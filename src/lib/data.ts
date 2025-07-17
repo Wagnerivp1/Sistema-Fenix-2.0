@@ -1,0 +1,111 @@
+import type { Customer, ServiceOrder } from '@/types';
+
+export const mockCustomers: Customer[] = [
+  {
+    id: 'CUST-001',
+    name: 'Ana Silva',
+    phone: '(11) 98765-4321',
+    email: 'ana.silva@example.com',
+    address: 'Rua das Flores, 123, São Paulo, SP',
+    observations: 'Cliente prefere contato por WhatsApp.',
+  },
+  {
+    id: 'CUST-002',
+    name: 'Bruno Costa',
+    phone: '(21) 91234-5678',
+    email: 'bruno.costa@example.com',
+    address: 'Avenida Copacabana, 456, Rio de Janeiro, RJ',
+    observations: '',
+  },
+  {
+    id: 'CUST-003',
+    name: 'Carla Dias',
+    phone: '(31) 99988-7766',
+    email: 'carla.dias@example.com',
+    address: 'Praça da Liberdade, 789, Belo Horizonte, MG',
+    observations: 'Indicada por outro cliente.',
+  },
+  {
+    id: 'CUST-004',
+    name: 'Daniel Martins',
+    phone: '(51) 98877-6655',
+    email: 'daniel.martins@example.com',
+    address: 'Rua dos Andradas, 101, Porto Alegre, RS',
+    observations: 'Cliente antigo.',
+  },
+  {
+    id: 'CUST-005',
+    name: 'Eduarda Lima',
+    phone: '(71) 97766-5544',
+    email: 'eduarda.lima@example.com',
+    address: 'Largo do Pelourinho, 202, Salvador, BA',
+    observations: '',
+  },
+];
+
+export const mockServiceOrders: ServiceOrder[] = [
+  {
+    id: 'OS-2024-001',
+    customerName: 'Ana Silva',
+    equipment: 'Laptop Dell Inspiron 15',
+    reportedProblem: 'Não liga',
+    status: 'Em análise',
+    date: '2024-07-20',
+    totalValue: 0,
+  },
+  {
+    id: 'OS-2024-002',
+    customerName: 'Bruno Costa',
+    equipment: 'iPhone 13',
+    reportedProblem: 'Tela quebrada',
+    status: 'Aprovado',
+    date: '2024-07-19',
+    totalValue: 850.0,
+  },
+  {
+    id: 'OS-2024-003',
+    customerName: 'Carla Dias',
+    equipment: 'Impressora HP DeskJet',
+    reportedProblem: 'Não puxa papel',
+    status: 'Em conserto',
+    date: '2024-07-19',
+    totalValue: 120.0,
+  },
+  {
+    id: 'OS-2024-004',
+    customerName: 'Daniel Martins',
+    equipment: 'Samsung Galaxy S22',
+    reportedProblem: 'Bateria não segura carga',
+    status: 'Finalizado',
+    date: '2024-07-18',
+    totalValue: 350.0,
+  },
+  {
+    id: 'OS-2024-005',
+    customerName: 'Eduarda Lima',
+    equipment: 'Macbook Air M1',
+    reportedProblem: 'Teclado com falha em algumas teclas',
+    status: 'Entregue',
+    date: '2024-07-15',
+    totalValue: 600.0,
+  },
+  {
+    id: 'OS-2024-006',
+    customerName: 'Ana Silva',
+    equipment: 'Desktop Gamer',
+    reportedProblem: 'Superaquecendo e desligando',
+    status: 'Recebido',
+    date: '2024-07-21',
+    totalValue: 0,
+  },
+];
+
+export const mockRevenueData = [
+    { month: 'Jan', revenue: 4000, expenses: 2400 },
+    { month: 'Fev', revenue: 3000, expenses: 1398 },
+    { month: 'Mar', revenue: 5000, expenses: 3800 },
+    { month: 'Abr', revenue: 2780, expenses: 1908 },
+    { month: 'Mai', revenue: 1890, expenses: 1800 },
+    { month: 'Jun', revenue: 3390, expenses: 2500 },
+    { month: 'Jul', revenue: 4490, expenses: 3100 },
+]

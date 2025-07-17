@@ -56,41 +56,45 @@ export default function CustomersPage() {
                 </kbd>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-3xl">
               <DialogHeader>
-                <DialogTitle>Novo Cliente</DialogTitle>
+                <DialogTitle>Adicionar Cliente</DialogTitle>
                 <DialogDescription>
-                  Preencha os dados para cadastrar um novo cliente.
+                  Preencha os dados do novo cliente abaixo.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Nome
-                  </Label>
-                  <Input id="name" placeholder="Nome completo" className="col-span-3" />
+              <div className="grid gap-6 py-4">
+                 <div className="grid grid-cols-1 gap-6">
+                    <div>
+                        <Label htmlFor="name">Nome Completo</Label>
+                        <Input id="name" placeholder="John Doe" />
+                    </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">
-                    Email
-                  </Label>
-                  <Input id="email" type="email" placeholder="email@exemplo.com" className="col-span-3" />
+                <div className="grid grid-cols-2 gap-6">
+                    <div>
+                        <Label htmlFor="phone">Telefone</Label>
+                        <Input id="phone" placeholder="(99) 99999-9999" />
+                    </div>
+                    <div>
+                        <Label htmlFor="email">E-mail</Label>
+                        <Input id="email" type="email" placeholder="email@example.com" />
+                    </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="phone" className="text-right">
-                    Telefone
-                  </Label>
-                  <Input id="phone" placeholder="(99) 99999-9999" className="col-span-3" />
-                </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="address" className="text-right">
-                    Endereço
-                  </Label>
-                  <Input id="address" placeholder="Rua, Número, Bairro..." className="col-span-3" />
+                 <div className="grid grid-cols-2 gap-6">
+                    <div>
+                        <Label htmlFor="address">Endereço</Label>
+                        <Input id="address" placeholder="Rua Exemplo, 123" />
+                    </div>
+                    <div>
+                        <Label htmlFor="cpf">CPF / CNPJ</Label>
+                        <Input id="cpf" placeholder="Opcional" />
+                    </div>
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="submit">Salvar Cliente</Button>
+              <DialogFooter className="justify-end gap-2">
+                 <Button variant="ghost">Cancelar</Button>
+                 <Button variant="outline">Salvar</Button>
+                 <Button type="submit">Salvar e Gerar OS</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

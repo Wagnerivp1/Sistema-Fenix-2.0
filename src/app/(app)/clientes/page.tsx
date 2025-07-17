@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import { PlusCircle, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +40,12 @@ import { Label } from '@/components/ui/label';
 import { mockCustomers } from '@/lib/data';
 
 export default function CustomersPage() {
+  const [searchTerm, setSearchTerm] = React.useState('');
+
+  const filteredCustomers = mockCustomers.filter((customer) =>
+    customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -106,6 +115,8 @@ export default function CustomersPage() {
           <Input
             placeholder="Filtrar por nome..."
             className="max-w-sm"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Table>
@@ -126,7 +137,7 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockCustomers.map((customer) => (
+            {filteredCustomers.map((customer) => (
               <TableRow key={customer.id}>
                 <TableCell className="font-medium">{customer.name}</TableCell>
                 <TableCell>{customer.email}</TableCell>

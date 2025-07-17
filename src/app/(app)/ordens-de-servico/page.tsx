@@ -57,6 +57,13 @@ const getStatusVariant = (status: string) => {
     }
 }
 
+const formatDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  // Adiciona o fuso UTC para evitar problemas de timezone
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
 export default function ServiceOrdersPage() {
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customerId');
@@ -140,7 +147,7 @@ export default function ServiceOrdersPage() {
                 </TableCell>
                 <TableCell className="font-medium">{order.customerName}</TableCell>
                 <TableCell>{order.equipment}</TableCell>
-                <TableCell className="hidden md:table-cell">{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="hidden md:table-cell">{formatDate(order.date)}</TableCell>
                 <TableCell>
                    <Badge className={cn('font-semibold', getStatusVariant(order.status))} variant="outline">
                     {order.status}

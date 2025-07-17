@@ -16,6 +16,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -42,7 +43,8 @@ export function MainNav() {
   const isCollapsed = state === 'collapsed';
 
   return (
-    <nav className="flex flex-col gap-2 px-4">
+    <nav className="flex flex-col gap-2 px-4 py-4">
+      <TooltipProvider>
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.href);
         return (
@@ -51,8 +53,8 @@ export function MainNav() {
               <Link
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-                  isActive && 'bg-accent text-primary',
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary-foreground hover:bg-primary/80',
+                  isActive && 'bg-primary text-primary-foreground',
                   isCollapsed && 'justify-center'
                 )}
               >
@@ -69,6 +71,7 @@ export function MainNav() {
           </Tooltip>
         );
       })}
+      </TooltipProvider>
     </nav>
   );
 }

@@ -29,13 +29,13 @@ import { cn } from '@/lib/utils';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
-        case 'Recebido': return 'bg-yellow-200 text-yellow-800';
-        case 'Em análise': return 'bg-blue-200 text-blue-800';
-        case 'Aprovado': return 'bg-green-200 text-green-800';
-        case 'Em conserto': return 'bg-indigo-200 text-indigo-800';
-        case 'Finalizado': return 'bg-gray-200 text-gray-800';
-        case 'Entregue': return 'bg-purple-200 text-purple-800';
-        default: return 'bg-gray-100 text-gray-800';
+        case 'Recebido': return 'bg-yellow-900 text-yellow-300 border-yellow-700';
+        case 'Em análise': return 'bg-blue-900 text-blue-300 border-blue-700';
+        case 'Aprovado': return 'bg-green-900 text-green-300 border-green-700';
+        case 'Em conserto': return 'bg-indigo-900 text-indigo-300 border-indigo-700';
+        case 'Finalizado': return 'bg-gray-700 text-gray-300 border-gray-500';
+        case 'Entregue': return 'bg-purple-900 text-purple-300 border-purple-700';
+        default: return 'bg-gray-800 text-gray-400 border-gray-600';
     }
 }
 

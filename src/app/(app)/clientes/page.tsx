@@ -3,6 +3,8 @@
 
 import * as React from 'react';
 import { PlusCircle, MoreHorizontal, ArrowUpDown, Check, ChevronsUpDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,6 +29,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -49,10 +62,41 @@ import {
 import { mockCustomers } from '@/lib/data';
 import type { Customer } from '@/types';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { EditCustomerDialog } from '@/components/customers/edit-customer-dialog';
 
 export default function CustomersPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [customers, setCustomers] = React.useState<Customer[]>(mockCustomers);
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
-  const [open, setOpen] = React.useState(false);
+  const [openCombobox, setOpenCombobox] = React.useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+
+  const handleSearch = (searchQuery: string) => {
+    const customer = customers.find(c => c.name.toLowerCase() === searchQuery.toLowerCase());
+    setSelectedCustomer(customer || null);
+  };
+  
+  const handleUpdateCustomer = (updatedCustomer: Customer) => {
+    setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+    setSelectedCustomer(updatedCustomer);
+    toast({
+      title: 'Cliente atualizado!',
+      description: `Os dados de ${updatedCustomer.name} foram salvos.`,
+    });
+    setIsEditDialogOpen(false);
+  };
+
+  const handleDeleteCustomer = (customerId: string) => {
+    setCustomers(prev => prev.filter(c => c.id !== customerId));
+    setSelectedCustomer(null);
+    toast({
+      title: 'Cliente excluído!',
+      description: 'O cliente foi removido do sistema.',
+      variant: 'destructive',
+    });
+  };
 
   return (
     <Card>
@@ -94,8 +138,8 @@ export default function CustomersPage() {
                         <Input id="phone" placeholder="(99) 99999-9999" />
                     </div>
                     <div>
-                        <Label htmlFor="email">E-mail</Label>
-                        <Input id="email" type="email" placeholder="Opcional" />
+                        <Label htmlFor="email">E-mail (Opcional)</Label>
+                        <Input id="email" type="email" placeholder="email@exemplo.com" />
                     </div>
                 </div>
                  <div className="grid grid-cols-2 gap-6">
@@ -104,8 +148,8 @@ export default function CustomersPage() {
                         <Input id="address" placeholder="Rua Exemplo, 123" />
                     </div>
                     <div>
-                        <Label htmlFor="cpf">CPF / CNPJ</Label>
-                        <Input id="cpf" placeholder="Opcional" />
+                        <Label htmlFor="cpf">CPF / CNPJ (Opcional)</Label>
+                        <Input id="cpf" placeholder="Apenas números" />
                     </div>
                 </div>
               </div>
@@ -120,12 +164,12 @@ export default function CustomersPage() {
       </CardHeader>
       <CardContent>
         <div className="mb-4">
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
-                aria-expanded={open}
+                aria-expanded={openCombobox}
                 className="w-[300px] justify-between"
               >
                 {selectedCustomer
@@ -136,18 +180,20 @@ export default function CustomersPage() {
             </PopoverTrigger>
             <PopoverContent className="w-[300px] p-0">
               <Command>
-                <CommandInput placeholder="Procurar cliente..." />
+                <CommandInput 
+                  placeholder="Procurar cliente..." 
+                  onValueChange={handleSearch}
+                 />
                 <CommandList>
                   <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
                   <CommandGroup>
-                    {mockCustomers.map((customer) => (
+                    {customers.map((customer) => (
                       <CommandItem
                         key={customer.id}
                         value={customer.name}
                         onSelect={(currentValue) => {
-                           const customer = mockCustomers.find(c => c.name.toLowerCase() === currentValue.toLowerCase());
-                           setSelectedCustomer(customer || null);
-                           setOpen(false);
+                           handleSearch(currentValue);
+                           setOpenCombobox(false);
                         }}
                       >
                         <Check
@@ -199,11 +245,34 @@ export default function CustomersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem>Editar Cliente</DropdownMenuItem>
-                      <DropdownMenuItem>Abrir Ordem de Serviço</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        Excluir
+                      <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
+                        Editar Cliente
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => router.push('/ordens-de-servico')}>
+                        Abrir Ordem de Serviço
+                      </DropdownMenuItem>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                            Excluir
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Essa ação não pode ser desfeita. Isso excluirá permanentemente o cliente
+                              <span className="font-bold"> {selectedCustomer.name}</span>.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteCustomer(selectedCustomer.id)}>
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -217,6 +286,15 @@ export default function CustomersPage() {
             )}
           </TableBody>
         </Table>
+
+        {selectedCustomer && (
+          <EditCustomerDialog
+            customer={selectedCustomer}
+            isOpen={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            onSave={handleUpdateCustomer}
+          />
+        )}
       </CardContent>
     </Card>
   );

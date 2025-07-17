@@ -14,7 +14,7 @@ import Link from 'next/link';
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = React.useState('');
+  const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     // Simulação de autenticação
     setTimeout(() => {
-      if (email === 'admin@assistec.now' && password === '123456') {
+      if (username.toLowerCase() === 'admin' && password.toLowerCase() === 'admin') {
         toast({
           title: 'Login bem-sucedido!',
           description: 'Redirecionando para o dashboard...',
@@ -34,7 +34,7 @@ export default function LoginPage() {
         toast({
           variant: 'destructive',
           title: 'Credenciais inválidas',
-          description: 'Por favor, verifique seu email e senha.',
+          description: 'Por favor, verifique seu usuário e senha.',
         });
         setIsLoading(false);
       }
@@ -54,14 +54,14 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Usuário</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
+                id="username"
+                type="text"
+                placeholder="Seu usuário"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 disabled={isLoading}
               />
             </div>

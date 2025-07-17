@@ -31,17 +31,6 @@ export function AlertsAndNotifications() {
               </div>
             </div>
         </div>
-         <div className="border-l-4 border-yellow-500 bg-yellow-500/10 p-4 rounded-r-lg">
-           <div className="flex items-start gap-3">
-              <Settings className="h-5 w-5 text-yellow-500 mt-1 flex-shrink-0" />
-              <div>
-                  <p className="font-semibold text-yellow-400">Ativar o Windows</p>
-                  <p className="text-sm text-yellow-400/80">
-                    Acesse Configurações para ativar o Windows.
-                  </p>
-              </div>
-            </div>
-        </div>
       </CardContent>
     </Card>
   );

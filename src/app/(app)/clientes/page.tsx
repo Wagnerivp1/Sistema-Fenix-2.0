@@ -1,4 +1,4 @@
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -43,16 +43,17 @@ export default function CustomersPage() {
           <div>
             <CardTitle>Clientes</CardTitle>
             <CardDescription>
-              Gerencie seus clientes e veja o histórico de serviços.
+              Gerencie seus clientes cadastrados.
             </CardDescription>
           </div>
           <Dialog>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Adicionar Cliente
-                </span>
+              <Button size="sm">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Adicionar Cliente
+                 <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                  N
+                </kbd>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -96,12 +97,24 @@ export default function CustomersPage() {
         </div>
       </CardHeader>
       <CardContent>
+        <div className="mb-4">
+          <Input
+            placeholder="Filtrar por nome..."
+            className="max-w-sm"
+          />
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
+              <TableHead>
+                <Button variant="ghost" className="p-0 hover:bg-transparent">
+                  Nome
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>Email</TableHead>
               <TableHead className="hidden md:table-cell">Telefone</TableHead>
-              <TableHead className="hidden md:table-cell">Email</TableHead>
+              <TableHead className="hidden md:table-cell">Documento</TableHead>
               <TableHead>
                 <span className="sr-only">Ações</span>
               </TableHead>
@@ -111,8 +124,9 @@ export default function CustomersPage() {
             {mockCustomers.map((customer) => (
               <TableRow key={customer.id}>
                 <TableCell className="font-medium">{customer.name}</TableCell>
+                <TableCell>{customer.email}</TableCell>
                 <TableCell className="hidden md:table-cell">{customer.phone}</TableCell>
-                <TableCell className="hidden md:table-cell">{customer.email}</TableCell>
+                <TableCell className="hidden md:table-cell">{customer.id.split('-')[1]}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -123,8 +137,8 @@ export default function CustomersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
-                      <DropdownMenuItem>Ver Histórico</DropdownMenuItem>
+                      <DropdownMenuItem>Editar Cliente</DropdownMenuItem>
+                      <DropdownMenuItem>Abrir Ordem de Serviço</DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">
                         Excluir
                       </DropdownMenuItem>

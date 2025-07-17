@@ -37,7 +37,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -97,6 +96,12 @@ export default function CustomersPage() {
       variant: 'destructive',
     });
   };
+  
+  const handleOpenServiceOrder = () => {
+    if (selectedCustomer) {
+      router.push(`/ordens-de-servico?customerId=${selectedCustomer.id}`);
+    }
+  }
 
   return (
     <Card>
@@ -248,7 +253,7 @@ export default function CustomersPage() {
                       <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
                         Editar Cliente
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => router.push('/ordens-de-servico')}>
+                      <DropdownMenuItem onSelect={handleOpenServiceOrder}>
                         Abrir Ordem de Serviço
                       </DropdownMenuItem>
                       <AlertDialog>

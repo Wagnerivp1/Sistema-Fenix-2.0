@@ -1,4 +1,9 @@
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+
+'use client';
+
+import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
+import { MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,26 +36,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockServiceOrders } from '@/lib/data';
+import { mockServiceOrders, mockCustomers } from '@/lib/data';
+import type { Customer } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
-        case 'Aberta': return 'bg-primary/20 text-primary-foreground border-primary/30';
-        case 'Aguardando Pagamento': return 'bg-destructive/80 text-destructive-foreground border-destructive/90';
-        case 'Aguardando peça': return 'bg-yellow-600/80 text-white border-yellow-700/90';
-        case 'Em análise': return 'bg-blue-900 text-blue-300 border-blue-700';
-        case 'Aprovado': return 'bg-green-900 text-green-300 border-green-700';
-        case 'Em conserto': return 'bg-indigo-900 text-indigo-300 border-indigo-700';
-        case 'Finalizado': return 'bg-gray-700 text-gray-300 border-gray-500';
-        case 'Entregue': return 'bg-purple-900 text-purple-300 border-purple-700';
-        default: return 'bg-gray-800 text-gray-400 border-gray-600';
+        case 'Aberta': return 'border-transparent bg-blue-500/20 text-blue-400';
+        case 'Aguardando Pagamento': return 'border-transparent bg-red-500/20 text-red-400';
+        case 'Aguardando peça': return 'border-transparent bg-yellow-500/20 text-yellow-400';
+        case 'Em análise': return 'border-transparent bg-cyan-500/20 text-cyan-400';
+        case 'Aprovado': return 'border-transparent bg-green-500/20 text-green-400';
+        case 'Em conserto': return 'border-transparent bg-indigo-500/20 text-indigo-400';
+        case 'Finalizado': return 'border-transparent bg-gray-500/20 text-gray-400';
+        case 'Entregue': return 'border-transparent bg-purple-500/20 text-purple-400';
+        case 'Aguardando': return 'border-transparent bg-orange-500/20 text-orange-400';
+        default: return 'border-transparent bg-gray-700/50 text-gray-300';
     }
 }
 
 export default function ServiceOrdersPage() {
+  const searchParams = useSearchParams();
+  const customerId = searchParams.get('customerId');
+  const [customerForNewOS, setCustomerForNewOS] = React.useState<Customer | null>(null);
+  const [isNewOrderSheetOpen, setIsNewOrderSheetOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (customerId) {
+      const customer = mockCustomers.find(c => c.id === customerId);
+      if (customer) {
+        setCustomerForNewOS(customer);
+        setIsNewOrderSheetOpen(true);
+      }
+    }
+  }, [customerId]);
+  
+  const handleSheetOpenChange = (isOpen: boolean) => {
+    setIsNewOrderSheetOpen(isOpen);
+    // Clear customer when sheet is closed, so it doesn't re-open with old data
+    if (!isOpen) {
+      setCustomerForNewOS(null);
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -72,7 +102,11 @@ export default function ServiceOrdersPage() {
                 <SelectItem value="todas">Status: Todas</SelectItem>
               </SelectContent>
             </Select>
-            <NewOrderSheet />
+            <NewOrderSheet 
+              customer={customerForNewOS}
+              isOpen={isNewOrderSheetOpen}
+              onOpenChange={handleSheetOpenChange}
+            />
           </div>
         </div>
       </CardHeader>

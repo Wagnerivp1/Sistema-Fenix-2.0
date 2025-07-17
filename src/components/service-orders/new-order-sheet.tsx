@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -24,21 +25,41 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { mockCustomers } from '@/lib/data';
+import type { Customer } from '@/types';
 
-export function NewOrderSheet() {
+interface NewOrderSheetProps {
+  customer?: Customer | null;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+}
+
+export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetProps) {
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (customer) {
+      setSelectedCustomerId(customer.id);
+    }
+  }, [customer]);
+
+  const trigger = (
+    <SheetTrigger asChild>
+      <Button size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground">
+        <PlusCircle className="h-3.5 w-3.5" />
+        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+          Adicionar OS
+        </span>
+         <kbd className="ml-2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:inline-flex">
+            O
+          </kbd>
+      </Button>
+    </SheetTrigger>
+  );
+
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground">
-          <PlusCircle className="h-3.5 w-3.5" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Adicionar OS
-          </span>
-           <kbd className="ml-2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:inline-flex">
-              O
-            </kbd>
-        </Button>
-      </SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      {/* Only render trigger if onOpenChange is not provided, meaning it's self-managed */}
+      {!onOpenChange && trigger}
       <SheetContent className="sm:max-w-3xl w-full">
         <SheetHeader>
           <SheetTitle>Nova Ordem de Serviço</SheetTitle>
@@ -50,13 +71,13 @@ export function NewOrderSheet() {
           <div className="grid grid-cols-1 gap-4">
              <div>
                 <Label htmlFor="customer">Selecione um cliente</Label>
-                 <Select>
+                 <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockCustomers.map((customer) => (
-                        <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>
+                    {mockCustomers.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

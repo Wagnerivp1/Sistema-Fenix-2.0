@@ -5,15 +5,15 @@ import * as React from 'react';
 import { PlusCircle, Printer, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-  SheetClose,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { mockCustomers } from '@/lib/data';
 import type { Customer } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface NewOrderSheetProps {
   customer?: Customer | null;
@@ -34,6 +35,7 @@ interface NewOrderSheetProps {
 }
 
 export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetProps) {
+  const { toast } = useToast();
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
@@ -41,9 +43,29 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
       setSelectedCustomerId(customer.id);
     }
   }, [customer]);
+  
+  const handleSave = () => {
+    // Aqui você adicionaria a lógica para salvar a OS no banco de dados
+    console.log("Saving service order...");
+    toast({
+      title: 'Ordem de Serviço Salva!',
+      description: 'A nova ordem de serviço foi registrada com sucesso.',
+    });
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+  };
+
+  const handlePrint = (documentType: string) => {
+    // Lógica de impressão
+    toast({
+        title: 'Imprimindo documento...',
+        description: `O ${documentType} será impresso.`,
+    })
+  }
 
   const trigger = (
-    <SheetTrigger asChild>
+    <DialogTrigger asChild>
       <Button size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground">
         <PlusCircle className="h-3.5 w-3.5" />
         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -53,20 +75,20 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
             O
           </kbd>
       </Button>
-    </SheetTrigger>
+    </DialogTrigger>
   );
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {/* Only render trigger if onOpenChange is not provided, meaning it's self-managed */}
       {!onOpenChange && trigger}
-      <SheetContent className="sm:max-w-3xl w-full">
-        <SheetHeader>
-          <SheetTitle>Nova Ordem de Serviço</SheetTitle>
-          <SheetDescription>
+      <DialogContent className="sm:max-w-4xl w-full">
+        <DialogHeader>
+          <DialogTitle>Nova Ordem de Serviço</DialogTitle>
+          <DialogDescription>
             Preencha os dados para registrar um novo atendimento.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
         <div className="grid gap-6 py-8">
           <div className="grid grid-cols-1 gap-4">
              <div>
@@ -118,23 +140,21 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
           </div>
 
         </div>
-        <SheetFooter className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+        <DialogFooter className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                 <Button variant="outline"><Printer />Gerar Orçamento</Button>
-                 <Button variant="outline"><Printer />Reimprimir OS</Button>
-                 <Button variant="outline"><FileText />Recibo de Entrada</Button>
-                 <Button variant="outline"><FileText />Recibo de Entrega</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Orçamento')}><Printer />Gerar Orçamento</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Reimpressão de OS')}><Printer />Reimprimir OS</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrada')}><FileText />Recibo de Entrada</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrega')}><FileText />Recibo de Entrega</Button>
             </div>
             <div className="flex gap-2 justify-end">
-                <SheetClose asChild>
+                <DialogClose asChild>
                     <Button variant="ghost">Cancelar</Button>
-                </SheetClose>
-                <SheetClose asChild>
-                    <Button type="submit">Salvar Ordem de Serviço</Button>
-                </SheetClose>
+                </DialogClose>
+                <Button onClick={handleSave}>Salvar Ordem de Serviço</Button>
             </div>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

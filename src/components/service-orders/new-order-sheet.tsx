@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Sparkles, X } from 'lucide-react';
+import { PlusCircle, Printer, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -11,39 +11,21 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
-  SheetClose
+  SheetClose,
 } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { getAiSuggestions } from '@/app/actions';
-import { AiSuggestions } from './ai-suggestions';
-import { useToast } from '@/hooks/use-toast';
-import type { SuggestResolutionOutput } from '@/ai/flows/suggest-resolution';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { mockCustomers } from '@/lib/data';
 
 export function NewOrderSheet() {
-  const [deviceType, setDeviceType] = React.useState('');
-  const [reportedProblem, setReportedProblem] = React.useState('');
-  const [suggestions, setSuggestions] = React.useState<SuggestResolutionOutput | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const { toast } = useToast();
-
-  const handleGetSuggestions = async () => {
-    setIsLoading(true);
-    setSuggestions(null);
-    const result = await getAiSuggestions(deviceType, reportedProblem);
-    if (result.success) {
-      setSuggestions(result.data);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: result.error,
-      });
-    }
-    setIsLoading(false);
-  };
-
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -52,64 +34,84 @@ export function NewOrderSheet() {
           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
             Adicionar OS
           </span>
+           <kbd className="ml-2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:inline-flex">
+              O
+            </kbd>
         </Button>
       </SheetTrigger>
-      <SheetContent className="sm:max-w-xl w-full">
+      <SheetContent className="sm:max-w-3xl w-full">
         <SheetHeader>
           <SheetTitle>Nova Ordem de Serviço</SheetTitle>
           <SheetDescription>
-            Preencha os dados para abrir uma nova OS.
+            Preencha os dados para registrar um novo atendimento.
           </SheetDescription>
         </SheetHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="customer" className="text-right">
-              Cliente
-            </Label>
-            <Input id="customer" placeholder="Nome do cliente" className="col-span-3" />
+        <div className="grid gap-6 py-8">
+          <div className="grid grid-cols-1 gap-4">
+             <div>
+                <Label htmlFor="customer">Selecione um cliente</Label>
+                 <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockCustomers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="deviceType" className="text-right">
-              Equipamento
-            </Label>
-            <Input
-              id="deviceType"
-              placeholder="Ex: iPhone 13, Notebook Dell"
-              className="col-span-3"
-              value={deviceType}
-              onChange={(e) => setDeviceType(e.target.value)}
-            />
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="type">Tipo</Label>
+              <Input id="type" placeholder="Ex: Notebook" />
+            </div>
+            <div>
+              <Label htmlFor="brand">Marca</Label>
+              <Input id="brand" placeholder="Ex: Dell" />
+            </div>
+            <div>
+              <Label htmlFor="model">Modelo</Label>
+              <Input id="model" placeholder="Ex: Inspiron 15" />
+            </div>
+             <div>
+              <Label htmlFor="serial">Nº de Série</Label>
+              <Input id="serial" placeholder="Serial" />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="reportedProblem" className="text-right">
-              Defeito
-            </Label>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="accessories">Acessórios Entregues com o Equipamento</Label>
             <Textarea
-              id="reportedProblem"
-              placeholder="Descrição do problema relatado pelo cliente"
-              className="col-span-3"
-              value={reportedProblem}
-              onChange={(e) => setReportedProblem(e.target.value)}
+              id="accessories"
+              placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
             />
+             <p className="text-sm text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
           </div>
-          
-          <div className="col-span-4">
-            <Button
-              onClick={handleGetSuggestions}
-              disabled={isLoading || !deviceType || !reportedProblem}
-              className="w-full gap-2 bg-accent hover:bg-accent/90"
-            >
-              <Sparkles className="h-4 w-4" />
-              {isLoading ? 'Analisando...' : 'Obter Sugestões com IA'}
-            </Button>
+           <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="problem">Defeito Reclamado</Label>
+            <Textarea
+              id="problem"
+              placeholder="Descrição detalhada do problema informado pelo cliente."
+            />
           </div>
 
-          <AiSuggestions suggestions={suggestions} isLoading={isLoading} />
         </div>
-        <SheetFooter>
-          <SheetClose asChild>
-            <Button type="submit">Salvar Ordem de Serviço</Button>
-          </SheetClose>
+        <SheetFooter className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                 <Button variant="outline"><Printer />Gerar Orçamento</Button>
+                 <Button variant="outline"><Printer />Reimprimir OS</Button>
+                 <Button variant="outline"><FileText />Recibo de Entrada</Button>
+                 <Button variant="outline"><FileText />Recibo de Entrega</Button>
+            </div>
+            <div className="flex gap-2 justify-end">
+                <SheetClose asChild>
+                    <Button variant="ghost">Cancelar</Button>
+                </SheetClose>
+                <SheetClose asChild>
+                    <Button type="submit">Salvar Ordem de Serviço</Button>
+                </SheetClose>
+            </div>
         </SheetFooter>
       </SheetContent>
     </Sheet>

@@ -1,3 +1,4 @@
+
 import { PlusCircle, MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -77,7 +78,7 @@ export default function CustomersPage() {
                     </div>
                     <div>
                         <Label htmlFor="email">E-mail</Label>
-                        <Input id="email" type="email" placeholder="email@example.com" />
+                        <Input id="email" type="email" placeholder="Opcional" />
                     </div>
                 </div>
                  <div className="grid grid-cols-2 gap-6">

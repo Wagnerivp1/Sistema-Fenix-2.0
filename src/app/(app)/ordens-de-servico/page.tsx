@@ -1,4 +1,4 @@
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,13 +23,24 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { mockServiceOrders } from '@/lib/data';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
-        case 'Recebido': return 'bg-yellow-900 text-yellow-300 border-yellow-700';
+        case 'Aberta': return 'bg-primary/20 text-primary-foreground border-primary/30';
+        case 'Aguardando Pagamento': return 'bg-destructive/80 text-destructive-foreground border-destructive/90';
+        case 'Aguardando peça': return 'bg-yellow-600/80 text-white border-yellow-700/90';
         case 'Em análise': return 'bg-blue-900 text-blue-300 border-blue-700';
         case 'Aprovado': return 'bg-green-900 text-green-300 border-green-700';
         case 'Em conserto': return 'bg-indigo-900 text-indigo-300 border-indigo-700';
@@ -43,26 +54,43 @@ export default function ServiceOrdersPage() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <CardTitle>Ordens de Serviço</CardTitle>
             <CardDescription>
-              Acompanhe e gerencie todas as ordens de serviço.
+              Gerencie as ordens de serviço.
             </CardDescription>
           </div>
-          <NewOrderSheet />
+          <div className="flex items-center gap-2 ml-auto">
+             <Select defaultValue="ativas">
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativas">Status: Ativas</SelectItem>
+                <SelectItem value="finalizadas">Status: Finalizadas</SelectItem>
+                <SelectItem value="todas">Status: Todas</SelectItem>
+              </SelectContent>
+            </Select>
+            <NewOrderSheet />
+          </div>
         </div>
       </CardHeader>
       <CardContent>
+         <div className="mb-4">
+          <Input
+            placeholder="Filtrar por cliente..."
+            className="max-w-sm"
+          />
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="hidden w-[100px] sm:table-cell">OS</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Equipamento</TableHead>
-              <TableHead className="hidden md:table-cell">Status</TableHead>
-              <TableHead className="hidden md:table-cell">Data</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="hidden md:table-cell">Data de Entrada</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>
                 <span className="sr-only">Ações</span>
               </TableHead>
@@ -71,17 +99,20 @@ export default function ServiceOrdersPage() {
           <TableBody>
             {mockServiceOrders.map((order) => (
               <TableRow key={order.id}>
-                <TableCell className="hidden sm:table-cell font-medium">{order.id}</TableCell>
-                <TableCell>{order.customerName}</TableCell>
-                <TableCell className="font-medium">{order.equipment}</TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden sm:table-cell">
+                   <Link href="#" className="font-medium text-primary hover:underline">
+                    #...{order.id.slice(-4)}
+                  </Link>
+                </TableCell>
+                <TableCell className="font-medium">{order.customerName}</TableCell>
+                <TableCell>{order.equipment}</TableCell>
+                <TableCell className="hidden md:table-cell">{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell>
                    <Badge className={cn('font-semibold', getStatusVariant(order.status))} variant="outline">
                     {order.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
-                <TableCell className="text-right">R$ {order.totalValue.toFixed(2)}</TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">

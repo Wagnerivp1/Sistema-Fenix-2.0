@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Sparkles } from 'lucide-react';
+import { PlusCircle, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -47,10 +47,10 @@ export function NewOrderSheet() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button size="sm" className="gap-1">
+        <Button size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground">
           <PlusCircle className="h-3.5 w-3.5" />
           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Nova Ordem de Serviço
+            Adicionar OS
           </span>
         </Button>
       </SheetTrigger>

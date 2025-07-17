@@ -12,7 +12,7 @@ export type ServiceOrder = {
   customerName: string;
   equipment: string;
   reportedProblem: string;
-  status: 'Recebido' | 'Em análise' | 'Aprovado' | 'Em conserto' | 'Finalizado' | 'Entregue';
+  status: 'Recebido' | 'Em análise' | 'Aprovado' | 'Em conserto' | 'Finalizado' | 'Entregue' | 'Aberta' | 'Aguardando Pagamento' | 'Aguardando peça';
   date: string;
   totalValue: number;
 };

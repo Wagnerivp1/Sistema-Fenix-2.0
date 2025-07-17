@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, ArrowUpDown, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -37,14 +37,22 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { mockCustomers } from '@/lib/data';
+import type { Customer } from '@/types';
+import { cn } from '@/lib/utils';
 
 export default function CustomersPage() {
-  const [searchTerm, setSearchTerm] = React.useState('');
-
-  const filteredCustomers = mockCustomers.filter((customer) =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
+  const [open, setOpen] = React.useState(false);
 
   return (
     <Card>
@@ -112,12 +120,50 @@ export default function CustomersPage() {
       </CardHeader>
       <CardContent>
         <div className="mb-4">
-          <Input
-            placeholder="Filtrar por nome..."
-            className="max-w-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-[300px] justify-between"
+              >
+                {selectedCustomer
+                  ? selectedCustomer.name
+                  : 'Selecione um cliente...'}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0">
+              <Command>
+                <CommandInput placeholder="Procurar cliente..." />
+                <CommandList>
+                  <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                  <CommandGroup>
+                    {mockCustomers.map((customer) => (
+                      <CommandItem
+                        key={customer.id}
+                        value={customer.name}
+                        onSelect={(currentValue) => {
+                           const customer = mockCustomers.find(c => c.name.toLowerCase() === currentValue.toLowerCase());
+                           setSelectedCustomer(customer || null);
+                           setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            selectedCustomer?.name.toLowerCase() === customer.name.toLowerCase() ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        {customer.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         <Table>
           <TableHeader>
@@ -137,12 +183,12 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCustomers.map((customer) => (
-              <TableRow key={customer.id}>
-                <TableCell className="font-medium">{customer.name}</TableCell>
-                <TableCell>{customer.email}</TableCell>
-                <TableCell className="hidden md:table-cell">{customer.phone}</TableCell>
-                <TableCell className="hidden md:table-cell">{customer.id.split('-')[1]}</TableCell>
+            {selectedCustomer ? (
+              <TableRow key={selectedCustomer.id}>
+                <TableCell className="font-medium">{selectedCustomer.name}</TableCell>
+                <TableCell>{selectedCustomer.email}</TableCell>
+                <TableCell className="hidden md:table-cell">{selectedCustomer.phone}</TableCell>
+                <TableCell className="hidden md:table-cell">{selectedCustomer.id.split('-')[1]}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -162,7 +208,13 @@ export default function CustomersPage() {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+               <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  Nenhum cliente selecionado.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

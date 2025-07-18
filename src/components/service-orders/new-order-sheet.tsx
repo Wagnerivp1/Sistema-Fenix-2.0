@@ -138,18 +138,11 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
               placeholder="Descrição detalhada do problema informado pelo cliente."
             />
           </div>
-           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="diagnosis">Diagnóstico</Label>
-            <Textarea
-              id="diagnosis"
-              placeholder="Análise inicial do técnico sobre o problema."
-            />
-          </div>
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="technical_report">Laudo Técnico</Label>
+            <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
             <Textarea
               id="technical_report"
-              placeholder="Descrição técnica detalhada do serviço a ser executado, peças necessárias, etc."
+              placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
             />
           </div>
 

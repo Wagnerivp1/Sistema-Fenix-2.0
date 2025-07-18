@@ -14,6 +14,16 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -69,6 +79,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const [technicalReport, setTechnicalReport] = React.useState('');
   const [items, setItems] = React.useState<QuoteItem[]>([]);
   const [status, setStatus] = React.useState<ServiceOrder['status']>('Aberta');
+  const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = React.useState(false);
   
   const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0, type: 'service' as 'service' | 'part' });
 
@@ -193,8 +204,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setTextColor(fontColor);
 
     // --- Header ---
-    // Logo Placeholder
-    doc.setFillColor(240, 240, 240); // Light gray
+    doc.setFillColor(240, 240, 240);
     doc.rect(margin, 10, 30, 15, 'F');
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
@@ -434,7 +444,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
+    const margin = 10;
     const fontColor = '#000000';
     const primaryColor = '#e0e7ff';
   
@@ -442,7 +452,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         let currentY = yOffset;
   
         // --- Header ---
-        doc.setFillColor(240, 240, 240); // Light gray
+        doc.setFillColor(240, 240, 240);
         doc.rect(margin, currentY, 30, 15, 'F');
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
@@ -511,10 +521,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
         
         const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
-        const textHeight = doc.getTextDimensions(textLines).h;
-        const textY = currentY + (textHeight / 2) - 2;
-        doc.text(textLines, pageWidth / 2, textY, { align: 'center' });
-        currentY += textHeight + 2;
+        doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
+        currentY += doc.getTextDimensions(textLines).h + 2;
   
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
         currentY += 4;
@@ -560,6 +568,23 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
   }
 
+  const handleStatusChange = (value: ServiceOrder['status'] | 'Finalizar') => {
+    if (value === 'Finalizar') {
+      setIsFinalizeDialogOpen(true);
+    } else {
+      setStatus(value as ServiceOrder['status']);
+    }
+  };
+
+  const handleFinalize = (paid: boolean) => {
+    if (paid) {
+      setStatus('Finalizado');
+    } else {
+      setStatus('Aguardando Pagamento');
+    }
+    setIsFinalizeDialogOpen(false);
+  };
+
   const trigger = (
     <DialogTrigger asChild>
       <Button size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -575,6 +600,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   );
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
       <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col">
@@ -602,7 +628,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
               </div>
               <div>
                 <Label htmlFor="status">Status da OS</Label>
-                <Select value={status} onValueChange={(value) => setStatus(value as ServiceOrder['status'])}>
+                <Select value={status} onValueChange={handleStatusChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -613,7 +639,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                     <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
                     <SelectItem value="Aprovado">Aprovado</SelectItem>
                     <SelectItem value="Em conserto">Em conserto</SelectItem>
-                    <SelectItem value="Finalizado">Finalizado</SelectItem>
+                    <SelectItem value="Finalizar">Finalizar</SelectItem>
                     <SelectItem value="Entregue">Entregue</SelectItem>
                   </SelectContent>
                 </Select>
@@ -738,5 +764,27 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirmar Finalização</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta Ordem de Serviço já foi paga pelo cliente?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <Button variant="outline" onClick={() => handleFinalize(false)}>
+            Não, aguardando
+          </Button>
+          <Button onClick={() => handleFinalize(true)}>
+            Sim, foi paga
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
+
+    

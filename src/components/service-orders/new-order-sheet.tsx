@@ -155,65 +155,125 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     }
 
     const doc = new jsPDF();
+    const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+
+    // --- PDF Styling ---
+    const primaryColor = '#1667f3'; // A blue color similar to the theme
+    const grayColor = '#4a5568';
+    const lightGrayColor = '#f7fafc';
+    const osNumber = `OS-${Date.now().toString().slice(-6)}`;
+
+    // --- Header ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(primaryColor);
+    doc.text("Sistema Fênix", 14, 22);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(grayColor);
+    doc.text("Rua Exemplo, 123 - Centro", 14, 28);
+    doc.text("Telefone: (99) 99999-9999 | Email: contato@fenix.com", 14, 33);
     
-    // Header
-    doc.setFontSize(20);
-    doc.text("Orçamento de Serviço", 105, 20, { align: 'center' });
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Orçamento", pageWidth - 14, 22, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Número: ${osNumber}`, pageWidth - 14, 28, { align: 'right' });
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 14, 33, { align: 'right' });
+
+    doc.setDrawColor(primaryColor);
+    doc.line(14, 40, pageWidth - 14, 40);
+
+    // --- Customer and Equipment Info ---
     doc.setFontSize(12);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 190, 25, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(primaryColor);
+    doc.text("CLIENTE", 14, 50);
+    doc.text("EQUIPAMENTO", pageWidth / 2, 50);
     
-    // Company Info (replace with your actual info)
-    doc.setFontSize(10);
-    doc.text("Sistema Fênix Assistência Técnica", 14, 35);
-    doc.text("Rua Exemplo, 123 - Centro", 14, 40);
-    doc.text("Telefone: (99) 99999-9999", 14, 45);
+    doc.setDrawColor(grayColor);
+    doc.line(14, 52, 95, 52); // Line under CLIENTE
+    doc.line(pageWidth / 2, 52, pageWidth - 14, 52); // Line under EQUIPAMENTO
 
-    // Customer Info
-    doc.setFontSize(14);
-    doc.text("Dados do Cliente", 14, 60);
     doc.setFontSize(10);
-    doc.text(`Nome: ${selectedCustomer.name}`, 14, 68);
-    doc.text(`Telefone: ${selectedCustomer.phone}`, 14, 73);
-    doc.text(`Endereço: ${selectedCustomer.address}`, 14, 78);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(grayColor);
+
+    // Customer
+    doc.text(selectedCustomer.name, 14, 58);
+    doc.text(selectedCustomer.phone, 14, 63);
+    doc.text(selectedCustomer.address, 14, 68);
+
+    // Equipment
+    doc.text(`${equipmentType} ${equipment.brand} ${equipment.model}`, pageWidth / 2, 58);
+    doc.text(`Nº de Série: ${equipment.serial || 'Não informado'}`, pageWidth / 2, 63);
     
-    // Equipment Info
-    doc.setFontSize(14);
-    doc.text("Dados do Equipamento", 14, 90);
-    doc.setFontSize(10);
-    doc.text(`Tipo: ${equipmentType}`, 14, 98);
-    doc.text(`Marca/Modelo: ${equipment.brand} ${equipment.model}`, 14, 103);
-    doc.text(`Defeito Reclamado: ${reportedProblem}`, 14, 108);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`DEFEITO RECLAMADO:`, 14, 78);
+    doc.setFont('helvetica', 'normal');
+    
+    const problemLines = doc.splitTextToSize(reportedProblem, pageWidth - 28);
+    doc.text(problemLines, 14, 83);
 
-    // Items Table
-    const tableColumn = ["Descrição", "Qtd.", "Valor Unit.", "Subtotal"];
-    const tableRows = items.map(item => [
+    // --- Items Table ---
+    const tableColumn = ["Item", "Descrição", "Qtd.", "Vlr. Unit.", "Subtotal"];
+    const tableRows = items.map((item, index) => [
+      index + 1,
       item.description,
       item.quantity,
       `R$ ${item.unitPrice.toFixed(2)}`,
       `R$ ${(item.quantity * item.unitPrice).toFixed(2)}`
     ]);
+    
+    const total = calculateTotal();
+    tableRows.push([
+        { content: 'Total do Orçamento:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+        { content: `R$ ${total.toFixed(2)}`, styles: { fontStyle: 'bold' } }
+    ]);
+
 
     doc.autoTable({
-        startY: 120,
+        startY: Math.max(90, doc.previousAutoTable.finalY + 10),
         head: [tableColumn],
         body: tableRows,
         theme: 'striped',
-        headStyles: { fillColor: [22, 163, 74] },
+        headStyles: { 
+            fillColor: primaryColor, 
+            textColor: '#ffffff',
+            fontStyle: 'bold'
+        },
+        footStyles: {
+            fillColor: lightGrayColor,
+            textColor: grayColor,
+            fontStyle: 'bold',
+            fontSize: 12
+        },
+        didDrawPage: (data) => {
+            // Footer on each page
+            doc.setFontSize(8);
+            doc.setTextColor(grayColor);
+            doc.text(`Página ${data.pageNumber}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
     });
 
-    // Total
-    const finalY = (doc as any).lastAutoTable.finalY || 150;
-    const total = calculateTotal();
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total do Orçamento: R$ ${total.toFixed(2)}`, 190, finalY + 15, { align: 'right' });
+    // --- Footer ---
+    const finalY = (doc as any).lastAutoTable.finalY || pageHeight - 50;
+    doc.setFontSize(9);
+    doc.setTextColor(grayColor);
+    doc.text("Validade do Orçamento: 15 dias.", 14, finalY + 15);
+    doc.text("Garantia de 90 dias sobre o serviço executado.", 14, finalY + 20);
 
-    // Footer
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text("Este orçamento é válido por 15 dias.", 14, 280);
+    doc.line(pageWidth / 2 - 40, finalY + 40, pageWidth / 2 + 40, finalY + 40);
+    doc.text("Assinatura do Cliente", pageWidth / 2, finalY + 45, { align: 'center' });
+    
+    // --- Auto Print ---
+    doc.autoPrint();
+    const pdfBlob = doc.output('bloburl');
+    window.open(pdfBlob.toString(), '_blank');
 
-    doc.save(`Orcamento-${selectedCustomer.name.replace(/\s/g, '_')}.pdf`);
   };
 
 

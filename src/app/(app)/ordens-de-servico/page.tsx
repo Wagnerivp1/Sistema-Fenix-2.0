@@ -37,10 +37,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { mockServiceOrders, mockCustomers } from '@/lib/data';
-import type { Customer } from '@/types';
+import type { Customer, ServiceOrder } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -67,26 +68,58 @@ const formatDate = (dateString: string) => {
 export default function ServiceOrdersPage() {
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customerId');
+  const { toast } = useToast();
+  
+  const [orders, setOrders] = React.useState<ServiceOrder[]>(mockServiceOrders);
+  const [editingOrder, setEditingOrder] = React.useState<ServiceOrder | null>(null);
   const [customerForNewOS, setCustomerForNewOS] = React.useState<Customer | null>(null);
-  const [isNewOrderSheetOpen, setIsNewOrderSheetOpen] = React.useState(false);
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (customerId) {
       const customer = mockCustomers.find(c => c.id === customerId);
       if (customer) {
         setCustomerForNewOS(customer);
-        setIsNewOrderSheetOpen(true);
+        setEditingOrder(null);
+        setIsSheetOpen(true);
       }
     }
   }, [customerId]);
   
   const handleSheetOpenChange = (isOpen: boolean) => {
-    setIsNewOrderSheetOpen(isOpen);
-    // Clear customer when sheet is closed, so it doesn't re-open with old data
+    setIsSheetOpen(isOpen);
+    // Limpa os estados ao fechar o sheet
     if (!isOpen) {
       setCustomerForNewOS(null);
+      setEditingOrder(null);
     }
   }
+
+  const handleEditClick = (order: ServiceOrder) => {
+    setEditingOrder(order);
+    setCustomerForNewOS(null);
+    setIsSheetOpen(true);
+  }
+
+  const handleSaveOrder = (savedOrder: ServiceOrder) => {
+    // Se a OS já existe, atualiza. Se não, adiciona.
+    const orderExists = orders.some(o => o.id === savedOrder.id);
+    if (orderExists) {
+        setOrders(orders.map(o => o.id === savedOrder.id ? savedOrder : o));
+         toast({
+            title: 'Ordem de Serviço Atualizada!',
+            description: 'Os dados da OS foram salvos com sucesso.',
+        });
+    } else {
+        setOrders([savedOrder, ...orders]);
+        toast({
+            title: 'Ordem de Serviço Salva!',
+            description: 'A nova ordem de serviço foi registrada com sucesso.',
+        });
+    }
+    handleSheetOpenChange(false);
+  }
+
 
   return (
     <Card>
@@ -111,8 +144,10 @@ export default function ServiceOrdersPage() {
             </Select>
             <NewOrderSheet 
               customer={customerForNewOS}
-              isOpen={isNewOrderSheetOpen}
+              serviceOrder={editingOrder}
+              isOpen={isSheetOpen}
               onOpenChange={handleSheetOpenChange}
+              onSave={handleSaveOrder}
             />
           </div>
         </div>
@@ -138,11 +173,11 @@ export default function ServiceOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockServiceOrders.map((order) => (
+            {orders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="hidden sm:table-cell">
                    <Link href="#" className="font-medium text-primary hover:underline">
-                    #...{order.id.slice(-4)}
+                    #{order.id.slice(-4)}
                   </Link>
                 </TableCell>
                 <TableCell className="font-medium">{order.customerName}</TableCell>
@@ -164,7 +199,7 @@ export default function ServiceOrdersPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar</DropdownMenuItem>
                       <DropdownMenuItem>Imprimir</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

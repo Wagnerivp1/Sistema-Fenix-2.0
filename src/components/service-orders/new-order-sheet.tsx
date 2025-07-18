@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { mockCustomers } from '@/lib/data';
-import type { Customer } from '@/types';
+import type { Customer, ServiceOrder } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getAiSuggestions } from '@/app/actions';
@@ -45,8 +45,10 @@ declare module 'jspdf' {
 
 interface NewOrderSheetProps {
   customer?: Customer | null;
+  serviceOrder?: ServiceOrder | null;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  onSave?: (serviceOrder: ServiceOrder) => void;
 }
 
 interface QuoteItem {
@@ -58,20 +60,73 @@ interface QuoteItem {
 }
 
 
-export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetProps) {
+export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
   const { toast } = useToast();
-  const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | undefined>(undefined);
+  
+  // States para os dados do formulário
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>('');
   const [equipmentType, setEquipmentType] = React.useState('');
+  const [equipment, setEquipment] = React.useState({ brand: '', model: '', serial: '' });
+  const [accessories, setAccessories] = React.useState('');
   const [reportedProblem, setReportedProblem] = React.useState('');
   const [technicalReport, setTechnicalReport] = React.useState('');
-  const [aiSuggestions, setAiSuggestions] = React.useState<SuggestResolutionOutput | null>(null);
-  const [isAiLoading, setIsAiLoading] = React.useState(false);
-
-  const [equipment, setEquipment] = React.useState({ brand: '', model: '', serial: '' });
   const [items, setItems] = React.useState<QuoteItem[]>([]);
+  const [status, setStatus] = React.useState<ServiceOrder['status']>('Aberta');
+  
   const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0, type: 'service' as 'service' | 'part' });
 
+  // States para controle da UI
+  const [aiSuggestions, setAiSuggestions] = React.useState<SuggestResolutionOutput | null>(null);
+  const [isAiLoading, setIsAiLoading] = React.useState(false);
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const isEditing = !!serviceOrder;
+
+  React.useEffect(() => {
+    const selectedCustomer = mockCustomers.find(c => c.name === serviceOrder?.customerName);
+
+    if (isEditing && serviceOrder) {
+        // Modo Edição: Preenche o formulário com dados da OS
+        setSelectedCustomerId(selectedCustomer?.id || '');
+        // O equipmentType é parte do equipment na OS, vamos extrair
+        const [type] = serviceOrder.equipment.split(' ');
+        setEquipmentType(type);
+        setEquipment({
+            brand: serviceOrder.equipment.split(' ')[1] || '',
+            model: serviceOrder.equipment.split(' ')[2] || '',
+            serial: '', // Mock, não temos no model
+        });
+        setAccessories(''); // Mock
+        setReportedProblem(serviceOrder.reportedProblem);
+        setTechnicalReport(''); // Mock
+        setItems([]); // Mock
+        setStatus(serviceOrder.status);
+
+    } else if (customer) {
+        // Modo Criação a partir de um cliente: preenche só o cliente
+        setSelectedCustomerId(customer.id);
+        // Reseta os outros campos
+        setEquipmentType('');
+        setEquipment({ brand: '', model: '', serial: '' });
+        setAccessories('');
+        setReportedProblem('');
+        setTechnicalReport('');
+        setItems([]);
+        setStatus('Aberta');
+
+    } else {
+        // Modo Criação (em branco)
+        setSelectedCustomerId('');
+        setEquipmentType('');
+        setEquipment({ brand: '', model: '', serial: '' });
+        setAccessories('');
+        setReportedProblem('');
+        setTechnicalReport('');
+        setItems([]);
+        setStatus('Aberta');
+    }
+  }, [serviceOrder, customer, isEditing, isOpen]);
+
 
   const handleEquipmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -99,13 +154,6 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     const filteredItems = type ? items.filter(item => item.type === type) : items;
     return filteredItems.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
   };
-
-
-  React.useEffect(() => {
-    if (customer) {
-      setSelectedCustomerId(customer.id);
-    }
-  }, [customer]);
 
   React.useEffect(() => {
     if (debounceTimeoutRef.current) {
@@ -141,13 +189,26 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
   }, [equipmentType, reportedProblem, toast]);
   
   const handleSave = () => {
-    console.log("Saving service order...");
-    toast({
-      title: 'Ordem de Serviço Salva!',
-      description: 'A nova ordem de serviço foi registrada com sucesso.',
-    });
-    if (onOpenChange) {
-      onOpenChange(false);
+    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
+    if (!selectedCustomer) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Por favor, selecione um cliente.' });
+      return;
+    }
+
+    const fullEquipmentName = `${equipmentType} ${equipment.brand} ${equipment.model}`.trim();
+
+    const finalOrder: ServiceOrder = {
+        id: serviceOrder?.id || `OS-${Date.now()}`,
+        customerName: selectedCustomer.name,
+        equipment: fullEquipmentName,
+        reportedProblem: reportedProblem,
+        status: status,
+        date: serviceOrder?.date || new Date().toISOString().split('T')[0],
+        totalValue: calculateTotal()
+    }
+    
+    if (onSave) {
+        onSave(finalOrder);
     }
   };
 
@@ -191,10 +252,10 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
+    const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
     doc.text("Orçamento de Serviço", pageWidth - margin, 18, { align: 'right' });
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const osId = `#...${Date.now().toString().slice(-4)}`; // Mock OS ID
     doc.text(`OS Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
     doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
 
@@ -245,8 +306,19 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     currentY += problemBoxHeight + 5;
 
     // --- Items Table (Optional, for calculation) ---
-    // If you want to show the table, you can add it here.
-    // For now, it just calculates totals.
+    if (items.length > 0) {
+      currentY += 5;
+      doc.autoTable({
+        startY: currentY,
+        head: [['Item', 'Qtd', 'Vlr. Unit.', 'Total']],
+        body: items.map(item => [item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: '#ffffff' },
+        footStyles: { fillColor: secondaryColor },
+        margin: { left: margin, right: margin }
+      });
+      currentY = doc.lastAutoTable.finalY;
+    }
     
     const totalServices = calculateTotal('service');
     const totalParts = calculateTotal('part');
@@ -254,7 +326,7 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
 
     // --- Totals Summary ---
     doc.setDrawColor(secondaryColor);
-    doc.line(margin, currentY, pageWidth - margin, currentY);
+    doc.line(margin, currentY + 4, pageWidth - margin, currentY + 4);
     currentY += 8;
 
     doc.setFont('helvetica', 'bold');
@@ -332,17 +404,17 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
       {!onOpenChange && trigger}
       <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Nova Ordem de Serviço</DialogTitle>
+          <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
-            Preencha os dados para registrar um novo atendimento.
+            {isEditing ? `Altere os dados do atendimento.` : 'Preencha os dados para registrar um novo atendimento.'}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="flex-grow pr-6 -mr-6">
           <div className="space-y-6 py-4 pr-6">
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                <div>
-                  <Label htmlFor="customer">Selecione um cliente</Label>
-                   <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                  <Label htmlFor="customer">Cliente</Label>
+                   <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId} disabled={isEditing}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um cliente" />
                     </SelectTrigger>
@@ -352,6 +424,24 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
                       ))}
                     </SelectContent>
                   </Select>
+              </div>
+              <div>
+                <Label htmlFor="status">Status da OS</Label>
+                <Select value={status} onValueChange={(value) => setStatus(value as ServiceOrder['status'])}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Aberta">Aberta</SelectItem>
+                    <SelectItem value="Em análise">Em análise</SelectItem>
+                    <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
+                    <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
+                    <SelectItem value="Aprovado">Aprovado</SelectItem>
+                    <SelectItem value="Em conserto">Em conserto</SelectItem>
+                    <SelectItem value="Finalizado">Finalizado</SelectItem>
+                    <SelectItem value="Entregue">Entregue</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-4">
@@ -377,6 +467,8 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
               <Textarea
                 id="accessories"
                 placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
+                value={accessories}
+                onChange={(e) => setAccessories(e.target.value)}
               />
                <p className="text-sm text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
             </div>
@@ -470,7 +562,7 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
                 <DialogClose asChild>
                     <Button variant="ghost">Cancelar</Button>
                 </DialogClose>
-                <Button onClick={handleSave}>Salvar Ordem de Serviço</Button>
+                <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
             </div>
         </DialogFooter>
       </DialogContent>

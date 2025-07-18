@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Printer, FileText } from 'lucide-react';
+import { PlusCircle, Printer, FileText, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -31,12 +31,30 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { getAiSuggestions } from '@/app/actions';
 import type { SuggestResolutionOutput } from '@/ai/flows/suggest-resolution';
 import { AiSuggestions } from './ai-suggestions';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { Separator } from '../ui/separator';
+
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+    }
+}
+
 
 interface NewOrderSheetProps {
   customer?: Customer | null;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 }
+
+interface QuoteItem {
+  id: number;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 
 export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetProps) {
   const { toast } = useToast();
@@ -46,7 +64,37 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
   const [aiSuggestions, setAiSuggestions] = React.useState<SuggestResolutionOutput | null>(null);
   const [isAiLoading, setIsAiLoading] = React.useState(false);
 
+  const [equipment, setEquipment] = React.useState({ brand: '', model: '', serial: '' });
+  const [items, setItems] = React.useState<QuoteItem[]>([]);
+  const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0 });
+
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleEquipmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setEquipment(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleAddItem = () => {
+    if (newItem.description && newItem.quantity > 0 && newItem.unitPrice >= 0) {
+      setItems([...items, { ...newItem, id: Date.now() }]);
+      setNewItem({ description: '', quantity: 1, unitPrice: 0 }); // Reset for next item
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Item inválido',
+            description: 'Preencha a descrição e o valor do item.',
+        })
+    }
+  };
+
+  const handleRemoveItem = (id: number) => {
+    setItems(items.filter(item => item.id !== id));
+  };
+  
+  const calculateTotal = () => {
+    return items.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
+  };
 
 
   React.useEffect(() => {
@@ -89,7 +137,6 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
   }, [equipmentType, reportedProblem, toast]);
   
   const handleSave = () => {
-    // Aqui você adicionaria a lógica para salvar a OS no banco de dados
     console.log("Saving service order...");
     toast({
       title: 'Ordem de Serviço Salva!',
@@ -100,8 +147,81 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     }
   };
 
+  const generateQuotePdf = () => {
+    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
+    if (!selectedCustomer) {
+        toast({ variant: 'destructive', title: 'Cliente não selecionado!'});
+        return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.text("Orçamento de Serviço", 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 190, 25, { align: 'right' });
+    
+    // Company Info (replace with your actual info)
+    doc.setFontSize(10);
+    doc.text("Sistema Fênix Assistência Técnica", 14, 35);
+    doc.text("Rua Exemplo, 123 - Centro", 14, 40);
+    doc.text("Telefone: (99) 99999-9999", 14, 45);
+
+    // Customer Info
+    doc.setFontSize(14);
+    doc.text("Dados do Cliente", 14, 60);
+    doc.setFontSize(10);
+    doc.text(`Nome: ${selectedCustomer.name}`, 14, 68);
+    doc.text(`Telefone: ${selectedCustomer.phone}`, 14, 73);
+    doc.text(`Endereço: ${selectedCustomer.address}`, 14, 78);
+    
+    // Equipment Info
+    doc.setFontSize(14);
+    doc.text("Dados do Equipamento", 14, 90);
+    doc.setFontSize(10);
+    doc.text(`Tipo: ${equipmentType}`, 14, 98);
+    doc.text(`Marca/Modelo: ${equipment.brand} ${equipment.model}`, 14, 103);
+    doc.text(`Defeito Reclamado: ${reportedProblem}`, 14, 108);
+
+    // Items Table
+    const tableColumn = ["Descrição", "Qtd.", "Valor Unit.", "Subtotal"];
+    const tableRows = items.map(item => [
+      item.description,
+      item.quantity,
+      `R$ ${item.unitPrice.toFixed(2)}`,
+      `R$ ${(item.quantity * item.unitPrice).toFixed(2)}`
+    ]);
+
+    doc.autoTable({
+        startY: 120,
+        head: [tableColumn],
+        body: tableRows,
+        theme: 'striped',
+        headStyles: { fillColor: [22, 163, 74] },
+    });
+
+    // Total
+    const finalY = (doc as any).lastAutoTable.finalY || 150;
+    const total = calculateTotal();
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total do Orçamento: R$ ${total.toFixed(2)}`, 190, finalY + 15, { align: 'right' });
+
+    // Footer
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Este orçamento é válido por 15 dias.", 14, 280);
+
+    doc.save(`Orcamento-${selectedCustomer.name.replace(/\s/g, '_')}.pdf`);
+  };
+
+
   const handlePrint = (documentType: string) => {
-    // Lógica de impressão
+    if (documentType === 'Orçamento') {
+      generateQuotePdf();
+      return;
+    }
     toast({
         title: 'Imprimindo documento...',
         description: `O ${documentType} será impresso.`,
@@ -124,7 +244,6 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      {/* Only render trigger if onOpenChange is not provided, meaning it's self-managed */}
       {!onOpenChange && trigger}
       <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
@@ -133,8 +252,8 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
             Preencha os dados para registrar um novo atendimento.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-grow pr-6">
-          <div className="grid gap-6 py-4">
+        <ScrollArea className="flex-grow pr-6 -mr-6">
+          <div className="space-y-6 py-4 pr-6">
             <div className="grid grid-cols-1 gap-4">
                <div>
                   <Label htmlFor="customer">Selecione um cliente</Label>
@@ -157,15 +276,15 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
               </div>
               <div>
                 <Label htmlFor="brand">Marca</Label>
-                <Input id="brand" placeholder="Ex: Dell" />
+                <Input id="brand" placeholder="Ex: Dell" value={equipment.brand} onChange={handleEquipmentChange} />
               </div>
               <div>
                 <Label htmlFor="model">Modelo</Label>
-                <Input id="model" placeholder="Ex: Inspiron 15" />
+                <Input id="model" placeholder="Ex: Inspiron 15" value={equipment.model} onChange={handleEquipmentChange} />
               </div>
                <div>
                 <Label htmlFor="serial">Nº de Série</Label>
-                <Input id="serial" placeholder="Serial" />
+                <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-2">
@@ -196,10 +315,52 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
                 rows={5}
               />
             </div>
+
+             <Separator />
+            
+            <div>
+              <Label className="text-base font-semibold">Serviços e Peças</Label>
+              <div className="mt-4 space-y-4">
+                {items.map((item, index) => (
+                  <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
+                    <div className="flex-grow grid grid-cols-12 gap-2 items-center">
+                        <span className="col-span-6">{item.description}</span>
+                        <span className="col-span-2 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
+                        <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
+                        <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                    </div>
+                    <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+               <div className="mt-4 flex items-end gap-2 p-2 rounded-md border border-dashed">
+                <div className="flex-grow">
+                  <Label htmlFor="newItemDescription">Descrição do Item</Label>
+                  <Input id="newItemDescription" placeholder="Ex: Formatação, Troca de Tela" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                </div>
+                <div className="w-20">
+                  <Label htmlFor="newItemQty">Qtd.</Label>
+                  <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
+                </div>
+                <div className="w-32">
+                  <Label htmlFor="newItemPrice">Valor R$</Label>
+                  <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} />
+                </div>
+                <Button onClick={handleAddItem} size="sm">Adicionar Item</Button>
+              </div>
+
+               <div className="mt-4 text-right">
+                <p className="text-lg font-bold">Total: R$ {calculateTotal().toFixed(2)}</p>
+              </div>
+            </div>
+
           </div>
         </ScrollArea>
         <DialogFooter className="mt-4 pt-4 border-t flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
-            <div className="flex flex-wrap items-center justify-start gap-2">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Orçamento</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrada')}><FileText className="mr-2 h-4 w-4" />Recibo Entrada</Button>

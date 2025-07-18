@@ -486,12 +486,17 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
         doc.setTextColor(fontColor);
-        doc.text("Sistema Fênix", companyInfoX, currentY + 12);
+        doc.text("Sistema Fênix", companyInfoX, currentY + 8);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text("Rua da Tecnologia, 123 - Centro", companyInfoX, currentY + 13);
+        doc.text("Telefone: (11) 99999-8888", companyInfoX, currentY + 18);
         
         doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
         doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 12, { align: 'right' });
         
-        currentY += 20;
+        currentY += 25;
         doc.setDrawColor(fontColor);
         doc.line(margin, currentY, pageWidth - margin, currentY);
         currentY += 10;
@@ -543,12 +548,9 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.setTextColor(fontColor);
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
         
-        const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2) - 10);
-        const textBlockHeight = textLines.length * (doc.getFontSize() / doc.internal.scaleFactor);
-        const textY = currentY + (15 - textBlockHeight) / 2; // Center vertically in a 15-unit high area
-        
-        doc.text(textLines, pageWidth / 2, textY, { align: 'center', baseline: 'top' });
-        currentY += 15;
+        const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
+        doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
+        currentY += textLines.length * (doc.getFontSize() / doc.internal.scaleFactor) + 5;
   
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
         currentY += 4;

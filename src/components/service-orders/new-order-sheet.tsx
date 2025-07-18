@@ -210,22 +210,17 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
   };
 
-  const generateQuotePdf = () => {
+  const generatePdfBase = (title: string): { doc: jsPDF, selectedCustomer: Customer, currentY: number, pageWidth: number, margin: number } | null => {
     const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
         toast({ variant: 'destructive', title: 'Cliente não selecionado!'});
-        return;
+        return null;
     }
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
-    let currentY = 0;
-
-    // --- Colors and Fonts ---
-    const primaryColor = '#1e3a8a';
-    const secondaryColor = '#e0e7ff';
-    const fontColor = '#000000'; // Black
+    const fontColor = '#000000';
 
     doc.setFont('helvetica');
 
@@ -233,23 +228,33 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(fontColor);
-    doc.text("Assistec Now", margin, 18);
+    doc.text("Sistema Fênix", margin, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text("Rua da Tecnologia, 123 - Centro", margin, 24);
-    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@assistecnow.com", margin, 29);
+    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@sistemafenix.com", margin, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
-    doc.text("Orçamento de Serviço", pageWidth - margin, 18, { align: 'right' });
+    doc.text(title, pageWidth - margin, 18, { align: 'right' });
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
     doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
 
-    currentY = 40;
+    return { doc, selectedCustomer, currentY: 40, pageWidth, margin };
+  }
 
+  const generateQuotePdf = () => {
+    const base = generatePdfBase("Orçamento de Serviço");
+    if (!base) return;
+    let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
+
+    const fontColor = '#000000';
+    const primaryColor = '#1e3a8a';
+    const secondaryColor = '#e0e7ff';
+    
     // --- Helper to draw info boxes ---
     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
       doc.setFillColor(secondaryColor);
@@ -345,43 +350,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   };
 
   const generateServiceOrderPdf = () => {
-    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
-    if (!selectedCustomer) {
-      toast({ variant: 'destructive', title: 'Cliente não selecionado!' });
-      return;
-    }
+    const base = generatePdfBase("Ordem de Serviço");
+    if (!base) return;
+    let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    let currentY = 0;
-
+    const fontColor = '#000000';
     const primaryColor = '#1e3a8a';
     const secondaryColor = '#e0e7ff';
-    const fontColor = '#000000';
-
-    doc.setFont('helvetica');
-
-    // --- Header ---
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(fontColor);
-    doc.text("Assistec Now", margin, 18);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text("Rua da Tecnologia, 123 - Centro", margin, 24);
-    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@assistecnow.com", margin, 29);
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
-    doc.text("Ordem de Serviço", pageWidth - margin, 18, { align: 'right' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`OS Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
-    doc.text(`Data Entrada: ${serviceOrder?.date ? new Date(serviceOrder.date).toLocaleDateString('pt-BR', { timeZone: 'UTC'}) : new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
-
-    currentY = 40;
 
     // --- Helper to draw info boxes ---
      const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
@@ -478,92 +453,109 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   };
 
   const generateDeliveryReceiptPdf = () => {
-    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
-    if (!selectedCustomer) {
-      toast({ variant: 'destructive', title: 'Cliente não selecionado!' });
-      return;
-    }
+    const base = generatePdfBase("Recibo de Entrega");
+    if (!base) return;
+    let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
     const fontColor = '#000000';
-    const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
     const fullEquipmentName = `${equipmentType} ${equipment.brand} ${equipment.model}`.trim();
 
+    currentY += 10;
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    const mainText = `Eu, ${selectedCustomer.name}, declaro para os devidos fins que recebi da Sistema Fênix, nesta data, o equipamento ${fullEquipmentName}, referente à Ordem de Serviço acima, em perfeitas condições de funcionamento e aparência, após a realização dos serviços solicitados. Atesto que testei o equipamento no ato da retirada.`;
+    const splitMainText = doc.splitTextToSize(mainText, pageWidth - (margin * 2));
+    doc.text(splitMainText, margin, currentY);
+    currentY += (splitMainText.length * 5) + 30;
 
-    const drawReceipt = (startY: number, via: 'Cliente' | 'Loja') => {
-      let currentY = startY;
-
-      // Header
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.setTextColor(fontColor);
-      doc.text('Recibo de Entrega de Equipamento', pageWidth / 2, currentY, { align: 'center' });
-      currentY += 6;
-      doc.setFontSize(10);
-      doc.text(`(Via - ${via})`, pageWidth / 2, currentY, { align: 'center' });
-      currentY += 10;
-      
-      // Receipt Info
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`OS Nº: ${osId}`, margin, currentY);
-      doc.text(`Data de Entrega: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY, { align: 'right' });
-      currentY += 10;
-
-      // Main Text
-      const mainText = `Eu, ${selectedCustomer.name}, portador(a) do CPF/CNPJ não informado, declaro para os devidos fins que recebi da Assistec Now, nesta data, o equipamento ${fullEquipmentName}, referente à Ordem de Serviço nº ${osId}, em perfeitas condições de funcionamento e aparência, após a realização dos serviços solicitados.`;
-      const splitMainText = doc.splitTextToSize(mainText, pageWidth - (margin * 2));
-      doc.text(splitMainText, margin, currentY);
-      currentY += (splitMainText.length * 5) + 5;
-
-      // Legal Terms
-      doc.setFont('helvetica', 'bold');
-      doc.text('Termos e Condições:', margin, currentY);
-      currentY += 5;
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      const termsText = [
-          '1. O cliente declara que testou o equipamento no ato da retirada e atestou seu pleno funcionamento.',
-          '2. A garantia do serviço prestado é de 90 (noventa) dias a contar desta data, cobrindo exclusivamente o defeito reparado, conforme Art. 26, II, do Código de Defesa do Consumidor.',
-          '3. A garantia não cobre novos defeitos, danos causados por mau uso, quedas, contato com líquidos, sobrecarga elétrica, ou software (vírus, reinstalações, etc.).',
-          '4. A perda da garantia ocorrerá se o lacre de segurança for violado ou se o equipamento for aberto por terceiros não autorizados.',
-      ];
-      const splitTermsText = doc.splitTextToSize(termsText.join('\n'), pageWidth - (margin * 2));
-      doc.text(splitTermsText, margin, currentY);
-      currentY += (splitTermsText.length * 3.5) + 10;
-      
-      // Signature
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 5;
-      doc.setFontSize(10);
-      doc.text(`${selectedCustomer.name}`, pageWidth / 2, currentY, { align: 'center' });
-      currentY += 5;
-      doc.setFont('helvetica', 'bold');
-      doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
-    }
-
-    // Draw first copy (Customer's)
-    drawReceipt(20, 'Cliente');
-
-    // Separator
-    const middleY = pageHeight / 2;
-    doc.setLineDashPattern([2, 2], 0);
-    doc.line(margin, middleY, pageWidth - margin, middleY);
-    doc.setLineDashPattern([], 0);
-
-    // Draw second copy (Store's)
-    drawReceipt(middleY + 15, 'Loja');
-
-
+    // --- Signature ---
+    doc.line(pageWidth / 2 - 50, currentY, pageWidth / 2 + 50, currentY);
+    currentY += 5;
+    doc.setFontSize(10);
+    doc.setTextColor(fontColor);
+    doc.text(`${selectedCustomer.name}`, pageWidth / 2, currentY, { align: 'center' });
+    currentY += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
+    
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');
   };
 
+  const generateEntryReceiptPdf = () => {
+    const base = generatePdfBase("Recibo de Entrada");
+    if (!base) return;
+    let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
+
+    const fontColor = '#000000';
+    const primaryColor = '#1e3a8a';
+    const secondaryColor = '#e0e7ff';
+    
+    // --- Helper to draw info boxes ---
+    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
+      doc.setFillColor(secondaryColor);
+      doc.rect(x, y, width, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(primaryColor);
+      doc.text(title, x + 3, y + 6);
+      doc.setDrawColor(secondaryColor);
+      doc.rect(x, y + 8, width, height - 8, 'S');
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(fontColor);
+      doc.text(text, x + 3, y + 14);
+    };
+
+    const boxWidth = (pageWidth - (margin * 2));
+    
+    // --- Customer and Equipment Info ---
+    const customerInfo = [
+      `Nome: ${selectedCustomer.name}`,
+      `Telefone: ${selectedCustomer.phone}`,
+    ];
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 20, customerInfo);
+    currentY += 30;
+
+    const equipmentInfo = [
+      `Tipo: ${equipmentType}`,
+      `Marca / Modelo: ${equipment.brand} ${equipment.model}`,
+      `Nº Série: ${equipment.serial || 'Não informado'}`,
+      `Acessórios: ${accessories || 'Nenhum'}`,
+    ];
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
+    currentY += 40;
+    
+    // --- Problem and Diagnosis ---
+    const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
+    currentY += 60;
+
+    // --- Terms and Signature ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(fontColor);
+    doc.text('IMPORTANTE:', margin, currentY);
+    currentY += 5;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
+    doc.text(doc.splitTextToSize(termsText, pageWidth - (margin * 2)), margin, currentY);
+    currentY += 30;
+    
+    doc.line(pageWidth / 2 - 50, currentY, pageWidth / 2 + 50, currentY);
+    currentY += 5;
+    doc.setFontSize(10);
+    doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center'});
+
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+  };
 
   const handlePrint = (documentType: string) => {
     switch (documentType) {
@@ -577,8 +569,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         generateDeliveryReceiptPdf();
         break;
       case 'Recibo de Entrada':
-        // Lógica para recibo de entrada
-        toast({ title: 'Funcionalidade em desenvolvimento.' });
+        generateEntryReceiptPdf();
         break;
       default:
         toast({

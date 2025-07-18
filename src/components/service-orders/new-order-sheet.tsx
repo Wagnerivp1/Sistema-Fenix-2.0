@@ -455,55 +455,55 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10;
     const fontColor = '#000000';
-    const primaryColor = '#e0e7ff';
+    const primaryColor = '#eef2ff'; // Lighter primary color
   
     const drawReceiptContent = (yOffset: number, via: string) => {
         let currentY = yOffset;
   
         // --- Header ---
-        doc.setFillColor(240, 240, 240);
-        doc.rect(margin, currentY, 30, 20, 'F');
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text('Sua Logo', margin + 7, currentY + 12);
+        doc.setFillColor(248, 250, 252); // Very light gray
+        doc.rect(margin, currentY, 25, 20, 'F');
+        doc.setFontSize(7);
+        doc.setTextColor(156, 163, 175);
+        doc.text('Sua Logo', margin + 4.5, currentY + 12);
         doc.setTextColor(fontColor);
 
-        const companyInfoX = margin + 35;
+        const companyInfoX = margin + 30;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text("Sistema Fênix", companyInfoX, currentY + 8);
+        doc.text("Sistema Fênix", companyInfoX, currentY + 7);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text("Rua da Tecnologia, 123", companyInfoX, currentY + 13);
-        doc.text("Telefone: (11) 99999-8888", companyInfoX, currentY + 17);
+        doc.text("Rua da Tecnologia, 123", companyInfoX, currentY + 12);
+        doc.text("Telefone: (11) 99999-8888", companyInfoX, currentY + 16);
         
-        doc.setFontSize(11);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 10, { align: 'right' });
+        doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
         
-        currentY += 25;
-        doc.setDrawColor(fontColor);
+        currentY += 22;
+        doc.setDrawColor(209, 213, 219);
         doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 6;
+        currentY += 5;
   
         // --- Boxes ---
         const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
             doc.setFillColor(primaryColor);
-            doc.rect(x, y, width, 6, 'F');
+            doc.rect(x, y, width, 5, 'F');
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(9);
-            doc.text(title, x + 2, y + 4.5);
-            doc.setDrawColor(primaryColor);
-            doc.rect(x, y + 6, width, height - 6, 'S');
+            doc.setFontSize(8);
+            doc.text(title, x + 2, y + 3.5);
+            doc.setDrawColor(224, 231, 255);
+            doc.rect(x, y + 5, width, height - 5, 'S');
       
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
             const textArray = Array.isArray(text) ? text : [text];
-            doc.text(textArray, x + 2, y + 11);
+            doc.text(textArray, x + 2, y + 9);
         };
   
         const boxWidth = (pageWidth - (margin * 2));
-        const boxHeight = 15;
+        const boxHeight = 12;
         
         const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
         const customerInfo = [
@@ -511,46 +511,46 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             `Telefone: ${selectedCustomer.phone}`,
         ];
         drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, boxHeight, customerInfo);
-        currentY += boxHeight + 2;
+        currentY += boxHeight + 1;
   
         const equipmentInfo = [
             `Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`,
             `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`,
         ];
         drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, boxHeight, equipmentInfo);
-        currentY += boxHeight + 2;
+        currentY += boxHeight + 1;
         
         const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 4);
-        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight + 5, problemText);
-        currentY += boxHeight + 8;
+        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight + 3, problemText);
+        currentY += boxHeight + 5;
   
         // --- Footer ---
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
         
         const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
         doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += doc.getTextDimensions(textLines).h + 5;
+        currentY += doc.getTextDimensions(textLines).h + 4;
   
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
-        currentY += 4;
-        doc.setFontSize(9);
+        currentY += 3;
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
     }
   
     // Desenha a primeira via (Cliente)
-    drawReceiptContent(10, "Via do Cliente");
+    drawReceiptContent(8, "Via do Cliente");
   
     // Linha de corte
-    const cutLineY = pageHeight / 2;
-    doc.setLineDashPattern([2, 2], 0);
+    const cutLineY = pageHeight / 2 - 2;
+    doc.setLineDashPattern([1, 1], 0);
     doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
     doc.setLineDashPattern([], 0);
   
     // Desenha a segunda via (Loja)
-    drawReceiptContent(cutLineY + 5, "Via da Loja");
+    drawReceiptContent(cutLineY + 3, "Via da Loja");
   
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
@@ -612,7 +612,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[95vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-0 flex-shrink-0">
           <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
@@ -630,7 +630,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             <div className="flex-1 min-h-0 mt-4 overflow-hidden">
                 <ScrollArea className="h-full pr-4 -mr-4">
                     <TabsContent value="general" className="mt-0">
-                        <div className="space-y-6 py-4">
+                        <div className="space-y-4 py-4">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="customer">Cliente</Label>
@@ -682,47 +682,47 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                               <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
                             </div>
                           </div>
-                          <div className="grid grid-cols-1 gap-2">
-                            <Label htmlFor="accessories">Acessórios Entregues com o Equipamento</Label>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            <Label htmlFor="accessories">Acessórios Entregues</Label>
                             <Textarea
                               id="accessories"
                               placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
                               value={accessories}
                               onChange={(e) => setAccessories(e.target.value)}
-                              rows={3}
+                              rows={2}
                             />
-                            <p className="text-sm text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
+                            <p className="text-xs text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
                           </div>
-                          <div className="grid grid-cols-1 gap-2">
+                          <div className="grid grid-cols-1 gap-1.5">
                             <Label htmlFor="problem">Defeito Reclamado</Label>
                             <Textarea
                               id="problem"
                               placeholder="Descrição detalhada do problema informado pelo cliente."
                               value={reportedProblem} 
                               onChange={handleReportedProblemChange}
-                              rows={4}
+                              rows={3}
                             />
                           </div>
                         </div>
                     </TabsContent>
                     <TabsContent value="items" className="mt-0">
-                      <div className="space-y-6 py-4">
-                        <div className="grid grid-cols-1 gap-2">
+                      <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-1 gap-1.5">
                           <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
                           <Textarea
                             id="technical_report"
                             placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
                             value={technicalReport}
                             onChange={(e) => setTechnicalReport(e.target.value)}
-                            rows={5}
+                            rows={4}
                           />
                         </div>
                         <div>
-                          <div className="space-y-4">
+                          <div className="space-y-2">
                             {items.map((item) => (
                               <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
                                 <div className="flex-grow grid grid-cols-12 gap-2 items-center">
-                                    <span className="col-span-5">{item.description}</span>
+                                    <span className="col-span-5 truncate">{item.description}</span>
                                     <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
                                     <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
                                     <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
@@ -734,13 +734,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                               </div>
                             ))}
                           </div>
-                          <div className="mt-4 flex items-end gap-2 p-2 rounded-md border border-dashed">
+                          <div className="mt-2 flex items-end gap-2 p-2 rounded-md border border-dashed">
                             <div className="flex-grow">
-                              <Label htmlFor="newItemDescription">Descrição do Item</Label>
-                              <Input id="newItemDescription" placeholder="Ex: Formatação, Troca de Tela" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                              <Label htmlFor="newItemDescription" className="text-xs">Descrição</Label>
+                              <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                             </div>
-                            <div className="w-32">
-                              <Label>Tipo</Label>
+                            <div className="w-28">
+                              <Label className="text-xs">Tipo</Label>
                               <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value})}>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -751,15 +751,15 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div className="w-20">
-                              <Label htmlFor="newItemQty">Qtd.</Label>
+                            <div className="w-16">
+                              <Label htmlFor="newItemQty" className="text-xs">Qtd</Label>
                               <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
                             </div>
-                            <div className="w-32">
-                              <Label htmlFor="newItemPrice">Valor R$</Label>
+                            <div className="w-24">
+                              <Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label>
                               <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} />
                             </div>
-                            <Button onClick={handleAddItem} size="sm">Adicionar Item</Button>
+                            <Button onClick={handleAddItem} size="sm">Adicionar</Button>
                           </div>
                           <div className="mt-4 text-right">
                             <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
@@ -769,7 +769,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                     </TabsContent>
                     <TabsContent value="notes" className="mt-0">
                       <div className="py-4">
-                        <div className="grid grid-cols-1 gap-2">
+                        <div className="grid grid-cols-1 gap-1.5">
                             <Label htmlFor="internal_notes">Comentários Internos</Label>
                             <Textarea
                               id="internal_notes"
@@ -824,7 +824,5 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </>
   );
 }
-
-    
 
     

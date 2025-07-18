@@ -255,19 +255,20 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const primaryColor = '#e0e7ff';
     const secondaryColor = '#f3f4f6';
     
+    doc.setTextColor(fontColor);
+    
     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
       doc.setFillColor(primaryColor);
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.setTextColor(fontColor);
       doc.text(title, x + 3, y + 6);
+      
       doc.setDrawColor(primaryColor);
       doc.rect(x, y + 8, width, height - 8, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      doc.setTextColor(fontColor);
       const textArray = Array.isArray(text) ? text : [text];
       doc.text(textArray, x + 3, y + 14);
     };
@@ -317,13 +318,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 15;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.setTextColor(fontColor);
     doc.text('Validade e Condições:', margin, currentY);
     
     doc.setFont('helvetica', 'normal');
@@ -336,7 +335,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
     doc.setFontSize(9);
-    doc.setTextColor(fontColor);
     doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
 
     const pdfBlob = doc.output('blob');
@@ -353,19 +351,20 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const primaryColor = '#e0e7ff';
     const secondaryColor = '#f3f4f6';
 
+    doc.setTextColor(fontColor);
+
      const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
       doc.setFillColor(primaryColor);
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.setTextColor(fontColor);
       doc.text(title, x + 3, y + 6);
+
       doc.setDrawColor(primaryColor);
       doc.rect(x, y + 8, width, height - 8, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      doc.setTextColor(fontColor);
       const textArray = Array.isArray(text) ? text : [text];
       doc.text(textArray, x + 3, y + 14);
     };
@@ -415,13 +414,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 15;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.setTextColor(fontColor);
     doc.text('Termos de Garantia e Serviço:', margin, currentY);
     
     doc.setFont('helvetica', 'normal');
@@ -434,7 +431,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
     doc.setFontSize(9);
-    doc.setTextColor(fontColor);
     doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center'});
 
     const pdfBlob = doc.output('blob');
@@ -488,7 +484,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             doc.setFontSize(9);
             doc.setTextColor(fontColor);
             const textArray = Array.isArray(text) ? text : [text];
-            doc.text(textArray, x + 3, y + 15); // Adjusted y position
+            doc.text(textArray, x + 3, y + 15);
         };
   
         const boxWidth = (pageWidth - (margin * 2));
@@ -519,7 +515,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.setFontSize(8);
         doc.setTextColor(fontColor);
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
-        doc.text(doc.splitTextToSize(termsText, pageWidth - (margin * 2)), margin, currentY, { align: 'center' });
+        const splitText = doc.splitTextToSize(termsText, pageWidth - (margin * 2) - 10);
+        doc.text(splitText, pageWidth / 2, currentY, { align: 'center' });
         currentY += 15;
   
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);

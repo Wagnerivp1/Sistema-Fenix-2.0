@@ -151,10 +151,10 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
         </ScrollArea>
         <DialogFooter className="mt-4 pt-4 border-t flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                 <Button variant="outline" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2" />Gerar Orçamento</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2" />Reimprimir OS</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrada')}><FileText className="mr-2" />Recibo de Entrada</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrega')}><FileText className="mr-2" />Recibo de Entrega</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Gerar Orçamento</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrada')}><FileText className="mr-2 h-4 w-4" />Recibo de Entrada</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrega')}><FileText className="mr-2 h-4 w-4" />Recibo de Entrega</Button>
             </div>
             <div className="flex gap-2 justify-end">
                 <DialogClose asChild>

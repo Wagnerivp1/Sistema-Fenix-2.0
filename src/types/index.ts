@@ -24,4 +24,5 @@ export type ServiceOrder = {
   date: string;
   totalValue: number;
   items?: ServiceOrderItem[];
+  internalNotes?: string;
 };

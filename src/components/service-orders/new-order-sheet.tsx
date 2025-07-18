@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockCustomers } from '@/lib/data';
 import type { Customer, ServiceOrder } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -77,6 +78,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const [accessories, setAccessories] = React.useState('');
   const [reportedProblem, setReportedProblem] = React.useState('');
   const [technicalReport, setTechnicalReport] = React.useState('');
+  const [internalNotes, setInternalNotes] = React.useState('');
   const [items, setItems] = React.useState<QuoteItem[]>([]);
   const [status, setStatus] = React.useState<ServiceOrder['status']>('Aberta');
   const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = React.useState(false);
@@ -103,6 +105,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setTechnicalReport(''); // Mock data
           setItems(serviceOrder.items || []); 
           setStatus(serviceOrder.status);
+          setInternalNotes(serviceOrder.internalNotes || '');
       } else if (customer) {
           setSelectedCustomerId(customer.id);
           // Reset other fields for new order from customer
@@ -113,6 +116,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setTechnicalReport('');
           setItems([]);
           setStatus('Aberta');
+          setInternalNotes('');
       } else {
           // Reset all fields for a completely new order
           setSelectedCustomerId('');
@@ -123,6 +127,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setTechnicalReport('');
           setItems([]);
           setStatus('Aberta');
+          setInternalNotes('');
       }
     }
   }, [serviceOrder, customer, isEditing, isOpen]);
@@ -181,6 +186,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         date: serviceOrder?.date || new Date().toISOString().split('T')[0],
         totalValue: calculateTotal(),
         items: items,
+        internalNotes: internalNotes,
     }
     
     if (onSave) {
@@ -693,59 +699,77 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
               />
             </div>
 
-             <Separator />
-            
-            <div>
-              <Label className="text-base font-semibold">Serviços e Peças</Label>
-              <div className="mt-4 space-y-4">
-                {items.map((item, index) => (
-                  <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
-                    <div className="flex-grow grid grid-cols-12 gap-2 items-center">
-                        <span className="col-span-5">{item.description}</span>
-                        <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
-                        <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
-                        <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
-                        <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
-                    </div>
-                    <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+            <Tabs defaultValue="items">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
+                <TabsTrigger value="notes">Comentários Internos</TabsTrigger>
+              </TabsList>
+              <TabsContent value="items" className="pt-4">
+                <div>
+                  <div className="space-y-4">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
+                        <div className="flex-grow grid grid-cols-12 gap-2 items-center">
+                            <span className="col-span-5">{item.description}</span>
+                            <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
+                            <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
+                            <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
+                            <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-               <div className="mt-4 flex items-end gap-2 p-2 rounded-md border border-dashed">
-                <div className="flex-grow">
-                  <Label htmlFor="newItemDescription">Descrição do Item</Label>
-                  <Input id="newItemDescription" placeholder="Ex: Formatação, Troca de Tela" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
-                </div>
-                <div className="w-32">
-                  <Label>Tipo</Label>
-                   <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="service">Serviço</SelectItem>
-                      <SelectItem value="part">Peça</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-20">
-                  <Label htmlFor="newItemQty">Qtd.</Label>
-                  <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
-                </div>
-                <div className="w-32">
-                  <Label htmlFor="newItemPrice">Valor R$</Label>
-                  <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} />
-                </div>
-                <Button onClick={handleAddItem} size="sm">Adicionar Item</Button>
-              </div>
+                  <div className="mt-4 flex items-end gap-2 p-2 rounded-md border border-dashed">
+                    <div className="flex-grow">
+                      <Label htmlFor="newItemDescription">Descrição do Item</Label>
+                      <Input id="newItemDescription" placeholder="Ex: Formatação, Troca de Tela" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                    </div>
+                    <div className="w-32">
+                      <Label>Tipo</Label>
+                      <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="service">Serviço</SelectItem>
+                          <SelectItem value="part">Peça</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-20">
+                      <Label htmlFor="newItemQty">Qtd.</Label>
+                      <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
+                    </div>
+                    <div className="w-32">
+                      <Label htmlFor="newItemPrice">Valor R$</Label>
+                      <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} />
+                    </div>
+                    <Button onClick={handleAddItem} size="sm">Adicionar Item</Button>
+                  </div>
 
-               <div className="mt-4 text-right">
-                <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
-              </div>
-            </div>
+                  <div className="mt-4 text-right">
+                    <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="notes" className="pt-4">
+                  <div className="grid grid-cols-1 gap-2">
+                    <Label htmlFor="internal_notes">Comentários Internos</Label>
+                    <Textarea
+                      id="internal_notes"
+                      placeholder="Adicione observações para a equipe. Este conteúdo não será impresso."
+                      value={internalNotes}
+                      onChange={(e) => setInternalNotes(e.target.value)}
+                      rows={8}
+                    />
+                    <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
+                  </div>
+              </TabsContent>
+            </Tabs>
 
           </div>
         </ScrollArea>
@@ -786,5 +810,3 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </>
   );
 }
-
-    

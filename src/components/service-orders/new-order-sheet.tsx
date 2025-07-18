@@ -488,7 +488,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             doc.setFontSize(9);
             doc.setTextColor(fontColor);
             const textArray = Array.isArray(text) ? text : [text];
-            doc.text(textArray, x + 3, y + 14);
+            doc.text(textArray, x + 3, y + 15); // Adjusted y position
         };
   
         const boxWidth = (pageWidth - (margin * 2));

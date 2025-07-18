@@ -373,10 +373,152 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     window.open(pdfBlob.toString(), '_blank');
   };
 
+  const generateServiceOrderPdf = () => {
+    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
+    if (!selectedCustomer) {
+      toast({ variant: 'destructive', title: 'Cliente não selecionado!' });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 0;
+
+    // --- Colors and Fonts ---
+    const primaryColor = '#1e3a8a';
+    const secondaryColor = '#e0e7ff';
+    const fontColor = '#374151';
+    const lightFontColor = '#6b7280';
+
+    doc.setFont('helvetica');
+
+    // --- Header ---
+    doc.setFillColor(255, 0, 0);
+    doc.circle(margin + 10, 20, 10, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.text('JL', margin + 6, 22);
+
+    doc.setTextColor(fontColor);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text("JL INFORMÁTICA.", margin + 25, 18);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Rua Santa Catarina 485", margin + 25, 24);
+    doc.text("Telefone: 43996024065 | E-mail: jl.solucoes@hotmail.com", margin + 25, 29);
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
+    doc.text("Ordem de Serviço", pageWidth - margin, 18, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`OS Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
+    doc.text(`Data Entrada: ${serviceOrder?.date ? new Date(serviceOrder.date).toLocaleDateString('pt-BR', { timeZone: 'UTC'}) : new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
+
+    currentY = 40;
+
+    // --- Helper to draw info boxes ---
+    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number) => {
+      doc.setFillColor(secondaryColor);
+      doc.rect(x, y, width, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(primaryColor);
+      doc.text(title, x + 3, y + 6);
+      doc.setDrawColor(secondaryColor);
+      doc.rect(x, y + 8, width, height - 8, 'S');
+    };
+
+    // --- Customer and Equipment Info ---
+    const boxWidth = (pageWidth - (margin * 2));
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(fontColor);
+    doc.text(`Nome: ${selectedCustomer.name}`, margin + 3, currentY + 14);
+    doc.text(`Telefone: ${selectedCustomer.phone}`, margin + 3, currentY + 19);
+    doc.text(`Endereço: ${selectedCustomer.address || 'Não informado'}`, margin + 3, currentY + 24);
+    currentY += 35;
+
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30);
+    doc.text(`Tipo: ${equipmentType}`, margin + 3, currentY + 14);
+    doc.text(`Marca / Modelo: ${equipment.brand} ${equipment.model}`, margin + 3, currentY + 19);
+    doc.text(`Nº Série: ${equipment.serial || 'Não informado'}`, margin + 3, currentY + 24);
+    doc.text(`Acessórios: ${accessories || 'Nenhum'}`, margin + 3, currentY + 29);
+    currentY += 40;
+    
+    // --- Problem and Diagnosis ---
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25);
+    const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
+    doc.text(problemText, margin + 3, currentY + 14);
+    currentY += 35;
+
+    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30);
+    const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
+    doc.text(servicesText, margin + 3, currentY + 14);
+    currentY += 35;
+
+    // --- Items Table ---
+    if (items.length > 0) {
+      doc.autoTable({
+        startY: currentY,
+        head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
+        body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: '#ffffff' },
+        footStyles: { fillColor: secondaryColor },
+        margin: { left: margin, right: margin }
+      });
+      currentY = doc.lastAutoTable.finalY;
+    }
+    
+    const grandTotal = calculateTotal();
+    currentY += 10;
+    
+    // --- Totals ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
+    currentY += 15;
+
+    // --- Warranty and Signature ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(fontColor);
+    doc.text('Termos de Garantia e Serviço:', margin, currentY);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(lightFontColor);
+    currentY += 4;
+    const warrantyText = "A garantia para os serviços prestados é de 90 dias, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.";
+    doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
+    currentY += 25;
+    
+    doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
+    currentY += 4;
+    doc.setFontSize(9);
+    doc.setTextColor(fontColor);
+    doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center'});
+
+    // --- Auto Print ---
+    doc.autoPrint();
+    const pdfBlob = doc.output('bloburl');
+    window.open(pdfBlob.toString(), '_blank');
+  };
+
 
   const handlePrint = (documentType: string) => {
     if (documentType === 'Orçamento') {
       generateQuotePdf();
+      return;
+    }
+    if (documentType === 'Reimpressão de OS') {
+      generateServiceOrderPdf();
       return;
     }
     toast({

@@ -223,11 +223,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const fontColor = '#000000';
 
     doc.setFont('helvetica');
+    doc.setTextColor(fontColor);
 
     // --- Header ---
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(fontColor);
     doc.text("Sistema Fênix", margin, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
@@ -252,29 +252,28 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
 
     const fontColor = '#000000';
-    const primaryColor = '#1e3a8a';
-    const secondaryColor = '#e0e7ff';
+    const primaryColor = '#e0e7ff';
+    const secondaryColor = '#f3f4f6';
     
-    // --- Helper to draw info boxes ---
     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
-      doc.setFillColor(secondaryColor);
+      doc.setFillColor(primaryColor);
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.setTextColor(primaryColor);
+      doc.setTextColor(fontColor);
       doc.text(title, x + 3, y + 6);
-      doc.setDrawColor(secondaryColor);
+      doc.setDrawColor(primaryColor);
       doc.rect(x, y + 8, width, height - 8, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(text, x + 3, y + 14);
+      const textArray = Array.isArray(text) ? text : [text];
+      doc.text(textArray, x + 3, y + 14);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
     
-    // --- Customer and Equipment Info ---
     const customerInfo = [
       `Nome: ${selectedCustomer.name}`,
       `Telefone: ${selectedCustomer.phone}`,
@@ -292,7 +291,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
-    // --- Problem and Diagnosis ---
     const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
     drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 35;
@@ -301,14 +299,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30, servicesText);
     currentY += 40;
 
-    // --- Items Table ---
     if (items.length > 0) {
       doc.autoTable({
         startY: currentY,
         head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
-        headStyles: { fillColor: primaryColor, textColor: '#ffffff', fontStyle: 'bold' },
+        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold' },
         footStyles: { fillColor: secondaryColor, textColor: fontColor },
         margin: { left: margin, right: margin }
       });
@@ -318,14 +315,12 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const grandTotal = calculateTotal();
     currentY += 10;
     
-    // --- Totals ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 15;
 
-    // --- Conditions and Signature ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(fontColor);
@@ -355,29 +350,28 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
 
     const fontColor = '#000000';
-    const primaryColor = '#1e3a8a';
-    const secondaryColor = '#e0e7ff';
+    const primaryColor = '#e0e7ff';
+    const secondaryColor = '#f3f4f6';
 
-    // --- Helper to draw info boxes ---
      const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
-      doc.setFillColor(secondaryColor);
+      doc.setFillColor(primaryColor);
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.setTextColor(primaryColor);
+      doc.setTextColor(fontColor);
       doc.text(title, x + 3, y + 6);
-      doc.setDrawColor(secondaryColor);
+      doc.setDrawColor(primaryColor);
       doc.rect(x, y + 8, width, height - 8, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(text, x + 3, y + 14);
+      const textArray = Array.isArray(text) ? text : [text];
+      doc.text(textArray, x + 3, y + 14);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
     
-    // --- Customer and Equipment Info ---
     const customerInfo = [
       `Nome: ${selectedCustomer.name}`,
       `Telefone: ${selectedCustomer.phone}`,
@@ -395,7 +389,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
-    // --- Problem and Diagnosis ---
     const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
     drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 35;
@@ -404,14 +397,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30, servicesText);
     currentY += 40;
 
-    // --- Items Table ---
     if (items.length > 0) {
       doc.autoTable({
         startY: currentY,
         head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
-        headStyles: { fillColor: primaryColor, textColor: '#ffffff', fontStyle: 'bold' },
+        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold' },
         footStyles: { fillColor: secondaryColor, textColor: fontColor },
         margin: { left: margin, right: margin }
       });
@@ -421,14 +413,12 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const grandTotal = calculateTotal();
     currentY += 10;
     
-    // --- Totals ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 15;
 
-    // --- Warranty and Signature ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(fontColor);
@@ -452,67 +442,33 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     window.open(pdfUrl, '_blank');
   };
 
-  const generateDeliveryReceiptPdf = () => {
-    const base = generatePdfBase("Recibo de Entrega");
-    if (!base) return;
-    let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
-
-    const fontColor = '#000000';
-    const fullEquipmentName = `${equipmentType} ${equipment.brand} ${equipment.model}`.trim();
-
-    currentY += 10;
-    
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    const mainText = `Eu, ${selectedCustomer.name}, declaro para os devidos fins que recebi da Sistema Fênix, nesta data, o equipamento ${fullEquipmentName}, referente à Ordem de Serviço acima, em perfeitas condições de funcionamento e aparência, após a realização dos serviços solicitados. Atesto que testei o equipamento no ato da retirada.`;
-    const splitMainText = doc.splitTextToSize(mainText, pageWidth - (margin * 2));
-    doc.text(splitMainText, margin, currentY);
-    currentY += (splitMainText.length * 5) + 30;
-
-    // --- Signature ---
-    doc.line(pageWidth / 2 - 50, currentY, pageWidth / 2 + 50, currentY);
-    currentY += 5;
-    doc.setFontSize(10);
-    doc.setTextColor(fontColor);
-    doc.text(`${selectedCustomer.name}`, pageWidth / 2, currentY, { align: 'center' });
-    currentY += 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
-    
-    const pdfBlob = doc.output('blob');
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    window.open(pdfUrl, '_blank');
-  };
-
   const generateEntryReceiptPdf = () => {
     const base = generatePdfBase("Recibo de Entrada");
     if (!base) return;
     let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
 
     const fontColor = '#000000';
-    const primaryColor = '#1e3a8a';
-    const secondaryColor = '#e0e7ff';
+    const primaryColor = '#e0e7ff';
     
-    // --- Helper to draw info boxes ---
     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
-      doc.setFillColor(secondaryColor);
+      doc.setFillColor(primaryColor);
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.setTextColor(primaryColor);
+      doc.setTextColor(fontColor);
       doc.text(title, x + 3, y + 6);
-      doc.setDrawColor(secondaryColor);
+      doc.setDrawColor(primaryColor);
       doc.rect(x, y + 8, width, height - 8, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(text, x + 3, y + 14);
+      const textArray = Array.isArray(text) ? text : [text];
+      doc.text(textArray, x + 3, y + 14);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
     
-    // --- Customer and Equipment Info ---
     const customerInfo = [
       `Nome: ${selectedCustomer.name}`,
       `Telefone: ${selectedCustomer.phone}`,
@@ -529,12 +485,10 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
-    // --- Problem and Diagnosis ---
     const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
     drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 60;
 
-    // --- Terms and Signature ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.setTextColor(fontColor);
@@ -564,9 +518,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         break;
       case 'Reimpressão de OS':
         generateServiceOrderPdf();
-        break;
-      case 'Recibo de Entrega':
-        generateDeliveryReceiptPdf();
         break;
       case 'Recibo de Entrada':
         generateEntryReceiptPdf();
@@ -751,7 +702,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Orçamento</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrada')}><FileText className="mr-2 h-4 w-4" />Recibo Entrada</Button>
-                 <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrega')}><FileText className="mr-2 h-4 w-4" />Recibo Entrega</Button>
             </div>
             <div className="flex justify-end gap-2 mt-4 sm:mt-0">
                 <DialogClose asChild>

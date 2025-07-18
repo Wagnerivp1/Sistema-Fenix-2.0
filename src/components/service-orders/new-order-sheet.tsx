@@ -38,6 +38,7 @@ import { Separator } from '../ui/separator';
 declare module 'jspdf' {
     interface jsPDF {
       autoTable: (options: any) => jsPDF;
+      lastAutoTable: { finalY: number };
     }
 }
 
@@ -159,22 +160,22 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
 
     // --- PDF Styling ---
-    const primaryColor = '#1667f3'; // A blue color similar to the theme
+    const primaryColor = '#3F51B5'; 
     const grayColor = '#4a5568';
-    const lightGrayColor = '#f7fafc';
+    const lightGrayColor = '#E8EAF6';
     const osNumber = `OS-${Date.now().toString().slice(-6)}`;
 
     // --- Header ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
     doc.setTextColor(primaryColor);
-    doc.text("Sistema Fênix", 14, 22);
+    doc.text("Assistec Now", 14, 22);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(grayColor);
-    doc.text("Rua Exemplo, 123 - Centro", 14, 28);
-    doc.text("Telefone: (99) 99999-9999 | Email: contato@fenix.com", 14, 33);
+    doc.text("Rua da Tecnologia, 123 - Centro", 14, 28);
+    doc.text("Telefone: (99) 99999-9999 | Email: contato@assistecnow.com", 14, 33);
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -216,7 +217,9 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     doc.setFont('helvetica', 'normal');
     
     const problemLines = doc.splitTextToSize(reportedProblem, pageWidth - 28);
-    doc.text(problemLines, 14, 83);
+    let currentY = 83;
+    doc.text(problemLines, 14, currentY);
+    currentY += (problemLines.length * 5); // Approximate height of text block
 
     // --- Items Table ---
     const tableColumn = ["Item", "Descrição", "Qtd.", "Vlr. Unit.", "Subtotal"];
@@ -236,7 +239,7 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
 
 
     doc.autoTable({
-        startY: Math.max(90, doc.previousAutoTable.finalY + 10),
+        startY: currentY + 5,
         head: [tableColumn],
         body: tableRows,
         theme: 'striped',
@@ -260,7 +263,7 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     });
 
     // --- Footer ---
-    const finalY = (doc as any).lastAutoTable.finalY || pageHeight - 50;
+    const finalY = doc.lastAutoTable.finalY || pageHeight - 50;
     doc.setFontSize(9);
     doc.setTextColor(grayColor);
     doc.text("Validade do Orçamento: 15 dias.", 14, finalY + 15);
@@ -437,3 +440,5 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     </Dialog>
   );
 }
+
+    

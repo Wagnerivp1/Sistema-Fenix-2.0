@@ -450,7 +450,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         return null;
     }
   
-    const doc = new jsPDF();
+    const doc = new jsPDF({ format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10;
@@ -540,17 +540,19 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
     }
   
-    // Desenha a primeira via (Cliente)
+    const receiptHeight = 90; // Approximate height of one receipt in mm
+    
+    // Draw the first receipt (Customer copy)
     drawReceiptContent(8, "Via do Cliente");
   
-    // Linha de corte
-    const cutLineY = pageHeight / 2 - 2;
+    // Cutting line
+    const cutLineY = receiptHeight;
     doc.setLineDashPattern([1, 1], 0);
     doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
     doc.setLineDashPattern([], 0);
   
-    // Desenha a segunda via (Loja)
-    drawReceiptContent(cutLineY + 3, "Via da Loja");
+    // Draw the second receipt (Store copy)
+    drawReceiptContent(cutLineY + 5, "Via da Loja");
   
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
@@ -612,7 +614,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[95vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-4 flex-shrink-0 border-b">
           <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
@@ -622,12 +624,14 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         
         <div className="flex-1 min-h-0">
           <Tabs defaultValue="general" className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 flex-shrink-0 px-6">
-              <TabsTrigger value="general">Dados Gerais</TabsTrigger>
-              <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
-              <TabsTrigger value="notes">Comentários</TabsTrigger>
-            </TabsList>
-            <div className="flex-1 min-h-0 mt-2 overflow-hidden">
+            <div className="px-6 flex-shrink-0">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="general">Dados Gerais</TabsTrigger>
+                    <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
+                    <TabsTrigger value="notes">Comentários</TabsTrigger>
+                </TabsList>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto">
               <ScrollArea className="h-full">
                 <div className="px-6 py-4 space-y-4">
                   <TabsContent value="general" className="mt-0 space-y-3">
@@ -785,7 +789,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           </Tabs>
         </div>
         
-        <DialogFooter className="p-6 pt-4 border-t sm:justify-between flex-shrink-0 bg-card">
+        <DialogFooter className="p-6 pt-4 border-t flex-shrink-0 bg-card sm:justify-between">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Gerar Orçamento</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>
@@ -822,3 +826,5 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </>
   );
 }
+
+    

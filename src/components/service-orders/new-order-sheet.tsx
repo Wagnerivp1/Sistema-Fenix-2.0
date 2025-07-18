@@ -158,125 +158,162 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     const doc = new jsPDF();
     const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
     const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+    const margin = 14;
 
-    // --- PDF Styling ---
-    const primaryColor = '#3F51B5'; 
-    const grayColor = '#4a5568';
-    const lightGrayColor = '#E8EAF6';
-    const osNumber = `OS-${Date.now().toString().slice(-6)}`;
-
+    // --- Colors ---
+    const primaryColor = '#283593'; // Um azul mais escuro
+    const secondaryColor = '#3F51B5';
+    const lightGrayColor = '#F5F5F5';
+    const fontColor = '#424242';
+    
     // --- Header ---
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.setTextColor(primaryColor);
-    doc.text("Assistec Now", 14, 22);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(grayColor);
-    doc.text("Rua da Tecnologia, 123 - Centro", 14, 28);
-    doc.text("Telefone: (99) 99999-9999 | Email: contato@assistecnow.com", 14, 33);
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text("Orçamento", pageWidth - 14, 22, { align: 'right' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Número: ${osNumber}`, pageWidth - 14, 28, { align: 'right' });
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 14, 33, { align: 'right' });
-
-    doc.setDrawColor(primaryColor);
-    doc.line(14, 40, pageWidth - 14, 40);
-
-    // --- Customer and Equipment Info ---
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(primaryColor);
-    doc.text("CLIENTE", 14, 50);
-    doc.text("EQUIPAMENTO", pageWidth / 2, 50);
-    
-    doc.setDrawColor(grayColor);
-    doc.line(14, 52, 95, 52); // Line under CLIENTE
-    doc.line(pageWidth / 2, 52, pageWidth - 14, 52); // Line under EQUIPAMENTO
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(grayColor);
-
-    // Customer
-    doc.text(selectedCustomer.name, 14, 58);
-    doc.text(selectedCustomer.phone, 14, 63);
-    doc.text(selectedCustomer.address, 14, 68);
-
-    // Equipment
-    doc.text(`${equipmentType} ${equipment.brand} ${equipment.model}`, pageWidth / 2, 58);
-    doc.text(`Nº de Série: ${equipment.serial || 'Não informado'}`, pageWidth / 2, 63);
+    doc.setFillColor(primaryColor);
+    doc.rect(0, 0, pageWidth, 40, 'F');
     
     doc.setFont('helvetica', 'bold');
-    doc.text(`DEFEITO RECLAMADO:`, 14, 78);
-    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(20);
+    doc.setTextColor('#FFFFFF');
+    doc.text("Orçamento", margin, 18);
     
-    const problemLines = doc.splitTextToSize(reportedProblem, pageWidth - 28);
-    let currentY = 83;
-    doc.text(problemLines, 14, currentY);
-    currentY += (problemLines.length * 5); // Approximate height of text block
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text("Sistema Fênix - Assistência Técnica", margin, 25);
+    doc.text("Endereço: Rua da Tecnologia, 123 - Cidade", margin, 29);
+    doc.text("Telefone: (12) 3456-7890 | E-mail: contato@fenix.com", margin, 33);
+    
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Sistema Fênix", pageWidth - margin, 25, { align: 'right' });
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Assistência Técnica", pageWidth - margin, 30, { align: 'right' });
+
+
+    // --- Customer Info ---
+    let currentY = 50;
+    const fieldHeight = 8;
+    const fieldStyle = {
+        fillColor: '#FFFFFF',
+        lineWidth: 0.2,
+        drawColor: '#BDBDBD'
+    };
+    
+    doc.setFontSize(8);
+    doc.setTextColor(fontColor);
+
+    const addInfoField = (label: string, value: string, y: number) => {
+        doc.text(label, margin + 2, y + 5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(value, margin + 25, y + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.roundedRect(margin, y, pageWidth - (margin * 2), fieldHeight, 1, 1, 'S');
+        return y + fieldHeight;
+    }
+
+    currentY = addInfoField("Cliente:", selectedCustomer.name, currentY);
+    currentY = addInfoField("CPF/CNPJ:", selectedCustomer.id.split('-')[1] || 'Não informado', currentY);
+    currentY = addInfoField("Endereço:", selectedCustomer.address, currentY);
+    currentY = addInfoField("Telefone:", selectedCustomer.phone, currentY);
+    currentY += 5; // spacing
+
+    // --- Equipment and Problem ---
+    doc.text(`Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`, margin, currentY);
+    currentY += 5;
+    doc.text(`Defeito Reclamado: ${reportedProblem}`, margin, currentY);
+    currentY += 10;
 
     // --- Items Table ---
-    const tableColumn = ["Item", "Descrição", "Qtd.", "Vlr. Unit.", "Subtotal"];
-    const tableRows = items.map((item, index) => [
-      index + 1,
+    const tableColumn = ["DESCRIÇÃO DO SERVIÇO", "QUANT.", "UNITÁRIO (R$)", "TOTAL (R$)"];
+    const tableRows = items.map((item) => [
       item.description,
       item.quantity,
-      `R$ ${item.unitPrice.toFixed(2)}`,
-      `R$ ${(item.quantity * item.unitPrice).toFixed(2)}`
+      item.unitPrice.toFixed(2),
+      (item.quantity * item.unitPrice).toFixed(2)
     ]);
     
     const total = calculateTotal();
-    tableRows.push([
-        { content: 'Total do Orçamento:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: `R$ ${total.toFixed(2)}`, styles: { fontStyle: 'bold' } }
-    ]);
-
 
     doc.autoTable({
-        startY: currentY + 5,
+        startY: currentY,
         head: [tableColumn],
         body: tableRows,
-        theme: 'striped',
+        theme: 'grid',
         headStyles: { 
             fillColor: primaryColor, 
-            textColor: '#ffffff',
-            fontStyle: 'bold'
-        },
-        footStyles: {
-            fillColor: lightGrayColor,
-            textColor: grayColor,
+            textColor: '#FFFFFF',
             fontStyle: 'bold',
-            fontSize: 12
+            halign: 'center',
+        },
+        styles: {
+            font: 'helvetica',
+            fontSize: 9,
+            cellPadding: 2,
+        },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 20, halign: 'center' },
+            2: { cellWidth: 30, halign: 'right' },
+            3: { cellWidth: 30, halign: 'right' },
         },
         didDrawPage: (data) => {
             // Footer on each page
             doc.setFontSize(8);
-            doc.setTextColor(grayColor);
+            doc.setTextColor(fontColor);
             doc.text(`Página ${data.pageNumber}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
         }
     });
 
-    // --- Footer ---
-    const finalY = doc.lastAutoTable.finalY || pageHeight - 50;
-    doc.setFontSize(9);
-    doc.setTextColor(grayColor);
-    doc.text("Validade do Orçamento: 15 dias.", 14, finalY + 15);
-    doc.text("Garantia de 90 dias sobre o serviço executado.", 14, finalY + 20);
+    currentY = doc.lastAutoTable.finalY;
 
-    doc.line(pageWidth / 2 - 40, finalY + 40, pageWidth / 2 + 40, finalY + 40);
-    doc.text("Assinatura do Cliente", pageWidth / 2, finalY + 45, { align: 'center' });
+    // --- Totals ---
+    const totalFieldX = pageWidth - margin - 60;
+    doc.setFillColor(primaryColor);
+    doc.rect(margin, currentY, pageWidth - (margin * 2) - 65, 8, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor('#FFFFFF');
+    doc.text("TOTAL:", totalFieldX - 25, currentY + 5.5, { align: 'right' });
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(fontColor);
+    doc.rect(totalFieldX, currentY, 60, 8, 'S');
+    doc.text(`R$ ${total.toFixed(2)}`, totalFieldX + 58, currentY + 5.5, { align: 'right' });
+    currentY += 15;
+    
+    // --- Observations ---
+    doc.setFillColor(lightGrayColor);
+    doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 30, 2, 2, 'F');
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(fontColor);
+    doc.text("Observações", margin + 3, currentY + 6);
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    const observations = [
+        "1. Este orçamento é válido por 15 dias a partir da data de emissão.",
+        "2. O prazo de entrega será combinado após a aprovação do orçamento.",
+        "3. Em caso de desistência após o início do serviço, será cobrado um valor proporcional.",
+        "4. Garantia de 90 dias sobre o(s) serviço(s) executado(s)."
+    ];
+    doc.text(observations, margin + 3, currentY + 12);
+    currentY += 35;
+
+    // --- Signatures ---
+    doc.text(`Data: ____ / ____ / ________`, margin, currentY);
+    currentY += 15;
+    doc.line(margin, currentY, margin + 80, currentY);
+    doc.text("Assinatura do Cliente", margin + 40, currentY + 4, { align: 'center' });
+    
+    doc.line(pageWidth - margin - 80, currentY, pageWidth - margin, currentY);
+    doc.text("Assinatura do Técnico", pageWidth - margin - 40, currentY + 4, { align: 'center' });
     
     // --- Auto Print ---
     doc.autoPrint();
     const pdfBlob = doc.output('bloburl');
     window.open(pdfBlob.toString(), '_blank');
-
   };
 
 

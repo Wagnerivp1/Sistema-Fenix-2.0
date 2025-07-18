@@ -83,47 +83,44 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const isEditing = !!serviceOrder;
 
   React.useEffect(() => {
-    const selectedCustomer = mockCustomers.find(c => c.name === serviceOrder?.customerName);
-
-    if (isEditing && serviceOrder) {
-        // Modo Edição: Preenche o formulário com dados da OS
-        setSelectedCustomerId(selectedCustomer?.id || '');
-        // O equipmentType é parte do equipment na OS, vamos extrair
-        const [type] = serviceOrder.equipment.split(' ');
-        setEquipmentType(type);
-        setEquipment({
-            brand: serviceOrder.equipment.split(' ')[1] || '',
-            model: serviceOrder.equipment.split(' ')[2] || '',
-            serial: '', // Mock, não temos no model
-        });
-        setAccessories(''); // Mock
-        setReportedProblem(serviceOrder.reportedProblem);
-        setTechnicalReport(''); // Mock
-        setItems([]); // Mock
-        setStatus(serviceOrder.status);
-
-    } else if (customer) {
-        // Modo Criação a partir de um cliente: preenche só o cliente
-        setSelectedCustomerId(customer.id);
-        // Reseta os outros campos
-        setEquipmentType('');
-        setEquipment({ brand: '', model: '', serial: '' });
-        setAccessories('');
-        setReportedProblem('');
-        setTechnicalReport('');
-        setItems([]);
-        setStatus('Aberta');
-
-    } else {
-        // Modo Criação (em branco)
-        setSelectedCustomerId('');
-        setEquipmentType('');
-        setEquipment({ brand: '', model: '', serial: '' });
-        setAccessories('');
-        setReportedProblem('');
-        setTechnicalReport('');
-        setItems([]);
-        setStatus('Aberta');
+    if (isOpen) { // Only update form when dialog is opening
+      if (isEditing && serviceOrder) {
+          const selectedCustomer = mockCustomers.find(c => c.name === serviceOrder.customerName);
+          setSelectedCustomerId(selectedCustomer?.id || '');
+          const [type, brand, ...modelParts] = serviceOrder.equipment.split(' ');
+          const model = modelParts.join(' ');
+          setEquipmentType(type || '');
+          setEquipment({
+              brand: brand || '',
+              model: model || '',
+              serial: '', // Mock data, as it's not in the model
+          });
+          setAccessories(''); // Mock data
+          setReportedProblem(serviceOrder.reportedProblem);
+          setTechnicalReport(''); // Mock data
+          setItems([]); // Mock data
+          setStatus(serviceOrder.status);
+      } else if (customer) {
+          setSelectedCustomerId(customer.id);
+          // Reset other fields for new order from customer
+          setEquipmentType('');
+          setEquipment({ brand: '', model: '', serial: '' });
+          setAccessories('');
+          setReportedProblem('');
+          setTechnicalReport('');
+          setItems([]);
+          setStatus('Aberta');
+      } else {
+          // Reset all fields for a completely new order
+          setSelectedCustomerId('');
+          setEquipmentType('');
+          setEquipment({ brand: '', model: '', serial: '' });
+          setAccessories('');
+          setReportedProblem('');
+          setTechnicalReport('');
+          setItems([]);
+          setStatus('Aberta');
+      }
     }
   }, [serviceOrder, customer, isEditing, isOpen]);
 
@@ -227,14 +224,12 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     // --- Colors and Fonts ---
     const primaryColor = '#1e3a8a';
     const secondaryColor = '#e0e7ff';
-    const fontColor = '#374151';
-    const lightFontColor = '#6b7280';
+    const fontColor = '#000000'; // Black
+    const lightFontColor = '#000000'; // Black
 
     doc.setFont('helvetica');
 
     // --- Header ---
-    // Usando um placeholder para o logo. Você pode substituir por uma imagem real se tiver.
-    // doc.addImage(logoBase64, 'PNG', margin, 15, 20, 20);
     doc.setFillColor(primaryColor);
     doc.circle(margin + 10, 20, 8, 'F');
     doc.setFontSize(14);
@@ -311,7 +306,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
-        headStyles: { fillColor: primaryColor, textColor: '#ffffff' },
+        headStyles: { fillColor: primaryColor, textColor: '#ffffff', fontStyle: 'bold' },
         footStyles: { fillColor: secondaryColor },
         margin: { left: margin, right: margin }
       });
@@ -324,6 +319,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     // --- Totals ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
+    doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 15;
 
@@ -347,8 +343,9 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setTextColor(fontColor);
     doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
 
-    const pdfBlob = doc.output('bloburl');
-    window.open(pdfBlob.toString(), '_blank');
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
   };
 
   const generateServiceOrderPdf = () => {
@@ -366,8 +363,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     // --- Colors and Fonts ---
     const primaryColor = '#1e3a8a';
     const secondaryColor = '#e0e7ff';
-    const fontColor = '#374151';
-    const lightFontColor = '#6b7280';
+    const fontColor = '#000000'; // Black
+    const lightFontColor = '#000000'; // Black
 
     doc.setFont('helvetica');
 
@@ -448,7 +445,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
-        headStyles: { fillColor: primaryColor, textColor: '#ffffff' },
+        headStyles: { fillColor: primaryColor, textColor: '#ffffff', fontStyle: 'bold' },
         footStyles: { fillColor: secondaryColor },
         margin: { left: margin, right: margin }
       });
@@ -461,6 +458,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     // --- Totals ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
+    doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 15;
 
@@ -484,8 +482,9 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setTextColor(fontColor);
     doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center'});
 
-    const pdfBlob = doc.output('bloburl');
-    window.open(pdfBlob.toString(), '_blank');
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
   };
 
 
@@ -670,14 +669,14 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
 
           </div>
         </ScrollArea>
-        <DialogFooter className="mt-4 pt-4 border-t flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
+        <DialogFooter className="mt-4 pt-4 border-t sm:justify-between">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Orçamento</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrada')}><FileText className="mr-2 h-4 w-4" />Recibo Entrada</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrega')}><FileText className="mr-2 h-4 w-4" />Recibo Entrega</Button>
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 mt-4 sm:mt-0">
                 <DialogClose asChild>
                     <Button variant="ghost">Cancelar</Button>
                 </DialogClose>
@@ -688,5 +687,3 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </Dialog>
   );
 }
-
-    

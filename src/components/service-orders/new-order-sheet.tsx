@@ -28,9 +28,6 @@ import { mockCustomers } from '@/lib/data';
 import type { Customer, ServiceOrder } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { getAiSuggestions } from '@/app/actions';
-import type { SuggestResolutionOutput } from '@/ai/flows/suggest-resolution';
-import { AiSuggestions } from './ai-suggestions';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Separator } from '../ui/separator';
@@ -75,17 +72,10 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   
   const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0, type: 'service' as 'service' | 'part' });
 
-  // States para controle da UI
-  const [aiSuggestions, setAiSuggestions] = React.useState<SuggestResolutionOutput | null>(null);
-  const [isAiLoading, setIsAiLoading] = React.useState(false);
-  const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
   const isEditing = !!serviceOrder;
-  const isTriggeredByUser = React.useRef(false);
 
   React.useEffect(() => {
     if (isOpen) { // Only update form when dialog is opening
-      isTriggeredByUser.current = false;
       if (isEditing && serviceOrder) {
           const selectedCustomer = mockCustomers.find(c => c.name === serviceOrder.customerName);
           setSelectedCustomerId(selectedCustomer?.id || '');
@@ -123,24 +113,20 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setItems([]);
           setStatus('Aberta');
       }
-      setAiSuggestions(null);
     }
   }, [serviceOrder, customer, isEditing, isOpen]);
 
 
   const handleEquipmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    isTriggeredByUser.current = true;
     const { id, value } = e.target;
     setEquipment(prev => ({ ...prev, [id]: value }));
   };
 
   const handleEquipmentTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    isTriggeredByUser.current = true;
     setEquipmentType(e.target.value);
   }
 
   const handleReportedProblemChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    isTriggeredByUser.current = true;
     setReportedProblem(e.target.value);
   }
 
@@ -165,42 +151,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const filteredItems = type ? items.filter(item => item.type === type) : items;
     return filteredItems.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
   };
-
-  React.useEffect(() => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    if (equipmentType && reportedProblem && isTriggeredByUser.current) {
-      setIsAiLoading(true);
-      debounceTimeoutRef.current = setTimeout(async () => {
-        const result = await getAiSuggestions(equipmentType, reportedProblem);
-        if (result.success) {
-          setAiSuggestions(result.data);
-        } else {
-          // Não mostra mais o toast de erro se os campos estiverem vazios, pois a chamada é controlada.
-          if (result.error !== 'Por favor, preencha o tipo de equipamento e o defeito relatado.') {
-            toast({
-              variant: 'destructive',
-              title: 'Erro na IA',
-              description: result.error,
-            });
-          }
-          setAiSuggestions(null);
-        }
-        setIsAiLoading(false);
-      }, 1000); // 1 segundo de debounce
-    } else if (!isTriggeredByUser.current) {
-        setAiSuggestions(null);
-        setIsAiLoading(false);
-    }
-    
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, [equipmentType, reportedProblem, toast]);
   
   const handleSave = () => {
     const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
@@ -561,8 +511,10 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
         
         const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
-        doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += textLines.length * 3 + 5;
+        const textHeight = doc.getTextDimensions(textLines).h;
+        const textY = currentY + (textHeight / 2) - 2;
+        doc.text(textLines, pageWidth / 2, textY, { align: 'center' });
+        currentY += textHeight + 2;
   
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
         currentY += 4;
@@ -704,9 +656,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                  onChange={handleReportedProblemChange}
               />
             </div>
-             {(isAiLoading || aiSuggestions) && (
-              <AiSuggestions suggestions={aiSuggestions} isLoading={isAiLoading} />
-            )}
             <div className="grid grid-cols-1 gap-2">
               <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
               <Textarea

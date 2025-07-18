@@ -620,14 +620,14 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-grow min-h-0 overflow-hidden px-6">
+        <div className="flex-1 min-h-0 px-6">
           <Tabs defaultValue="general" className="h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="general">Dados Gerais</TabsTrigger>
               <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
               <TabsTrigger value="notes">Comentários</TabsTrigger>
             </TabsList>
-            <div className="flex-grow min-h-0 mt-4 overflow-hidden">
+            <div className="flex-1 min-h-0 mt-4 overflow-hidden">
                 <ScrollArea className="h-full pr-4 -mr-4">
                     <TabsContent value="general" className="mt-0">
                         <div className="space-y-6 py-4">
@@ -689,6 +689,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                               placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
                               value={accessories}
                               onChange={(e) => setAccessories(e.target.value)}
+                              rows={3}
                             />
                             <p className="text-sm text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
                           </div>
@@ -699,6 +700,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                               placeholder="Descrição detalhada do problema informado pelo cliente."
                               value={reportedProblem} 
                               onChange={handleReportedProblemChange}
+                              rows={4}
                             />
                           </div>
                         </div>
@@ -822,5 +824,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </>
   );
 }
+
+    
 
     

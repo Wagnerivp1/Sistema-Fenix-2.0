@@ -68,6 +68,7 @@ export const mockServiceOrders: ServiceOrder[] = [
     status: 'Aberta',
     date: '2025-07-17',
     totalValue: 0,
+    items: [],
   },
   {
     id: 'OS-2024-7318',
@@ -77,6 +78,7 @@ export const mockServiceOrders: ServiceOrder[] = [
     status: 'Aberta',
     date: '2025-07-17',
     totalValue: 0,
+    items: [],
   },
   {
     id: 'OS-2024-7978',
@@ -86,6 +88,7 @@ export const mockServiceOrders: ServiceOrder[] = [
     status: 'Aguardando',
     date: '2025-07-16',
     totalValue: 120.0,
+    items: [{ id: 1, description: 'Formatação e Reinstalação do Windows', quantity: 1, unitPrice: 120, type: 'service' }],
   },
   {
     id: 'OS-2024-4125',
@@ -95,6 +98,10 @@ export const mockServiceOrders: ServiceOrder[] = [
     status: 'Aguardando peça',
     date: '2025-07-14',
     totalValue: 350.0,
+    items: [
+      { id: 1, description: 'Bateria para Acer Aspire 3', quantity: 1, unitPrice: 280, type: 'part' },
+      { id: 2, description: 'Mão de obra para troca', quantity: 1, unitPrice: 70, type: 'service' },
+    ],
   },
   {
     id: 'OS-2024-005',
@@ -104,6 +111,7 @@ export const mockServiceOrders: ServiceOrder[] = [
     status: 'Entregue',
     date: '2024-07-15',
     totalValue: 600.0,
+    items: [{ id: 1, description: 'Troca do top-case (teclado)', quantity: 1, unitPrice: 600, type: 'service' }],
   },
   {
     id: 'OS-2024-006',
@@ -113,6 +121,9 @@ export const mockServiceOrders: ServiceOrder[] = [
     status: 'Finalizado',
     date: '2024-07-21',
     totalValue: 250,
+    items: [
+        { id: 1, description: 'Limpeza interna completa e troca de pasta térmica', quantity: 1, unitPrice: 250, type: 'service' }
+    ],
   },
 ];
 

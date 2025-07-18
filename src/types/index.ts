@@ -7,6 +7,14 @@ export type Customer = {
   observations: string;
 };
 
+export type ServiceOrderItem = {
+  id: number;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  type: 'service' | 'part';
+}
+
 export type ServiceOrder = {
   id: string;
   customerName: string;
@@ -15,4 +23,5 @@ export type ServiceOrder = {
   status: 'Recebido' | 'Em análise' | 'Aprovado' | 'Em conserto' | 'Finalizado' | 'Entregue' | 'Aberta' | 'Aguardando Pagamento' | 'Aguardando peça' | 'Aguardando' | 'Cancelada';
   date: string;
   totalValue: number;
+  items?: ServiceOrderItem[];
 };

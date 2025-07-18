@@ -98,7 +98,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setAccessories(''); // Mock data
           setReportedProblem(serviceOrder.reportedProblem);
           setTechnicalReport(''); // Mock data
-          setItems([]); // Mock data
+          setItems(serviceOrder.items || []); 
           setStatus(serviceOrder.status);
       } else if (customer) {
           setSelectedCustomerId(customer.id);
@@ -201,7 +201,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         reportedProblem: reportedProblem,
         status: status,
         date: serviceOrder?.date || new Date().toISOString().split('T')[0],
-        totalValue: calculateTotal()
+        totalValue: calculateTotal(),
+        items: items,
     }
     
     if (onSave) {
@@ -225,26 +226,18 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const primaryColor = '#1e3a8a';
     const secondaryColor = '#e0e7ff';
     const fontColor = '#000000'; // Black
-    const lightFontColor = '#000000'; // Black
 
     doc.setFont('helvetica');
 
     // --- Header ---
-    doc.setFillColor(primaryColor);
-    doc.circle(margin + 10, 20, 8, 'F');
-    doc.setFontSize(14);
-    doc.setTextColor('#ffffff');
-    doc.setFont('helvetica', 'bold');
-    doc.text('A', margin + 7.5, 22);
-
-    doc.setTextColor(fontColor);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("Assistec Now", margin + 25, 18);
+    doc.setTextColor(fontColor);
+    doc.text("Assistec Now", margin, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text("Rua da Tecnologia, 123 - Centro", margin + 25, 24);
-    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@assistecnow.com", margin + 25, 29);
+    doc.text("Rua da Tecnologia, 123 - Centro", margin, 24);
+    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@assistecnow.com", margin, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -258,7 +251,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     currentY = 40;
 
     // --- Helper to draw info boxes ---
-    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number) => {
+    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
       doc.setFillColor(secondaryColor);
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
@@ -267,37 +260,41 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       doc.text(title, x + 3, y + 6);
       doc.setDrawColor(secondaryColor);
       doc.rect(x, y + 8, width, height - 8, 'S');
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(fontColor);
+      doc.text(text, x + 3, y + 14);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
     
     // --- Customer and Equipment Info ---
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(fontColor);
-    doc.text(`Nome: ${selectedCustomer.name}`, margin + 3, currentY + 14);
-    doc.text(`Telefone: ${selectedCustomer.phone}`, margin + 3, currentY + 19);
-    doc.text(`Endereço: ${selectedCustomer.address || 'Não informado'}`, margin + 3, currentY + 24);
+    const customerInfo = [
+      `Nome: ${selectedCustomer.name}`,
+      `Telefone: ${selectedCustomer.phone}`,
+      `Endereço: ${selectedCustomer.address || 'Não informado'}`,
+    ];
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25, customerInfo);
     currentY += 35;
 
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30);
-    doc.text(`Tipo: ${equipmentType}`, margin + 3, currentY + 14);
-    doc.text(`Marca / Modelo: ${equipment.brand} ${equipment.model}`, margin + 3, currentY + 19);
-    doc.text(`Nº Série: ${equipment.serial || 'Não informado'}`, margin + 3, currentY + 24);
-    doc.text(`Acessórios: ${accessories || 'Nenhum'}`, margin + 3, currentY + 29);
+    const equipmentInfo = [
+      `Tipo: ${equipmentType}`,
+      `Marca / Modelo: ${equipment.brand} ${equipment.model}`,
+      `Nº Série: ${equipment.serial || 'Não informado'}`,
+      `Acessórios: ${accessories || 'Nenhum'}`,
+    ];
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
     // --- Problem and Diagnosis ---
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25);
     const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
-    doc.text(problemText, margin + 3, currentY + 14);
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 35;
 
-    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30);
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    doc.text(servicesText, margin + 3, currentY + 14);
-    currentY += 35;
+    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30, servicesText);
+    currentY += 40;
 
     // --- Items Table ---
     if (items.length > 0) {
@@ -307,7 +304,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
         headStyles: { fillColor: primaryColor, textColor: '#ffffff', fontStyle: 'bold' },
-        footStyles: { fillColor: secondaryColor },
+        footStyles: { fillColor: secondaryColor, textColor: fontColor },
         margin: { left: margin, right: margin }
       });
       currentY = doc.lastAutoTable.finalY;
@@ -331,7 +328,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(lightFontColor);
     currentY += 4;
     const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
@@ -360,30 +356,21 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const margin = 15;
     let currentY = 0;
 
-    // --- Colors and Fonts ---
     const primaryColor = '#1e3a8a';
     const secondaryColor = '#e0e7ff';
-    const fontColor = '#000000'; // Black
-    const lightFontColor = '#000000'; // Black
+    const fontColor = '#000000';
 
     doc.setFont('helvetica');
 
     // --- Header ---
-    doc.setFillColor(primaryColor);
-    doc.circle(margin + 10, 20, 8, 'F');
-    doc.setFontSize(14);
-    doc.setTextColor('#ffffff');
-    doc.setFont('helvetica', 'bold');
-    doc.text('A', margin + 7.5, 22);
-
-    doc.setTextColor(fontColor);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("Assistec Now", margin + 25, 18);
+    doc.setTextColor(fontColor);
+    doc.text("Assistec Now", margin, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text("Rua da Tecnologia, 123 - Centro", margin + 25, 24);
-    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@assistecnow.com", margin + 25, 29);
+    doc.text("Rua da Tecnologia, 123 - Centro", margin, 24);
+    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@assistecnow.com", margin, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -397,7 +384,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     currentY = 40;
 
     // --- Helper to draw info boxes ---
-    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number) => {
+     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
       doc.setFillColor(secondaryColor);
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
@@ -406,37 +393,41 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       doc.text(title, x + 3, y + 6);
       doc.setDrawColor(secondaryColor);
       doc.rect(x, y + 8, width, height - 8, 'S');
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(fontColor);
+      doc.text(text, x + 3, y + 14);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
     
     // --- Customer and Equipment Info ---
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(fontColor);
-    doc.text(`Nome: ${selectedCustomer.name}`, margin + 3, currentY + 14);
-    doc.text(`Telefone: ${selectedCustomer.phone}`, margin + 3, currentY + 19);
-    doc.text(`Endereço: ${selectedCustomer.address || 'Não informado'}`, margin + 3, currentY + 24);
+    const customerInfo = [
+      `Nome: ${selectedCustomer.name}`,
+      `Telefone: ${selectedCustomer.phone}`,
+      `Endereço: ${selectedCustomer.address || 'Não informado'}`,
+    ];
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25, customerInfo);
     currentY += 35;
 
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30);
-    doc.text(`Tipo: ${equipmentType}`, margin + 3, currentY + 14);
-    doc.text(`Marca / Modelo: ${equipment.brand} ${equipment.model}`, margin + 3, currentY + 19);
-    doc.text(`Nº Série: ${equipment.serial || 'Não informado'}`, margin + 3, currentY + 24);
-    doc.text(`Acessórios: ${accessories || 'Nenhum'}`, margin + 3, currentY + 29);
+    const equipmentInfo = [
+      `Tipo: ${equipmentType}`,
+      `Marca / Modelo: ${equipment.brand} ${equipment.model}`,
+      `Nº Série: ${equipment.serial || 'Não informado'}`,
+      `Acessórios: ${accessories || 'Nenhum'}`,
+    ];
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
     // --- Problem and Diagnosis ---
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25);
     const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
-    doc.text(problemText, margin + 3, currentY + 14);
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 35;
 
-    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30);
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    doc.text(servicesText, margin + 3, currentY + 14);
-    currentY += 35;
+    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30, servicesText);
+    currentY += 40;
 
     // --- Items Table ---
     if (items.length > 0) {
@@ -446,7 +437,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
         headStyles: { fillColor: primaryColor, textColor: '#ffffff', fontStyle: 'bold' },
-        footStyles: { fillColor: secondaryColor },
+        footStyles: { fillColor: secondaryColor, textColor: fontColor },
         margin: { left: margin, right: margin }
       });
       currentY = doc.lastAutoTable.finalY;
@@ -470,7 +461,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(lightFontColor);
     currentY += 4;
     const warrantyText = "A garantia para os serviços prestados é de 90 dias, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.";
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
@@ -487,20 +477,116 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     window.open(pdfUrl, '_blank');
   };
 
+  const generateDeliveryReceiptPdf = () => {
+    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
+    if (!selectedCustomer) {
+      toast({ variant: 'destructive', title: 'Cliente não selecionado!' });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const fontColor = '#000000';
+    const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
+    const fullEquipmentName = `${equipmentType} ${equipment.brand} ${equipment.model}`.trim();
+
+
+    const drawReceipt = (startY: number, via: 'Cliente' | 'Loja') => {
+      let currentY = startY;
+
+      // Header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(fontColor);
+      doc.text('Recibo de Entrega de Equipamento', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 6;
+      doc.setFontSize(10);
+      doc.text(`(Via - ${via})`, pageWidth / 2, currentY, { align: 'center' });
+      currentY += 10;
+      
+      // Receipt Info
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`OS Nº: ${osId}`, margin, currentY);
+      doc.text(`Data de Entrega: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY, { align: 'right' });
+      currentY += 10;
+
+      // Main Text
+      const mainText = `Eu, ${selectedCustomer.name}, portador(a) do CPF/CNPJ não informado, declaro para os devidos fins que recebi da Assistec Now, nesta data, o equipamento ${fullEquipmentName}, referente à Ordem de Serviço nº ${osId}, em perfeitas condições de funcionamento e aparência, após a realização dos serviços solicitados.`;
+      const splitMainText = doc.splitTextToSize(mainText, pageWidth - (margin * 2));
+      doc.text(splitMainText, margin, currentY);
+      currentY += (splitMainText.length * 5) + 5;
+
+      // Legal Terms
+      doc.setFont('helvetica', 'bold');
+      doc.text('Termos e Condições:', margin, currentY);
+      currentY += 5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      const termsText = [
+          '1. O cliente declara que testou o equipamento no ato da retirada e atestou seu pleno funcionamento.',
+          '2. A garantia do serviço prestado é de 90 (noventa) dias a contar desta data, cobrindo exclusivamente o defeito reparado, conforme Art. 26, II, do Código de Defesa do Consumidor.',
+          '3. A garantia não cobre novos defeitos, danos causados por mau uso, quedas, contato com líquidos, sobrecarga elétrica, ou software (vírus, reinstalações, etc.).',
+          '4. A perda da garantia ocorrerá se o lacre de segurança for violado ou se o equipamento for aberto por terceiros não autorizados.',
+      ];
+      const splitTermsText = doc.splitTextToSize(termsText.join('\n'), pageWidth - (margin * 2));
+      doc.text(splitTermsText, margin, currentY);
+      currentY += (splitTermsText.length * 3.5) + 10;
+      
+      // Signature
+      doc.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 5;
+      doc.setFontSize(10);
+      doc.text(`${selectedCustomer.name}`, pageWidth / 2, currentY, { align: 'center' });
+      currentY += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
+    }
+
+    // Draw first copy (Customer's)
+    drawReceipt(20, 'Cliente');
+
+    // Separator
+    const middleY = pageHeight / 2;
+    doc.setLineDashPattern([2, 2], 0);
+    doc.line(margin, middleY, pageWidth - margin, middleY);
+    doc.setLineDashPattern([], 0);
+
+    // Draw second copy (Store's)
+    drawReceipt(middleY + 15, 'Loja');
+
+
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+  };
+
 
   const handlePrint = (documentType: string) => {
-    if (documentType === 'Orçamento') {
-      generateQuotePdf();
-      return;
+    switch (documentType) {
+      case 'Orçamento':
+        generateQuotePdf();
+        break;
+      case 'Reimpressão de OS':
+        generateServiceOrderPdf();
+        break;
+      case 'Recibo de Entrega':
+        generateDeliveryReceiptPdf();
+        break;
+      case 'Recibo de Entrada':
+        // Lógica para recibo de entrada
+        toast({ title: 'Funcionalidade em desenvolvimento.' });
+        break;
+      default:
+        toast({
+            title: 'Imprimindo documento...',
+            description: `O ${documentType} será impresso.`,
+        });
+        break;
     }
-    if (documentType === 'Reimpressão de OS') {
-      generateServiceOrderPdf();
-      return;
-    }
-    toast({
-        title: 'Imprimindo documento...',
-        description: `O ${documentType} será impresso.`,
-    })
   }
 
   const trigger = (
@@ -532,7 +618,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             <div className="grid grid-cols-2 gap-4">
                <div>
                   <Label htmlFor="customer">Cliente</Label>
-                   <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId} disabled={isEditing}>
+                   <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um cliente" />
                     </SelectTrigger>

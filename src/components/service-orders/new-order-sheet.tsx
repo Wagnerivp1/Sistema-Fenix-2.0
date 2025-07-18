@@ -225,16 +225,15 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     let currentY = 0;
 
     // --- Colors and Fonts ---
-    const primaryColor = '#1e3a8a'; // A darker blue
-    const secondaryColor = '#e0e7ff'; // A light blue
+    const primaryColor = '#1e3a8a';
+    const secondaryColor = '#e0e7ff';
     const fontColor = '#374151';
     const lightFontColor = '#6b7280';
-    
+
     doc.setFont('helvetica');
 
     // --- Header ---
-    // Placeholder for logo
-    doc.setFillColor(255, 0, 0); // Red circle for logo
+    doc.setFillColor(255, 0, 0);
     doc.circle(margin + 10, 20, 10, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
@@ -249,69 +248,66 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFont('helvetica', 'normal');
     doc.text("Rua Santa Catarina 485", margin + 25, 24);
     doc.text("Telefone: 43996024065 | E-mail: jl.solucoes@hotmail.com", margin + 25, 29);
-    
+
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
     doc.text("Orçamento de Serviço", pageWidth - margin, 18, { align: 'right' });
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`OS Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
+    doc.text(`Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
     doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
 
     currentY = 40;
 
     // --- Helper to draw info boxes ---
     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number) => {
-        doc.setFillColor(secondaryColor);
-        doc.rect(x, y, width, 8, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
-        doc.setTextColor(primaryColor);
-        doc.text(title, x + 3, y + 6);
-        doc.setDrawColor(secondaryColor);
-        doc.rect(x, y + 8, width, height - 8, 'S');
+      doc.setFillColor(secondaryColor);
+      doc.rect(x, y, width, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(primaryColor);
+      doc.text(title, x + 3, y + 6);
+      doc.setDrawColor(secondaryColor);
+      doc.rect(x, y + 8, width, height - 8, 'S');
     };
+
+    const boxWidth = (pageWidth - (margin * 2));
     
     // --- Customer and Equipment Info ---
-    const boxWidth = (pageWidth - (margin * 3)) / 2;
-    const boxHeight = 25;
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, boxHeight);
-    drawBoxWithTitle('Informações do Equipamento', margin + boxWidth + margin, currentY, boxWidth, boxHeight);
-
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(fontColor);
     doc.text(`Nome: ${selectedCustomer.name}`, margin + 3, currentY + 14);
     doc.text(`Telefone: ${selectedCustomer.phone}`, margin + 3, currentY + 19);
-    doc.text(`Documento: ${selectedCustomer.id.split('-')[1] || 'Não informado'}`, margin + 3, currentY + 24);
+    doc.text(`Endereço: ${selectedCustomer.address || 'Não informado'}`, margin + 3, currentY + 24);
+    currentY += 35;
 
-    doc.text(`Tipo: ${equipmentType}`, margin + boxWidth + margin + 3, currentY + 14);
-    doc.text(`Marca / Modelo: ${equipment.brand} ${equipment.model}`, margin + boxWidth + margin + 3, currentY + 19);
-    doc.text(`Nº Série: ${equipment.serial || 'Não informado'}`, margin + boxWidth + margin + 3, currentY + 24);
-
-    currentY += boxHeight + 10;
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30);
+    doc.text(`Tipo: ${equipmentType}`, margin + 3, currentY + 14);
+    doc.text(`Marca / Modelo: ${equipment.brand} ${equipment.model}`, margin + 3, currentY + 19);
+    doc.text(`Nº Série: ${equipment.serial || 'Não informado'}`, margin + 3, currentY + 24);
+    doc.text(`Acessórios: ${accessories || 'Nenhum'}`, margin + 3, currentY + 29);
+    currentY += 40;
     
-    // --- Problem and Proposed Services ---
-    const problemBoxHeight = 30;
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, problemBoxHeight);
-    drawBoxWithTitle('Serviços Propostos', margin + boxWidth + margin, currentY, boxWidth, problemBoxHeight);
-    
+    // --- Problem and Diagnosis ---
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25);
     const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
     doc.text(problemText, margin + 3, currentY + 14);
+    currentY += 35;
 
+    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30);
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    doc.text(servicesText, margin + boxWidth + margin + 3, currentY + 14);
+    doc.text(servicesText, margin + 3, currentY + 14);
+    currentY += 35;
 
-    currentY += problemBoxHeight + 5;
-
-    // --- Items Table (Optional, for calculation) ---
+    // --- Items Table ---
     if (items.length > 0) {
-      currentY += 5;
       doc.autoTable({
         startY: currentY,
-        head: [['Item', 'Qtd', 'Vlr. Unit.', 'Total']],
-        body: items.map(item => [item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+        head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
+        body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
         headStyles: { fillColor: primaryColor, textColor: '#ffffff' },
         footStyles: { fillColor: secondaryColor },
@@ -320,32 +316,16 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       currentY = doc.lastAutoTable.finalY;
     }
     
-    const totalServices = calculateTotal('service');
-    const totalParts = calculateTotal('part');
-    const grandTotal = totalServices + totalParts;
-
-    // --- Totals Summary ---
-    doc.setDrawColor(secondaryColor);
-    doc.line(margin, currentY + 4, pageWidth - margin, currentY + 4);
-    currentY += 8;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(lightFontColor);
-    
-    const totalsText = `Total Serviços: R$ ${totalServices.toFixed(2)}`;
-    const totalPiecesText = `Total Peças: R$ ${totalParts.toFixed(2)}`;
-    const totalEstimatedText = `Valor Total Estimado: R$ ${grandTotal.toFixed(2)}`;
-
-    doc.text(totalsText, margin, currentY);
-    doc.text(totalPiecesText, margin + (pageWidth / 3), currentY);
-    doc.text(totalEstimatedText, pageWidth - margin, currentY, { align: 'right' });
-    
-    currentY += 8;
-    doc.line(margin, currentY, pageWidth - margin, currentY);
+    const grandTotal = calculateTotal();
     currentY += 10;
     
-    // --- Conditions ---
+    // --- Totals ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
+    currentY += 15;
+
+    // --- Conditions and Signature ---
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(fontColor);
@@ -355,11 +335,10 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFontSize(8);
     doc.setTextColor(lightFontColor);
     currentY += 4;
-    doc.text('Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente.', margin, currentY);
-    
+    const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
+    doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
     currentY += 25;
     
-    // --- Signature ---
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
     doc.setFontSize(9);
@@ -433,8 +412,9 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       doc.rect(x, y + 8, width, height - 8, 'S');
     };
 
-    // --- Customer and Equipment Info ---
     const boxWidth = (pageWidth - (margin * 2));
+    
+    // --- Customer and Equipment Info ---
     drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
@@ -711,3 +691,5 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </Dialog>
   );
 }
+
+    

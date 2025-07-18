@@ -54,6 +54,7 @@ interface QuoteItem {
   description: string;
   quantity: number;
   unitPrice: number;
+  type: 'service' | 'part';
 }
 
 
@@ -62,12 +63,13 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | undefined>(undefined);
   const [equipmentType, setEquipmentType] = React.useState('');
   const [reportedProblem, setReportedProblem] = React.useState('');
+  const [technicalReport, setTechnicalReport] = React.useState('');
   const [aiSuggestions, setAiSuggestions] = React.useState<SuggestResolutionOutput | null>(null);
   const [isAiLoading, setIsAiLoading] = React.useState(false);
 
   const [equipment, setEquipment] = React.useState({ brand: '', model: '', serial: '' });
   const [items, setItems] = React.useState<QuoteItem[]>([]);
-  const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0 });
+  const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0, type: 'service' as 'service' | 'part' });
 
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -79,7 +81,7 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
   const handleAddItem = () => {
     if (newItem.description && newItem.quantity > 0 && newItem.unitPrice >= 0) {
       setItems([...items, { ...newItem, id: Date.now() }]);
-      setNewItem({ description: '', quantity: 1, unitPrice: 0 }); // Reset for next item
+      setNewItem({ description: '', quantity: 1, unitPrice: 0, type: 'service' }); // Reset for next item
     } else {
         toast({
             variant: 'destructive',
@@ -93,8 +95,9 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     setItems(items.filter(item => item.id !== id));
   };
   
-  const calculateTotal = () => {
-    return items.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
+  const calculateTotal = (type?: 'service' | 'part') => {
+    const filteredItems = type ? items.filter(item => item.type === type) : items;
+    return filteredItems.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
   };
 
 
@@ -156,160 +159,142 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     }
 
     const doc = new jsPDF();
-    const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-    const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
-    const margin = 14;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 0;
 
-    // --- Colors ---
-    const primaryColor = '#283593'; // Um azul mais escuro
-    const secondaryColor = '#3F51B5';
-    const lightGrayColor = '#F5F5F5';
-    const fontColor = '#424242';
+    // --- Colors and Fonts ---
+    const primaryColor = '#1e3a8a'; // A darker blue
+    const secondaryColor = '#e0e7ff'; // A light blue
+    const fontColor = '#374151';
+    const lightFontColor = '#6b7280';
     
+    doc.setFont('helvetica');
+
     // --- Header ---
-    doc.setFillColor(primaryColor);
-    doc.rect(0, 0, pageWidth, 40, 'F');
-    
+    // Placeholder for logo
+    doc.setFillColor(255, 0, 0); // Red circle for logo
+    doc.circle(margin + 10, 20, 10, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.setTextColor('#FFFFFF');
-    doc.text("Orçamento", margin, 18);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text("Sistema Fênix - Assistência Técnica", margin, 25);
-    doc.text("Endereço: Rua da Tecnologia, 123 - Cidade", margin, 29);
-    doc.text("Telefone: (12) 3456-7890 | E-mail: contato@fenix.com", margin, 33);
-    
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
+    doc.text('JL', margin + 6, 22);
+
+    doc.setTextColor(fontColor);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("Sistema Fênix", pageWidth - margin, 25, { align: 'right' });
+    doc.text("JL INFORMÁTICA.", margin + 25, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text("Assistência Técnica", pageWidth - margin, 30, { align: 'right' });
+    doc.text("Rua Santa Catarina 485", margin + 25, 24);
+    doc.text("Telefone: 43996024065 | E-mail: jl.solucoes@hotmail.com", margin + 25, 29);
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Orçamento de Serviço", pageWidth - margin, 18, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const osId = `#...${Date.now().toString().slice(-4)}`; // Mock OS ID
+    doc.text(`OS Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
+    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
 
+    currentY = 40;
 
-    // --- Customer Info ---
-    let currentY = 50;
-    const fieldHeight = 8;
-    const fieldStyle = {
-        fillColor: '#FFFFFF',
-        lineWidth: 0.2,
-        drawColor: '#BDBDBD'
+    // --- Helper to draw info boxes ---
+    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number) => {
+        doc.setFillColor(secondaryColor);
+        doc.rect(x, y, width, 8, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(primaryColor);
+        doc.text(title, x + 3, y + 6);
+        doc.setDrawColor(secondaryColor);
+        doc.rect(x, y + 8, width, height - 8, 'S');
     };
     
-    doc.setFontSize(8);
-    doc.setTextColor(fontColor);
+    // --- Customer and Equipment Info ---
+    const boxWidth = (pageWidth - (margin * 3)) / 2;
+    const boxHeight = 25;
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, boxHeight);
+    drawBoxWithTitle('Informações do Equipamento', margin + boxWidth + margin, currentY, boxWidth, boxHeight);
 
-    const addInfoField = (label: string, value: string, y: number) => {
-        doc.text(label, margin + 2, y + 5);
-        doc.setFont('helvetica', 'bold');
-        doc.text(value, margin + 25, y + 5);
-        doc.setFont('helvetica', 'normal');
-        doc.roundedRect(margin, y, pageWidth - (margin * 2), fieldHeight, 1, 1, 'S');
-        return y + fieldHeight;
-    }
-
-    currentY = addInfoField("Cliente:", selectedCustomer.name, currentY);
-    currentY = addInfoField("CPF/CNPJ:", selectedCustomer.id.split('-')[1] || 'Não informado', currentY);
-    currentY = addInfoField("Endereço:", selectedCustomer.address, currentY);
-    currentY = addInfoField("Telefone:", selectedCustomer.phone, currentY);
-    currentY += 5; // spacing
-
-    // --- Equipment and Problem ---
-    doc.text(`Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`, margin, currentY);
-    currentY += 5;
-    doc.text(`Defeito Reclamado: ${reportedProblem}`, margin, currentY);
-    currentY += 10;
-
-    // --- Items Table ---
-    const tableColumn = ["DESCRIÇÃO DO SERVIÇO", "QUANT.", "UNITÁRIO (R$)", "TOTAL (R$)"];
-    const tableRows = items.map((item) => [
-      item.description,
-      item.quantity,
-      item.unitPrice.toFixed(2),
-      (item.quantity * item.unitPrice).toFixed(2)
-    ]);
-    
-    const total = calculateTotal();
-
-    doc.autoTable({
-        startY: currentY,
-        head: [tableColumn],
-        body: tableRows,
-        theme: 'grid',
-        headStyles: { 
-            fillColor: primaryColor, 
-            textColor: '#FFFFFF',
-            fontStyle: 'bold',
-            halign: 'center',
-        },
-        styles: {
-            font: 'helvetica',
-            fontSize: 9,
-            cellPadding: 2,
-        },
-        columnStyles: {
-            0: { cellWidth: 'auto' },
-            1: { cellWidth: 20, halign: 'center' },
-            2: { cellWidth: 30, halign: 'right' },
-            3: { cellWidth: 30, halign: 'right' },
-        },
-        didDrawPage: (data) => {
-            // Footer on each page
-            doc.setFontSize(8);
-            doc.setTextColor(fontColor);
-            doc.text(`Página ${data.pageNumber}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-        }
-    });
-
-    currentY = doc.lastAutoTable.finalY;
-
-    // --- Totals ---
-    const totalFieldX = pageWidth - margin - 60;
-    doc.setFillColor(primaryColor);
-    doc.rect(margin, currentY, pageWidth - (margin * 2) - 65, 8, 'F');
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor('#FFFFFF');
-    doc.text("TOTAL:", totalFieldX - 25, currentY + 5.5, { align: 'right' });
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(fontColor);
-    doc.rect(totalFieldX, currentY, 60, 8, 'S');
-    doc.text(`R$ ${total.toFixed(2)}`, totalFieldX + 58, currentY + 5.5, { align: 'right' });
-    currentY += 15;
-    
-    // --- Observations ---
-    doc.setFillColor(lightGrayColor);
-    doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 30, 2, 2, 'F');
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(fontColor);
-    doc.text("Observações", margin + 3, currentY + 6);
-
-    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    const observations = [
-        "1. Este orçamento é válido por 15 dias a partir da data de emissão.",
-        "2. O prazo de entrega será combinado após a aprovação do orçamento.",
-        "3. Em caso de desistência após o início do serviço, será cobrado um valor proporcional.",
-        "4. Garantia de 90 dias sobre o(s) serviço(s) executado(s)."
-    ];
-    doc.text(observations, margin + 3, currentY + 12);
-    currentY += 35;
+    doc.setFontSize(9);
+    doc.setTextColor(fontColor);
+    doc.text(`Nome: ${selectedCustomer.name}`, margin + 3, currentY + 14);
+    doc.text(`Telefone: ${selectedCustomer.phone}`, margin + 3, currentY + 19);
+    doc.text(`Documento: ${selectedCustomer.id.split('-')[1] || 'Não informado'}`, margin + 3, currentY + 24);
 
-    // --- Signatures ---
-    doc.text(`Data: ____ / ____ / ________`, margin, currentY);
-    currentY += 15;
-    doc.line(margin, currentY, margin + 80, currentY);
-    doc.text("Assinatura do Cliente", margin + 40, currentY + 4, { align: 'center' });
+    doc.text(`Tipo: ${equipmentType}`, margin + boxWidth + margin + 3, currentY + 14);
+    doc.text(`Marca / Modelo: ${equipment.brand} ${equipment.model}`, margin + boxWidth + margin + 3, currentY + 19);
+    doc.text(`Nº Série: ${equipment.serial || 'Não informado'}`, margin + boxWidth + margin + 3, currentY + 24);
+
+    currentY += boxHeight + 10;
     
-    doc.line(pageWidth - margin - 80, currentY, pageWidth - margin, currentY);
-    doc.text("Assinatura do Técnico", pageWidth - margin - 40, currentY + 4, { align: 'center' });
+    // --- Problem and Proposed Services ---
+    const problemBoxHeight = 30;
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, problemBoxHeight);
+    drawBoxWithTitle('Serviços Propostos', margin + boxWidth + margin, currentY, boxWidth, problemBoxHeight);
     
+    const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
+    doc.text(problemText, margin + 3, currentY + 14);
+
+    const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
+    doc.text(servicesText, margin + boxWidth + margin + 3, currentY + 14);
+
+    currentY += problemBoxHeight + 5;
+
+    // --- Items Table (Optional, for calculation) ---
+    // If you want to show the table, you can add it here.
+    // For now, it just calculates totals.
+    
+    const totalServices = calculateTotal('service');
+    const totalParts = calculateTotal('part');
+    const grandTotal = totalServices + totalParts;
+
+    // --- Totals Summary ---
+    doc.setDrawColor(secondaryColor);
+    doc.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 8;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(lightFontColor);
+    
+    const totalsText = `Total Serviços: R$ ${totalServices.toFixed(2)}`;
+    const totalPiecesText = `Total Peças: R$ ${totalParts.toFixed(2)}`;
+    const totalEstimatedText = `Valor Total Estimado: R$ ${grandTotal.toFixed(2)}`;
+
+    doc.text(totalsText, margin, currentY);
+    doc.text(totalPiecesText, margin + (pageWidth / 3), currentY);
+    doc.text(totalEstimatedText, pageWidth - margin, currentY, { align: 'right' });
+    
+    currentY += 8;
+    doc.line(margin, currentY, pageWidth - margin, currentY);
+    currentY += 10;
+    
+    // --- Conditions ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(fontColor);
+    doc.text('Validade e Condições:', margin, currentY);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(lightFontColor);
+    currentY += 4;
+    doc.text('Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente.', margin, currentY);
+    
+    currentY += 25;
+    
+    // --- Signature ---
+    doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
+    currentY += 4;
+    doc.setFontSize(9);
+    doc.setTextColor(fontColor);
+    doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
+
+
     // --- Auto Print ---
     doc.autoPrint();
     const pdfBlob = doc.output('bloburl');
@@ -412,6 +397,8 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
               <Textarea
                 id="technical_report"
                 placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
+                value={technicalReport}
+                onChange={(e) => setTechnicalReport(e.target.value)}
                 rows={5}
               />
             </div>
@@ -424,8 +411,9 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
                 {items.map((item, index) => (
                   <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
                     <div className="flex-grow grid grid-cols-12 gap-2 items-center">
-                        <span className="col-span-6">{item.description}</span>
-                        <span className="col-span-2 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
+                        <span className="col-span-5">{item.description}</span>
+                        <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
+                        <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
                         <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
                         <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
                     </div>
@@ -441,6 +429,18 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
                   <Label htmlFor="newItemDescription">Descrição do Item</Label>
                   <Input id="newItemDescription" placeholder="Ex: Formatação, Troca de Tela" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                 </div>
+                <div className="w-32">
+                  <Label>Tipo</Label>
+                   <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="service">Serviço</SelectItem>
+                      <SelectItem value="part">Peça</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="w-20">
                   <Label htmlFor="newItemQty">Qtd.</Label>
                   <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
@@ -453,7 +453,7 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
               </div>
 
                <div className="mt-4 text-right">
-                <p className="text-lg font-bold">Total: R$ {calculateTotal().toFixed(2)}</p>
+                <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
               </div>
             </div>
 
@@ -477,5 +477,3 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     </Dialog>
   );
 }
-
-    

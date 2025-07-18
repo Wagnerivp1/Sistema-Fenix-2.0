@@ -25,4 +25,7 @@ export type ServiceOrder = {
   totalValue: number;
   items?: ServiceOrderItem[];
   internalNotes?: string;
+  technicalReport?: string;
+  accessories?: string;
+  serialNumber?: string;
 };

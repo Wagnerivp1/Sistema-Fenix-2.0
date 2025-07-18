@@ -63,12 +63,15 @@ export const mockServiceOrders: ServiceOrder[] = [
     {
     id: 'OS-2024-3803',
     customerName: 'VALDECIR ALVARINO',
-    equipment: 'IMPRESSORA EPSON',
+    equipment: 'IMPRESSORA EPSON L3150',
+    serialNumber: 'ABC12345',
+    accessories: 'Cabo de força',
     reportedProblem: 'NAO IMPRIME',
+    technicalReport: 'Necessário limpeza do cabeçote de impressão e substituição do cartucho preto.',
     status: 'Aberta',
     date: '2025-07-17',
-    totalValue: 0,
-    items: [],
+    totalValue: 150,
+    items: [{ id: 1, description: 'Limpeza de cabeçote', quantity: 1, unitPrice: 150, type: 'service' }],
   },
   {
     id: 'OS-2024-7318',

@@ -28,6 +28,9 @@ import { mockCustomers } from '@/lib/data';
 import type { Customer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { getAiSuggestions } from '@/app/actions';
+import type { SuggestResolutionOutput } from '@/ai/flows/suggest-resolution';
+import { AiSuggestions } from './ai-suggestions';
 
 interface NewOrderSheetProps {
   customer?: Customer | null;
@@ -38,12 +41,52 @@ interface NewOrderSheetProps {
 export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetProps) {
   const { toast } = useToast();
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | undefined>(undefined);
+  const [equipmentType, setEquipmentType] = React.useState('');
+  const [reportedProblem, setReportedProblem] = React.useState('');
+  const [aiSuggestions, setAiSuggestions] = React.useState<SuggestResolutionOutput | null>(null);
+  const [isAiLoading, setIsAiLoading] = React.useState(false);
+
+  const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
 
   React.useEffect(() => {
     if (customer) {
       setSelectedCustomerId(customer.id);
     }
   }, [customer]);
+
+  React.useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    if (equipmentType && reportedProblem) {
+      setIsAiLoading(true);
+      debounceTimeoutRef.current = setTimeout(async () => {
+        const result = await getAiSuggestions(equipmentType, reportedProblem);
+        if (result.success) {
+          setAiSuggestions(result.data);
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Erro na IA',
+            description: result.error,
+          });
+          setAiSuggestions(null);
+        }
+        setIsAiLoading(false);
+      }, 1000); // 1 segundo de debounce
+    } else {
+        setAiSuggestions(null);
+        setIsAiLoading(false);
+    }
+    
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [equipmentType, reportedProblem, toast]);
   
   const handleSave = () => {
     // Aqui você adicionaria a lógica para salvar a OS no banco de dados
@@ -110,7 +153,7 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
             <div className="grid grid-cols-4 gap-4">
               <div>
                 <Label htmlFor="type">Tipo</Label>
-                <Input id="type" placeholder="Ex: Notebook" />
+                <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={(e) => setEquipmentType(e.target.value)} />
               </div>
               <div>
                 <Label htmlFor="brand">Marca</Label>
@@ -138,25 +181,31 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
               <Textarea
                 id="problem"
                 placeholder="Descrição detalhada do problema informado pelo cliente."
+                 value={reportedProblem} 
+                 onChange={(e) => setReportedProblem(e.target.value)}
               />
             </div>
+             {(isAiLoading || aiSuggestions) && (
+              <AiSuggestions suggestions={aiSuggestions} isLoading={isAiLoading} />
+            )}
             <div className="grid grid-cols-1 gap-2">
               <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
               <Textarea
                 id="technical_report"
                 placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
+                rows={5}
               />
             </div>
           </div>
         </ScrollArea>
-        <DialogFooter className="mt-4 pt-4 border-t flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                 <Button variant="outline" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Gerar Orçamento</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrada')}><FileText className="mr-2 h-4 w-4" />Recibo de Entrada</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrega')}><FileText className="mr-2 h-4 w-4" />Recibo de Entrega</Button>
+        <DialogFooter className="mt-4 pt-4 border-t flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
+            <div className="flex flex-wrap items-center justify-start gap-2">
+                 <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Orçamento</Button>
+                 <Button variant="outline" size="sm" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>
+                 <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrada')}><FileText className="mr-2 h-4 w-4" />Recibo Entrada</Button>
+                 <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrega')}><FileText className="mr-2 h-4 w-4" />Recibo Entrega</Button>
             </div>
-            <div className="flex gap-2 justify-end">
+            <div className="flex justify-end gap-2">
                 <DialogClose asChild>
                     <Button variant="ghost">Cancelar</Button>
                 </DialogClose>

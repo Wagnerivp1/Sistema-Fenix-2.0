@@ -233,21 +233,23 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFont('helvetica');
 
     // --- Header ---
-    doc.setFillColor(255, 0, 0);
-    doc.circle(margin + 10, 20, 10, 'F');
+    // Usando um placeholder para o logo. Você pode substituir por uma imagem real se tiver.
+    // doc.addImage(logoBase64, 'PNG', margin, 15, 20, 20);
+    doc.setFillColor(primaryColor);
+    doc.circle(margin + 10, 20, 8, 'F');
+    doc.setFontSize(14);
+    doc.setTextColor('#ffffff');
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.text('JL', margin + 6, 22);
+    doc.text('A', margin + 7.5, 22);
 
     doc.setTextColor(fontColor);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("JL INFORMÁTICA.", margin + 25, 18);
+    doc.text("Assistec Now", margin + 25, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text("Rua Santa Catarina 485", margin + 25, 24);
-    doc.text("Telefone: 43996024065 | E-mail: jl.solucoes@hotmail.com", margin + 25, 29);
+    doc.text("Rua da Tecnologia, 123 - Centro", margin + 25, 24);
+    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@assistecnow.com", margin + 25, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -345,9 +347,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setTextColor(fontColor);
     doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
 
-
-    // --- Auto Print ---
-    doc.autoPrint();
     const pdfBlob = doc.output('bloburl');
     window.open(pdfBlob.toString(), '_blank');
   };
@@ -373,21 +372,21 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFont('helvetica');
 
     // --- Header ---
-    doc.setFillColor(255, 0, 0);
-    doc.circle(margin + 10, 20, 10, 'F');
+    doc.setFillColor(primaryColor);
+    doc.circle(margin + 10, 20, 8, 'F');
+    doc.setFontSize(14);
+    doc.setTextColor('#ffffff');
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.text('JL', margin + 6, 22);
+    doc.text('A', margin + 7.5, 22);
 
     doc.setTextColor(fontColor);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("JL INFORMÁTICA.", margin + 25, 18);
+    doc.text("Assistec Now", margin + 25, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text("Rua Santa Catarina 485", margin + 25, 24);
-    doc.text("Telefone: 43996024065 | E-mail: jl.solucoes@hotmail.com", margin + 25, 29);
+    doc.text("Rua da Tecnologia, 123 - Centro", margin + 25, 24);
+    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@assistecnow.com", margin + 25, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -485,8 +484,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setTextColor(fontColor);
     doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center'});
 
-    // --- Auto Print ---
-    doc.autoPrint();
     const pdfBlob = doc.output('bloburl');
     window.open(pdfBlob.toString(), '_blank');
   };

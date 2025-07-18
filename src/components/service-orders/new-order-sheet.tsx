@@ -27,6 +27,7 @@ import {
 import { mockCustomers } from '@/lib/data';
 import type { Customer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface NewOrderSheetProps {
   customer?: Customer | null;
@@ -82,77 +83,78 @@ export function NewOrderSheet({ customer, isOpen, onOpenChange }: NewOrderSheetP
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {/* Only render trigger if onOpenChange is not provided, meaning it's self-managed */}
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Nova Ordem de Serviço</DialogTitle>
           <DialogDescription>
             Preencha os dados para registrar um novo atendimento.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-8">
-          <div className="grid grid-cols-1 gap-4">
-             <div>
-                <Label htmlFor="customer">Selecione um cliente</Label>
-                 <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockCustomers.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <ScrollArea className="flex-grow pr-6">
+          <div className="grid gap-6 py-4">
+            <div className="grid grid-cols-1 gap-4">
+               <div>
+                  <Label htmlFor="customer">Selecione um cliente</Label>
+                   <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockCustomers.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="type">Tipo</Label>
+                <Input id="type" placeholder="Ex: Notebook" />
+              </div>
+              <div>
+                <Label htmlFor="brand">Marca</Label>
+                <Input id="brand" placeholder="Ex: Dell" />
+              </div>
+              <div>
+                <Label htmlFor="model">Modelo</Label>
+                <Input id="model" placeholder="Ex: Inspiron 15" />
+              </div>
+               <div>
+                <Label htmlFor="serial">Nº de Série</Label>
+                <Input id="serial" placeholder="Serial" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <Label htmlFor="accessories">Acessórios Entregues com o Equipamento</Label>
+              <Textarea
+                id="accessories"
+                placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
+              />
+               <p className="text-sm text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
+            </div>
+             <div className="grid grid-cols-1 gap-2">
+              <Label htmlFor="problem">Defeito Reclamado</Label>
+              <Textarea
+                id="problem"
+                placeholder="Descrição detalhada do problema informado pelo cliente."
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
+              <Textarea
+                id="technical_report"
+                placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
+              />
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="type">Tipo</Label>
-              <Input id="type" placeholder="Ex: Notebook" />
-            </div>
-            <div>
-              <Label htmlFor="brand">Marca</Label>
-              <Input id="brand" placeholder="Ex: Dell" />
-            </div>
-            <div>
-              <Label htmlFor="model">Modelo</Label>
-              <Input id="model" placeholder="Ex: Inspiron 15" />
-            </div>
-             <div>
-              <Label htmlFor="serial">Nº de Série</Label>
-              <Input id="serial" placeholder="Serial" />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="accessories">Acessórios Entregues com o Equipamento</Label>
-            <Textarea
-              id="accessories"
-              placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
-            />
-             <p className="text-sm text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
-          </div>
-           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="problem">Defeito Reclamado</Label>
-            <Textarea
-              id="problem"
-              placeholder="Descrição detalhada do problema informado pelo cliente."
-            />
-          </div>
-          <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
-            <Textarea
-              id="technical_report"
-              placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
-            />
-          </div>
-
-        </div>
-        <DialogFooter className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+        </ScrollArea>
+        <DialogFooter className="mt-4 pt-4 border-t flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                 <Button variant="outline" onClick={() => handlePrint('Orçamento')}><Printer />Gerar Orçamento</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Reimpressão de OS')}><Printer />Reimprimir OS</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrada')}><FileText />Recibo de Entrada</Button>
-                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrega')}><FileText />Recibo de Entrega</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2" />Gerar Orçamento</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2" />Reimprimir OS</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrada')}><FileText className="mr-2" />Recibo de Entrada</Button>
+                 <Button variant="outline" onClick={() => handlePrint('Recibo de Entrega')}><FileText className="mr-2" />Recibo de Entrega</Button>
             </div>
             <div className="flex gap-2 justify-end">
                 <DialogClose asChild>

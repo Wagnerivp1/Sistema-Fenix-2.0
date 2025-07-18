@@ -226,13 +226,22 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setTextColor(fontColor);
 
     // --- Header ---
+    // Logo Placeholder
+    doc.setFillColor(240, 240, 240); // Light gray
+    doc.rect(margin, 10, 30, 15, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Sua Logo', margin + 7, 19);
+
+    const companyInfoX = margin + 35;
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("Sistema Fênix", margin, 18);
+    doc.setTextColor(fontColor);
+    doc.text("Sistema Fênix", companyInfoX, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text("Rua da Tecnologia, 123 - Centro", margin, 24);
-    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@sistemafenix.com", margin, 29);
+    doc.text("Rua da Tecnologia, 123 - Centro", companyInfoX, 24);
+    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@sistemafenix.com", companyInfoX, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -262,6 +271,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
+      doc.setTextColor(fontColor);
       doc.text(title, x + 3, y + 6);
       
       doc.setDrawColor(primaryColor);
@@ -269,8 +279,9 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
+      doc.setTextColor(fontColor);
       const textArray = Array.isArray(text) ? text : [text];
-      doc.text(textArray, x + 3, y + 14);
+      doc.text(textArray, x + 3, y + 15);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
@@ -318,11 +329,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
+    doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 15;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
+    doc.setTextColor(fontColor);
     doc.text('Validade e Condições:', margin, currentY);
     
     doc.setFont('helvetica', 'normal');
@@ -335,6 +348,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
     doc.setFontSize(9);
+    doc.setTextColor(fontColor);
     doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
 
     const pdfBlob = doc.output('blob');
@@ -358,6 +372,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       doc.rect(x, y, width, 8, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
+      doc.setTextColor(fontColor);
       doc.text(title, x + 3, y + 6);
 
       doc.setDrawColor(primaryColor);
@@ -365,8 +380,9 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
+      doc.setTextColor(fontColor);
       const textArray = Array.isArray(text) ? text : [text];
-      doc.text(textArray, x + 3, y + 14);
+      doc.text(textArray, x + 3, y + 15);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
@@ -414,11 +430,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
+    doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
     currentY += 15;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
+    doc.setTextColor(fontColor);
     doc.text('Termos de Garantia e Serviço:', margin, currentY);
     
     doc.setFont('helvetica', 'normal');
@@ -431,6 +449,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
     doc.setFontSize(9);
+    doc.setTextColor(fontColor);
     doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center'});
 
     const pdfBlob = doc.output('blob');
@@ -456,10 +475,18 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         let currentY = yOffset;
   
         // --- Header ---
+        // Logo Placeholder
+        doc.setFillColor(240, 240, 240); // Light gray
+        doc.rect(margin, currentY, 30, 15, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Sua Logo', margin + 7, currentY + 9);
+
+        const companyInfoX = margin + 35;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
         doc.setTextColor(fontColor);
-        doc.text("Sistema Fênix", margin, currentY + 12);
+        doc.text("Sistema Fênix", companyInfoX, currentY + 12);
         
         doc.setFontSize(12);
         doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 12, { align: 'right' });
@@ -515,14 +542,19 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.setFontSize(8);
         doc.setTextColor(fontColor);
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
-        const splitText = doc.splitTextToSize(termsText, pageWidth - (margin * 2) - 10);
-        doc.text(splitText, pageWidth / 2, currentY, { align: 'center' });
+        
+        const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2) - 10);
+        const textBlockHeight = textLines.length * (doc.getFontSize() / doc.internal.scaleFactor);
+        const textY = currentY + (15 - textBlockHeight) / 2; // Center vertically in a 15-unit high area
+        
+        doc.text(textLines, pageWidth / 2, textY, { align: 'center', baseline: 'top' });
         currentY += 15;
   
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
         currentY += 4;
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
+        doc.setTextColor(fontColor);
         doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
     }
   

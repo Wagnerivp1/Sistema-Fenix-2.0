@@ -81,9 +81,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const isEditing = !!serviceOrder;
+  const isTriggeredByUser = React.useRef(false);
 
   React.useEffect(() => {
     if (isOpen) { // Only update form when dialog is opening
+      isTriggeredByUser.current = false;
       if (isEditing && serviceOrder) {
           const selectedCustomer = mockCustomers.find(c => c.name === serviceOrder.customerName);
           setSelectedCustomerId(selectedCustomer?.id || '');
@@ -121,14 +123,26 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setItems([]);
           setStatus('Aberta');
       }
+      setAiSuggestions(null);
     }
   }, [serviceOrder, customer, isEditing, isOpen]);
 
 
   const handleEquipmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    isTriggeredByUser.current = true;
     const { id, value } = e.target;
     setEquipment(prev => ({ ...prev, [id]: value }));
   };
+
+  const handleEquipmentTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    isTriggeredByUser.current = true;
+    setEquipmentType(e.target.value);
+  }
+
+  const handleReportedProblemChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    isTriggeredByUser.current = true;
+    setReportedProblem(e.target.value);
+  }
 
   const handleAddItem = () => {
     if (newItem.description && newItem.quantity > 0 && newItem.unitPrice >= 0) {
@@ -157,23 +171,26 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       clearTimeout(debounceTimeoutRef.current);
     }
 
-    if (equipmentType && reportedProblem) {
+    if (equipmentType && reportedProblem && isTriggeredByUser.current) {
       setIsAiLoading(true);
       debounceTimeoutRef.current = setTimeout(async () => {
         const result = await getAiSuggestions(equipmentType, reportedProblem);
         if (result.success) {
           setAiSuggestions(result.data);
         } else {
-          toast({
-            variant: 'destructive',
-            title: 'Erro na IA',
-            description: result.error,
-          });
+          // Não mostra mais o toast de erro se os campos estiverem vazios, pois a chamada é controlada.
+          if (result.error !== 'Por favor, preencha o tipo de equipamento e o defeito relatado.') {
+            toast({
+              variant: 'destructive',
+              title: 'Erro na IA',
+              description: result.error,
+            });
+          }
           setAiSuggestions(null);
         }
         setIsAiLoading(false);
       }, 1000); // 1 segundo de debounce
-    } else {
+    } else if (!isTriggeredByUser.current) {
         setAiSuggestions(null);
         setIsAiLoading(false);
     }
@@ -517,7 +534,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         };
   
         const boxWidth = (pageWidth - (margin * 2));
-        const boxHeight = 22;
+        const boxHeight = 18;
         
         const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
         const customerInfo = [
@@ -525,18 +542,18 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             `Telefone: ${selectedCustomer.phone}`,
         ];
         drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, boxHeight, customerInfo);
-        currentY += boxHeight + 5;
+        currentY += boxHeight + 4;
   
         const equipmentInfo = [
             `Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`,
             `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`,
         ];
         drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, boxHeight, equipmentInfo);
-        currentY += boxHeight + 5;
+        currentY += boxHeight + 4;
         
         const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
         drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight, problemText);
-        currentY += boxHeight + 10;
+        currentY += boxHeight + 8;
   
         // --- Footer ---
         doc.setFont('helvetica', 'bold');
@@ -564,7 +581,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setLineDashPattern([], 0);
   
     // Desenha a segunda via (Loja)
-    drawReceiptContent(cutLineY + 10, "Via da Loja");
+    drawReceiptContent(cutLineY + 5, "Via da Loja");
   
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
@@ -653,7 +670,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             <div className="grid grid-cols-4 gap-4">
               <div>
                 <Label htmlFor="type">Tipo</Label>
-                <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={(e) => setEquipmentType(e.target.value)} />
+                <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={handleEquipmentTypeChange} />
               </div>
               <div>
                 <Label htmlFor="brand">Marca</Label>
@@ -684,7 +701,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                 id="problem"
                 placeholder="Descrição detalhada do problema informado pelo cliente."
                  value={reportedProblem} 
-                 onChange={(e) => setReportedProblem(e.target.value)}
+                 onChange={handleReportedProblemChange}
               />
             </div>
              {(isAiLoading || aiSuggestions) && (

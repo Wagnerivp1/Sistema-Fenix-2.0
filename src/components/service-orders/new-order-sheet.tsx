@@ -232,11 +232,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text('Sua Logo', margin + 7, 19);
+    doc.setTextColor(fontColor);
 
     const companyInfoX = margin + 35;
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(fontColor);
     doc.text("Sistema Fênix", companyInfoX, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
@@ -475,17 +475,16 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         let currentY = yOffset;
   
         // --- Header ---
-        // Logo Placeholder
         doc.setFillColor(240, 240, 240); // Light gray
         doc.rect(margin, currentY, 30, 15, 'F');
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
         doc.text('Sua Logo', margin + 7, currentY + 9);
+        doc.setTextColor(fontColor);
 
         const companyInfoX = margin + 35;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
-        doc.setTextColor(fontColor);
         doc.text("Sistema Fênix", companyInfoX, currentY + 8);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
@@ -499,64 +498,59 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         currentY += 25;
         doc.setDrawColor(fontColor);
         doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 10;
+        currentY += 8;
   
         // --- Boxes ---
         const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
             doc.setFillColor(primaryColor);
-            doc.rect(x, y, width, 8, 'F');
+            doc.rect(x, y, width, 7, 'F');
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
-            doc.setTextColor(fontColor);
-            doc.text(title, x + 3, y + 6);
+            doc.text(title, x + 3, y + 5);
             doc.setDrawColor(primaryColor);
-            doc.rect(x, y + 8, width, height - 8, 'S');
+            doc.rect(x, y + 7, width, height - 7, 'S');
       
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-            doc.setTextColor(fontColor);
             const textArray = Array.isArray(text) ? text : [text];
-            doc.text(textArray, x + 3, y + 15);
+            doc.text(textArray, x + 3, y + 13);
         };
   
         const boxWidth = (pageWidth - (margin * 2));
+        const boxHeight = 22;
         
         const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
         const customerInfo = [
-            `Nº OS: ${osId}`,
-            `Cliente: ${selectedCustomer.name}`,
+            `Nº OS: ${osId} | Cliente: ${selectedCustomer.name}`,
             `Telefone: ${selectedCustomer.phone}`,
         ];
-        drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25, customerInfo);
-        currentY += 35;
+        drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, boxHeight, customerInfo);
+        currentY += boxHeight + 5;
   
         const equipmentInfo = [
             `Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`,
-            `Nº Série: ${equipment.serial || 'Não informado'}`,
-            `Acessórios: ${accessories || 'Nenhum'}`,
+            `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`,
         ];
-        drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 25, equipmentInfo);
-        currentY += 35;
+        drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, boxHeight, equipmentInfo);
+        currentY += boxHeight + 5;
         
         const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
-        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
-        currentY += 35;
+        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight, problemText);
+        currentY += boxHeight + 10;
   
         // --- Footer ---
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
-        doc.setTextColor(fontColor);
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
         
         const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
         doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += textLines.length * (doc.getFontSize() / doc.internal.scaleFactor) + 5;
+        currentY += textLines.length * 3 + 5;
   
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
         currentY += 4;
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(fontColor);
         doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
     }
   
@@ -564,12 +558,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawReceiptContent(10, "Via do Cliente");
   
     // Linha de corte
+    const cutLineY = pageHeight / 2;
     doc.setLineDashPattern([2, 2], 0);
-    doc.line(margin, pageHeight / 2, pageWidth - margin, pageHeight / 2);
+    doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
     doc.setLineDashPattern([], 0);
   
     // Desenha a segunda via (Loja)
-    drawReceiptContent(pageHeight / 2 + 10, "Via da Loja");
+    drawReceiptContent(cutLineY + 10, "Via da Loja");
   
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);

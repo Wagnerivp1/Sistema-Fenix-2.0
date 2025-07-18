@@ -443,69 +443,103 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   };
 
   const generateEntryReceiptPdf = () => {
-    const base = generatePdfBase("Recibo de Entrada");
-    if (!base) return;
-    let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
-
+    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
+    if (!selectedCustomer) {
+        toast({ variant: 'destructive', title: 'Cliente não selecionado!' });
+        return null;
+    }
+  
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
     const fontColor = '#000000';
     const primaryColor = '#e0e7ff';
-    
-    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
-      doc.setFillColor(primaryColor);
-      doc.rect(x, y, width, 8, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(fontColor);
-      doc.text(title, x + 3, y + 6);
-      doc.setDrawColor(primaryColor);
-      doc.rect(x, y + 8, width, height - 8, 'S');
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor(fontColor);
-      const textArray = Array.isArray(text) ? text : [text];
-      doc.text(textArray, x + 3, y + 14);
-    };
-
-    const boxWidth = (pageWidth - (margin * 2));
-    
-    const customerInfo = [
-      `Nome: ${selectedCustomer.name}`,
-      `Telefone: ${selectedCustomer.phone}`,
-    ];
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 20, customerInfo);
-    currentY += 30;
-
-    const equipmentInfo = [
-      `Tipo: ${equipmentType}`,
-      `Marca / Modelo: ${equipment.brand} ${equipment.model}`,
-      `Nº Série: ${equipment.serial || 'Não informado'}`,
-      `Acessórios: ${accessories || 'Nenhum'}`,
-    ];
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
-    currentY += 40;
-    
-    const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
-    currentY += 60;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(fontColor);
-    doc.text('IMPORTANTE:', margin, currentY);
-    currentY += 5;
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
-    doc.text(doc.splitTextToSize(termsText, pageWidth - (margin * 2)), margin, currentY);
-    currentY += 30;
-    
-    doc.line(pageWidth / 2 - 50, currentY, pageWidth / 2 + 50, currentY);
-    currentY += 5;
-    doc.setFontSize(10);
-    doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center'});
-
+  
+    const drawReceiptContent = (yOffset: number, via: string) => {
+        let currentY = yOffset;
+  
+        // --- Header ---
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(fontColor);
+        doc.text("Sistema Fênix", margin, currentY + 12);
+        
+        doc.setFontSize(12);
+        doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 12, { align: 'right' });
+        
+        currentY += 20;
+        doc.setDrawColor(fontColor);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        currentY += 10;
+  
+        // --- Boxes ---
+        const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
+            doc.setFillColor(primaryColor);
+            doc.rect(x, y, width, 8, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(fontColor);
+            doc.text(title, x + 3, y + 6);
+            doc.setDrawColor(primaryColor);
+            doc.rect(x, y + 8, width, height - 8, 'S');
+      
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(fontColor);
+            const textArray = Array.isArray(text) ? text : [text];
+            doc.text(textArray, x + 3, y + 14);
+        };
+  
+        const boxWidth = (pageWidth - (margin * 2));
+        
+        const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
+        const customerInfo = [
+            `Nº OS: ${osId}`,
+            `Cliente: ${selectedCustomer.name}`,
+            `Telefone: ${selectedCustomer.phone}`,
+        ];
+        drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25, customerInfo);
+        currentY += 35;
+  
+        const equipmentInfo = [
+            `Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`,
+            `Nº Série: ${equipment.serial || 'Não informado'}`,
+            `Acessórios: ${accessories || 'Nenhum'}`,
+        ];
+        drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 25, equipmentInfo);
+        currentY += 35;
+        
+        const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
+        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
+        currentY += 35;
+  
+        // --- Footer ---
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(fontColor);
+        const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
+        doc.text(doc.splitTextToSize(termsText, pageWidth - (margin * 2)), margin, currentY, { align: 'center' });
+        currentY += 15;
+  
+        doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
+        currentY += 4;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
+    }
+  
+    // Desenha a primeira via (Cliente)
+    drawReceiptContent(10, "Via do Cliente");
+  
+    // Linha de corte
+    doc.setLineDashPattern([2, 2], 0);
+    doc.line(margin, pageHeight / 2, pageWidth - margin, pageHeight / 2);
+    doc.setLineDashPattern([], 0);
+  
+    // Desenha a segunda via (Loja)
+    drawReceiptContent(pageHeight / 2 + 10, "Via da Loja");
+  
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');

@@ -76,6 +76,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const [equipmentType, setEquipmentType] = React.useState('');
   const [equipment, setEquipment] = React.useState({ brand: '', model: '', serial: '' });
   const [accessories, setAccessories] = React.useState('');
+  const [reportedProblem, setReportedProblem] = React.useState('');
   const [technicalReport, setTechnicalReport] = React.useState('');
   const [internalNotes, setInternalNotes] = React.useState('');
   const [items, setItems] = React.useState<QuoteItem[]>([]);
@@ -100,6 +101,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
               serial: serviceOrder.serialNumber || '',
           });
           setAccessories(serviceOrder.accessories || ''); 
+          setReportedProblem(serviceOrder.reportedProblem || '');
           setTechnicalReport(serviceOrder.technicalReport || ''); 
           setItems(serviceOrder.items || []); 
           setStatus(serviceOrder.status);
@@ -110,6 +112,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setEquipmentType('');
           setEquipment({ brand: '', model: '', serial: '' });
           setAccessories('');
+          setReportedProblem('');
           setTechnicalReport('');
           setItems([]);
           setStatus('Aberta');
@@ -120,6 +123,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setEquipmentType('');
           setEquipment({ brand: '', model: '', serial: '' });
           setAccessories('');
+          setReportedProblem('');
           setTechnicalReport('');
           setItems([]);
           setStatus('Aberta');
@@ -173,7 +177,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         id: serviceOrder?.id || `OS-${Date.now()}`,
         customerName: selectedCustomer.name,
         equipment: fullEquipmentName,
-        reportedProblem: serviceOrder?.reportedProblem || 'Não informado',
+        reportedProblem: reportedProblem,
         status: status,
         date: serviceOrder?.date || new Date().toISOString().split('T')[0],
         totalValue: calculateTotal(),
@@ -281,7 +285,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
-    const problemText = doc.splitTextToSize(serviceOrder?.reportedProblem || "Não informado", boxWidth - 6);
+    const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
     drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 35;
 
@@ -382,7 +386,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
-    const problemText = doc.splitTextToSize(serviceOrder?.reportedProblem || "Não informado", boxWidth - 6);
+    const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
     drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 35;
 
@@ -508,7 +512,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, boxHeight, equipmentInfo);
         currentY += boxHeight;
         
-        const problemText = doc.splitTextToSize(serviceOrder?.reportedProblem || 'Não informado', boxWidth - 4);
+        const problemText = doc.splitTextToSize(reportedProblem || 'Não informado', boxWidth - 4);
         drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight + 2, problemText);
         currentY += boxHeight + 4;
   
@@ -670,6 +674,16 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                           <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
                         </div>
                       </div>
+                       <div className="grid grid-cols-1 gap-1.5">
+                        <Label htmlFor="reported_problem">Defeito Reclamado</Label>
+                        <Textarea
+                          id="reported_problem"
+                          placeholder="Descrição do problema relatado pelo cliente."
+                          value={reportedProblem}
+                          onChange={(e) => setReportedProblem(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
                       <div className="grid grid-cols-1 gap-1.5">
                         <Label htmlFor="accessories">Acessórios Entregues</Label>
                         <Textarea
@@ -800,5 +814,3 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </>
   );
 }
-
-    

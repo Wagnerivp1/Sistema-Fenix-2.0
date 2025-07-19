@@ -73,10 +73,10 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   
   // States para os dados do formulário
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>('');
+  const [reportedProblem, setReportedProblem] = React.useState('');
   const [equipmentType, setEquipmentType] = React.useState('');
   const [equipment, setEquipment] = React.useState({ brand: '', model: '', serial: '' });
   const [accessories, setAccessories] = React.useState('');
-  const [reportedProblem, setReportedProblem] = React.useState('');
   const [technicalReport, setTechnicalReport] = React.useState('');
   const [internalNotes, setInternalNotes] = React.useState('');
   const [items, setItems] = React.useState<QuoteItem[]>([]);
@@ -231,7 +231,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.text(`Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
     doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
 
-    return { doc, selectedCustomer, currentY: 42, pageWidth, margin };
+    return { doc, selectedCustomer, currentY: 40, pageWidth, margin };
   }
 
   const generateQuotePdf = () => {
@@ -260,7 +260,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
       const textArray = Array.isArray(text) ? text : [text];
-      doc.text(textArray, x + 3, y + 13);
+      doc.text(textArray, x + 3, y + 12);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
@@ -270,8 +270,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Telefone: ${selectedCustomer.phone}`,
       `Endereço: ${selectedCustomer.address || 'Não informado'}`,
     ];
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 22, customerInfo);
-    currentY += 28;
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 20, customerInfo);
+    currentY += 24;
 
     const equipmentInfo = [
       `Tipo: ${equipmentType}`,
@@ -279,16 +279,16 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Nº Série: ${equipment.serial || 'Não informado'}`,
       `Acessórios: ${accessories || 'Nenhum'}`,
     ];
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 26, equipmentInfo);
-    currentY += 32;
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 24, equipmentInfo);
+    currentY += 28;
     
     const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 22, problemText);
-    currentY += 28;
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 20, problemText);
+    currentY += 24;
 
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 26, servicesText);
-    currentY += 32;
+    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 24, servicesText);
+    currentY += 28;
 
     if (items.length > 0) {
       doc.autoTable({
@@ -305,13 +305,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
     
     const grandTotal = calculateTotal();
-    currentY += 8;
+    currentY += 6;
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-    currentY += 10;
+    currentY += 8;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
@@ -323,7 +323,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     currentY += 3;
     const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-    currentY += 18;
+    currentY += 15;
     
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
@@ -362,7 +362,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
       const textArray = Array.isArray(text) ? text : [text];
-      doc.text(textArray, x + 3, y + 13);
+      doc.text(textArray, x + 3, y + 12);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
@@ -372,8 +372,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Telefone: ${selectedCustomer.phone}`,
       `Endereço: ${selectedCustomer.address || 'Não informado'}`,
     ];
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 22, customerInfo);
-    currentY += 28;
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 20, customerInfo);
+    currentY += 24;
 
     const equipmentInfo = [
       `Tipo: ${equipmentType}`,
@@ -381,16 +381,16 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Nº Série: ${equipment.serial || 'Não informado'}`,
       `Acessórios: ${accessories || 'Nenhum'}`,
     ];
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 26, equipmentInfo);
-    currentY += 32;
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 24, equipmentInfo);
+    currentY += 28;
     
     const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 22, problemText);
-    currentY += 28;
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 20, problemText);
+    currentY += 24;
 
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 26, servicesText);
-    currentY += 32;
+    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 24, servicesText);
+    currentY += 28;
 
     if (items.length > 0) {
       doc.autoTable({
@@ -407,13 +407,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
     
     const grandTotal = calculateTotal();
-    currentY += 8;
+    currentY += 6;
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-    currentY += 10;
+    currentY += 8;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
@@ -425,7 +425,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     currentY += 3;
     const warrantyText = "A garantia para os serviços prestados é de 90 dias, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.";
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-    currentY += 18;
+    currentY += 15;
     
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
@@ -473,7 +473,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.setFont('helvetica', 'bold');
         doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
         
-        currentY += 20;
+        currentY += 18;
         doc.setDrawColor(209, 213, 219);
         doc.line(margin, currentY, pageWidth - margin, currentY);
         currentY += 4;
@@ -490,11 +490,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
             const textArray = Array.isArray(text) ? text : [text];
-            doc.text(textArray, x + 2, y + 9);
+            doc.text(textArray, x + 2, y + 8);
         };
   
         const boxWidth = (pageWidth - (margin * 2));
-        const boxHeight = 11;
+        const boxHeight = 10;
         
         const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
         const customerInfo = [
@@ -512,8 +512,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         currentY += boxHeight;
         
         const problemText = doc.splitTextToSize(reportedProblem || 'Não informado', boxWidth - 4);
-        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight + 2, problemText);
-        currentY += boxHeight + 4;
+        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight, problemText);
+        currentY += boxHeight + 2;
   
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7);
@@ -530,7 +530,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
     }
   
-    const receiptHeight = 85; 
+    const receiptHeight = 78;
     
     drawReceiptContent(8, "Via do Cliente");
   
@@ -601,7 +601,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[95vh] flex flex-col p-0">
         <DialogHeader className="p-4 flex-shrink-0 border-b">
           <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
@@ -673,26 +673,28 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                           <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 gap-1.5">
-                        <Label htmlFor="reported_problem">Defeito Reclamado</Label>
-                        <Textarea
-                          id="reported_problem"
-                          placeholder="Descrição do problema relatado pelo cliente."
-                          value={reportedProblem}
-                          onChange={(e) => setReportedProblem(e.target.value)}
-                          rows={3}
-                        />
-                      </div>
-                       <div className="grid grid-cols-1 gap-1.5">
-                        <Label htmlFor="accessories">Acessórios Entregues</Label>
-                        <Textarea
-                          id="accessories"
-                          placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
-                          value={accessories}
-                          onChange={(e) => setAccessories(e.target.value)}
-                          rows={3}
-                        />
-                        <p className="text-xs text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="reported_problem">Defeito Reclamado</Label>
+                          <Textarea
+                            id="reported_problem"
+                            placeholder="Descrição do problema relatado pelo cliente."
+                            value={reportedProblem}
+                            onChange={(e) => setReportedProblem(e.target.value)}
+                            rows={3}
+                          />
+                        </div>
+                         <div className="space-y-1.5">
+                          <Label htmlFor="accessories">Acessórios Entregues</Label>
+                          <Textarea
+                            id="accessories"
+                            placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
+                            value={accessories}
+                            onChange={(e) => setAccessories(e.target.value)}
+                            rows={3}
+                          />
+                          <p className="text-xs text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
+                        </div>
                       </div>
                   </TabsContent>
                   <TabsContent value="items" className="mt-0 space-y-3">
@@ -813,3 +815,5 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </>
   );
 }
+
+    

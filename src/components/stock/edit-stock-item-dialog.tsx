@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import Barcode from 'react-barcode';
 
 interface EditStockItemDialogProps {
   item: StockItem | null;
@@ -70,7 +71,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
     }
     
     // Gerar o código de barras com as informações desejadas
-    const barcodeValue = `jl iNFORMÁTICA | ${formData.name} | R$${formData.price.toFixed(2)}`;
+    const barcodeValue = `jl iNFORMÁTICA | ${formData.name} | R$${(formData.price || 0).toFixed(2)}`;
 
     const finalItem: StockItem = {
       id: formData.id!,
@@ -83,6 +84,8 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
     onSave(finalItem);
   };
   
+  const currentBarcodeValue = `jl iNFORMÁTICA | ${formData.name || ''} | R$${(formData.price || 0).toFixed(2)}`;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
@@ -125,7 +128,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
                 </div>
                 <div className="space-y-2 col-span-1">
                     <Label htmlFor="barcode">Código de Barras</Label>
-                     <Input id="barcode" value={formData.barcode ? 'Gerado automaticamente' : ''} disabled />
+                     <Input id="barcode" value={'Gerado automaticamente'} disabled />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
@@ -148,9 +151,18 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
                 </div>
             </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave}>Salvar Produto</Button>
+        <DialogFooter className="sm:justify-between items-center">
+            <div className="flex-shrink-0">
+                {formData.name && formData.price ? (
+                    <Barcode value={currentBarcodeValue} height={40} fontSize={10} width={1.5} />
+                ) : (
+                    <div className="h-[40px] flex items-center text-xs text-muted-foreground">Preencha nome e preço para gerar o código.</div>
+                )}
+            </div>
+            <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+                <Button onClick={handleSave}>Salvar Produto</Button>
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

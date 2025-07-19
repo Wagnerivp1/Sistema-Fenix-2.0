@@ -409,7 +409,149 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     window.open(pdfUrl, '_blank');
   };
 
+  const getWarrantyPeriodText = (order: ServiceOrder) => {
+    if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
+        return "Garantia não aplicável ou pendente.";
+    }
+
+    let defaultWarrantyDays = 90;
+    try {
+        const savedSettings = localStorage.getItem(SETTINGS_KEY);
+        if (savedSettings) {
+            defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
+        }
+    } catch (e) { /* ignore */ }
+
+    const match = order.warranty.match(/(\d+)\s*(dias|meses|mes|ano|anos)/i);
+    let duration: Duration = { days: defaultWarrantyDays };
+
+    if (match) {
+        const value = parseInt(match[1], 10);
+        const unit = match[2].toLowerCase();
+        if (unit.startsWith('dia')) duration = { days: value };
+        else if (unit.startsWith('mes')) duration = { months: value };
+        else if (unit.startsWith('ano')) duration = { years: value };
+    }
+
+    const [year, month, day] = order.deliveredDate.split('-').map(Number);
+    const startDate = new Date(Date.UTC(year, month - 1, day));
+    const endDate = add(startDate, duration);
+    const formatDate = (d: Date) => d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+
+    return `Período da Garantia: de ${formatDate(startDate)} até ${formatDate(endDate)}.`;
+};
+
+  const generateDeliveryReceiptPdf = (orderToPrint: ServiceOrder) => {
+    const selectedCustomer = customers.find(c => c.name === orderToPrint.customerName);
+    if (!selectedCustomer) {
+        toast({ variant: "destructive", title: "Cliente não encontrado!" });
+        return;
+    }
+
+    const doc = new jsPDF({ format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 10;
+    const osId = `#${orderToPrint.id.slice(-4)}`;
+
+    const drawReceiptContent = (yOffset: number, via: string) => {
+        let currentY = yOffset;
+        const fontColor = '#000000';
+
+        // Cabeçalho
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, currentY, 25, 18, 'F');
+        doc.setFontSize(7);
+        doc.setTextColor(156, 163, 175);
+        doc.text('Sua Logo', margin + 4.5, currentY + 11);
+
+        doc.setTextColor(fontColor);
+        const companyInfoX = margin + 30;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text("JL Informática", companyInfoX, currentY + 7);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Recibo de Entrega - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
+        currentY += 20;
+        doc.setDrawColor(209, 213, 219);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        currentY += 5;
+
+        // Informações da OS
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('OS:', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(osId, margin + 8, currentY);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Cliente:', margin + 30, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(selectedCustomer.name, margin + 45, currentY);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Data Entrega:', margin + 120, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, currentY);
+        currentY += 7;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipamento:', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(orderToPrint.equipment, margin + 25, currentY);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Nº Série:', margin + 120, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(orderToPrint.serialNumber || 'Não informado', margin + 135, currentY);
+        currentY += 7;
+
+        // Termos de Garantia
+        doc.setFont('helvetica', 'bold');
+        doc.text('Garantia:', margin, currentY);
+        currentY += 4;
+        doc.setFont('helvetica', 'normal');
+        const warrantyText = getWarrantyPeriodText(orderToPrint);
+        const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2);
+        doc.text(warrantyLines, margin, currentY);
+        currentY += warrantyLines.length * 4 + 3;
+
+        const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
+        const textLines = doc.splitTextToSize(termsText, pageWidth - margin * 2);
+        doc.text(textLines, margin, currentY);
+        currentY += doc.getTextDimensions(textLines).h + 10;
+        
+        // Assinatura
+        doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
+        currentY += 4;
+        doc.setFontSize(8);
+        doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
+
+        return currentY;
+    };
+
+    const firstReceiptEndY = drawReceiptContent(10, "Via do Cliente");
+    const cutLineY = firstReceiptEndY + 10;
+    doc.setLineDashPattern([2, 1], 0);
+    doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
+    doc.setLineDashPattern([], 0);
+    drawReceiptContent(cutLineY + 10, "Via da Loja");
+
+    doc.output('dataurlnewwindow');
+};
+
   const generateServiceOrderPdf = (orderToPrint: ServiceOrder) => {
+    // Se a OS estiver entregue, gera o recibo de entrega em duas vias
+    if (orderToPrint.status === 'Entregue' && orderToPrint.deliveredDate) {
+        generateDeliveryReceiptPdf(orderToPrint);
+        return;
+    }
+
+    // Caso contrário, gera o documento completo da OS
     const base = generatePdfBase("Ordem de Serviço");
     if (!base) return;
     let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
@@ -503,31 +645,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     // Add warranty start and end date if applicable
     const deliveredDate = orderToPrint.deliveredDate;
     if (orderToPrint.status === 'Entregue' && deliveredDate && warranty) {
-        let defaultWarrantyDays = 90;
-        try {
-            const savedSettings = localStorage.getItem(SETTINGS_KEY);
-            if (savedSettings) {
-                defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
-            }
-        } catch (e) { /* ignore */ }
-
-        const match = warranty.match(/(\d+)\s*(dias|meses|mes|ano|anos)/i);
-        let duration: Duration = { days: defaultWarrantyDays };
-
-        if (match) {
-            const value = parseInt(match[1], 10);
-            const unit = match[2].toLowerCase();
-            if (unit.startsWith('dia')) duration = { days: value };
-            else if (unit.startsWith('mes')) duration = { months: value };
-            else if (unit.startsWith('ano')) duration = { years: value };
-        }
-        
-        const [year, month, day] = deliveredDate.split('-').map(Number);
-        const startDate = new Date(Date.UTC(year, month - 1, day));
-        const endDate = add(startDate, duration);
-        const formatDate = (d: Date) => d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-
-        warrantyText += ` Período da Garantia: de ${formatDate(startDate)} até ${formatDate(endDate)}.`;
+        warrantyText = getWarrantyPeriodText(orderToPrint);
     }
 
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);

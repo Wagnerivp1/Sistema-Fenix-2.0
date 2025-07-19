@@ -113,15 +113,25 @@ export default function ServiceOrdersPage() {
   const handleSaveOrder = (savedOrder: ServiceOrder) => {
     let updatedOrders;
     const orderExists = orders.some(o => o.id === savedOrder.id);
+    const finalOrder = { ...savedOrder };
+
+    // Se o status for 'Entregue' e não houver data de entrega, defina-a
+    if (finalOrder.status === 'Entregue' && !finalOrder.deliveredDate) {
+      finalOrder.deliveredDate = new Date().toISOString().split('T')[0];
+    }
+    // Se o status não for mais 'Entregue', limpe a data de entrega
+    else if (finalOrder.status !== 'Entregue') {
+      delete finalOrder.deliveredDate;
+    }
 
     if (orderExists) {
-        updatedOrders = orders.map(o => o.id === savedOrder.id ? savedOrder : o);
+        updatedOrders = orders.map(o => o.id === finalOrder.id ? finalOrder : o);
          toast({
             title: 'Ordem de Serviço Atualizada!',
             description: 'Os dados da OS foram salvos com sucesso.',
         });
     } else {
-        updatedOrders = [savedOrder, ...orders];
+        updatedOrders = [finalOrder, ...orders];
         toast({
             title: 'Ordem de Serviço Salva!',
             description: 'A nova ordem de serviço foi registrada com sucesso.',

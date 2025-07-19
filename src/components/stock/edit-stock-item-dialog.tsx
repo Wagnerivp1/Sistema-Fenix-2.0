@@ -35,7 +35,6 @@ const initialFormData: Partial<StockItem> = {
     price: 0,
     quantity: 0,
     minStock: 0,
-    location: '',
 };
 
 export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: EditStockItemDialogProps) {
@@ -72,7 +71,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
       id: item?.id || `PROD-${Date.now()}`,
       name: formData.name,
       price: formData.price || 0,
-      quantity: item?.quantity || 0, // Quantity is managed by entries/exits, not here.
+      quantity: isEditing ? item.quantity : (formData.quantity || 0),
       ...formData
     };
     onSave(finalItem);
@@ -133,12 +132,13 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
             </div>
             <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="minStock">Estoque Mínimo</Label>
-                    <Input id="minStock" type="number" value={formData.minStock || ''} onChange={handleChange} />
+                    <Label htmlFor="quantity">Quantidade Inicial</Label>
+                    <Input id="quantity" type="number" value={isEditing ? item.quantity : (formData.quantity || '')} onChange={handleChange} disabled={isEditing} />
+                    {isEditing && <p className="text-xs text-muted-foreground">Use "Adicionar Entrada" para alterar o estoque.</p>}
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="location">Localização</Label>
-                    <Input id="location" placeholder="Ex: Prateleira A-5" value={formData.location || ''} onChange={handleChange} />
+                    <Label htmlFor="minStock">Estoque Mínimo</Label>
+                    <Input id="minStock" type="number" value={formData.minStock || ''} onChange={handleChange} />
                 </div>
             </div>
         </div>
@@ -150,4 +150,3 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
     </Dialog>
   );
 }
-

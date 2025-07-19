@@ -36,7 +36,7 @@ export type StockItem = {
   category?: string;
   description?: string;
   unitOfMeasure?: 'UN' | 'KG' | 'L' | 'M' | 'CX';
-  barcode?: string;
+  barcode: string;
   costPrice?: number;
   price: number; // Selling price
   quantity: number;

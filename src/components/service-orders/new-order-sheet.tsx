@@ -452,20 +452,18 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   
     const doc = new jsPDF({ format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10;
     const fontColor = '#000000';
-    const primaryColor = '#eef2ff'; // Lighter primary color
+    const primaryColor = '#eef2ff'; 
   
     const drawReceiptContent = (yOffset: number, via: string) => {
         let currentY = yOffset;
   
-        // --- Header ---
-        doc.setFillColor(248, 250, 252); // Very light gray
-        doc.rect(margin, currentY, 25, 20, 'F');
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, currentY, 25, 18, 'F');
         doc.setFontSize(7);
         doc.setTextColor(156, 163, 175);
-        doc.text('Sua Logo', margin + 4.5, currentY + 12);
+        doc.text('Sua Logo', margin + 4.5, currentY + 11);
         doc.setTextColor(fontColor);
 
         const companyInfoX = margin + 30;
@@ -474,19 +472,17 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.text("Sistema Fênix", companyInfoX, currentY + 7);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text("Rua da Tecnologia, 123", companyInfoX, currentY + 12);
-        doc.text("Telefone: (11) 99999-8888", companyInfoX, currentY + 16);
+        doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);
         
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
         
-        currentY += 22;
+        currentY += 20;
         doc.setDrawColor(209, 213, 219);
         doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 5;
+        currentY += 4;
   
-        // --- Boxes ---
         const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
             doc.setFillColor(primaryColor);
             doc.rect(x, y, width, 5, 'F');
@@ -503,7 +499,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         };
   
         const boxWidth = (pageWidth - (margin * 2));
-        const boxHeight = 12;
+        const boxHeight = 11;
         
         const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
         const customerInfo = [
@@ -511,27 +507,26 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             `Telefone: ${selectedCustomer.phone}`,
         ];
         drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, boxHeight, customerInfo);
-        currentY += boxHeight + 1;
+        currentY += boxHeight;
   
         const equipmentInfo = [
             `Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`,
             `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`,
         ];
         drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, boxHeight, equipmentInfo);
-        currentY += boxHeight + 1;
+        currentY += boxHeight;
         
         const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 4);
-        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight + 3, problemText);
-        currentY += boxHeight + 5;
+        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight + 2, problemText);
+        currentY += boxHeight + 4;
   
-        // --- Footer ---
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7);
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
         
         const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
         doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += doc.getTextDimensions(textLines).h + 4;
+        currentY += doc.getTextDimensions(textLines).h + 3;
   
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
         currentY += 3;
@@ -540,18 +535,15 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
     }
   
-    const receiptHeight = 90; // Approximate height of one receipt in mm
+    const receiptHeight = 85; 
     
-    // Draw the first receipt (Customer copy)
     drawReceiptContent(8, "Via do Cliente");
   
-    // Cutting line
     const cutLineY = receiptHeight;
     doc.setLineDashPattern([1, 1], 0);
     doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
     doc.setLineDashPattern([], 0);
   
-    // Draw the second receipt (Store copy)
     drawReceiptContent(cutLineY + 5, "Via da Loja");
   
     const pdfBlob = doc.output('blob');
@@ -614,8 +606,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full max-h-[95vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-4 flex-shrink-0 border-b">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-4 flex-shrink-0 border-b">
           <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
             {isEditing ? `Altere os dados do atendimento, adicione serviços e peças.` : 'Preencha os dados para registrar um novo atendimento.'}
@@ -624,7 +616,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         
         <div className="flex-1 min-h-0">
           <Tabs defaultValue="general" className="h-full flex flex-col">
-            <div className="px-6 flex-shrink-0">
+            <div className="px-4 flex-shrink-0">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="general">Dados Gerais</TabsTrigger>
                     <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
@@ -633,7 +625,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto">
               <ScrollArea className="h-full">
-                <div className="px-6 py-4 space-y-4">
+                <div className="p-4 space-y-4">
                   <TabsContent value="general" className="mt-0 space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -789,7 +781,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           </Tabs>
         </div>
         
-        <DialogFooter className="p-6 pt-4 border-t flex-shrink-0 bg-card sm:justify-between">
+        <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-between">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Gerar Orçamento</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>

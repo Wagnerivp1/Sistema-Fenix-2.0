@@ -95,4 +95,3 @@ export function AddStockEntryDialog({ item, isOpen, onOpenChange, onSave }: AddS
     </Dialog>
   );
 }
-

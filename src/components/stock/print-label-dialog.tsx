@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

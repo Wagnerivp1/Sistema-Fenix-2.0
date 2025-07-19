@@ -1,4 +1,4 @@
-import type { Customer, ServiceOrder } from '@/types';
+import type { Customer, ServiceOrder, StockItem } from '@/types';
 
 export const mockCustomers: Customer[] = [
   {
@@ -138,4 +138,15 @@ export const mockRevenueData = [
     { month: 'Mai', revenue: 1890, expenses: 1800 },
     { month: 'Jun', revenue: 3390, expenses: 2500 },
     { month: 'Jul', revenue: 4490, expenses: 3100 },
-]
+];
+
+
+export const mockStock: StockItem[] = [
+  { id: 'PART-001', name: 'Bateria para Acer Aspire 3', quantity: 5, price: 280.00, location: 'Prateleira A-1' },
+  { id: 'PART-002', name: 'Tela 15.6" LED Slim', quantity: 10, price: 350.00, location: 'Prateleira A-2' },
+  { id: 'PART-003', name: 'Teclado ABNT2 Dell Inspiron', quantity: 2, price: 120.00, location: 'Caixa 5' },
+  { id: 'PART-004', name: 'SSD 240GB Kingston', quantity: 8, price: 180.00, location: 'Prateleira B-1' },
+  { id: 'PART-005', name: 'Memória RAM 8GB DDR4 Notebook', quantity: 12, price: 220.00, location: 'Prateleira B-1' },
+  { id: 'PART-006', name: 'Fonte Carregador Universal Notebook', quantity: 0, price: 90.00, location: 'Caixa 1' },
+  { id: 'PART-007', name: 'Pasta Térmica Prata 5g', quantity: 20, price: 25.00, location: 'Gaveta 3' },
+];

@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Printer, FileText, Trash2, X } from 'lucide-react';
+import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,6 +24,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,13 +37,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockCustomers } from '@/lib/data';
-import type { Customer, ServiceOrder } from '@/types';
+import { mockCustomers, mockStock } from '@/lib/data';
+import type { Customer, ServiceOrder, StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Separator } from '../ui/separator';
+import { cn } from '@/lib/utils';
+
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -71,7 +74,6 @@ interface QuoteItem {
 export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
   const { toast } = useToast();
   
-  // States para os dados do formulário
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>('');
   const [reportedProblem, setReportedProblem] = React.useState('');
   const [equipmentType, setEquipmentType] = React.useState('');
@@ -82,8 +84,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const [items, setItems] = React.useState<QuoteItem[]>([]);
   const [status, setStatus] = React.useState<ServiceOrder['status']>('Aberta');
   const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = React.useState(false);
-  
+  const [isManualAddDialogOpen, setIsManualAddDialogOpen] = React.useState(false);
+  const [manualAddItem, setManualAddItem] = React.useState<QuoteItem | null>(null);
+
   const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0, type: 'service' as 'service' | 'part' });
+  const [openCombobox, setOpenCombobox] = React.useState(false);
 
   const isEditing = !!serviceOrder;
 
@@ -138,16 +143,35 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   };
 
   const handleAddItem = () => {
-    if (newItem.description && newItem.quantity > 0 && newItem.unitPrice >= 0) {
-      setItems([...items, { ...newItem, id: Date.now() }]);
-      setNewItem({ description: '', quantity: 1, unitPrice: 0, type: 'service' }); // Reset for next item
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Item inválido',
-            description: 'Preencha a descrição e o valor do item.',
-        })
+    if (!newItem.description || newItem.quantity <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Item inválido',
+        description: 'Preencha a descrição e a quantidade do item.',
+      });
+      return;
     }
+
+    if (newItem.type === 'part') {
+      const stockItem = mockStock.find(item => item.name.toLowerCase() === newItem.description.toLowerCase());
+      if (!stockItem) {
+        setManualAddItem({ ...newItem, id: Date.now() });
+        setIsManualAddDialogOpen(true);
+        return;
+      }
+    }
+
+    setItems([...items, { ...newItem, id: Date.now() }]);
+    setNewItem({ description: '', quantity: 1, unitPrice: 0, type: 'service' }); // Reset for next item
+  };
+
+  const confirmManualAdd = () => {
+    if (manualAddItem) {
+      setItems([...items, manualAddItem]);
+    }
+    setNewItem({ description: '', quantity: 1, unitPrice: 0, type: 'service' });
+    setIsManualAddDialogOpen(false);
+    setManualAddItem(null);
   };
 
   const handleRemoveItem = (id: number) => {
@@ -188,7 +212,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
   };
 
-  const generatePdfBase = (title: string): { doc: jsPDF, selectedCustomer: Customer, currentY: number, pageWidth: number, margin: number } | null => {
+ const generatePdfBase = (title: string): { doc: jsPDF, selectedCustomer: Customer, currentY: number, pageWidth: number, margin: number } | null => {
     const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
         toast({ variant: 'destructive', title: 'Cliente não selecionado!'});
@@ -245,22 +269,22 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
       const textArray = Array.isArray(text) ? text : [text];
       const textHeight = doc.getTextDimensions(textArray).h;
-      const boxHeight = Math.max(minHeight, textHeight + 6);
+      const boxHeight = Math.max(minHeight, textHeight + 4);
       
       doc.setFillColor(primaryColor);
-      doc.rect(x, y, width, 7, 'F');
+      doc.rect(x, y, width, 6, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(title, x + 3, y + 5);
+      doc.text(title, x + 2, y + 4.5);
       
       doc.setDrawColor(primaryColor);
-      doc.rect(x, y + 7, width, boxHeight, 'S');
+      doc.rect(x, y + 6, width, boxHeight, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(textArray, x + 3, y + 12);
+      doc.text(textArray, x + 2, y + 10);
 
       return y + boxHeight + 8; // Return new Y position
     };
@@ -272,7 +296,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Telefone: ${selectedCustomer.phone}`,
       `Endereço: ${selectedCustomer.address || 'Não informado'}`,
     ];
-    currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 18, customerInfo);
+    currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 15, customerInfo);
 
     const equipmentInfo = [
       `Tipo: ${equipmentType}`,
@@ -280,13 +304,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Nº Série: ${equipment.serial || 'Não informado'}`,
       `Acessórios: ${accessories || 'Nenhum'}`,
     ];
-    currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 22, equipmentInfo);
+    currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 20, equipmentInfo);
     
-    const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
-    currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 18, problemText);
+    const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 4);
+    currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 15, problemText);
 
-    const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 22, servicesText);
+    const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
+    currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 20, servicesText);
 
     if (items.length > 0) {
       doc.autoTable({
@@ -294,8 +318,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
-        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9 },
-        bodyStyles: { fontSize: 8 },
+        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
+        bodyStyles: { fontSize: 8, cellPadding: 1.5 },
         footStyles: { fillColor: secondaryColor, textColor: fontColor },
         margin: { left: margin, right: margin }
       });
@@ -303,13 +327,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
     
     const grandTotal = calculateTotal();
-    currentY += 6;
+    currentY += 5;
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-    currentY += 8;
+    currentY += 6;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
@@ -321,7 +345,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     currentY += 3;
     const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-    currentY += 15;
+    currentY += 12;
     
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
@@ -345,26 +369,26 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
 
     doc.setTextColor(fontColor);
 
-    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
+     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
       const textArray = Array.isArray(text) ? text : [text];
       const textHeight = doc.getTextDimensions(textArray).h;
-      const boxHeight = Math.max(minHeight, textHeight + 6);
+      const boxHeight = Math.max(minHeight, textHeight + 4);
       
       doc.setFillColor(primaryColor);
-      doc.rect(x, y, width, 7, 'F');
+      doc.rect(x, y, width, 6, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(title, x + 3, y + 5);
+      doc.text(title, x + 2, y + 4.5);
       
       doc.setDrawColor(primaryColor);
-      doc.rect(x, y + 7, width, boxHeight, 'S');
+      doc.rect(x, y + 6, width, boxHeight, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(textArray, x + 3, y + 12);
-      
+      doc.text(textArray, x + 2, y + 10);
+
       return y + boxHeight + 8; // Return new Y position
     };
     
@@ -375,7 +399,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Telefone: ${selectedCustomer.phone}`,
       `Endereço: ${selectedCustomer.address || 'Não informado'}`,
     ];
-    currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 18, customerInfo);
+    currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 15, customerInfo);
 
     const equipmentInfo = [
       `Tipo: ${equipmentType}`,
@@ -383,13 +407,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Nº Série: ${equipment.serial || 'Não informado'}`,
       `Acessórios: ${accessories || 'Nenhum'}`,
     ];
-    currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 22, equipmentInfo);
+    currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 20, equipmentInfo);
     
-    const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
-    currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 18, problemText);
+    const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 4);
+    currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 15, problemText);
 
-    const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 22, servicesText);
+    const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
+    currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 20, servicesText);
 
     if (items.length > 0) {
       doc.autoTable({
@@ -397,8 +421,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
-        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9 },
-        bodyStyles: { fontSize: 8 },
+        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
+        bodyStyles: { fontSize: 8, cellPadding: 1.5 },
         footStyles: { fillColor: secondaryColor, textColor: fontColor },
         margin: { left: margin, right: margin }
       });
@@ -406,13 +430,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
     
     const grandTotal = calculateTotal();
-    currentY += 6;
+    currentY += 5;
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-    currentY += 8;
+    currentY += 6;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
@@ -424,7 +448,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     currentY += 3;
     const warrantyText = "A garantia para os serviços prestados é de 90 dias, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.";
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-    currentY += 15;
+    currentY += 12;
     
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
@@ -437,95 +461,94 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     window.open(pdfUrl, '_blank');
   };
 
-  const generateEntryReceiptPdf = () => {
+const generateEntryReceiptPdf = () => {
     const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
-      toast({ variant: 'destructive', title: 'Cliente não selecionado!' });
-      return null;
+        toast({ variant: "destructive", title: "Cliente não selecionado!" });
+        return;
     }
 
     const doc = new jsPDF({ format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 10;
     const fontColor = '#000000';
-    const primaryColor = '#eef2ff';
+    const primaryColor = '#f3f4f6';
 
     const drawReceiptContent = (yOffset: number, via: string) => {
-      let currentY = yOffset;
+        let currentY = yOffset;
 
-      doc.setFillColor(248, 250, 252);
-      doc.rect(margin, currentY, 25, 18, 'F');
-      doc.setFontSize(7);
-      doc.setTextColor(156, 163, 175);
-      doc.text('Sua Logo', margin + 4.5, currentY + 11);
-      doc.setTextColor(fontColor);
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, currentY, 25, 18, 'F');
+        doc.setFontSize(7);
+        doc.setTextColor(156, 163, 175);
+        doc.text('Sua Logo', margin + 4.5, currentY + 11);
+        doc.setTextColor(fontColor);
 
-      const companyInfoX = margin + 30;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text("Sistema Fênix", companyInfoX, currentY + 7);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);
-
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
-
-      currentY += 18;
-      doc.setDrawColor(209, 213, 219);
-      doc.line(margin, currentY, pageWidth - margin, currentY);
-      currentY += 4;
-
-      const drawInfoBox = (title: string, lines: string[], startY: number): number => {
-        const boxWidth = pageWidth - (margin * 2);
-        const titleHeight = 5;
-        const textHeight = doc.getTextDimensions(lines).h + 4;
-        const boxHeight = titleHeight + textHeight;
-
-        doc.setFillColor(primaryColor);
-        doc.rect(margin, startY, boxWidth, titleHeight, 'F');
+        const companyInfoX = margin + 30;
         doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text("Sistema Fênix", companyInfoX, currentY + 7);
         doc.setFontSize(8);
-        doc.text(title, margin + 2, startY + 3.5);
-
-        doc.setDrawColor(224, 231, 255);
-        doc.rect(margin, startY + titleHeight, boxWidth, textHeight, 'S');
-
         doc.setFont('helvetica', 'normal');
+        doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
+
+        currentY += 18;
+        doc.setDrawColor(209, 213, 219);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        currentY += 4;
+
+        const drawInfoBox = (title: string, lines: string[], startY: number): number => {
+            const boxWidth = pageWidth - (margin * 2);
+            const titleHeight = 5;
+            const textLines = lines.map(line => doc.splitTextToSize(line, boxWidth - 4)).flat();
+            const textHeight = doc.getTextDimensions(textLines).h + 2;
+            const boxHeight = titleHeight + textHeight;
+
+            doc.setFillColor(primaryColor);
+            doc.rect(margin, startY, boxWidth, titleHeight, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8);
+            doc.text(title, margin + 2, startY + 3.5);
+
+            doc.setDrawColor(224, 231, 255);
+            doc.rect(margin, startY + titleHeight, boxWidth, textHeight, 'S');
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.text(textLines, margin + 2, startY + titleHeight + 4);
+
+            return startY + boxHeight;
+        };
+
+        const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
+        currentY = drawInfoBox('Dados do Cliente', [`Nº OS: ${osId} | Cliente: ${selectedCustomer.name}`, `Telefone: ${selectedCustomer.phone}`], currentY);
+        currentY = drawInfoBox('Informações do Equipamento', [`Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`, `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`], currentY + 1);
+        currentY = drawInfoBox('Defeito Reclamado', [reportedProblem || 'Não informado'], currentY + 1);
+        currentY += 2;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
+
+        const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
+        doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
+        currentY += doc.getTextDimensions(textLines).h + 3;
+
+        doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
+        currentY += 3;
         doc.setFontSize(8);
-        doc.text(lines, margin + 2, startY + titleHeight + 4);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
 
-        return startY + boxHeight;
-      };
-
-      const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
-      currentY = drawInfoBox('Dados do Cliente', [`Nº OS: ${osId} | Cliente: ${selectedCustomer.name}`, `Telefone: ${selectedCustomer.phone}`], currentY);
-      currentY = drawInfoBox('Informações do Equipamento', [`Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`, `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`], currentY + 1);
-      
-      const problemText = doc.splitTextToSize(reportedProblem || 'Não informado', pageWidth - (margin * 2) - 4);
-      currentY = drawInfoBox('Defeito Reclamado', problemText, currentY + 1);
-      currentY += 2;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
-
-      const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
-      doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
-      currentY += doc.getTextDimensions(textLines).h + 3;
-
-      doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
-      currentY += 3;
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
-
-      return currentY; // Return the final Y position for this receipt
+        return currentY;
     };
 
     const firstReceiptEndY = drawReceiptContent(8, "Via do Cliente");
-    const receiptHeight = firstReceiptEndY + 5; // Add some padding
+    const receiptHeight = firstReceiptEndY + 5;
 
     const cutLineY = receiptHeight;
     doc.setLineDashPattern([1, 1], 0);
@@ -537,7 +560,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');
-  };
+};
 
   const handlePrint = (documentType: string) => {
     switch (documentType) {
@@ -594,7 +617,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl w-full h-[95vh] flex flex-col p-0">
         <DialogHeader className="p-4 flex-shrink-0 border-b">
           <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
@@ -602,71 +625,70 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-grow min-h-0 flex flex-col">
-          <div className="px-4 flex-shrink-0">
-              <Tabs defaultValue="general">
-                  <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="general">Dados Gerais</TabsTrigger>
-                      <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
-                      <TabsTrigger value="notes">Comentários</TabsTrigger>
-                  </TabsList>
+        <div className="flex-grow min-h-0">
+            <Tabs defaultValue="general" className="h-full flex flex-col">
+                <TabsList className="grid w-full grid-cols-3 mx-4 flex-shrink-0">
+                    <TabsTrigger value="general">Dados Gerais</TabsTrigger>
+                    <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
+                    <TabsTrigger value="notes">Comentários</TabsTrigger>
+                </TabsList>
 
-                  <div className="flex-grow min-h-0 mt-2">
-                    <ScrollArea className="h-[calc(70vh-220px)]">
-                      <div className="p-4 pt-2 space-y-3">
-                        <TabsContent value="general" className="mt-0 space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                  <Label htmlFor="customer">Cliente</Label>
-                                  <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Selecione um cliente" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {mockCustomers.map((c) => (
-                                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                              </div>
-                              <div>
-                                <Label htmlFor="status">Status</Label>
-                                <Select value={status} onValueChange={handleStatusChange}>
+                <div className="flex-grow min-h-0">
+                  <ScrollArea className="h-full">
+                    <div className="p-4 pt-2 space-y-3">
+                      <TabsContent value="general" className="mt-0 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label htmlFor="customer">Cliente</Label>
+                                <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Status" />
+                                    <SelectValue placeholder="Selecione um cliente" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="Aberta">Aberta</SelectItem>
-                                    <SelectItem value="Em análise">Em análise</SelectItem>
-                                    <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
-                                    <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
-                                    <SelectItem value="Aprovado">Aprovado</SelectItem>
-                                    <SelectItem value="Em conserto">Em conserto</SelectItem>
-                                    <SelectItem value="Finalizar">Finalizar</SelectItem>
-                                    <SelectItem value="Entregue">Entregue</SelectItem>
+                                    {mockCustomers.map((c) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
-                              </div>
                             </div>
-                            <div className="grid grid-cols-4 gap-3">
-                              <div>
-                                <Label htmlFor="type">Tipo</Label>
-                                <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={(e) => setEquipmentType(e.target.value)} />
-                              </div>
-                              <div>
-                                <Label htmlFor="brand">Marca</Label>
-                                <Input id="brand" placeholder="Ex: Dell" value={equipment.brand} onChange={handleEquipmentChange} />
-                              </div>
-                              <div>
-                                <Label htmlFor="model">Modelo</Label>
-                                <Input id="model" placeholder="Ex: Inspiron 15" value={equipment.model} onChange={handleEquipmentChange} />
-                              </div>
-                              <div>
-                                <Label htmlFor="serial">Nº de Série</Label>
-                                <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
-                              </div>
+                            <div>
+                              <Label htmlFor="status">Status</Label>
+                              <Select value={status} onValueChange={handleStatusChange}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Aberta">Aberta</SelectItem>
+                                  <SelectItem value="Em análise">Em análise</SelectItem>
+                                  <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
+                                  <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
+                                  <SelectItem value="Aprovado">Aprovado</SelectItem>
+                                  <SelectItem value="Em conserto">Em conserto</SelectItem>
+                                  <SelectItem value="Finalizar">Finalizar</SelectItem>
+                                  <SelectItem value="Entregue">Entregue</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                          </div>
+                          <div className="grid grid-cols-4 gap-3">
+                            <div>
+                              <Label htmlFor="type">Tipo</Label>
+                              <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={(e) => setEquipmentType(e.target.value)} />
+                            </div>
+                            <div>
+                              <Label htmlFor="brand">Marca</Label>
+                              <Input id="brand" placeholder="Ex: Dell" value={equipment.brand} onChange={handleEquipmentChange} />
+                            </div>
+                            <div>
+                              <Label htmlFor="model">Modelo</Label>
+                              <Input id="model" placeholder="Ex: Inspiron 15" value={equipment.model} onChange={handleEquipmentChange} />
+                            </div>
+                            <div>
+                              <Label htmlFor="serial">Nº de Série</Label>
+                              <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
+                            </div>
+                          </div>
+                           <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-1.5">
                                 <Label htmlFor="reported_problem">Defeito Reclamado</Label>
                                 <Textarea
@@ -686,90 +708,130 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                                   onChange={(e) => setAccessories(e.target.value)}
                                   rows={3}
                                 />
-                                <p className="text-xs text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
                               </div>
                             </div>
-                        </TabsContent>
-                        <TabsContent value="items" className="mt-0 space-y-3">
-                          <div className="grid grid-cols-1 gap-1.5">
-                            <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
-                            <Textarea
-                              id="technical_report"
-                              placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
-                              value={technicalReport}
-                              onChange={(e) => setTechnicalReport(e.target.value)}
-                              rows={4}
-                            />
-                          </div>
-                          <div>
-                            <div className="space-y-2">
-                              {items.map((item) => (
-                                <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
-                                  <div className="flex-grow grid grid-cols-12 gap-2 items-center">
-                                      <span className="col-span-5 truncate">{item.description}</span>
-                                      <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
-                                      <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
-                                      <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
-                                      <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
-                                  </div>
-                                  <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
+                      </TabsContent>
+                      <TabsContent value="items" className="mt-0 space-y-3">
+                        <div className="grid grid-cols-1 gap-1.5">
+                          <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
+                          <Textarea
+                            id="technical_report"
+                            placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
+                            value={technicalReport}
+                            onChange={(e) => setTechnicalReport(e.target.value)}
+                            rows={4}
+                          />
+                        </div>
+                        <div>
+                          <div className="space-y-2">
+                            {items.map((item) => (
+                              <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
+                                <div className="flex-grow grid grid-cols-12 gap-2 items-center">
+                                    <span className="col-span-5 truncate">{item.description}</span>
+                                    <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
+                                    <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
+                                    <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
+                                    <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
                                 </div>
-                              ))}
-                            </div>
-                            <div className="mt-2 flex items-end gap-2 p-2 rounded-md border border-dashed">
-                              <div className="flex-grow">
+                                <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-2 flex items-end gap-2 p-2 rounded-md border border-dashed">
+                             <div className="flex-grow">
                                 <Label htmlFor="newItemDescription" className="text-xs">Descrição</Label>
-                                <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
-                              </div>
-                              <div className="w-28">
-                                <Label className="text-xs">Tipo</Label>
-                                <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value})}>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="service">Serviço</SelectItem>
-                                    <SelectItem value="part">Peça</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="w-16">
-                                <Label htmlFor="newItemQty" className="text-xs">Qtd</Label>
-                                <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
-                              </div>
-                              <div className="w-24">
-                                <Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label>
-                                <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} />
-                              </div>
-                              <Button onClick={handleAddItem} size="sm">Adicionar</Button>
+                                {newItem.type === 'part' ? (
+                                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                                                {newItem.description || "Selecione uma peça..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                            <Command>
+                                                <CommandInput 
+                                                    placeholder="Procurar peça..."
+                                                    value={newItem.description}
+                                                    onValueChange={(search) => setNewItem({...newItem, description: search })}
+                                                />
+                                                <CommandList>
+                                                    <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {mockStock.map((stockItem) => (
+                                                            <CommandItem
+                                                                key={stockItem.id}
+                                                                value={stockItem.name}
+                                                                onSelect={(currentValue) => {
+                                                                    const selected = mockStock.find(s => s.name.toLowerCase() === currentValue.toLowerCase());
+                                                                    if (selected) {
+                                                                        setNewItem({ ...newItem, description: selected.name, unitPrice: selected.price });
+                                                                    }
+                                                                    setOpenCombobox(false);
+                                                                }}
+                                                            >
+                                                                <Check className={cn("mr-2 h-4 w-4", newItem.description.toLowerCase() === stockItem.name.toLowerCase() ? "opacity-100" : "opacity-0")} />
+                                                                {stockItem.name}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                ) : (
+                                    <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                                )}
                             </div>
-                            <div className="mt-4 text-right">
-                              <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
+
+                            <div className="w-28">
+                              <Label className="text-xs">Tipo</Label>
+                              <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value, description: '', unitPrice: 0 })}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="service">Serviço</SelectItem>
+                                  <SelectItem value="part">Peça</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
+                            <div className="w-16">
+                              <Label htmlFor="newItemQty" className="text-xs">Qtd</Label>
+                              <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
+                            </div>
+                            <div className="w-24">
+                              <Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label>
+                              <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} disabled={newItem.type === 'part'} />
+                            </div>
+                            <Button onClick={handleAddItem} size="sm">Adicionar</Button>
                           </div>
-                        </TabsContent>
-                        <TabsContent value="notes" className="mt-0">
-                          <div className="py-2">
-                            <div className="grid grid-cols-1 gap-1.5">
-                                <Label htmlFor="internal_notes">Comentários Internos</Label>
-                                <Textarea
-                                  id="internal_notes"
-                                  placeholder="Adicione observações para a equipe. Este conteúdo não será impresso."
-                                  value={internalNotes}
-                                  onChange={(e) => setInternalNotes(e.target.value)}
-                                  rows={8}
-                                />
-                                <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
-                              </div>
+                          <div className="mt-4 text-right">
+                            <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
                           </div>
-                        </TabsContent>
-                      </div>
-                    </ScrollArea>
-                  </div>
-              </Tabs>
-          </div>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="notes" className="mt-0">
+                        <div className="py-2">
+                          <div className="grid grid-cols-1 gap-1.5">
+                              <Label htmlFor="internal_notes">Comentários Internos</Label>
+                              <Textarea
+                                id="internal_notes"
+                                placeholder="Adicione observações para a equipe. Este conteúdo não será impresso."
+                                value={internalNotes}
+                                onChange={(e) => setInternalNotes(e.target.value)}
+                                rows={8}
+                              />
+                              <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
+                            </div>
+                        </div>
+                      </TabsContent>
+                    </div>
+                  </ScrollArea>
+                </div>
+            </Tabs>
         </div>
         
         <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-between">
@@ -803,6 +865,21 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           <Button onClick={() => handleFinalize(true)}>
             Sim, foi paga
           </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog open={isManualAddDialogOpen} onOpenChange={setIsManualAddDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Peça fora do estoque</AlertDialogTitle>
+          <AlertDialogDescription>
+            A peça <span className="font-bold">"{manualAddItem?.description}"</span> não consta no estoque. Deseja adicioná-la mesmo assim?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setManualAddItem(null)}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmManualAdd}>Adicionar</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

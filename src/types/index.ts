@@ -29,3 +29,11 @@ export type ServiceOrder = {
   accessories?: string;
   serialNumber?: string;
 };
+
+export type StockItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  location?: string;
+};

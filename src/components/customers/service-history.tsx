@@ -6,12 +6,13 @@ import type { ServiceOrder } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileDown, Calendar, User, Wrench, HardDrive, HelpCircle, FileText, ShoppingBag, DollarSign, ShieldCheck, MessageSquare, Tag, AlertCircle } from 'lucide-react';
+import { FileDown, Calendar, User, Wrench, HardDrive, HelpCircle, FileText, ShoppingBag, DollarSign, ShieldCheck, MessageSquare, Tag, AlertCircle, Search } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
-import { add, parseISO } from 'date-fns';
+import { add } from 'date-fns';
+import { Input } from '../ui/input';
 
 
 declare module 'jspdf' {
@@ -53,16 +54,20 @@ interface ServiceHistoryProps {
 }
 
 export function ServiceHistory({ history }: ServiceHistoryProps) {
-  
+  const [searchTerm, setSearchTerm] = React.useState('');
+
+  const filteredHistory = history.filter(order =>
+    order.id.toLowerCase().includes(searchTerm.toLowerCase().replace(/\s+/g, ''))
+  );
+
   const exportToPdf = () => {
     const doc = new jsPDF();
-    const customerName = history[0]?.customerName || "Cliente";
+    const customerName = filteredHistory[0]?.customerName || "Cliente";
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
     const fontColor = '#000000';
     const primaryColor = '#e0e7ff';
-    const secondaryColor = '#f3f4f6';
     let currentY = 40;
 
     // Cabeçalho da Empresa e do Documento
@@ -101,7 +106,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
         return yPosition;
     };
 
-    history.forEach((order, index) => {
+    filteredHistory.forEach((order) => {
         currentY = checkPageBreak(currentY, 60);
 
         // Separador para cada OS
@@ -119,22 +124,27 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
         const drawInfoBox = (title: string, content: string, startY: number) => {
             const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 4);
             const boxHeight = doc.getTextDimensions(textLines).h + 8;
-            currentY = checkPageBreak(startY, boxHeight + 5);
+            let finalY = startY;
+
+            if (finalY + boxHeight + 5 > doc.internal.pageSize.getHeight() - 20) {
+              doc.addPage();
+              finalY = 20;
+            }
 
             doc.setFillColor(primaryColor);
-            doc.rect(margin, startY, pageWidth - margin * 2, 6, 'F');
+            doc.rect(margin, finalY, pageWidth - margin * 2, 6, 'F');
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(9);
             doc.setTextColor(fontColor);
-            doc.text(title, margin + 2, startY + 4.5);
+            doc.text(title, margin + 2, finalY + 4.5);
 
             doc.setDrawColor(primaryColor);
-            doc.rect(margin, startY + 6, pageWidth - margin * 2, boxHeight, 'S');
+            doc.rect(margin, finalY + 6, pageWidth - margin * 2, boxHeight, 'S');
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-            doc.text(textLines, margin + 2, startY + 11);
+            doc.text(textLines, margin + 2, finalY + 11);
 
-            return startY + boxHeight + 8;
+            return finalY + boxHeight + 8;
         };
         
         doc.setFontSize(10);
@@ -190,81 +200,103 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Histórico de Atendimentos</CardTitle>
-          <CardDescription>{history.length} registro(s) encontrado(s).</CardDescription>
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle>Histórico de Atendimentos</CardTitle>
+            <CardDescription>{filteredHistory.length} de {history.length} registro(s) encontrado(s).</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Filtrar por nº OS..."
+                className="w-full rounded-lg bg-background pl-8 sm:w-[200px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button variant="outline" size="sm" onClick={exportToPdf} disabled={filteredHistory.length === 0}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Exportar
+            </Button>
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={exportToPdf}>
-          <FileDown className="mr-2 h-4 w-4" />
-          Exportar PDF
-        </Button>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full">
-          {history.map((order) => (
-            <AccordionItem value={order.id} key={order.id}>
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center justify-between w-full pr-4">
-                  <div className="flex items-center gap-4">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-semibold text-left">
-                        {order.equipment}
-                      </p>
-                      <p className="text-sm text-muted-foreground text-left">
-                        OS #{order.id.slice(-4)} - {formatDate(order.date)}
-                      </p>
+        {filteredHistory.length > 0 ? (
+          <Accordion type="single" collapsible className="w-full">
+            {filteredHistory.map((order) => (
+              <AccordionItem value={order.id} key={order.id}>
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-4">
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-semibold text-left">
+                          {order.equipment}
+                        </p>
+                        <p className="text-sm text-muted-foreground text-left">
+                          OS #{order.id.slice(-4)} - {formatDate(order.date)}
+                        </p>
+                      </div>
                     </div>
+                    <Badge variant="outline" className={cn('font-semibold', getStatusVariant(order.status))}>
+                      {order.status}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className={cn('font-semibold', getStatusVariant(order.status))}>
-                    {order.status}
-                  </Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2 pb-4 px-2 space-y-4 bg-muted/30 rounded-md border">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4">
-                  <InfoItem icon={User} label="Atendente" value={order.attendant} />
-                  <InfoItem icon={HardDrive} label="Equipamento" value={`${order.equipment}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`} />
-                  <InfoItem icon={Tag} label="Tipo de Atendimento" value="Manutenção Corretiva" />
-                  <InfoItem icon={ShoppingBag} label="Acessórios" value={order.accessories || 'Nenhum'} />
-                </div>
-                
-                <div className="px-4 space-y-4">
-                    <InfoBlock icon={HelpCircle} title="Problema Relatado pelo Cliente" content={order.reportedProblem} />
-                    <InfoBlock icon={Wrench} title="Diagnóstico / Laudo Técnico Realizado" content={order.technicalReport || 'Não informado'} />
-                </div>
-                
-                {order.items && order.items.length > 0 && (
-                   <div className="px-4">
-                     <h4 className="font-semibold mb-2 flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Peças e Serviços Utilizados</h4>
-                     <div className="border rounded-md bg-background/50">
-                       {order.items.map(item => (
-                         <div key={item.id} className="flex justify-between items-center p-2 border-b last:border-b-0 text-xs">
-                           <span className="flex-1">{item.description} ({item.type === 'part' ? 'Peça' : 'Serviço'})</span>
-                           <span className="w-20 text-right">Qtd: {item.quantity}</span>
-                           <span className="w-24 font-medium text-right">R$ {item.unitPrice.toFixed(2)}</span>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-4 px-2 space-y-4 bg-muted/30 rounded-md border">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4">
+                    <InfoItem icon={User} label="Atendente" value={order.attendant} />
+                    <InfoItem icon={HardDrive} label="Equipamento" value={`${order.equipment}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`} />
+                    <InfoItem icon={Tag} label="Tipo de Atendimento" value="Manutenção Corretiva" />
+                    <InfoItem icon={ShoppingBag} label="Acessórios" value={order.accessories || 'Nenhum'} />
+                  </div>
+                  
+                  <div className="px-4 space-y-4">
+                      <InfoBlock icon={HelpCircle} title="Problema Relatado pelo Cliente" content={order.reportedProblem} />
+                      <InfoBlock icon={Wrench} title="Diagnóstico / Laudo Técnico Realizado" content={order.technicalReport || 'Não informado'} />
+                  </div>
+                  
+                  {order.items && order.items.length > 0 && (
+                     <div className="px-4">
+                       <h4 className="font-semibold mb-2 flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Peças e Serviços Utilizados</h4>
+                       <div className="border rounded-md bg-background/50">
+                         {order.items.map(item => (
+                           <div key={item.id} className="flex justify-between items-center p-2 border-b last:border-b-0 text-xs">
+                             <span className="flex-1">{item.description} ({item.type === 'part' ? 'Peça' : 'Serviço'})</span>
+                             <span className="w-20 text-right">Qtd: {item.quantity}</span>
+                             <span className="w-24 font-medium text-right">R$ {item.unitPrice.toFixed(2)}</span>
+                           </div>
+                         ))}
+                         <div className="flex justify-end items-center p-2 font-bold text-sm bg-muted/50 rounded-b-md">
+                            Total de Itens: R$ {order.items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0).toFixed(2)}
                          </div>
-                       ))}
-                       <div className="flex justify-end items-center p-2 font-bold text-sm bg-muted/50 rounded-b-md">
-                          Total de Itens: R$ {order.items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0).toFixed(2)}
                        </div>
                      </div>
-                   </div>
-                )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4 mt-2 border-t border-dashed">
-                  <InfoItem icon={DollarSign} label="Valor Total da OS" value={`R$ ${order.totalValue.toFixed(2)}`} />
-                  <InfoItem icon={Tag} label="Forma de Pagamento" value={order.paymentMethod || 'Não informado'} />
-                  <InfoItem icon={ShieldCheck} label="Garantia Aplicada" value={order.warranty || 'Não informado'} />
-                  <WarrantyInfo order={order} />
-                  <InfoItem icon={MessageSquare} label="Observações Internas" value={order.internalNotes || 'Nenhuma'} />
-                </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4 mt-2 border-t border-dashed">
+                    <InfoItem icon={DollarSign} label="Valor Total da OS" value={`R$ ${order.totalValue.toFixed(2)}`} />
+                    <InfoItem icon={Tag} label="Forma de Pagamento" value={order.paymentMethod || 'Não informado'} />
+                    <InfoItem icon={ShieldCheck} label="Garantia Aplicada" value={order.warranty || 'Não informado'} />
+                    <WarrantyInfo order={order} />
+                    <InfoItem icon={MessageSquare} label="Observações Internas" value={order.internalNotes || 'Nenhuma'} />
+                  </div>
 
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center gap-4 min-h-[250px]">
+            <Search className="h-12 w-12 text-muted-foreground" />
+            <h3 className="text-lg font-semibold">Nenhum resultado encontrado</h3>
+            <p className="text-muted-foreground">Tente um número de OS diferente ou limpe a busca.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -333,3 +365,5 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   return <InfoItem icon={warranty.icon} label="Período de Garantia" value={warranty.text} />
 };
+
+    

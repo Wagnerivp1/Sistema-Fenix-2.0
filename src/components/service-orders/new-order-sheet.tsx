@@ -237,11 +237,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const companyInfoX = margin + 35;
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("Sistema Fênix", companyInfoX, 18);
+    doc.text("JL Informática", companyInfoX, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text("Rua da Tecnologia, 123 - Centro", companyInfoX, 24);
-    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@sistemafenix.com", companyInfoX, 29);
+    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@jlinformatica.com", companyInfoX, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -487,7 +487,7 @@ const generateEntryReceiptPdf = () => {
         const companyInfoX = margin + 30;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text("Sistema Fênix", companyInfoX, currentY + 7);
+        doc.text("JL Informática", companyInfoX, currentY + 7);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);

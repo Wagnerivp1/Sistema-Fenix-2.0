@@ -113,7 +113,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
             
             doc.setFontSize(6);
             doc.setFont('helvetica', 'bold');
-            doc.text('jl iNFORMÁTICA', centerX, currentY + 3, { align: 'center' });
+            doc.text('JL Informática', centerX, currentY + 3, { align: 'center' });
 
             doc.setFontSize(7);
             doc.setFont('helvetica', 'normal');

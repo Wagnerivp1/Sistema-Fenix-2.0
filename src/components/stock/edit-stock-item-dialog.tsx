@@ -71,12 +71,12 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
     }
     
     // Gerar o código de barras com as informações desejadas
-    const barcodeValue = `jl iNFORMÁTICA | ${formData.name} | R$${(formData.price || 0).toFixed(2)}`;
+    const barcodeValue = `JL Informática | ${formData.name} | R$${(formData.price || 0).toFixed(2)}`;
 
     const finalItem: StockItem = {
       id: formData.id!,
       barcode: barcodeValue,
-      name: formData.name,
+      name: formData.name!,
       price: formData.price || 0,
       quantity: isEditing ? item.quantity : (formData.quantity || 0),
       ...formData
@@ -84,7 +84,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
     onSave(finalItem);
   };
   
-  const currentBarcodeValue = `jl iNFORMÁTICA | ${formData.name || ''} | R$${(formData.price || 0).toFixed(2)}`;
+  const currentBarcodeValue = `JL Informática | ${formData.name || ''} | R$${(formData.price || 0).toFixed(2)}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

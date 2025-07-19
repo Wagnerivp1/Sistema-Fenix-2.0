@@ -289,22 +289,33 @@ const InfoBlock = ({ icon: Icon, title, content }: { icon: React.ElementType, ti
 
 const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
   const getWarrantyInfo = () => {
-    if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
-      return { text: "Garantia pendente de entrega", icon: AlertCircle };
-    }
+    const SETTINGS_KEY = 'app_settings';
+    let defaultWarrantyDays = 90; // Default fallback
 
-    const match = order.warranty.match(/(\d+)\s*(dias|meses|ano|anos)/i);
-    if (!match) {
-      return { text: "Prazo de garantia inválido", icon: AlertCircle };
+    try {
+        const savedSettings = localStorage.getItem(SETTINGS_KEY);
+        if (savedSettings) {
+            defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
+        }
+    } catch (e) {
+        console.error("Could not parse warranty settings, using default.", e);
     }
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2].toLowerCase();
     
-    const duration: Duration = {};
-    if (unit.startsWith('dia')) duration.days = value;
-    else if (unit.startsWith('mes')) duration.months = value;
-    else if (unit.startsWith('ano')) duration.years = value;
+    if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
+      return { text: "Garantia pendente de entrega do equipamento.", icon: AlertCircle };
+    }
+
+    const match = order.warranty.match(/(\d+)\s*(dias|meses|mes|ano|anos)/i);
+    let duration: Duration = { days: defaultWarrantyDays };
+
+    if (match) {
+      const value = parseInt(match[1], 10);
+      const unit = match[2].toLowerCase();
+      
+      if (unit.startsWith('dia')) duration = { days: value };
+      else if (unit.startsWith('mes')) duration = { months: value };
+      else if (unit.startsWith('ano')) duration = { years: value };
+    }
 
     const startDate = parseISO(order.deliveredDate);
     const endDate = add(startDate, duration);

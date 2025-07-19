@@ -88,7 +88,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const isEditing = !!serviceOrder;
 
   React.useEffect(() => {
-    if (isOpen) { // Only update form when dialog is opening
+    if (isOpen) { 
       if (isEditing && serviceOrder) {
           const selectedCustomer = mockCustomers.find(c => c.name === serviceOrder.customerName);
           setSelectedCustomerId(selectedCustomer?.id || '');
@@ -108,7 +108,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setInternalNotes(serviceOrder.internalNotes || '');
       } else if (customer) {
           setSelectedCustomerId(customer.id);
-          // Reset other fields for new order from customer
           setEquipmentType('');
           setEquipment({ brand: '', model: '', serial: '' });
           setAccessories('');
@@ -118,7 +117,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setStatus('Aberta');
           setInternalNotes('');
       } else {
-          // Reset all fields for a completely new order
           setSelectedCustomerId('');
           setEquipmentType('');
           setEquipment({ brand: '', model: '', serial: '' });
@@ -208,7 +206,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFont('helvetica');
     doc.setTextColor(fontColor);
 
-    // --- Header ---
     doc.setFillColor(240, 240, 240);
     doc.rect(margin, 10, 30, 25, 'F');
     doc.setFontSize(8);
@@ -234,7 +231,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.text(`Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
     doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
 
-    return { doc, selectedCustomer, currentY: 45, pageWidth, margin };
+    return { doc, selectedCustomer, currentY: 42, pageWidth, margin };
   }
 
   const generateQuotePdf = () => {
@@ -250,20 +247,20 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     
     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
       doc.setFillColor(primaryColor);
-      doc.rect(x, y, width, 8, 'F');
+      doc.rect(x, y, width, 7, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(title, x + 3, y + 6);
+      doc.text(title, x + 3, y + 5);
       
       doc.setDrawColor(primaryColor);
-      doc.rect(x, y + 8, width, height - 8, 'S');
+      doc.rect(x, y + 7, width, height - 7, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
       const textArray = Array.isArray(text) ? text : [text];
-      doc.text(textArray, x + 3, y + 15);
+      doc.text(textArray, x + 3, y + 13);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
@@ -273,8 +270,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Telefone: ${selectedCustomer.phone}`,
       `Endereço: ${selectedCustomer.address || 'Não informado'}`,
     ];
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25, customerInfo);
-    currentY += 35;
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 22, customerInfo);
+    currentY += 28;
 
     const equipmentInfo = [
       `Tipo: ${equipmentType}`,
@@ -282,16 +279,16 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Nº Série: ${equipment.serial || 'Não informado'}`,
       `Acessórios: ${accessories || 'Nenhum'}`,
     ];
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
-    currentY += 40;
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 26, equipmentInfo);
+    currentY += 32;
     
     const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
-    currentY += 35;
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 22, problemText);
+    currentY += 28;
 
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30, servicesText);
-    currentY += 40;
+    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 26, servicesText);
+    currentY += 32;
 
     if (items.length > 0) {
       doc.autoTable({
@@ -299,7 +296,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
-        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold' },
+        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
         footStyles: { fillColor: secondaryColor, textColor: fontColor },
         margin: { left: margin, right: margin }
       });
@@ -307,25 +305,25 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
     
     const grandTotal = calculateTotal();
-    currentY += 10;
+    currentY += 8;
     
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-    currentY += 15;
+    currentY += 10;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setTextColor(fontColor);
     doc.text('Validade e Condições:', margin, currentY);
     
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    currentY += 4;
+    doc.setFontSize(7);
+    currentY += 3;
     const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-    currentY += 25;
+    currentY += 18;
     
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
@@ -351,20 +349,20 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
 
      const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
       doc.setFillColor(primaryColor);
-      doc.rect(x, y, width, 8, 'F');
+      doc.rect(x, y, width, 7, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      doc.text(title, x + 3, y + 6);
+      doc.text(title, x + 3, y + 5);
 
       doc.setDrawColor(primaryColor);
-      doc.rect(x, y + 8, width, height - 8, 'S');
+      doc.rect(x, y + 7, width, height - 7, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
       const textArray = Array.isArray(text) ? text : [text];
-      doc.text(textArray, x + 3, y + 15);
+      doc.text(textArray, x + 3, y + 13);
     };
 
     const boxWidth = (pageWidth - (margin * 2));
@@ -374,8 +372,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Telefone: ${selectedCustomer.phone}`,
       `Endereço: ${selectedCustomer.address || 'Não informado'}`,
     ];
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 25, customerInfo);
-    currentY += 35;
+    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 22, customerInfo);
+    currentY += 28;
 
     const equipmentInfo = [
       `Tipo: ${equipmentType}`,
@@ -383,16 +381,16 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Nº Série: ${equipment.serial || 'Não informado'}`,
       `Acessórios: ${accessories || 'Nenhum'}`,
     ];
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
-    currentY += 40;
+    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 26, equipmentInfo);
+    currentY += 32;
     
     const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
-    currentY += 35;
+    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 22, problemText);
+    currentY += 28;
 
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 30, servicesText);
-    currentY += 40;
+    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 26, servicesText);
+    currentY += 32;
 
     if (items.length > 0) {
       doc.autoTable({
@@ -400,7 +398,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
         body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
         theme: 'grid',
-        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold' },
+        headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 8 },
         footStyles: { fillColor: secondaryColor, textColor: fontColor },
         margin: { left: margin, right: margin }
       });
@@ -408,25 +407,25 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
     
     const grandTotal = calculateTotal();
-    currentY += 10;
+    currentY += 8;
     
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setTextColor(fontColor);
     doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-    currentY += 15;
+    currentY += 10;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setTextColor(fontColor);
     doc.text('Termos de Garantia e Serviço:', margin, currentY);
     
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    currentY += 4;
+    doc.setFontSize(7);
+    currentY += 3;
     const warrantyText = "A garantia para os serviços prestados é de 90 dias, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.";
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-    currentY += 25;
+    currentY += 18;
     
     doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
     currentY += 4;
@@ -540,7 +539,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
     doc.setLineDashPattern([], 0);
   
-    drawReceiptContent(cutLineY + 5, "Via da Loja");
+    drawReceiptContent(cutLineY + 2, "Via da Loja");
   
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
@@ -602,7 +601,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full max-h-[95vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-4 flex-shrink-0 border-b">
           <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
@@ -610,8 +609,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 min-h-0 flex flex-col">
-          <Tabs defaultValue="general" className="flex flex-col flex-1 min-h-0">
+        <div className="flex-grow min-h-0">
+          <Tabs defaultValue="general" className="h-full flex flex-col">
             <div className="px-4 flex-shrink-0">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="general">Dados Gerais</TabsTrigger>
@@ -619,7 +618,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                     <TabsTrigger value="notes">Comentários</TabsTrigger>
                 </TabsList>
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex-grow min-h-0 overflow-hidden">
               <ScrollArea className="h-full">
                 <div className="p-4 space-y-3">
                   <TabsContent value="general" className="mt-0 space-y-3">
@@ -674,7 +673,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                           <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
                         </div>
                       </div>
-                       <div className="grid grid-cols-1 gap-1.5">
+                      <div className="grid grid-cols-1 gap-1.5">
                         <Label htmlFor="reported_problem">Defeito Reclamado</Label>
                         <Textarea
                           id="reported_problem"
@@ -684,7 +683,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                           rows={3}
                         />
                       </div>
-                      <div className="grid grid-cols-1 gap-1.5">
+                       <div className="grid grid-cols-1 gap-1.5">
                         <Label htmlFor="accessories">Acessórios Entregues</Label>
                         <Textarea
                           id="accessories"

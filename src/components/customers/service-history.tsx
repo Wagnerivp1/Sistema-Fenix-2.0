@@ -289,11 +289,15 @@ const InfoBlock = ({ icon: Icon, title, content }: { icon: React.ElementType, ti
 
 const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
   const getWarrantyInfo = () => {
+    if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
+      return { text: "Garantia pendente de entrega do equipamento.", icon: AlertCircle };
+    }
+    
     const SETTINGS_KEY = 'app_settings';
     let defaultWarrantyDays = 90; // Default fallback
 
     try {
-        const savedSettings = localStorage.getItem(SETTINGS_KEY);
+        const savedSettings = typeof window !== 'undefined' ? localStorage.getItem(SETTINGS_KEY) : null;
         if (savedSettings) {
             defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
         }
@@ -301,10 +305,6 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
         console.error("Could not parse warranty settings, using default.", e);
     }
     
-    if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
-      return { text: "Garantia pendente de entrega do equipamento.", icon: AlertCircle };
-    }
-
     const match = order.warranty.match(/(\d+)\s*(dias|meses|mes|ano|anos)/i);
     let duration: Duration = { days: defaultWarrantyDays };
 
@@ -321,7 +321,7 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
     const endDate = add(startDate, duration);
     
     return {
-      text: `De ${formatDate(order.deliveredDate)} até ${formatDate(endDate.toISOString())}`,
+      text: `Início: ${formatDate(order.deliveredDate)} | Fim: ${formatDate(endDate.toISOString())}`,
       icon: ShieldCheck
     };
   }

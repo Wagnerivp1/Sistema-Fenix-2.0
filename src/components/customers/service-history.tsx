@@ -9,7 +9,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { FileDown, Calendar, User, Wrench, HardDrive, HelpCircle, FileText, ShoppingBag, DollarSign, ShieldCheck, MessageSquare, Tag } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
+
+
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+      lastAutoTable: { finalY: number };
+    }
+}
+
 
 const formatDate = (dateString: string) => {
   const [year, month, day] = dateString.split('-').map(Number);
@@ -46,30 +56,118 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
   const exportToPdf = () => {
     const doc = new jsPDF();
     const customerName = history[0]?.customerName || "Cliente";
-    doc.text(`Histórico de Atendimentos - ${customerName}`, 14, 15);
-    
-    let yPosition = 25;
-    
-    history.forEach((order, index) => {
-      if (yPosition > 260) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`OS #${order.id.slice(-4)} - ${formatDate(order.date)} - Status: ${order.status}`, 14, yPosition);
-      yPosition += 7;
 
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Equipamento: ${order.equipment}`, 16, yPosition);
-      yPosition += 5;
-      doc.text(`Problema Relatado: ${order.reportedProblem}`, 16, yPosition);
-      yPosition += 5;
-      doc.text(`Laudo Técnico: ${order.technicalReport || 'Não informado'}`, 16, yPosition);
-      yPosition += 10;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const fontColor = '#000000';
+    const primaryColor = '#e0e7ff';
+    const secondaryColor = '#f3f4f6';
+    let currentY = 40;
+
+    // Cabeçalho da Empresa e do Documento
+    doc.setFont('helvetica');
+    doc.setTextColor(fontColor);
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, 10, 30, 25, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Sua Logo', margin + 7, 23);
+    doc.setTextColor(fontColor);
+
+    const companyInfoX = margin + 35;
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text("JL Informática", companyInfoX, 18);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Rua da Tecnologia, 123 - Centro", companyInfoX, 24);
+    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@jlinformatica.com", companyInfoX, 29);
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Histórico de Atendimentos`, pageWidth - margin, 18, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Cliente: ${customerName}`, pageWidth - margin, 24, { align: 'right' });
+    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
+
+
+    const checkPageBreak = (yPosition: number, requiredSpace: number = 20) => {
+        if (yPosition > doc.internal.pageSize.getHeight() - requiredSpace) {
+            doc.addPage();
+            return 20; // Nova posição Y na nova página
+        }
+        return yPosition;
+    };
+
+    history.forEach((order, index) => {
+        currentY = checkPageBreak(currentY, 60);
+
+        // Separador para cada OS
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        currentY += 8;
+
+        // Título da OS
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`OS #${order.id.slice(-4)} | Data: ${formatDate(order.date)} | Status: ${order.status}`, margin, currentY);
+        currentY += 6;
+
+        // Função para desenhar caixas de informação
+        const drawInfoBox = (title: string, content: string, startY: number) => {
+            const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 4);
+            const boxHeight = doc.getTextDimensions(textLines).h + 8;
+            currentY = checkPageBreak(startY, boxHeight + 5);
+
+            doc.setFillColor(primaryColor);
+            doc.rect(margin, startY, pageWidth - margin * 2, 6, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(fontColor);
+            doc.text(title, margin + 2, startY + 4.5);
+
+            doc.setDrawColor(primaryColor);
+            doc.rect(margin, startY + 6, pageWidth - margin * 2, boxHeight, 'S');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(textLines, margin + 2, startY + 11);
+
+            return startY + boxHeight + 8;
+        };
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Equipamento: `, margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${order.equipment}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`, margin + 28, currentY);
+        currentY += 6;
+
+        currentY = drawInfoBox('Problema Relatado', order.reportedProblem || 'Não informado', currentY);
+        currentY = drawInfoBox('Diagnóstico / Laudo Técnico', order.technicalReport || 'Não informado', currentY);
+        
+        currentY = checkPageBreak(currentY, 30);
+        // Tabela de itens
+        if (order.items && order.items.length > 0) {
+            doc.autoTable({
+                startY: currentY,
+                head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
+                body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+                theme: 'grid',
+                headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9 },
+                bodyStyles: { fontSize: 8 },
+                margin: { left: margin, right: margin }
+            });
+            currentY = doc.lastAutoTable.finalY + 5;
+        }
+
+        // Valor total da OS
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Valor Total da OS: R$ ${order.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
+        currentY += 10;
     });
+
 
     doc.save(`Historico_${customerName.replace(/\s+/g, '_')}.pdf`);
   };

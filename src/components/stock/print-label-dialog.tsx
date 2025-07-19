@@ -25,7 +25,6 @@ interface PrintLabelDialogProps {
   onOpenChange: (isOpen: boolean) => void;
 }
 
-// Componente invisível para renderizar o SVG e ser usado na conversão
 const BarcodeSvgRenderer = ({ value, onRender }: { value: string; onRender: (svgString: string) => void }) => {
   const barcodeRef = React.useRef<HTMLDivElement>(null);
 
@@ -48,7 +47,6 @@ const BarcodeSvgRenderer = ({ value, onRender }: { value: string; onRender: (svg
     </div>
   );
 };
-
 
 export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialogProps) {
   const { toast } = useToast();

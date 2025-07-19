@@ -544,7 +544,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     window.open(pdfUrl, '_blank');
   };
 
-const generateEntryReceiptPdf = () => {
+  const generateEntryReceiptPdf = () => {
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
         toast({ variant: "destructive", title: "Cliente não selecionado!" });
@@ -554,19 +554,18 @@ const generateEntryReceiptPdf = () => {
     const doc = new jsPDF({ format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 10;
-    const fontColor = '#000000';
-    const primaryColor = '#f3f4f6';
 
     const drawReceiptContent = (yOffset: number, via: string) => {
         let currentY = yOffset;
+        const fontColor = '#000000';
 
         doc.setFillColor(248, 250, 252);
         doc.rect(margin, currentY, 25, 18, 'F');
         doc.setFontSize(7);
         doc.setTextColor(156, 163, 175);
         doc.text('Sua Logo', margin + 4.5, currentY + 11);
-        doc.setTextColor(fontColor);
 
+        doc.setTextColor(fontColor);
         const companyInfoX = margin + 30;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
@@ -579,50 +578,63 @@ const generateEntryReceiptPdf = () => {
         doc.setFont('helvetica', 'bold');
         doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
 
-        currentY += 18;
+        currentY += 20;
         doc.setDrawColor(209, 213, 219);
         doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 4;
-
-        const drawInfoBox = (title: string, lines: string[], startY: number): number => {
-            const boxWidth = pageWidth - (margin * 2);
-            const titleHeight = 5;
-            const textLines = lines.map(line => doc.splitTextToSize(line, boxWidth - 4)).flat();
-            const textHeight = doc.getTextDimensions(textLines).h + 2;
-            const boxHeight = titleHeight + textHeight;
-
-            doc.setFillColor(primaryColor);
-            doc.rect(margin, startY, boxWidth, titleHeight, 'F');
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(8);
-            doc.text(title, margin + 2, startY + 3.5);
-
-            doc.setDrawColor(224, 231, 255);
-            doc.rect(margin, startY + titleHeight, boxWidth, textHeight, 'S');
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.text(textLines, margin + 2, startY + titleHeight + 4);
-
-            return startY + boxHeight;
-        };
+        currentY += 5;
 
         const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
-        currentY = drawInfoBox('Dados do Cliente', [`Nº OS: ${osId} | Cliente: ${selectedCustomer.name}`, `Telefone: ${selectedCustomer.phone}`], currentY);
-        currentY = drawInfoBox('Informações do Equipamento', [`Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`, `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`], currentY + 1);
-        currentY = drawInfoBox('Defeito Reclamado', [reportedProblem || 'Não informado'], currentY + 1);
-        currentY += 2;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('OS:', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(osId, margin + 8, currentY);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Cliente:', margin + 30, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(selectedCustomer.name, margin + 45, currentY);
         
+        doc.setFont('helvetica', 'bold');
+        doc.text('Data:', margin + 130, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(new Date().toLocaleDateString('pt-BR'), margin + 140, currentY);
+        currentY += 7;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipamento:', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${equipmentType} ${equipment.brand} ${equipment.model}`, margin + 25, currentY);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Nº Série:', margin + 100, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(equipment.serial || 'Não informado', margin + 115, currentY);
+        currentY += 7;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Acessórios:', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(accessories || 'Nenhum', margin + 22, currentY);
+        currentY += 7;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Problema Relatado:', margin, currentY);
+        currentY += 4;
+        doc.setFont('helvetica', 'normal');
+        const problemLines = doc.splitTextToSize(reportedProblem || 'Não informado', pageWidth - margin * 2);
+        doc.text(problemLines, margin, currentY);
+        currentY += problemLines.length * 4 + 5;
+
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7);
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
-
         const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
         doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += doc.getTextDimensions(textLines).h + 3;
+        currentY += doc.getTextDimensions(textLines).h + 10;
 
         doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
-        currentY += 3;
+        currentY += 4;
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
@@ -630,20 +642,19 @@ const generateEntryReceiptPdf = () => {
         return currentY;
     };
 
-    const firstReceiptEndY = drawReceiptContent(8, "Via do Cliente");
-    const receiptHeight = firstReceiptEndY + 5;
-
-    const cutLineY = receiptHeight;
-    doc.setLineDashPattern([1, 1], 0);
+    const firstReceiptEndY = drawReceiptContent(10, "Via do Cliente");
+    
+    const cutLineY = firstReceiptEndY + 10;
+    doc.setLineDashPattern([2, 1], 0);
     doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
     doc.setLineDashPattern([], 0);
 
-    drawReceiptContent(cutLineY + 2, "Via da Loja");
+    drawReceiptContent(cutLineY + 10, "Via da Loja");
 
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');
-};
+  };
 
   const handlePrint = (documentType: string) => {
     switch (documentType) {
@@ -991,7 +1002,3 @@ const generateEntryReceiptPdf = () => {
     </>
   );
 }
-
-    
-
-    

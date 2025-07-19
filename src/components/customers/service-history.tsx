@@ -23,13 +23,14 @@ declare module 'jspdf' {
 
 
 const formatDate = (dateString: string) => {
-  const date = parseISO(dateString);
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(date);
+    // Adiciona o fuso UTC para evitar problemas de timezone na conversão
+    const date = new Date(`${dateString}T00:00:00Z`);
+    return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'UTC',
+    }).format(date);
 };
 
 const getStatusVariant = (status: string) => {
@@ -317,11 +318,13 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
       else if (unit.startsWith('ano')) duration = { years: value };
     }
 
-    const startDate = parseISO(order.deliveredDate);
+    // Corrigido: Tratar a data como UTC para evitar problemas de fuso horário
+    const [year, month, day] = order.deliveredDate.split('-').map(Number);
+    const startDate = new Date(Date.UTC(year, month - 1, day));
     const endDate = add(startDate, duration);
     
     return {
-      text: `Início: ${formatDate(order.deliveredDate)} | Fim: ${formatDate(endDate.toISOString())}`,
+      text: `Início: ${formatDate(order.deliveredDate)} | Fim: ${formatDate(endDate.toISOString().split('T')[0])}`,
       icon: ShieldCheck
     };
   }

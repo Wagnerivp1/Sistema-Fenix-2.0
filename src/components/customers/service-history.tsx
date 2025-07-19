@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { FileDown, Calendar, User, Wrench, HardDrive, HelpCircle, FileText, ShoppingBag, DollarSign, ShieldCheck, MessageSquare, Tag } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import jsPDF from 'jspdf';
+import { cn } from '@/lib/utils';
 
 const formatDate = (dateString: string) => {
   const [year, month, day] = dateString.split('-').map(Number);
@@ -117,44 +118,47 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className={getStatusVariant(order.status)}>
+                  <Badge variant="outline" className={cn('font-semibold', getStatusVariant(order.status))}>
                     {order.status}
                   </Badge>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="pt-2 pb-4 px-2 space-y-6 bg-muted/30 rounded-md">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+              <AccordionContent className="pt-2 pb-4 px-2 space-y-4 bg-muted/30 rounded-md border">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4">
                   <InfoItem icon={User} label="Atendente" value={order.attendant} />
-                  <InfoItem icon={Tag} label="Tipo de Atendimento" value="Manutenção Corretiva" />
                   <InfoItem icon={HardDrive} label="Equipamento" value={`${order.equipment}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`} />
+                  <InfoItem icon={Tag} label="Tipo de Atendimento" value="Manutenção Corretiva" />
                   <InfoItem icon={ShoppingBag} label="Acessórios" value={order.accessories || 'Nenhum'} />
                 </div>
                 
-                <div className="space-y-4">
-                    <InfoBlock icon={HelpCircle} title="Problema Relatado" content={order.reportedProblem} />
-                    <InfoBlock icon={Wrench} title="Laudo e Ações Realizadas" content={order.technicalReport || 'Não informado'} />
+                <div className="px-4 space-y-4">
+                    <InfoBlock icon={HelpCircle} title="Problema Relatado pelo Cliente" content={order.reportedProblem} />
+                    <InfoBlock icon={Wrench} title="Diagnóstico / Laudo Técnico Realizado" content={order.technicalReport || 'Não informado'} />
                 </div>
                 
                 {order.items && order.items.length > 0 && (
-                   <div>
-                     <h4 className="font-semibold mb-2 flex items-center gap-2"><FileText className="h-4 w-4" /> Peças e Serviços</h4>
-                     <div className="border rounded-md">
+                   <div className="px-4">
+                     <h4 className="font-semibold mb-2 flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Peças e Serviços Utilizados</h4>
+                     <div className="border rounded-md bg-background/50">
                        {order.items.map(item => (
                          <div key={item.id} className="flex justify-between items-center p-2 border-b last:border-b-0 text-xs">
                            <span className="flex-1">{item.description} ({item.type === 'part' ? 'Peça' : 'Serviço'})</span>
                            <span className="w-20 text-right">Qtd: {item.quantity}</span>
-                           <span className="w-24 text-right">Vlr: R$ {item.unitPrice.toFixed(2)}</span>
+                           <span className="w-24 font-medium text-right">R$ {item.unitPrice.toFixed(2)}</span>
                          </div>
                        ))}
+                       <div className="flex justify-end items-center p-2 font-bold text-sm bg-muted/50 rounded-b-md">
+                          Total de Itens: R$ {order.items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0).toFixed(2)}
+                       </div>
                      </div>
                    </div>
                 )}
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm pt-4 border-t border-dashed">
-                  <InfoItem icon={DollarSign} label="Valor Total" value={`R$ ${order.totalValue.toFixed(2)}`} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4 mt-2 border-t border-dashed">
+                  <InfoItem icon={DollarSign} label="Valor Total da OS" value={`R$ ${order.totalValue.toFixed(2)}`} />
                   <InfoItem icon={Tag} label="Forma de Pagamento" value={order.paymentMethod || 'Não informado'} />
-                  <InfoItem icon={ShieldCheck} label="Garantia" value={order.warranty || 'Não informado'} />
-                  <InfoItem icon={MessageSquare} label="Observações" value={order.internalNotes || 'Nenhuma'} />
+                  <InfoItem icon={ShieldCheck} label="Garantia Aplicada" value={order.warranty || 'Não informado'} />
+                  <InfoItem icon={MessageSquare} label="Observações Internas" value={order.internalNotes || 'Nenhuma'} />
                 </div>
 
               </AccordionContent>
@@ -169,9 +173,9 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
 const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string }) => (
   <div className="flex items-start gap-3">
-    <Icon className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+    <Icon className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
     <div>
-      <p className="font-semibold">{label}</p>
+      <p className="font-semibold text-card-foreground">{label}</p>
       <p className="text-muted-foreground">{value}</p>
     </div>
   </div>
@@ -179,7 +183,7 @@ const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label
 
 const InfoBlock = ({ icon: Icon, title, content }: { icon: React.ElementType, title: string, content: string }) => (
   <div>
-    <h4 className="font-semibold mb-1 flex items-center gap-2"><Icon className="h-4 w-4" /> {title}</h4>
-    <p className="text-sm text-muted-foreground bg-background/50 p-2 rounded-md border">{content}</p>
+    <h4 className="font-semibold mb-1 flex items-center gap-2 text-card-foreground"><Icon className="h-4 w-4 text-primary" /> {title}</h4>
+    <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md border leading-relaxed">{content}</p>
   </div>
 );

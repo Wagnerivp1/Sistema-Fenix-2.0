@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check } from 'lucide-react';
+import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -70,6 +70,7 @@ interface QuoteItem {
   type: 'service' | 'part';
 }
 
+const SETTINGS_KEY = 'app_settings';
 
 export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
   const { toast } = useToast();
@@ -83,6 +84,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const [internalNotes, setInternalNotes] = React.useState('');
   const [items, setItems] = React.useState<QuoteItem[]>([]);
   const [status, setStatus] = React.useState<ServiceOrder['status']>('Aberta');
+  const [warranty, setWarranty] = React.useState('');
   const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = React.useState(false);
   const [isManualAddDialogOpen, setIsManualAddDialogOpen] = React.useState(false);
   const [manualAddItem, setManualAddItem] = React.useState<QuoteItem | null>(null);
@@ -93,6 +95,17 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const isEditing = !!serviceOrder;
 
   React.useEffect(() => {
+    let defaultWarrantyDays = 90;
+    try {
+      const savedSettings = localStorage.getItem(SETTINGS_KEY);
+      if (savedSettings) {
+        defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
+      }
+    } catch (error) {
+      console.error("Failed to load settings from localStorage", error);
+    }
+    const defaultWarranty = `${defaultWarrantyDays} dias`;
+
     if (isOpen) { 
       if (isEditing && serviceOrder) {
           const selectedCustomer = mockCustomers.find(c => c.name === serviceOrder.customerName);
@@ -111,6 +124,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setItems(serviceOrder.items || []); 
           setStatus(serviceOrder.status);
           setInternalNotes(serviceOrder.internalNotes || '');
+          setWarranty(serviceOrder.warranty || defaultWarranty);
       } else if (customer) {
           setSelectedCustomerId(customer.id);
           setEquipmentType('');
@@ -121,6 +135,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setItems([]);
           setStatus('Aberta');
           setInternalNotes('');
+          setWarranty(defaultWarranty);
       } else {
           // Reset form for a new blank OS
           setSelectedCustomerId('');
@@ -132,6 +147,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setItems([]);
           setStatus('Aberta');
           setInternalNotes('');
+          setWarranty(defaultWarranty);
       }
     }
   }, [serviceOrder, customer, isEditing, isOpen]);
@@ -205,6 +221,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         technicalReport: technicalReport,
         accessories: accessories,
         serialNumber: equipment.serial,
+        warranty: warranty,
+        attendant: 'Admin', // Placeholder for now
     }
     
     if (onSave) {
@@ -446,7 +464,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     currentY += 3;
-    const warrantyText = "A garantia para os serviços prestados é de 90 dias, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.";
+    const warrantyText = `A garantia para os serviços prestados é de ${warranty}, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.`;
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
     currentY += 12;
     
@@ -637,8 +655,8 @@ const generateEntryReceiptPdf = () => {
                   <ScrollArea className="h-full">
                     <div className="p-4 pt-2 space-y-3">
                       <TabsContent value="general" className="mt-0 space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="col-span-2">
                                 <Label htmlFor="customer">Cliente</Label>
                                 <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
                                   <SelectTrigger>
@@ -709,6 +727,18 @@ const generateEntryReceiptPdf = () => {
                                   rows={3}
                                 />
                               </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 items-end">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="warranty">Garantia Aplicada</Label>
+                                    <Input 
+                                        id="warranty" 
+                                        placeholder="Ex: 90 dias"
+                                        value={warranty}
+                                        onChange={(e) => setWarranty(e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground">Exemplos: 90 dias, 6 meses, 1 ano, Sem garantia</p>
+                                </div>
                             </div>
                       </TabsContent>
                       <TabsContent value="items" className="mt-0 space-y-3">

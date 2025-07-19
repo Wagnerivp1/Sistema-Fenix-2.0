@@ -65,7 +65,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       toast({
         variant: 'destructive',
         title: 'Erro de Impressão',
-        description: 'Não foi possível gerar a etiqueta. Verifique o código de barras.',
+        description: 'Não foi possível gerar a etiqueta. O código de barras não está pronto.',
       });
       return;
     }
@@ -147,7 +147,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
   return (
     <>
-      {isOpen && item.barcode && <BarcodeSvgRenderer value={item.barcode} onRender={setBarcodeSvgString} />}
+      {isOpen && item.id && <BarcodeSvgRenderer value={item.id} onRender={setBarcodeSvgString} />}
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

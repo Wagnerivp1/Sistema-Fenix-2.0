@@ -49,7 +49,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
         setFormData(item);
       } else {
         const newId = `PROD-${Date.now()}`;
-        setFormData({ ...initialFormData, id: newId });
+        setFormData({ ...initialFormData, id: newId, barcode: newId });
       }
     }
   }, [item, isOpen]);
@@ -70,12 +70,12 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
       return;
     }
     
-    // Gerar o código de barras com as informações desejadas
-    const barcodeValue = `JL Informática | ${formData.name} | R$${(formData.price || 0).toFixed(2)}`;
+    // O valor rico para o campo barcode é gerado aqui, mas o visual usa o ID.
+    const barcodeTextValue = `JL Informática | ${formData.name} | R$${(formData.price || 0).toFixed(2)}`;
 
     const finalItem: StockItem = {
       id: formData.id!,
-      barcode: barcodeValue,
+      barcode: barcodeTextValue, // Salva o texto rico
       name: formData.name!,
       price: formData.price || 0,
       quantity: isEditing ? item.quantity : (formData.quantity || 0),
@@ -84,8 +84,6 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
     onSave(finalItem);
   };
   
-  const currentBarcodeValue = `JL Informática | ${formData.name || ''} | R$${(formData.price || 0).toFixed(2)}`;
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
@@ -153,10 +151,10 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
         </div>
         <DialogFooter className="sm:justify-between items-center">
             <div className="flex-shrink-0">
-                {formData.name && formData.price ? (
-                    <Barcode value={currentBarcodeValue} height={40} fontSize={10} width={1.5} />
+                {formData.id ? (
+                    <Barcode value={formData.id} height={40} fontSize={10} width={1.5} />
                 ) : (
-                    <div className="h-[40px] flex items-center text-xs text-muted-foreground">Preencha nome e preço para gerar o código.</div>
+                    <div className="h-[40px] flex items-center text-xs text-muted-foreground">Aguardando ID do produto para gerar o código.</div>
                 )}
             </div>
             <div className="flex gap-2">

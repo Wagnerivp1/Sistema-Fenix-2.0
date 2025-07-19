@@ -37,14 +37,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockCustomers, mockStock } from '@/lib/data';
+import { getCustomers, getStock } from '@/lib/storage';
 import type { Customer, ServiceOrder, StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
-
+import { add } from 'date-fns';
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -75,6 +75,8 @@ const SETTINGS_KEY = 'app_settings';
 export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
   const { toast } = useToast();
   
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [stock, setStock] = React.useState<StockItem[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>('');
   const [reportedProblem, setReportedProblem] = React.useState('');
   const [equipmentType, setEquipmentType] = React.useState('');
@@ -93,6 +95,12 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const [openCombobox, setOpenCombobox] = React.useState(false);
 
   const isEditing = !!serviceOrder;
+  
+  React.useEffect(() => {
+    // Carrega clientes e estoque uma vez
+    setCustomers(getCustomers());
+    setStock(getStock());
+  }, []);
 
   React.useEffect(() => {
     let defaultWarrantyDays = 90;
@@ -108,7 +116,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
 
     if (isOpen) { 
       if (isEditing && serviceOrder) {
-          const selectedCustomer = mockCustomers.find(c => c.name === serviceOrder.customerName);
+          const selectedCustomer = customers.find(c => c.name === serviceOrder.customerName);
           setSelectedCustomerId(selectedCustomer?.id || '');
           const [type, brand, ...modelParts] = serviceOrder.equipment.split(' ');
           const model = modelParts.join(' ');
@@ -150,7 +158,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setWarranty(defaultWarranty);
       }
     }
-  }, [serviceOrder, customer, isEditing, isOpen]);
+  }, [serviceOrder, customer, isEditing, isOpen, customers]);
 
 
   const handleEquipmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,7 +177,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     }
 
     if (newItem.type === 'part') {
-      const stockItem = mockStock.find(item => item.name.toLowerCase() === newItem.description.toLowerCase());
+      const stockItem = stock.find(item => item.name.toLowerCase() === newItem.description.toLowerCase());
       if (!stockItem) {
         setManualAddItem({ ...newItem, id: Date.now() });
         setIsManualAddDialogOpen(true);
@@ -200,7 +208,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   };
   
   const handleSave = () => {
-    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
+    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'Erro', description: 'Por favor, selecione um cliente.' });
       return;
@@ -231,7 +239,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   };
 
  const generatePdfBase = (title: string): { doc: jsPDF, selectedCustomer: Customer, currentY: number, pageWidth: number, margin: number } | null => {
-    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
+    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
         toast({ variant: 'destructive', title: 'Cliente não selecionado!'});
         return null;
@@ -464,7 +472,39 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     currentY += 3;
-    const warrantyText = `A garantia para os serviços prestados é de ${warranty}, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.`;
+    
+    let warrantyText = `A garantia para os serviços prestados é de ${warranty}, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.`;
+
+    // Add warranty start and end date if applicable
+    const deliveredDate = serviceOrder?.deliveredDate;
+    if (status === 'Entregue' && deliveredDate && warranty) {
+        let defaultWarrantyDays = 90;
+        try {
+            const savedSettings = localStorage.getItem(SETTINGS_KEY);
+            if (savedSettings) {
+                defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
+            }
+        } catch (e) { /* ignore */ }
+
+        const match = warranty.match(/(\d+)\s*(dias|meses|mes|ano|anos)/i);
+        let duration: Duration = { days: defaultWarrantyDays };
+
+        if (match) {
+            const value = parseInt(match[1], 10);
+            const unit = match[2].toLowerCase();
+            if (unit.startsWith('dia')) duration = { days: value };
+            else if (unit.startsWith('mes')) duration = { months: value };
+            else if (unit.startsWith('ano')) duration = { years: value };
+        }
+        
+        const [year, month, day] = deliveredDate.split('-').map(Number);
+        const startDate = new Date(Date.UTC(year, month - 1, day));
+        const endDate = add(startDate, duration);
+        const formatDate = (d: Date) => d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+
+        warrantyText += ` Período da Garantia: de ${formatDate(startDate)} até ${formatDate(endDate)}.`;
+    }
+
     doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
     currentY += 12;
     
@@ -480,7 +520,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   };
 
 const generateEntryReceiptPdf = () => {
-    const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
+    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
         toast({ variant: "destructive", title: "Cliente não selecionado!" });
         return;
@@ -663,7 +703,7 @@ const generateEntryReceiptPdf = () => {
                                     <SelectValue placeholder="Selecione um cliente" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {mockCustomers.map((c) => (
+                                    {customers.map((c) => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                     ))}
                                   </SelectContent>
@@ -790,12 +830,12 @@ const generateEntryReceiptPdf = () => {
                                                 <CommandList>
                                                     <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
                                                     <CommandGroup>
-                                                        {mockStock.map((stockItem) => (
+                                                        {stock.map((stockItem) => (
                                                             <CommandItem
                                                                 key={stockItem.id}
                                                                 value={stockItem.name}
                                                                 onSelect={(currentValue) => {
-                                                                    const selected = mockStock.find(s => s.name.toLowerCase() === currentValue.toLowerCase());
+                                                                    const selected = stock.find(s => s.name.toLowerCase() === currentValue.toLowerCase());
                                                                     if (selected) {
                                                                         setNewItem({ ...newItem, description: selected.name, unitPrice: selected.price });
                                                                     }
@@ -916,3 +956,5 @@ const generateEntryReceiptPdf = () => {
     </>
   );
 }
+
+    

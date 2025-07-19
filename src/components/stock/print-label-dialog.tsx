@@ -33,25 +33,41 @@ const BarcodeRenderer = ({ value, onRender }: { value: string; onRender: (dataUr
     if (barcodeRef.current) {
       const svgElement = barcodeRef.current.querySelector('svg');
       if (svgElement) {
+        // Aumentar a resolução para melhor qualidade no PDF
+        svgElement.setAttribute('width', '360');
+        svgElement.setAttribute('height', '80');
+
         const serializer = new XMLSerializer();
         const svgString = serializer.serializeToString(svgElement);
         const canvas = document.createElement('canvas');
+        
+        // Ajustar o tamanho do canvas para a resolução aumentada
+        canvas.width = 360;
+        canvas.height = 80;
+
         const ctx = canvas.getContext('2d');
         const img = new Image();
+
         img.onload = () => {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx?.drawImage(img, 0, 0);
-          onRender(canvas.toDataURL('image/png'));
+          if (ctx) {
+            ctx.fillStyle = "#FFFFFF"; // Fundo branco para evitar transparência
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            onRender(canvas.toDataURL('image/png'));
+          }
         };
-        img.src = 'data:image/svg+xml;base64,' + btoa(svgString);
+        img.onerror = () => {
+          console.error("Failed to load SVG image for barcode.");
+        };
+        // O uso de btoa é seguro aqui, pois o SVG é gerado no cliente
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
       }
     }
   }, [value, onRender]);
 
   return (
-    <div ref={barcodeRef} style={{ display: 'none' }}>
-      <Barcode value={value} width={1} height={20} fontSize={10} />
+    <div ref={barcodeRef} style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+      <Barcode value={value || 'error'} width={1.5} height={40} fontSize={10} background="#FFFFFF" />
     </div>
   );
 };
@@ -74,7 +90,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       toast({
         variant: 'destructive',
         title: 'Erro de Impressão',
-        description: 'Não foi possível gerar a etiqueta. Tente novamente.',
+        description: 'Não foi possível gerar a etiqueta. Verifique se o código de barras foi renderizado.',
       });
       return;
     }
@@ -95,20 +111,17 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     
     for(let i = 0; i < quantity; i++) {
         // Verifica se a etiqueta cabe na linha atual
-        if (currentX + labelWidth > page.width) {
+        if (currentX + labelWidth > page.width - margin.left) {
             currentX = margin.left;
             currentY += labelHeight + gap.y;
         }
 
         // Verifica se a etiqueta cabe na página atual
-        if (currentY + labelHeight > page.height) {
+        if (currentY + labelHeight > page.height - margin.top) {
             doc.addPage();
             currentY = margin.top;
             currentX = margin.left;
         }
-
-        // Desenha a borda da etiqueta (opcional)
-        // doc.rect(currentX, currentY, labelWidth, labelHeight);
         
         // Adiciona conteúdo
         doc.setFontSize(8);
@@ -142,7 +155,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
   return (
     <>
-      <BarcodeRenderer value={item.barcode} onRender={setBarcodeDataUrl} />
+      {isOpen && <BarcodeRenderer value={item.barcode} onRender={setBarcodeDataUrl} />}
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

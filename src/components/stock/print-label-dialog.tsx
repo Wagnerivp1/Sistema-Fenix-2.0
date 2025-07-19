@@ -33,24 +33,22 @@ const BarcodeRenderer = ({ value, onRender }: { value: string; onRender: (dataUr
     if (barcodeRef.current) {
       const svgElement = barcodeRef.current.querySelector('svg');
       if (svgElement) {
-        // Aumentar a resolução para melhor qualidade no PDF
-        svgElement.setAttribute('width', '360');
-        svgElement.setAttribute('height', '80');
+        svgElement.setAttribute('width', '300');
+        svgElement.setAttribute('height', '60');
 
         const serializer = new XMLSerializer();
         const svgString = serializer.serializeToString(svgElement);
         const canvas = document.createElement('canvas');
         
-        // Ajustar o tamanho do canvas para a resolução aumentada
-        canvas.width = 360;
-        canvas.height = 80;
+        canvas.width = 300;
+        canvas.height = 60;
 
         const ctx = canvas.getContext('2d');
         const img = new Image();
 
         img.onload = () => {
           if (ctx) {
-            ctx.fillStyle = "#FFFFFF"; // Fundo branco para evitar transparência
+            ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             onRender(canvas.toDataURL('image/png'));
@@ -59,7 +57,6 @@ const BarcodeRenderer = ({ value, onRender }: { value: string; onRender: (dataUr
         img.onerror = () => {
           console.error("Failed to load SVG image for barcode.");
         };
-        // O uso de btoa é seguro aqui, pois o SVG é gerado no cliente
         img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
       }
     }
@@ -67,7 +64,7 @@ const BarcodeRenderer = ({ value, onRender }: { value: string; onRender: (dataUr
 
   return (
     <div ref={barcodeRef} style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
-      <Barcode value={value || 'error'} width={1.5} height={40} fontSize={10} background="#FFFFFF" />
+      <Barcode value={value || 'error'} width={1.2} height={30} fontSize={10} background="#FFFFFF" margin={2} />
     </div>
   );
 };
@@ -97,53 +94,51 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     
     const doc = new jsPDF();
     
-    // Configurações da etiqueta (em mm)
     const labelWidth = 40;
-    const labelHeight = 25;
+    const labelHeight = 20;
     const margin = { top: 10, left: 10 };
-    const gap = { x: 5, y: 5 };
-
-    // Configurações da página A4 (210x297 mm)
+    const gap = { x: 3, y: 3 };
     const page = { width: 210, height: 297 };
 
     let currentX = margin.left;
     let currentY = margin.top;
     
     for(let i = 0; i < quantity; i++) {
-        // Verifica se a etiqueta cabe na linha atual
         if (currentX + labelWidth > page.width - margin.left) {
             currentX = margin.left;
             currentY += labelHeight + gap.y;
         }
 
-        // Verifica se a etiqueta cabe na página atual
         if (currentY + labelHeight > page.height - margin.top) {
             doc.addPage();
             currentY = margin.top;
             currentX = margin.left;
         }
         
-        // Adiciona conteúdo
-        doc.setFontSize(8);
+        const centerX = currentX + labelWidth / 2;
+
+        // Borda da etiqueta
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(currentX, currentY, labelWidth, labelHeight);
+        
+        // Conteúdo
+        doc.setFontSize(6);
         doc.setFont('helvetica', 'bold');
-        doc.text('jl iNFORMÁTICA', currentX + 2, currentY + 4);
+        doc.text('jl iNFORMÁTICA', centerX, currentY + 3, { align: 'center' });
 
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
-        const productName = doc.splitTextToSize(item.name, labelWidth - 4);
-        doc.text(productName, currentX + 2, currentY + 8);
-        
-        const priceY = currentY + (productName.length > 1 ? 14 : 11);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, currentX + 2, priceY);
+        const productNameLines = doc.splitTextToSize(item.name, labelWidth - 4);
+        doc.text(productNameLines, centerX, currentY + 6.5, { align: 'center', maxWidth: labelWidth - 4 });
 
-        // Adiciona o código de barras
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 13, { align: 'center' });
+
         if (barcodeDataUrl) {
-            doc.addImage(barcodeDataUrl, 'PNG', currentX + 2, currentY + 15, 36, 8);
+            doc.addImage(barcodeDataUrl, 'PNG', currentX + 3, currentY + 14, 34, 5);
         }
 
-        // Move para a próxima posição
         currentX += labelWidth + gap.x;
     }
 
@@ -155,7 +150,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
   return (
     <>
-      {isOpen && <BarcodeRenderer value={item.barcode} onRender={setBarcodeDataUrl} />}
+      {isOpen && item.barcode && <BarcodeRenderer value={item.barcode} onRender={setBarcodeDataUrl} />}
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

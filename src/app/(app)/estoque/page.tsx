@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Search, MoreHorizontal, ArrowUpDown, Inbox, FileDown } from 'lucide-react';
+import { PlusCircle, Search, MoreHorizontal, ArrowUpDown, Inbox, FileDown, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -35,6 +35,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { EditStockItemDialog } from '@/components/stock/edit-stock-item-dialog';
 import { AddStockEntryDialog } from '@/components/stock/add-stock-entry-dialog';
+import { PrintLabelDialog } from '@/components/stock/print-label-dialog';
 
 export default function EstoquePage() {
   const [stockItems, setStockItems] = React.useState<StockItem[]>(mockStock);
@@ -43,6 +44,8 @@ export default function EstoquePage() {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [itemForEntry, setItemForEntry] = React.useState<StockItem | null>(null);
   const [isEntryOpen, setIsEntryOpen] = React.useState(false);
+  const [itemToPrint, setItemToPrint] = React.useState<StockItem | null>(null);
+  const [isPrintOpen, setIsPrintOpen] = React.useState(false);
   const { toast } = useToast();
 
   const filteredItems = stockItems.filter((item) =>
@@ -70,13 +73,16 @@ export default function EstoquePage() {
     setItemForEntry(null);
   };
   
-  const handleOpenDialog = (type: 'edit' | 'entry', item: StockItem | null) => {
+  const handleOpenDialog = (type: 'edit' | 'entry' | 'print', item: StockItem | null) => {
     if (type === 'edit') {
         setEditingItem(item);
         setIsEditOpen(true);
     } else if (type === 'entry') {
         setItemForEntry(item);
         setIsEntryOpen(true);
+    } else if (type === 'print') {
+        setItemToPrint(item);
+        setIsPrintOpen(true);
     }
   }
 
@@ -177,6 +183,10 @@ export default function EstoquePage() {
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => handleOpenDialog('edit', item)}>Editar Produto</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleOpenDialog('entry', item)}>Adicionar Entrada</DropdownMenuItem>
+                       <DropdownMenuItem onClick={() => handleOpenDialog('print', item)}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir Etiquetas
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive">
                         Excluir Produto
@@ -211,6 +221,12 @@ export default function EstoquePage() {
         onOpenChange={setIsEntryOpen}
         onSave={handleAddEntry}
         item={itemForEntry}
+    />
+
+    <PrintLabelDialog
+        isOpen={isPrintOpen}
+        onOpenChange={setIsPrintOpen}
+        item={itemToPrint}
     />
 
     </>

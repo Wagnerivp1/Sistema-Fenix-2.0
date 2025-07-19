@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, MoreHorizontal, ArrowUpDown, Check, ChevronsUpDown, User, Phone, Mail, MapPin } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, ArrowUpDown, Check, ChevronsUpDown, User, Phone, Mail, MapPin, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';

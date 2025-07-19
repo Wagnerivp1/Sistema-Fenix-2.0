@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Search, MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { PlusCircle, Search, MoreHorizontal, ArrowUpDown, Inbox, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { mockStock } from '@/lib/data';
@@ -32,28 +33,65 @@ import type { StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { EditStockItemDialog } from '@/components/stock/edit-stock-item-dialog';
+import { AddStockEntryDialog } from '@/components/stock/add-stock-entry-dialog';
 
 export default function EstoquePage() {
   const [stockItems, setStockItems] = React.useState<StockItem[]>(mockStock);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [editingItem, setEditingItem] = React.useState<StockItem | null>(null);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [itemForEntry, setItemForEntry] = React.useState<StockItem | null>(null);
+  const [isEntryOpen, setIsEntryOpen] = React.useState(false);
   const { toast } = useToast();
 
   const filteredItems = stockItems.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  const handleSaveItem = (itemToSave: StockItem) => {
+    const exists = stockItems.some(item => item.id === itemToSave.id);
+    if (exists) {
+        setStockItems(stockItems.map(item => item.id === itemToSave.id ? itemToSave : item));
+        toast({ title: 'Produto Atualizado!', description: `O item "${itemToSave.name}" foi salvo.` });
+    } else {
+        setStockItems([itemToSave, ...stockItems]);
+        toast({ title: 'Produto Adicionado!', description: `O item "${itemToSave.name}" foi cadastrado.` });
+    }
+    setIsEditOpen(false);
+    setEditingItem(null);
+  };
+  
+  const handleAddEntry = (item: StockItem, quantity: number) => {
+    setStockItems(stockItems.map(i => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i));
+    toast({ title: 'Entrada Registrada!', description: `${quantity} unidade(s) de "${item.name}" adicionada(s) ao estoque.` });
+    setIsEntryOpen(false);
+    setItemForEntry(null);
+  };
+  
+  const handleOpenDialog = (type: 'edit' | 'entry', item: StockItem | null) => {
+    if (type === 'edit') {
+        setEditingItem(item);
+        setIsEditOpen(true);
+    } else if (type === 'entry') {
+        setItemForEntry(item);
+        setIsEntryOpen(true);
+    }
+  }
 
-  const getStockBadge = (quantity: number) => {
-    if (quantity <= 0) {
+  const getStockBadge = (item: StockItem) => {
+    if (item.quantity <= 0) {
       return (
         <Badge variant="destructive" className="text-destructive-foreground">
           Sem estoque
         </Badge>
       );
     }
-    if (quantity <= 5) {
+    if (item.minStock && item.quantity <= item.minStock) {
       return (
         <Badge className="bg-yellow-500/80 text-white hover:bg-yellow-500/90">
-          Baixo
+          Estoque Baixo
         </Badge>
       );
     }
@@ -61,19 +99,30 @@ export default function EstoquePage() {
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <div>
             <CardTitle>Controle de Estoque</CardTitle>
             <CardDescription>
-              Gerencie seus produtos e peças.
+              Gerencie seus produtos, peças e insumos.
             </CardDescription>
           </div>
-          <Button size="sm">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Adicionar Produto
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-8 gap-1">
+              <FileDown className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Exportar
+              </span>
+            </Button>
+            <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenDialog('edit', null)}>
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Adicionar Produto
+              </span>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -82,20 +131,22 @@ export default function EstoquePage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Procurar por nome do produto..."
-              className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+              placeholder="Procurar por nome ou categoria..."
+              className="w-full rounded-lg bg-background pl-8 md:w-[300px]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
+        <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[64px]"></TableHead>
               <TableHead>Produto</TableHead>
-              <TableHead className="hidden md:table-cell">ID</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Quantidade</TableHead>
+              <TableHead className="hidden md:table-cell">Categoria</TableHead>
+              <TableHead>Qtd.</TableHead>
               <TableHead>Preço (R$)</TableHead>
               <TableHead>
                 <span className="sr-only">Ações</span>
@@ -103,11 +154,15 @@ export default function EstoquePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.map((item) => (
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item) => (
               <TableRow key={item.id}>
+                <TableCell>
+                  <Inbox className="h-6 w-6 text-muted-foreground" />
+                </TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell className="hidden md:table-cell">{item.id}</TableCell>
-                <TableCell>{getStockBadge(item.quantity)}</TableCell>
+                <TableCell>{getStockBadge(item)}</TableCell>
+                <TableCell className="hidden md:table-cell">{item.category || 'N/A'}</TableCell>
                 <TableCell>{item.quantity}</TableCell>
                 <TableCell>{item.price.toFixed(2)}</TableCell>
                 <TableCell>
@@ -120,24 +175,44 @@ export default function EstoquePage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
-                      <DropdownMenuItem>Ajustar Estoque</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleOpenDialog('edit', item)}>Editar Produto</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleOpenDialog('entry', item)}>Adicionar Entrada</DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive">
-                        Excluir
+                        Excluir Produto
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            ))
+            ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    Nenhum produto encontrado.
+                  </TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
-        {filteredItems.length === 0 && (
-          <div className="text-center py-10 text-muted-foreground">
-            Nenhum item encontrado.
-          </div>
-        )}
+        </div>
       </CardContent>
     </Card>
+    
+    <EditStockItemDialog 
+        isOpen={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        onSave={handleSaveItem}
+        item={editingItem}
+    />
+    
+    <AddStockEntryDialog
+        isOpen={isEntryOpen}
+        onOpenChange={setIsEntryOpen}
+        onSave={handleAddEntry}
+        item={itemForEntry}
+    />
+
+    </>
   );
 }

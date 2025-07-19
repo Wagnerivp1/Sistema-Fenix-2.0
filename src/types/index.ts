@@ -31,9 +31,26 @@ export type ServiceOrder = {
 };
 
 export type StockItem = {
-  id: string;
+  id: string; // SKU or internal code
   name: string;
+  category?: string;
+  description?: string;
+  unitOfMeasure?: 'UN' | 'KG' | 'L' | 'M' | 'CX';
+  barcode?: string;
+  costPrice?: number;
+  price: number; // Selling price
   quantity: number;
-  price: number;
+  minStock?: number;
   location?: string;
 };
+
+export type StockMovement = {
+  id: string;
+  itemId: string;
+  type: 'entrada' | 'saida';
+  origin?: 'compra' | 'devolucao' | 'transferencia' | 'venda' | 'ajuste';
+  quantity: number;
+  date: string;
+  user: string;
+  notes?: string;
+}

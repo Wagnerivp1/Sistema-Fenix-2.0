@@ -52,7 +52,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { mockCustomers, mockServiceOrders } from '@/lib/data';
+import { getCustomers, getServiceOrders, saveCustomers, saveServiceOrders } from '@/lib/storage';
 import type { Customer, ServiceOrder } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -62,16 +62,25 @@ import { ServiceHistory } from '@/components/customers/service-history';
 export default function CustomersPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [customers, setCustomers] = React.useState<Customer[]>(mockCustomers);
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [serviceOrders, setServiceOrders] = React.useState<ServiceOrder[]>([]);
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
   const [customerServiceHistory, setCustomerServiceHistory] = React.useState<ServiceOrder[]>([]);
   const [openCombobox, setOpenCombobox] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  
+  React.useEffect(() => {
+    // Load data from localStorage on mount
+    setCustomers(getCustomers());
+    setServiceOrders(getServiceOrders());
+    setIsLoading(false);
+  }, []);
 
   const handleSelectCustomer = (customer: Customer | null) => {
     setSelectedCustomer(customer);
     if (customer) {
-      const history = mockServiceOrders.filter(
+      const history = serviceOrders.filter(
         (order) => order.customerName.toLowerCase() === customer.name.toLowerCase()
       ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setCustomerServiceHistory(history);
@@ -81,7 +90,9 @@ export default function CustomersPage() {
   };
   
   const handleUpdateCustomer = (updatedCustomer: Customer) => {
-    setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+    const updatedCustomers = customers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c);
+    setCustomers(updatedCustomers);
+    saveCustomers(updatedCustomers); // Save to localStorage
     setSelectedCustomer(updatedCustomer);
     toast({
       title: 'Cliente atualizado!',
@@ -91,7 +102,9 @@ export default function CustomersPage() {
   };
 
   const handleDeleteCustomer = (customerId: string) => {
-    setCustomers(prev => prev.filter(c => c.id !== customerId));
+    const updatedCustomers = customers.filter(c => c.id !== customerId);
+    setCustomers(updatedCustomers);
+    saveCustomers(updatedCustomers); // Save to localStorage
     setSelectedCustomer(null);
     setCustomerServiceHistory([]);
     toast({
@@ -105,6 +118,10 @@ export default function CustomersPage() {
     if (selectedCustomer) {
       router.push(`/ordens-de-servico?customerId=${selectedCustomer.id}`);
     }
+  }
+
+  if (isLoading) {
+    return <div>Carregando clientes...</div>;
   }
 
   return (

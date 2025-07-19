@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockServiceOrders, mockCustomers } from '@/lib/data';
+import { getServiceOrders, saveServiceOrders, getCustomers } from '@/lib/storage';
 import type { Customer, ServiceOrder } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { cn } from '@/lib/utils';
@@ -70,14 +70,23 @@ export default function ServiceOrdersPage() {
   const customerId = searchParams.get('customerId');
   const { toast } = useToast();
   
-  const [orders, setOrders] = React.useState<ServiceOrder[]>(mockServiceOrders);
+  const [orders, setOrders] = React.useState<ServiceOrder[]>([]);
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [editingOrder, setEditingOrder] = React.useState<ServiceOrder | null>(null);
   const [customerForNewOS, setCustomerForNewOS] = React.useState<Customer | null>(null);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
+    // Load data from localStorage on mount
+    const loadedOrders = getServiceOrders();
+    const loadedCustomers = getCustomers();
+    setOrders(loadedOrders);
+    setCustomers(loadedCustomers);
+    setIsLoading(false);
+
     if (customerId) {
-      const customer = mockCustomers.find(c => c.id === customerId);
+      const customer = loadedCustomers.find(c => c.id === customerId);
       if (customer) {
         setCustomerForNewOS(customer);
         setEditingOrder(null);
@@ -102,24 +111,31 @@ export default function ServiceOrdersPage() {
   }
 
   const handleSaveOrder = (savedOrder: ServiceOrder) => {
-    // Se a OS já existe, atualiza. Se não, adiciona.
+    let updatedOrders;
     const orderExists = orders.some(o => o.id === savedOrder.id);
+
     if (orderExists) {
-        setOrders(orders.map(o => o.id === savedOrder.id ? savedOrder : o));
+        updatedOrders = orders.map(o => o.id === savedOrder.id ? savedOrder : o);
          toast({
             title: 'Ordem de Serviço Atualizada!',
             description: 'Os dados da OS foram salvos com sucesso.',
         });
     } else {
-        setOrders([savedOrder, ...orders]);
+        updatedOrders = [savedOrder, ...orders];
         toast({
             title: 'Ordem de Serviço Salva!',
             description: 'A nova ordem de serviço foi registrada com sucesso.',
         });
     }
+    
+    setOrders(updatedOrders);
+    saveServiceOrders(updatedOrders); // Save to localStorage
     handleSheetOpenChange(false);
   }
 
+  if (isLoading) {
+    return <div>Carregando ordens de serviço...</div>;
+  }
 
   return (
     <Card>

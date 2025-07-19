@@ -1,3 +1,7 @@
+
+'use client';
+
+import * as React from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { mockServiceOrders } from '@/lib/data';
+import { getServiceOrders } from '@/lib/storage';
 import { cn } from '@/lib/utils';
+import type { ServiceOrder } from '@/types';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -29,7 +34,14 @@ const getStatusVariant = (status: string) => {
 
 
 export function RecentOrdersTable() {
-  const recentOrders = [...mockServiceOrders].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+  const [recentOrders, setRecentOrders] = React.useState<ServiceOrder[]>([]);
+
+  React.useEffect(() => {
+    const allOrders = getServiceOrders();
+    const sortedOrders = [...allOrders].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+    setRecentOrders(sortedOrders);
+  }, []);
+
 
   return (
     <Card className="h-full flex flex-col">

@@ -1,20 +1,43 @@
+
+'use client';
+
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Wrench, CheckCircle, Archive } from 'lucide-react';
-import { mockCustomers, mockServiceOrders } from '@/lib/data';
+import { getCustomers, getServiceOrders, getStock } from '@/lib/storage';
 
 export function StatsCards() {
-  const activeOrders = mockServiceOrders.filter(
-    (order) => !['Finalizado', 'Entregue', 'Cancelada'].includes(order.status)
-  ).length;
+  const [stats, setStats] = React.useState({
+    activeOrders: 0,
+    completedOrders: 0,
+    totalCustomers: 0,
+    lowStockItems: 0,
+  });
+  
+  React.useEffect(() => {
+    const serviceOrders = getServiceOrders();
+    const customers = getCustomers();
+    const stock = getStock();
 
-  const completedOrders = mockServiceOrders.filter(
-    (order) => ['Finalizado', 'Entregue'].includes(order.status)
-  ).length;
-  
-  const totalCustomers = mockCustomers.length;
-  
-  // Mock data for low stock items
-  const lowStockItems = 2;
+    const activeOrders = serviceOrders.filter(
+      (order) => !['Finalizado', 'Entregue', 'Cancelada'].includes(order.status)
+    ).length;
+
+    const completedOrders = serviceOrders.filter(
+      (order) => ['Finalizado', 'Entregue'].includes(order.status)
+    ).length;
+    
+    const totalCustomers = customers.length;
+    
+    const lowStockItems = stock.filter(item => item.minStock && item.quantity <= item.minStock).length;
+
+    setStats({
+      activeOrders,
+      completedOrders,
+      totalCustomers,
+      lowStockItems,
+    });
+  }, []);
 
   return (
     <>
@@ -24,7 +47,7 @@ export function StatsCards() {
           <Wrench className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{activeOrders}</div>
+          <div className="text-2xl font-bold">{stats.activeOrders}</div>
           <p className="text-xs text-muted-foreground">Ordens de serviço ativas</p>
         </CardContent>
       </Card>
@@ -34,7 +57,7 @@ export function StatsCards() {
           <CheckCircle className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{completedOrders}</div>
+          <div className="text-2xl font-bold">{stats.completedOrders}</div>
           <p className="text-xs text-muted-foreground">Total de serviços entregues</p>
         </CardContent>
       </Card>
@@ -44,7 +67,7 @@ export function StatsCards() {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalCustomers}</div>
+          <div className="text-2xl font-bold">{stats.totalCustomers}</div>
           <p className="text-xs text-muted-foreground">Total de clientes cadastrados</p>
         </CardContent>
       </Card>
@@ -54,7 +77,7 @@ export function StatsCards() {
           <Archive className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{lowStockItems}</div>
+          <div className="text-2xl font-bold">{stats.lowStockItems}</div>
           <p className="text-xs text-muted-foreground">Itens que precisam de reposição</p>
         </CardContent>
       </Card>

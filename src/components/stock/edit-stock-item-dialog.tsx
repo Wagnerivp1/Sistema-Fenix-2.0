@@ -2,7 +2,6 @@
 'use client';
 
 import * as React from 'react';
-import Barcode from 'react-barcode';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -49,7 +48,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
         setFormData(item);
       } else {
         const newId = `PROD-${Date.now()}`;
-        setFormData({ ...initialFormData, id: newId, barcode: newId });
+        setFormData({ ...initialFormData, id: newId });
       }
     }
   }, [item, isOpen]);
@@ -65,13 +64,17 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
   };
 
   const handleSave = () => {
-    if (!formData.name) {
-      toast({ variant: 'destructive', title: 'Erro de Validação', description: 'O nome do produto é obrigatório.' });
+    if (!formData.name || !formData.price) {
+      toast({ variant: 'destructive', title: 'Erro de Validação', description: 'Nome do produto e preço de venda são obrigatórios.' });
       return;
     }
+    
+    // Gerar o código de barras com as informações desejadas
+    const barcodeValue = `jl iNFORMÁTICA | ${formData.name} | R$${formData.price.toFixed(2)}`;
+
     const finalItem: StockItem = {
       id: formData.id!,
-      barcode: formData.barcode!,
+      barcode: barcodeValue,
       name: formData.name,
       price: formData.price || 0,
       quantity: isEditing ? item.quantity : (formData.quantity || 0),
@@ -122,18 +125,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
                 </div>
                 <div className="space-y-2 col-span-1">
                     <Label htmlFor="barcode">Código de Barras</Label>
-                    {formData.barcode && (
-                      <div className="p-2 border rounded-md bg-white">
-                        <Barcode 
-                          value={formData.barcode} 
-                          height={40}
-                          width={1.5}
-                          fontSize={12}
-                          margin={2}
-                          background="transparent"
-                        />
-                      </div>
-                    )}
+                     <Input id="barcode" value={formData.barcode ? 'Gerado automaticamente' : ''} disabled />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="costPrice">Preço de Custo (R$)</Label>

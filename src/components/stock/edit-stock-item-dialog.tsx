@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import type { StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Barcode from 'react-barcode';
@@ -49,7 +50,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
         setFormData(item);
       } else {
         const newId = `PROD-${Date.now()}`;
-        setFormData({ ...initialFormData, id: newId, barcode: newId });
+        setFormData({ ...initialFormData, id: newId });
       }
     }
   }, [item, isOpen]);
@@ -70,12 +71,11 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
       return;
     }
     
-    // O valor rico para o campo barcode é gerado aqui, mas o visual usa o ID.
     const barcodeTextValue = `JL Informática | ${formData.name} | R$${(formData.price || 0).toFixed(2)}`;
 
     const finalItem: StockItem = {
       id: formData.id!,
-      barcode: barcodeTextValue, // Salva o texto rico
+      barcode: barcodeTextValue,
       name: formData.name!,
       price: formData.price || 0,
       quantity: isEditing ? item.quantity : (formData.quantity || 0),
@@ -86,70 +86,72 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 flex-shrink-0 border-b">
           <DialogTitle>{isEditing ? 'Editar Produto' : 'Cadastrar Novo Produto'}</DialogTitle>
           <DialogDescription>
             {isEditing ? `Altere os dados de "${item?.name}".` : 'Preencha as informações do novo item de estoque.'}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2 space-y-2">
-                    <Label htmlFor="name">Nome do Produto</Label>
-                    <Input id="name" value={formData.name || ''} onChange={handleChange} />
+        <ScrollArea className="flex-grow min-h-0">
+            <div className="grid gap-6 p-6">
+                <div className="grid grid-cols-3 gap-4">
+                    <div className="col-span-2 space-y-2">
+                        <Label htmlFor="name">Nome do Produto</Label>
+                        <Input id="name" value={formData.name || ''} onChange={handleChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="category">Categoria</Label>
+                        <Input id="category" placeholder="Ex: Componentes" value={formData.category || ''} onChange={handleChange} />
+                    </div>
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="category">Categoria</Label>
-                    <Input id="category" placeholder="Ex: Componentes" value={formData.category || ''} onChange={handleChange} />
+                <div className="space-y-2">
+                    <Label htmlFor="description">Descrição Detalhada</Label>
+                    <Textarea id="description" value={formData.description || ''} onChange={handleChange} rows={2} />
+                </div>
+                <div className="grid grid-cols-4 gap-4 items-end">
+                    <div className="space-y-2">
+                        <Label htmlFor="unitOfMeasure">Unidade</Label>
+                        <Select value={formData.unitOfMeasure || 'UN'} onValueChange={(v) => handleSelectChange('unitOfMeasure', v)}>
+                            <SelectTrigger id="unitOfMeasure">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="UN">Unidade (UN)</SelectItem>
+                                <SelectItem value="KG">Quilograma (KG)</SelectItem>
+                                <SelectItem value="L">Litro (L)</SelectItem>
+                                <SelectItem value="M">Metro (M)</SelectItem>
+                                <SelectItem value="CX">Caixa (CX)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2 col-span-1">
+                        <Label htmlFor="barcode">Código de Barras</Label>
+                        <Input id="barcode" value={'Gerado automaticamente'} disabled />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
+                        <Input id="costPrice" type="number" value={formData.costPrice || ''} onChange={handleChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="price">Preço de Venda (R$)</Label>
+                        <Input id="price" type="number" value={formData.price || ''} onChange={handleChange} />
+                    </div>
+                </div>
+                <div className="grid grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="quantity">Quantidade Inicial</Label>
+                        <Input id="quantity" type="number" value={isEditing ? item.quantity : (formData.quantity || '')} onChange={handleChange} disabled={isEditing} />
+                        {isEditing && <p className="text-xs text-muted-foreground">Use "Adicionar Entrada" para alterar o estoque.</p>}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="minStock">Estoque Mínimo</Label>
+                        <Input id="minStock" type="number" value={formData.minStock || ''} onChange={handleChange} />
+                    </div>
                 </div>
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="description">Descrição Detalhada</Label>
-                <Textarea id="description" value={formData.description || ''} onChange={handleChange} rows={2} />
-            </div>
-            <div className="grid grid-cols-4 gap-4 items-end">
-                <div className="space-y-2">
-                    <Label htmlFor="unitOfMeasure">Unidade</Label>
-                    <Select value={formData.unitOfMeasure || 'UN'} onValueChange={(v) => handleSelectChange('unitOfMeasure', v)}>
-                        <SelectTrigger id="unitOfMeasure">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="UN">Unidade (UN)</SelectItem>
-                            <SelectItem value="KG">Quilograma (KG)</SelectItem>
-                            <SelectItem value="L">Litro (L)</SelectItem>
-                            <SelectItem value="M">Metro (M)</SelectItem>
-                            <SelectItem value="CX">Caixa (CX)</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2 col-span-1">
-                    <Label htmlFor="barcode">Código de Barras</Label>
-                     <Input id="barcode" value={'Gerado automaticamente'} disabled />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
-                    <Input id="costPrice" type="number" value={formData.costPrice || ''} onChange={handleChange} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="price">Preço de Venda (R$)</Label>
-                    <Input id="price" type="number" value={formData.price || ''} onChange={handleChange} />
-                </div>
-            </div>
-            <div className="grid grid-cols-4 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantidade Inicial</Label>
-                    <Input id="quantity" type="number" value={isEditing ? item.quantity : (formData.quantity || '')} onChange={handleChange} disabled={isEditing} />
-                    {isEditing && <p className="text-xs text-muted-foreground">Use "Adicionar Entrada" para alterar o estoque.</p>}
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="minStock">Estoque Mínimo</Label>
-                    <Input id="minStock" type="number" value={formData.minStock || ''} onChange={handleChange} />
-                </div>
-            </div>
-        </div>
-        <DialogFooter className="sm:justify-between items-center">
+        </ScrollArea>
+        <DialogFooter className="p-6 border-t flex-shrink-0 bg-card sm:justify-between items-center">
             <div className="flex-shrink-0">
                 {formData.id ? (
                     <Barcode value={formData.id} height={40} fontSize={10} width={1.5} />

@@ -6,11 +6,12 @@ import type { ServiceOrder } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileDown, Calendar, User, Wrench, HardDrive, HelpCircle, FileText, ShoppingBag, DollarSign, ShieldCheck, MessageSquare, Tag } from 'lucide-react';
+import { FileDown, Calendar, User, Wrench, HardDrive, HelpCircle, FileText, ShoppingBag, DollarSign, ShieldCheck, MessageSquare, Tag, AlertCircle } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
+import { add, parseISO } from 'date-fns';
 
 
 declare module 'jspdf' {
@@ -22,8 +23,7 @@ declare module 'jspdf' {
 
 
 const formatDate = (dateString: string) => {
-  const [year, month, day] = dateString.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
+  const date = parseISO(dateString);
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -256,6 +256,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                   <InfoItem icon={DollarSign} label="Valor Total da OS" value={`R$ ${order.totalValue.toFixed(2)}`} />
                   <InfoItem icon={Tag} label="Forma de Pagamento" value={order.paymentMethod || 'Não informado'} />
                   <InfoItem icon={ShieldCheck} label="Garantia Aplicada" value={order.warranty || 'Não informado'} />
+                  <WarrantyInfo order={order} />
                   <InfoItem icon={MessageSquare} label="Observações Internas" value={order.internalNotes || 'Nenhuma'} />
                 </div>
 
@@ -285,3 +286,36 @@ const InfoBlock = ({ icon: Icon, title, content }: { icon: React.ElementType, ti
     <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md border leading-relaxed">{content}</p>
   </div>
 );
+
+const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
+  const getWarrantyInfo = () => {
+    if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
+      return { text: "Garantia pendente de entrega", icon: AlertCircle };
+    }
+
+    const match = order.warranty.match(/(\d+)\s*(dias|meses|ano|anos)/i);
+    if (!match) {
+      return { text: "Prazo de garantia inválido", icon: AlertCircle };
+    }
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+    
+    const duration: Duration = {};
+    if (unit.startsWith('dia')) duration.days = value;
+    else if (unit.startsWith('mes')) duration.months = value;
+    else if (unit.startsWith('ano')) duration.years = value;
+
+    const startDate = parseISO(order.deliveredDate);
+    const endDate = add(startDate, duration);
+    
+    return {
+      text: `De ${formatDate(order.deliveredDate)} até ${formatDate(endDate.toISOString())}`,
+      icon: ShieldCheck
+    };
+  }
+  
+  const warranty = getWarrantyInfo();
+
+  return <InfoItem icon={warranty.icon} label="Período de Garantia" value={warranty.text} />
+};

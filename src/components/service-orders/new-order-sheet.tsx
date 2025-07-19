@@ -207,11 +207,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     return filteredItems.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
   };
   
-  const handleSave = () => {
+  const getFinalOrderData = () => {
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'Erro', description: 'Por favor, selecione um cliente.' });
-      return;
+      return null;
     }
 
     const fullEquipmentName = `${equipmentType} ${equipment.brand} ${equipment.model}`.trim();
@@ -231,12 +231,37 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         serialNumber: equipment.serial,
         warranty: warranty,
         attendant: 'Admin', // Placeholder for now
+    };
+
+    // If status is 'Entregue' and no deliveredDate, set it
+    if (finalOrder.status === 'Entregue' && !finalOrder.deliveredDate) {
+      finalOrder.deliveredDate = new Date().toISOString().split('T')[0];
+    }
+    // If status is not 'Entregue', clear the deliveredDate
+    else if (finalOrder.status !== 'Entregue') {
+      delete finalOrder.deliveredDate;
     }
     
-    if (onSave) {
+    return finalOrder;
+  }
+  
+  const handleSave = () => {
+    const finalOrder = getFinalOrderData();
+    if (finalOrder && onSave) {
         onSave(finalOrder);
     }
   };
+
+  const handleSaveAndPrint = () => {
+    const finalOrder = getFinalOrderData();
+    if (finalOrder) {
+      if (onSave) {
+        onSave(finalOrder);
+      }
+      generateServiceOrderPdf(finalOrder);
+    }
+  }
+
 
  const generatePdfBase = (title: string): { doc: jsPDF, selectedCustomer: Customer, currentY: number, pageWidth: number, margin: number } | null => {
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
@@ -384,7 +409,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     window.open(pdfUrl, '_blank');
   };
 
-  const generateServiceOrderPdf = () => {
+  const generateServiceOrderPdf = (orderToPrint: ServiceOrder) => {
     const base = generatePdfBase("Ordem de Serviço");
     if (!base) return;
     let { doc, selectedCustomer, currentY, pageWidth, margin } = base;
@@ -476,8 +501,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     let warrantyText = `A garantia para os serviços prestados é de ${warranty}, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.`;
 
     // Add warranty start and end date if applicable
-    const deliveredDate = serviceOrder?.deliveredDate;
-    if (status === 'Entregue' && deliveredDate && warranty) {
+    const deliveredDate = orderToPrint.deliveredDate;
+    if (orderToPrint.status === 'Entregue' && deliveredDate && warranty) {
         let defaultWarrantyDays = 90;
         try {
             const savedSettings = localStorage.getItem(SETTINGS_KEY);
@@ -626,7 +651,10 @@ const generateEntryReceiptPdf = () => {
         generateQuotePdf();
         break;
       case 'Reimpressão de OS':
-        generateServiceOrderPdf();
+        const orderData = getFinalOrderData();
+        if (orderData) {
+            generateServiceOrderPdf(orderData);
+        }
         break;
       case 'Recibo de Entrada':
         generateEntryReceiptPdf();
@@ -914,7 +942,14 @@ const generateEntryReceiptPdf = () => {
                 <DialogClose asChild>
                     <Button variant="ghost">Cancelar</Button>
                 </DialogClose>
-                <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
+                {status === 'Entregue' ? (
+                    <Button onClick={handleSaveAndPrint}>
+                      <Printer className="mr-2 h-4 w-4" />
+                      Salvar e Imprimir Recibo
+                    </Button>
+                ) : (
+                    <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
+                )}
             </div>
         </DialogFooter>
       </DialogContent>
@@ -956,5 +991,7 @@ const generateEntryReceiptPdf = () => {
     </>
   );
 }
+
+    
 
     

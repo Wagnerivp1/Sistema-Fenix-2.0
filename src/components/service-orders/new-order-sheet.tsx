@@ -117,6 +117,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setStatus('Aberta');
           setInternalNotes('');
       } else {
+          // Reset form for a new blank OS
           setSelectedCustomerId('');
           setEquipmentType('');
           setEquipment({ brand: '', model: '', serial: '' });
@@ -135,10 +136,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     const { id, value } = e.target;
     setEquipment(prev => ({ ...prev, [id]: value }));
   };
-
-  const handleEquipmentTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEquipmentType(e.target.value);
-  }
 
   const handleAddItem = () => {
     if (newItem.description && newItem.quantity > 0 && newItem.unitPrice >= 0) {
@@ -245,7 +242,11 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     
     doc.setTextColor(fontColor);
     
-    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
+    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
+      const textArray = Array.isArray(text) ? text : [text];
+      const textHeight = doc.getTextDimensions(textArray).h;
+      const boxHeight = Math.max(minHeight, textHeight + 6);
+      
       doc.setFillColor(primaryColor);
       doc.rect(x, y, width, 7, 'F');
       doc.setFont('helvetica', 'bold');
@@ -254,13 +255,14 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       doc.text(title, x + 3, y + 5);
       
       doc.setDrawColor(primaryColor);
-      doc.rect(x, y + 7, width, height - 7, 'S');
+      doc.rect(x, y + 7, width, boxHeight, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      const textArray = Array.isArray(text) ? text : [text];
       doc.text(textArray, x + 3, y + 12);
+
+      return y + boxHeight + 8; // Return new Y position
     };
 
     const boxWidth = (pageWidth - (margin * 2));
@@ -270,8 +272,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Telefone: ${selectedCustomer.phone}`,
       `Endereço: ${selectedCustomer.address || 'Não informado'}`,
     ];
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 20, customerInfo);
-    currentY += 24;
+    currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 18, customerInfo);
 
     const equipmentInfo = [
       `Tipo: ${equipmentType}`,
@@ -279,16 +280,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Nº Série: ${equipment.serial || 'Não informado'}`,
       `Acessórios: ${accessories || 'Nenhum'}`,
     ];
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 24, equipmentInfo);
-    currentY += 28;
+    currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 22, equipmentInfo);
     
     const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 20, problemText);
-    currentY += 24;
+    currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 18, problemText);
 
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 24, servicesText);
-    currentY += 28;
+    currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 22, servicesText);
 
     if (items.length > 0) {
       doc.autoTable({
@@ -347,24 +345,29 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
 
     doc.setTextColor(fontColor);
 
-     const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
+    const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
+      const textArray = Array.isArray(text) ? text : [text];
+      const textHeight = doc.getTextDimensions(textArray).h;
+      const boxHeight = Math.max(minHeight, textHeight + 6);
+      
       doc.setFillColor(primaryColor);
       doc.rect(x, y, width, 7, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
       doc.text(title, x + 3, y + 5);
-
+      
       doc.setDrawColor(primaryColor);
-      doc.rect(x, y + 7, width, height - 7, 'S');
+      doc.rect(x, y + 7, width, boxHeight, 'S');
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(fontColor);
-      const textArray = Array.isArray(text) ? text : [text];
       doc.text(textArray, x + 3, y + 12);
+      
+      return y + boxHeight + 8; // Return new Y position
     };
-
+    
     const boxWidth = (pageWidth - (margin * 2));
     
     const customerInfo = [
@@ -372,8 +375,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Telefone: ${selectedCustomer.phone}`,
       `Endereço: ${selectedCustomer.address || 'Não informado'}`,
     ];
-    drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 20, customerInfo);
-    currentY += 24;
+    currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 18, customerInfo);
 
     const equipmentInfo = [
       `Tipo: ${equipmentType}`,
@@ -381,16 +383,13 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
       `Nº Série: ${equipment.serial || 'Não informado'}`,
       `Acessórios: ${accessories || 'Nenhum'}`,
     ];
-    drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 24, equipmentInfo);
-    currentY += 28;
+    currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 22, equipmentInfo);
     
     const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 6);
-    drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 20, problemText);
-    currentY += 24;
+    currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 18, problemText);
 
     const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 6);
-    drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 24, servicesText);
-    currentY += 28;
+    currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 22, servicesText);
 
     if (items.length > 0) {
       doc.autoTable({
@@ -441,106 +440,100 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const generateEntryReceiptPdf = () => {
     const selectedCustomer = mockCustomers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
-        toast({ variant: 'destructive', title: 'Cliente não selecionado!' });
-        return null;
+      toast({ variant: 'destructive', title: 'Cliente não selecionado!' });
+      return null;
     }
-  
+
     const doc = new jsPDF({ format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 10;
     const fontColor = '#000000';
-    const primaryColor = '#eef2ff'; 
-  
-    const drawReceiptContent = (yOffset: number, via: string) => {
-        let currentY = yOffset;
-  
-        doc.setFillColor(248, 250, 252);
-        doc.rect(margin, currentY, 25, 18, 'F');
-        doc.setFontSize(7);
-        doc.setTextColor(156, 163, 175);
-        doc.text('Sua Logo', margin + 4.5, currentY + 11);
-        doc.setTextColor(fontColor);
+    const primaryColor = '#eef2ff';
 
-        const companyInfoX = margin + 30;
+    const drawReceiptContent = (yOffset: number, via: string) => {
+      let currentY = yOffset;
+
+      doc.setFillColor(248, 250, 252);
+      doc.rect(margin, currentY, 25, 18, 'F');
+      doc.setFontSize(7);
+      doc.setTextColor(156, 163, 175);
+      doc.text('Sua Logo', margin + 4.5, currentY + 11);
+      doc.setTextColor(fontColor);
+
+      const companyInfoX = margin + 30;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text("Sistema Fênix", companyInfoX, currentY + 7);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
+
+      currentY += 18;
+      doc.setDrawColor(209, 213, 219);
+      doc.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 4;
+
+      const drawInfoBox = (title: string, lines: string[], startY: number): number => {
+        const boxWidth = pageWidth - (margin * 2);
+        const titleHeight = 5;
+        const textHeight = doc.getTextDimensions(lines).h + 4;
+        const boxHeight = titleHeight + textHeight;
+
+        doc.setFillColor(primaryColor);
+        doc.rect(margin, startY, boxWidth, titleHeight, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text("Sistema Fênix", companyInfoX, currentY + 7);
         doc.setFontSize(8);
+        doc.text(title, margin + 2, startY + 3.5);
+
+        doc.setDrawColor(224, 231, 255);
+        doc.rect(margin, startY + titleHeight, boxWidth, textHeight, 'S');
+
         doc.setFont('helvetica', 'normal');
-        doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
-        
-        currentY += 18;
-        doc.setDrawColor(209, 213, 219);
-        doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 4;
-  
-        const drawBoxWithTitle = (title: string, x: number, y: number, width: number, height: number, text: string | string[]) => {
-            doc.setFillColor(primaryColor);
-            doc.rect(x, y, width, 5, 'F');
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(8);
-            doc.text(title, x + 2, y + 3.5);
-            doc.setDrawColor(224, 231, 255);
-            doc.rect(x, y + 5, width, height - 5, 'S');
+        doc.setFontSize(8);
+        doc.text(lines, margin + 2, startY + titleHeight + 4);
+
+        return startY + boxHeight;
+      };
+
+      const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
+      currentY = drawInfoBox('Dados do Cliente', [`Nº OS: ${osId} | Cliente: ${selectedCustomer.name}`, `Telefone: ${selectedCustomer.phone}`], currentY);
+      currentY = drawInfoBox('Informações do Equipamento', [`Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`, `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`], currentY + 1);
       
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            const textArray = Array.isArray(text) ? text : [text];
-            doc.text(textArray, x + 2, y + 8);
-        };
-  
-        const boxWidth = (pageWidth - (margin * 2));
-        const boxHeight = 10;
-        
-        const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
-        const customerInfo = [
-            `Nº OS: ${osId} | Cliente: ${selectedCustomer.name}`,
-            `Telefone: ${selectedCustomer.phone}`,
-        ];
-        drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, boxHeight, customerInfo);
-        currentY += boxHeight;
-  
-        const equipmentInfo = [
-            `Equipamento: ${equipmentType} ${equipment.brand} ${equipment.model}`,
-            `Nº Série: ${equipment.serial || 'Não informado'} | Acessórios: ${accessories || 'Nenhum'}`,
-        ];
-        drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, boxHeight, equipmentInfo);
-        currentY += boxHeight;
-        
-        const problemText = doc.splitTextToSize(reportedProblem || 'Não informado', boxWidth - 4);
-        drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight, problemText);
-        currentY += boxHeight + 2;
-  
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
-        
-        const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
-        doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += doc.getTextDimensions(textLines).h + 3;
-  
-        doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
-        currentY += 3;
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
-    }
-  
-    const receiptHeight = 78;
-    
-    drawReceiptContent(8, "Via do Cliente");
-  
+      const problemText = doc.splitTextToSize(reportedProblem || 'Não informado', pageWidth - (margin * 2) - 4);
+      currentY = drawInfoBox('Defeito Reclamado', problemText, currentY + 1);
+      currentY += 2;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
+
+      const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
+      doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
+      currentY += doc.getTextDimensions(textLines).h + 3;
+
+      doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
+      currentY += 3;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
+
+      return currentY; // Return the final Y position for this receipt
+    };
+
+    const firstReceiptEndY = drawReceiptContent(8, "Via do Cliente");
+    const receiptHeight = firstReceiptEndY + 5; // Add some padding
+
     const cutLineY = receiptHeight;
     doc.setLineDashPattern([1, 1], 0);
     doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
     doc.setLineDashPattern([], 0);
-  
+
     drawReceiptContent(cutLineY + 2, "Via da Loja");
-  
+
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');
@@ -601,7 +594,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full max-h-[95vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-4 flex-shrink-0 border-b">
           <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
@@ -609,173 +602,174 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-grow min-h-0">
-          <Tabs defaultValue="general" className="h-full flex flex-col">
-            <div className="px-4 flex-shrink-0">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="general">Dados Gerais</TabsTrigger>
-                    <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
-                    <TabsTrigger value="notes">Comentários</TabsTrigger>
-                </TabsList>
-            </div>
-            <div className="flex-grow min-h-0 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-4 space-y-3">
-                  <TabsContent value="general" className="mt-0 space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <Label htmlFor="customer">Cliente</Label>
-                            <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione um cliente" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {mockCustomers.map((c) => (
-                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="status">Status</Label>
-                          <Select value={status} onValueChange={handleStatusChange}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Aberta">Aberta</SelectItem>
-                              <SelectItem value="Em análise">Em análise</SelectItem>
-                              <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
-                              <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
-                              <SelectItem value="Aprovado">Aprovado</SelectItem>
-                              <SelectItem value="Em conserto">Em conserto</SelectItem>
-                              <SelectItem value="Finalizar">Finalizar</SelectItem>
-                              <SelectItem value="Entregue">Entregue</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-4 gap-3">
-                        <div>
-                          <Label htmlFor="type">Tipo</Label>
-                          <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={handleEquipmentTypeChange} />
-                        </div>
-                        <div>
-                          <Label htmlFor="brand">Marca</Label>
-                          <Input id="brand" placeholder="Ex: Dell" value={equipment.brand} onChange={handleEquipmentChange} />
-                        </div>
-                        <div>
-                          <Label htmlFor="model">Modelo</Label>
-                          <Input id="model" placeholder="Ex: Inspiron 15" value={equipment.model} onChange={handleEquipmentChange} />
-                        </div>
-                        <div>
-                          <Label htmlFor="serial">Nº de Série</Label>
-                          <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="reported_problem">Defeito Reclamado</Label>
-                          <Textarea
-                            id="reported_problem"
-                            placeholder="Descrição do problema relatado pelo cliente."
-                            value={reportedProblem}
-                            onChange={(e) => setReportedProblem(e.target.value)}
-                            rows={3}
-                          />
-                        </div>
-                         <div className="space-y-1.5">
-                          <Label htmlFor="accessories">Acessórios Entregues</Label>
-                          <Textarea
-                            id="accessories"
-                            placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
-                            value={accessories}
-                            onChange={(e) => setAccessories(e.target.value)}
-                            rows={3}
-                          />
-                          <p className="text-xs text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
-                        </div>
-                      </div>
-                  </TabsContent>
-                  <TabsContent value="items" className="mt-0 space-y-3">
-                    <div className="grid grid-cols-1 gap-1.5">
-                      <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
-                      <Textarea
-                        id="technical_report"
-                        placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
-                        value={technicalReport}
-                        onChange={(e) => setTechnicalReport(e.target.value)}
-                        rows={4}
-                      />
-                    </div>
-                    <div>
-                      <div className="space-y-2">
-                        {items.map((item) => (
-                          <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
-                            <div className="flex-grow grid grid-cols-12 gap-2 items-center">
-                                <span className="col-span-5 truncate">{item.description}</span>
-                                <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
-                                <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
-                                <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
-                                <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+        <div className="flex-grow min-h-0 flex flex-col">
+          <div className="px-4 flex-shrink-0">
+              <Tabs defaultValue="general">
+                  <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="general">Dados Gerais</TabsTrigger>
+                      <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
+                      <TabsTrigger value="notes">Comentários</TabsTrigger>
+                  </TabsList>
+
+                  <div className="flex-grow min-h-0 mt-2">
+                    <ScrollArea className="h-[calc(70vh-220px)]">
+                      <div className="p-4 pt-2 space-y-3">
+                        <TabsContent value="general" className="mt-0 space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                  <Label htmlFor="customer">Cliente</Label>
+                                  <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione um cliente" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {mockCustomers.map((c) => (
+                                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="status">Status</Label>
+                                <Select value={status} onValueChange={handleStatusChange}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Aberta">Aberta</SelectItem>
+                                    <SelectItem value="Em análise">Em análise</SelectItem>
+                                    <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
+                                    <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
+                                    <SelectItem value="Aprovado">Aprovado</SelectItem>
+                                    <SelectItem value="Em conserto">Em conserto</SelectItem>
+                                    <SelectItem value="Finalizar">Finalizar</SelectItem>
+                                    <SelectItem value="Entregue">Entregue</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
-                            <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <div className="grid grid-cols-4 gap-3">
+                              <div>
+                                <Label htmlFor="type">Tipo</Label>
+                                <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={(e) => setEquipmentType(e.target.value)} />
+                              </div>
+                              <div>
+                                <Label htmlFor="brand">Marca</Label>
+                                <Input id="brand" placeholder="Ex: Dell" value={equipment.brand} onChange={handleEquipmentChange} />
+                              </div>
+                              <div>
+                                <Label htmlFor="model">Modelo</Label>
+                                <Input id="model" placeholder="Ex: Inspiron 15" value={equipment.model} onChange={handleEquipmentChange} />
+                              </div>
+                              <div>
+                                <Label htmlFor="serial">Nº de Série</Label>
+                                <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label htmlFor="reported_problem">Defeito Reclamado</Label>
+                                <Textarea
+                                  id="reported_problem"
+                                  placeholder="Descrição do problema relatado pelo cliente."
+                                  value={reportedProblem}
+                                  onChange={(e) => setReportedProblem(e.target.value)}
+                                  rows={3}
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label htmlFor="accessories">Acessórios Entregues</Label>
+                                <Textarea
+                                  id="accessories"
+                                  placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
+                                  value={accessories}
+                                  onChange={(e) => setAccessories(e.target.value)}
+                                  rows={3}
+                                />
+                                <p className="text-xs text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
+                              </div>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="items" className="mt-0 space-y-3">
+                          <div className="grid grid-cols-1 gap-1.5">
+                            <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
+                            <Textarea
+                              id="technical_report"
+                              placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
+                              value={technicalReport}
+                              onChange={(e) => setTechnicalReport(e.target.value)}
+                              rows={4}
+                            />
                           </div>
-                        ))}
+                          <div>
+                            <div className="space-y-2">
+                              {items.map((item) => (
+                                <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
+                                  <div className="flex-grow grid grid-cols-12 gap-2 items-center">
+                                      <span className="col-span-5 truncate">{item.description}</span>
+                                      <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
+                                      <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
+                                      <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
+                                      <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                                  </div>
+                                  <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-2 flex items-end gap-2 p-2 rounded-md border border-dashed">
+                              <div className="flex-grow">
+                                <Label htmlFor="newItemDescription" className="text-xs">Descrição</Label>
+                                <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                              </div>
+                              <div className="w-28">
+                                <Label className="text-xs">Tipo</Label>
+                                <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value})}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="service">Serviço</SelectItem>
+                                    <SelectItem value="part">Peça</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="w-16">
+                                <Label htmlFor="newItemQty" className="text-xs">Qtd</Label>
+                                <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
+                              </div>
+                              <div className="w-24">
+                                <Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label>
+                                <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} />
+                              </div>
+                              <Button onClick={handleAddItem} size="sm">Adicionar</Button>
+                            </div>
+                            <div className="mt-4 text-right">
+                              <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
+                            </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="notes" className="mt-0">
+                          <div className="py-2">
+                            <div className="grid grid-cols-1 gap-1.5">
+                                <Label htmlFor="internal_notes">Comentários Internos</Label>
+                                <Textarea
+                                  id="internal_notes"
+                                  placeholder="Adicione observações para a equipe. Este conteúdo não será impresso."
+                                  value={internalNotes}
+                                  onChange={(e) => setInternalNotes(e.target.value)}
+                                  rows={8}
+                                />
+                                <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
+                              </div>
+                          </div>
+                        </TabsContent>
                       </div>
-                      <div className="mt-2 flex items-end gap-2 p-2 rounded-md border border-dashed">
-                        <div className="flex-grow">
-                          <Label htmlFor="newItemDescription" className="text-xs">Descrição</Label>
-                          <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
-                        </div>
-                        <div className="w-28">
-                          <Label className="text-xs">Tipo</Label>
-                          <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value})}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="service">Serviço</SelectItem>
-                              <SelectItem value="part">Peça</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="w-16">
-                          <Label htmlFor="newItemQty" className="text-xs">Qtd</Label>
-                          <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
-                        </div>
-                        <div className="w-24">
-                          <Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label>
-                          <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} />
-                        </div>
-                        <Button onClick={handleAddItem} size="sm">Adicionar</Button>
-                      </div>
-                      <div className="mt-4 text-right">
-                        <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="notes" className="mt-0">
-                    <div className="py-2">
-                      <div className="grid grid-cols-1 gap-1.5">
-                          <Label htmlFor="internal_notes">Comentários Internos</Label>
-                          <Textarea
-                            id="internal_notes"
-                            placeholder="Adicione observações para a equipe. Este conteúdo não será impresso."
-                            value={internalNotes}
-                            onChange={(e) => setInternalNotes(e.target.value)}
-                            rows={8}
-                          />
-                          <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
-                        </div>
-                    </div>
-                  </TabsContent>
-                </div>
-              </ScrollArea>
-            </div>
-          </Tabs>
+                    </ScrollArea>
+                  </div>
+              </Tabs>
+          </div>
         </div>
         
         <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-between">
@@ -815,5 +809,3 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </>
   );
 }
-
-    

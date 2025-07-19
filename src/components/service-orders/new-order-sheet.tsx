@@ -76,7 +76,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   const [equipmentType, setEquipmentType] = React.useState('');
   const [equipment, setEquipment] = React.useState({ brand: '', model: '', serial: '' });
   const [accessories, setAccessories] = React.useState('');
-  const [reportedProblem, setReportedProblem] = React.useState('');
   const [technicalReport, setTechnicalReport] = React.useState('');
   const [internalNotes, setInternalNotes] = React.useState('');
   const [items, setItems] = React.useState<QuoteItem[]>([]);
@@ -101,7 +100,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
               serial: serviceOrder.serialNumber || '',
           });
           setAccessories(serviceOrder.accessories || ''); 
-          setReportedProblem(serviceOrder.reportedProblem);
           setTechnicalReport(serviceOrder.technicalReport || ''); 
           setItems(serviceOrder.items || []); 
           setStatus(serviceOrder.status);
@@ -112,7 +110,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setEquipmentType('');
           setEquipment({ brand: '', model: '', serial: '' });
           setAccessories('');
-          setReportedProblem('');
           setTechnicalReport('');
           setItems([]);
           setStatus('Aberta');
@@ -123,7 +120,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           setEquipmentType('');
           setEquipment({ brand: '', model: '', serial: '' });
           setAccessories('');
-          setReportedProblem('');
           setTechnicalReport('');
           setItems([]);
           setStatus('Aberta');
@@ -140,10 +136,6 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
 
   const handleEquipmentTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEquipmentType(e.target.value);
-  }
-
-  const handleReportedProblemChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setReportedProblem(e.target.value);
   }
 
   const handleAddItem = () => {
@@ -181,7 +173,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         id: serviceOrder?.id || `OS-${Date.now()}`,
         customerName: selectedCustomer.name,
         equipment: fullEquipmentName,
-        reportedProblem: reportedProblem,
+        reportedProblem: serviceOrder?.reportedProblem || 'Não informado',
         status: status,
         date: serviceOrder?.date || new Date().toISOString().split('T')[0],
         totalValue: calculateTotal(),
@@ -289,7 +281,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
-    const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
+    const problemText = doc.splitTextToSize(serviceOrder?.reportedProblem || "Não informado", boxWidth - 6);
     drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 35;
 
@@ -390,7 +382,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 30, equipmentInfo);
     currentY += 40;
     
-    const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 6);
+    const problemText = doc.splitTextToSize(serviceOrder?.reportedProblem || "Não informado", boxWidth - 6);
     drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 25, problemText);
     currentY += 35;
 
@@ -516,7 +508,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
         drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, boxHeight, equipmentInfo);
         currentY += boxHeight;
         
-        const problemText = doc.splitTextToSize(reportedProblem, boxWidth - 4);
+        const problemText = doc.splitTextToSize(serviceOrder?.reportedProblem || 'Não informado', boxWidth - 4);
         drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, boxHeight + 2, problemText);
         currentY += boxHeight + 4;
   
@@ -606,7 +598,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[95vh] flex flex-col p-0">
         <DialogHeader className="p-4 flex-shrink-0 border-b">
           <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
           <DialogDescription>
@@ -614,8 +606,8 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 min-h-0">
-          <Tabs defaultValue="general" className="h-full flex flex-col">
+        <div className="flex-1 min-h-0 flex flex-col">
+          <Tabs defaultValue="general" className="flex flex-col flex-1 min-h-0">
             <div className="px-4 flex-shrink-0">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="general">Dados Gerais</TabsTrigger>
@@ -623,7 +615,7 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                     <TabsTrigger value="notes">Comentários</TabsTrigger>
                 </TabsList>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-hidden">
               <ScrollArea className="h-full">
                 <div className="p-4 space-y-3">
                   <TabsContent value="general" className="mt-0 space-y-3">
@@ -685,19 +677,9 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
                           placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
                           value={accessories}
                           onChange={(e) => setAccessories(e.target.value)}
-                          rows={2}
-                        />
-                        <p className="text-xs text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
-                      </div>
-                      <div className="grid grid-cols-1 gap-1.5">
-                        <Label htmlFor="problem">Defeito Reclamado</Label>
-                        <Textarea
-                          id="problem"
-                          placeholder="Descrição detalhada do problema informado pelo cliente."
-                          value={reportedProblem} 
-                          onChange={handleReportedProblemChange}
                           rows={3}
                         />
+                        <p className="text-xs text-muted-foreground">Descreva todos os acessórios que o cliente deixou junto com o equipamento.</p>
                       </div>
                   </TabsContent>
                   <TabsContent value="items" className="mt-0 space-y-3">
@@ -818,3 +800,5 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
     </>
   );
 }
+
+    

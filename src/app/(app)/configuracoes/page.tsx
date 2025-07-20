@@ -68,7 +68,13 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
-          backupData[key] = JSON.parse(data);
+           // O item de configurações é um objeto, não um array, então não precisa de JSON.parse
+          if (key === SETTINGS_KEY) {
+            backupData[key] = JSON.parse(data);
+          } else {
+            // Os outros itens são arrays
+            backupData[key] = JSON.parse(data);
+          }
         }
       });
 
@@ -158,7 +164,7 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         localStorage.removeItem(key);
       });
-      // Also clear the initialization flag
+      // Also clear the initialization flag to ensure a full reset
       localStorage.removeItem('assistec_app_initialized');
 
       toast({ title: 'Sistema Limpo!', description: 'Todos os dados foram removidos. A página será recarregada.' });

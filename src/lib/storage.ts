@@ -27,21 +27,27 @@ function getFromStorage<T>(key: string, mockData: T[]): T[] {
     return []; // Return empty array on server
   }
   try {
-    const item = window.localStorage.getItem(key);
-    if (item) {
-      return JSON.parse(item);
-    } else {
-      // On first load for a key, populate with mock data.
-      // Subsequent loads after clearing will find `null` and return `[]` from the next check.
-      const isAppInitialized = window.localStorage.getItem('assistec_app_initialized');
-      if (!isAppInitialized) {
-        saveToStorage(key, mockData);
-        return mockData;
-      }
-      return [];
+    // First, check if the app has ever been initialized.
+    const isAppInitialized = window.localStorage.getItem('assistec_app_initialized');
+    if (!isAppInitialized) {
+      // If not, this is the very first load. Populate all mock data and set the flag.
+      saveToStorage(CUSTOMERS_KEY, mockCustomers);
+      saveToStorage(SERVICE_ORDERS_KEY, mockServiceOrders);
+      saveToStorage(STOCK_KEY, mockStock);
+      saveToStorage(SALES_KEY, mockSales);
+      saveToStorage(FINANCIAL_TRANSACTIONS_KEY, mockFinancialTransactions);
+      window.localStorage.setItem('assistec_app_initialized', 'true');
     }
+
+    // Now, try to get the specific item for the current key.
+    const item = window.localStorage.getItem(key);
+    // If the item exists, parse and return it.
+    // If it's null (e.g., after a clear), it will correctly fall through and return [].
+    return item ? JSON.parse(item) : [];
+
   } catch (error) {
     console.error(`Error reading from localStorage key “${key}”:`, error);
+    // In case of a parsing error or other issues, return an empty array.
     return [];
   }
 }
@@ -54,10 +60,6 @@ function saveToStorage<T>(key: string, data: T[]): void {
   try {
     const serializedData = JSON.stringify(data);
     window.localStorage.setItem(key, serializedData);
-    // Mark that the app has been initialized at least once
-    if (!window.localStorage.getItem('assistec_app_initialized')) {
-        window.localStorage.setItem('assistec_app_initialized', 'true');
-    }
   } catch (error) {
     console.error(`Error writing to localStorage key “${key}”:`, error);
   }

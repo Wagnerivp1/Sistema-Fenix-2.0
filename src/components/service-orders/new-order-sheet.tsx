@@ -279,24 +279,16 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                 doc.addImage(img, 'PNG', margin, 12, 25, 25);
             };
         } catch (e) { console.error("Error loading logo for PDF", e); }
-    } else {
-        doc.setFillColor(240, 240, 240);
-        doc.rect(margin, 10, 30, 25, 'F');
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text('Sua Logo', margin + 7, 23);
-        doc.setTextColor(fontColor);
     }
     
-
-    const companyInfoX = margin + 35;
+    const companyInfoX = margin + (companyInfo?.logoUrl ? 35 : 0);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text(companyInfo?.name || "Sua Empresa", companyInfoX, 18);
+    doc.text(companyInfo?.name || "", companyInfoX, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(companyInfo?.address || "Seu Endereço", companyInfoX, 24);
-    doc.text(`Telefone: ${companyInfo?.phone || 'Seu Telefone'} | E-mail: ${companyInfo?.emailOrSite || 'Seu E-mail'}`, companyInfoX, 29);
+    doc.text(companyInfo?.address || "", companyInfoX, 24);
+    doc.text(`Telefone: ${companyInfo?.phone || ''} | E-mail: ${companyInfo?.emailOrSite || ''}`, companyInfoX, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -466,22 +458,16 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                     doc.addImage(img, 'PNG', margin, currentY, 18, 18);
                 };
             } catch (e) { console.error("Error loading logo for PDF", e); }
-        } else {
-            doc.setFillColor(248, 250, 252);
-            doc.rect(margin, currentY, 25, 18, 'F');
-            doc.setFontSize(7);
-            doc.setTextColor(156, 163, 175);
-            doc.text('Sua Logo', margin + 4.5, currentY + 11);
         }
 
         doc.setTextColor(fontColor);
-        const companyInfoX = margin + 30;
+        const companyInfoX = margin + (companyInfo?.logoUrl ? 30 : 0);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text(companyInfo?.name || "Sua Empresa", companyInfoX, currentY + 7);
+        doc.text(companyInfo?.name || "", companyInfoX, currentY + 7);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${companyInfo?.address || "Seu Endereço"} | Fone: ${companyInfo?.phone || "Seu Telefone"}`, companyInfoX, currentY + 12);
+        doc.text(`${companyInfo?.address || ""} | Fone: ${companyInfo?.phone || ""}`, companyInfoX, currentY + 12);
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
@@ -690,22 +676,16 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                     doc.addImage(img, 'PNG', margin, currentY, 18, 18);
                 };
             } catch (e) { console.error("Error loading logo for PDF", e); }
-        } else {
-            doc.setFillColor(248, 250, 252);
-            doc.rect(margin, currentY, 25, 18, 'F');
-            doc.setFontSize(7);
-            doc.setTextColor(156, 163, 175);
-            doc.text('Sua Logo', margin + 4.5, currentY + 11);
         }
 
         doc.setTextColor(fontColor);
-        const companyInfoX = margin + 30;
+        const companyInfoX = margin + (companyInfo?.logoUrl ? 30 : 0);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text(companyInfo?.name || "Sua Empresa", companyInfoX, currentY + 7);
+        doc.text(companyInfo?.name || "", companyInfoX, currentY + 7);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${companyInfo?.address || "Seu Endereço"} | Fone: ${companyInfo?.phone || "Seu Telefone"}`, companyInfoX, currentY + 12);
+        doc.text(`${companyInfo?.address || ""} | Fone: ${companyInfo?.phone || ""}`, companyInfoX, currentY + 12);
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');

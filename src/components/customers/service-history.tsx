@@ -85,24 +85,16 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
           doc.addImage(img, 'PNG', margin, 12, 25, 25);
         };
       } catch (e) { console.error("Error loading logo for PDF", e); }
-    } else {
-        doc.setFillColor(240, 240, 240);
-        doc.rect(margin, 10, 30, 25, 'F');
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text('Sua Logo', margin + 7, 23);
-        doc.setTextColor(fontColor);
     }
 
-
-    const companyInfoX = margin + 35;
+    const companyInfoX = margin + (companyInfo?.logoUrl ? 35 : 0);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text(companyInfo?.name || "Sua Empresa", companyInfoX, 18);
+    doc.text(companyInfo?.name || "", companyInfoX, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(companyInfo?.address || "Seu Endereço", companyInfoX, 24);
-    doc.text(`Telefone: ${companyInfo?.phone || 'Seu Telefone'} | E-mail: ${companyInfo?.emailOrSite || 'Seu E-mail'}`, companyInfoX, 29);
+    doc.text(companyInfo?.address || "", companyInfoX, 24);
+    doc.text(`Telefone: ${companyInfo?.phone || ''} | E-mail: ${companyInfo?.emailOrSite || ''}`, companyInfoX, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');

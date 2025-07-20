@@ -9,6 +9,7 @@ import {
   Moon,
   Sun,
   Paintbrush,
+  Check,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -23,10 +24,13 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 export function HeaderActions() {
-    const { setTheme, themes, theme } = useTheme();
+    const { setTheme, theme } = useTheme();
 
     return (
         <DropdownMenu>
@@ -36,33 +40,40 @@ export function HeaderActions() {
                 <span className="sr-only">Toggle user menu</span>
             </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Configurações</DropdownMenuItem>
-            <DropdownMenuSub>
+            <DropdownMenuItem asChild>
+                <Link href="/configuracoes">Configurações</Link>
+            </DropdownMenuItem>
+             <DropdownMenuSeparator />
+             <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                <Paintbrush className="mr-2 h-4 w-4" />
-                <span>Tema</span>
+                    <Paintbrush className="mr-2 h-4 w-4" />
+                    <span>Tema</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={() => setTheme('light')}>
-                    <Sun className="mr-2 h-4 w-4" />
-                    <span>Claro</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme('dark')}>
-                    <Moon className="mr-2 h-4 w-4" />
-                    <span>Escuro</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {themes.filter(t => t !== 'light' && t !== 'dark' && t !== 'system').map((t) => (
-                        <DropdownMenuItem key={t} onClick={() => setTheme(t)} className="capitalize">
-                            <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: `hsl(var(--theme-${t}-primary))` }}></div>
-                            <span>{t === 'default' ? 'Padrão' : t}</span>
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuSubContent>
+                    <DropdownMenuSubContent>
+                        <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                             <DropdownMenuRadioItem value="light">
+                                <Sun className="mr-2 h-4 w-4" />
+                                Claro
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="dark">
+                                <Moon className="mr-2 h-4 w-4" />
+                                Escuro
+                            </DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                         <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                            <DropdownMenuRadioItem value="default">Padrão</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="slate">Slate</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="stone">Stone</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="rose">Rose</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="green">Green</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="orange">Orange</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                    </DropdownMenuSubContent>
                 </DropdownMenuPortal>
             </DropdownMenuSub>
             <DropdownMenuItem>Suporte</DropdownMenuItem>

@@ -17,6 +17,7 @@ import {
   CircleUser,
   Moon,
   Sun,
+  Paintbrush,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +48,7 @@ import { Logo } from '@/components/logo';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { setTheme } = useTheme();
+  const { setTheme, themes, theme } = useTheme();
   
   return (
     <SidebarProvider>
@@ -101,22 +102,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuItem>Configurações</DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
+                    <Paintbrush className="mr-2 h-4 w-4" />
                     <span>Tema</span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => setTheme("light")}>
+                      <DropdownMenuItem onClick={() => setTheme('light')}>
                         <Sun className="mr-2 h-4 w-4" />
                         <span>Claro</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme("dark")}>
+                      <DropdownMenuItem onClick={() => setTheme('dark')}>
                         <Moon className="mr-2 h-4 w-4" />
                         <span>Escuro</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme("system")}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Sistema</span>
-                      </DropdownMenuItem>
+                       <DropdownMenuSeparator />
+                        {themes.filter(t => t !== 'light' && t !== 'dark' && t !== 'system').map((t) => (
+                           <DropdownMenuItem key={t} onClick={() => setTheme(t)} className="capitalize">
+                             <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: `hsl(var(--${t}-primary))` }}></div>
+                             <span>{t === 'default' ? 'Padrão' : t}</span>
+                           </DropdownMenuItem>
+                        ))}
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>

@@ -118,7 +118,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                        <DropdownMenuSeparator />
                         {themes.filter(t => t !== 'light' && t !== 'dark' && t !== 'system').map((t) => (
                            <DropdownMenuItem key={t} onClick={() => setTheme(t)} className="capitalize">
-                             <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: `hsl(var(--${t}-primary))` }}></div>
+                             <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: `hsl(var(--theme-${t}-primary))` }}></div>
                              <span>{t === 'default' ? 'Padrão' : t}</span>
                            </DropdownMenuItem>
                         ))}

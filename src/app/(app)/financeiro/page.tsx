@@ -293,11 +293,11 @@ export default function FinanceiroPage() {
                       {dateRange?.from ? (
                         dateRange.to ? (
                           <>
-                            {format(dateRange.from, 'LLL dd, y', { locale: ptBR })} -{' '}
-                            {format(dateRange.to, 'LLL dd, y', { locale: ptBR })}
+                            {format(dateRange.from, 'dd/MM/yyyy')} -{' '}
+                            {format(dateRange.to, 'dd/MM/yyyy')}
                           </>
                         ) : (
-                          format(dateRange.from, 'LLL dd, y', { locale: ptBR })
+                          format(dateRange.from, 'dd/MM/yyyy')
                         )
                       ) : (
                         <span>Selecione um período</span>

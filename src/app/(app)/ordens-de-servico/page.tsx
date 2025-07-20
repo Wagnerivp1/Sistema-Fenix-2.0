@@ -77,12 +77,14 @@ export default function ServiceOrdersPage() {
   const [customerForNewOS, setCustomerForNewOS] = React.useState<Customer | null>(null);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [statusFilter, setStatusFilter] = React.useState('ativas');
+  const [searchFilter, setSearchFilter] = React.useState('');
 
   React.useEffect(() => {
     // Load data from localStorage on mount
     const loadedOrders = getServiceOrders();
     const loadedCustomers = getCustomers();
-    setOrders(loadedOrders);
+    setOrders(loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setCustomers(loadedCustomers);
     setIsLoading(false);
 
@@ -164,7 +166,7 @@ export default function ServiceOrdersPage() {
         });
     }
     
-    setOrders(updatedOrders);
+    setOrders(updatedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     saveServiceOrders(updatedOrders); // Save to localStorage
     handleSheetOpenChange(false);
   }
@@ -181,6 +183,26 @@ export default function ServiceOrdersPage() {
     });
   };
 
+  const filteredOrders = React.useMemo(() => {
+    let result = [...orders];
+
+    if (statusFilter === 'ativas') {
+      result = result.filter(o => o.status !== 'Finalizado' && o.status !== 'Entregue');
+    } else if (statusFilter === 'finalizadas') {
+      result = result.filter(o => o.status === 'Finalizado' || o.status === 'Entregue');
+    }
+
+    if (searchFilter) {
+      result = result.filter(o => 
+        o.customerName.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        o.equipment.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        o.id.toLowerCase().includes(searchFilter.toLowerCase())
+      );
+    }
+
+    return result;
+  }, [orders, statusFilter, searchFilter]);
+
   if (isLoading) {
     return <div>Carregando ordens de serviço...</div>;
   }
@@ -196,7 +218,7 @@ export default function ServiceOrdersPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 ml-auto">
-             <Select defaultValue="ativas">
+             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -220,8 +242,10 @@ export default function ServiceOrdersPage() {
       <CardContent>
          <div className="mb-4">
           <Input
-            placeholder="Filtrar por cliente..."
+            placeholder="Filtrar por cliente, equipamento ou nº OS..."
             className="max-w-sm"
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
           />
         </div>
         <Table>
@@ -238,7 +262,8 @@ export default function ServiceOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
+            {filteredOrders.length > 0 ? (
+              filteredOrders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="hidden sm:table-cell">
                    <Link href="#" className="font-medium text-primary hover:underline">
@@ -263,8 +288,7 @@ export default function ServiceOrdersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
                       <DropdownMenuItem>Imprimir</DropdownMenuItem>
                       {(order.status === 'Finalizado' || order.status === 'Entregue') && (
                         <>
@@ -279,7 +303,14 @@ export default function ServiceOrdersPage() {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            ))
+            ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    Nenhuma ordem de serviço encontrada com os filtros atuais.
+                  </TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

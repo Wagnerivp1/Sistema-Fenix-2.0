@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { APP_STORAGE_KEYS, getUsers, saveUsers, MASTER_USER_ID, getLoggedInUser, getCompanyInfo, saveCompanyInfo } from '@/lib/storage';
 import type { User, CompanyInfo } from '@/types';
+import Image from 'next/image';
 
 const SETTINGS_KEY = 'app_settings';
 
@@ -61,6 +62,7 @@ export default function ConfiguracoesPage() {
   const [isRestoreAlertOpen, setIsRestoreAlertOpen] = React.useState(false);
   const [backupFile, setBackupFile] = React.useState<File | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const logoInputRef = React.useRef<HTMLInputElement>(null);
 
   const [isUserDialogOpen, setIsUserDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -99,9 +101,35 @@ export default function ConfiguracoesPage() {
         title: "Dados da Empresa Salvos!",
         description: "As informações da sua empresa foram atualizadas.",
     });
-    // Trigger a reload or a state update in the layout
     window.dispatchEvent(new Event('storage'));
   };
+  
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit
+        toast({
+          variant: 'destructive',
+          title: 'Arquivo muito grande',
+          description: 'Por favor, selecione uma imagem com menos de 1MB.',
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCompanyInfo(prev => ({...prev, logoUrl: reader.result as string}));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleRemoveLogo = () => {
+    setCompanyInfo(prev => ({...prev, logoUrl: ''}));
+    if(logoInputRef.current) {
+        logoInputRef.current.value = '';
+    }
+  };
+
 
   const handleSaveSettings = () => {
     try {
@@ -367,12 +395,36 @@ export default function ConfiguracoesPage() {
                     <Input id="emailOrSite" value={companyInfo.emailOrSite} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
                 </div>
             </div>
-             <div className="space-y-1">
-                <Label htmlFor="logoUrl">URL da Logo</Label>
-                <Input id="logoUrl" value={companyInfo.logoUrl} onChange={handleCompanyInfoChange} placeholder="https://exemplo.com/sua-logo.png" disabled={!isCurrentUserAdmin} />
-                 <p className="text-sm text-muted-foreground">
-                    Hospede sua logo em um site (como o <a href="https://imgur.com/upload" target="_blank" rel="noopener noreferrer" className="underline">Imgur</a>) e cole o link aqui.
-                </p>
+             <div className="space-y-2">
+                <Label>Logo da Empresa</Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-md border flex items-center justify-center bg-muted/30 overflow-hidden">
+                    {companyInfo.logoUrl ? (
+                      <Image src={companyInfo.logoUrl} alt="Logo Preview" width={80} height={80} className="object-contain" />
+                    ) : (
+                      <ImageIcon className="w-10 h-10 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                     <Button variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={!isCurrentUserAdmin}>
+                        Escolher Arquivo
+                    </Button>
+                    <input 
+                      ref={logoInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="image/png, image/jpeg, image/svg+xml"
+                      onChange={handleLogoUpload}
+                    />
+                     {companyInfo.logoUrl && (
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRemoveLogo} disabled={!isCurrentUserAdmin}>
+                            <X className="w-4 h-4 mr-1" />
+                            Remover Logo
+                        </Button>
+                    )}
+                    <p className="text-xs text-muted-foreground">Recomendado: PNG ou SVG, até 1MB.</p>
+                  </div>
+                </div>
             </div>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">

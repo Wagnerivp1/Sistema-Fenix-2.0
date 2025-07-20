@@ -11,20 +11,13 @@ const ThemeWatcher = () => {
   const { theme } = useTheme();
 
   React.useEffect(() => {
-    // Remove todas as classes de tema existentes
-    document.documentElement.classList.remove(...themeClasses);
+    // Remove todas as classes de tema existentes do body
+    document.body.classList.remove(...themeClasses);
 
     // Adiciona a classe do tema atual se não for light, dark ou system
     if (theme && !['light', 'dark', 'system'].includes(theme)) {
-       document.documentElement.classList.add(`theme-${theme}`);
-    } else if (theme === 'system') {
-       // Se o tema do sistema for escuro, o tema padrão é 'default' no modo escuro
-       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
-       if(systemTheme === 'dark') {
-          document.documentElement.classList.add(`theme-default`);
-       }
+       document.body.classList.add(`theme-${theme}`);
     }
-    
   }, [theme]);
 
   return null;

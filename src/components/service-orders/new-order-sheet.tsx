@@ -274,13 +274,19 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         
         // Company Info
         const companyInfoX = margin + (companyInfo?.logoUrl ? 30 : 0);
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo?.name || "", companyInfoX, currentY + 6);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(companyInfo?.address || "", companyInfoX, currentY + 12);
-        doc.text(`Telefone: ${companyInfo?.phone || ''} | E-mail: ${companyInfo?.emailOrSite || ''}`, companyInfoX, currentY + 17);
+        if (companyInfo?.name) {
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text(companyInfo.name, companyInfoX, currentY + 6);
+        }
+        if (companyInfo?.address) {
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(companyInfo.address, companyInfoX, currentY + 12);
+        }
+        if (companyInfo?.phone || companyInfo?.emailOrSite) {
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
+        }
 
         // Document Info
         doc.setFontSize(14);
@@ -456,30 +462,33 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
             if (isSecondVia) {
               const companyInfoX = margin + (companyInfo.logoUrl ? 30 : 0);
-              doc.setFontSize(18);
-              doc.setFont('helvetica', 'bold');
-              doc.text(companyInfo.name || '', companyInfoX, localY - 24);
-              doc.setFontSize(9);
-              doc.setFont('helvetica', 'normal');
-              doc.text(companyInfo.address || '', companyInfoX, localY - 18);
-              doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, localY - 13);
+              if (companyInfo.name) {
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text(companyInfo.name || '', companyInfoX, localY - 24);
+              }
+              if (companyInfo.address) {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(companyInfo.address, companyInfoX, localY - 18);
+              }
+              if(companyInfo.phone || companyInfo.emailOrSite) {
+                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, localY - 13);
+              }
               if (companyInfo.logoUrl) {
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
                 img.src = companyInfo.logoUrl;
-                // It's already loaded, so we can draw it directly
                 doc.addImage(img, 'PNG', 15, localY - 28, 25, 25);
               }
             }
 
 
-            // Header for the receipt part
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
             doc.text(`Recibo de Entrega - ${via}`, pageWidth / 2, localY, { align: 'center' });
             localY += 10;
 
-            // OS Info
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(9);
             doc.text('OS:', margin, localY);
@@ -508,7 +517,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             doc.text(orderToPrint.serialNumber || 'Não informado', margin + 135, localY);
             localY += 7;
 
-            // Warranty Terms
             doc.setFont('helvetica', 'bold');
             doc.text('Garantia:', margin, localY);
             localY += 4;
@@ -523,7 +531,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             doc.text(textLines, margin, localY);
             localY += doc.getTextDimensions(textLines).h + 10;
             
-            // Signature
             doc.line(margin + 20, localY, pageWidth - margin - 20, localY);
             localY += 4;
             doc.setFontSize(8);
@@ -659,34 +666,49 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
         const drawReceiptContent = (yOffset: number, via: string, isSecondVia: boolean = false) => {
             let localY = yOffset;
-
+            const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
+            
             if (isSecondVia) {
               const companyInfoX = margin + (companyInfo.logoUrl ? 30 : 0);
-              doc.setFontSize(18);
-              doc.setFont('helvetica', 'bold');
-              doc.text(companyInfo.name || '', companyInfoX, localY - 24);
-              doc.setFontSize(9);
-              doc.setFont('helvetica', 'normal');
-              doc.text(companyInfo.address || '', companyInfoX, localY - 18);
-              doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, localY - 13);
+              if (companyInfo.name) {
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text(companyInfo.name, companyInfoX, localY - 24);
+              }
+              if (companyInfo.address) {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(companyInfo.address, companyInfoX, localY - 18);
+              }
+              if(companyInfo.phone || companyInfo.emailOrSite) {
+                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, localY - 13);
+              }
               if (companyInfo.logoUrl) {
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
                 img.src = companyInfo.logoUrl;
                 doc.addImage(img, 'PNG', 15, localY - 28, 25, 25);
               }
+
+              // Re-add title for second via
+              doc.setFontSize(14);
+              doc.setFont('helvetica', 'bold');
+              doc.text("Recibo de Entrada", pageWidth - margin, localY - 24, { align: 'right' });
+              doc.setFontSize(10);
+              doc.setFont('helvetica', 'normal');
+              doc.text(`Nº: ${osId}`, pageWidth - margin, localY - 18, { align: 'right' });
+              doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, localY - 13, { align: 'right' });
             }
             
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
-            doc.text(`Recibo de Entrada - ${via}`, pageWidth / 2, localY, { align: 'center' });
+            doc.text(`Via do(a) ${via}`, pageWidth / 2, localY, { align: 'center' });
             localY += 10;
             
             doc.setDrawColor(209, 213, 219);
             doc.line(margin, localY, pageWidth - margin, localY);
             localY += 5;
 
-            const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(9);
             doc.text('OS:', margin, localY);
@@ -734,7 +756,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
             const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
             doc.text(textLines, pageWidth / 2, localY, { align: 'center' });
-            localY += doc.getTextDimensions(textLines).h + 10;
+            localY += doc.getTextDimensions(textLines).h + 15; // Increased space for signature
 
             doc.line(margin + 20, localY, pageWidth - margin - 20, localY);
             localY += 4;
@@ -745,14 +767,14 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             return localY;
         };
 
-        const firstReceiptEndY = drawReceiptContent(currentY, "Via do Cliente");
+        const firstReceiptEndY = drawReceiptContent(currentY, "Cliente");
         
         const cutLineY = firstReceiptEndY + 10;
         doc.setLineDashPattern([2, 1], 0);
         doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
         doc.setLineDashPattern([], 0);
 
-        drawReceiptContent(cutLineY + 10, "Via da Loja", true);
+        drawReceiptContent(cutLineY + 10, "Loja", true);
         
         doc.output('dataurlnewwindow');
     });

@@ -253,16 +253,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
   };
 
-  const handleSaveAndPrint = () => {
-    const finalOrder = getFinalOrderData();
-    if (finalOrder) {
-      if (onSave) {
-        onSave(finalOrder);
-      }
-      generateServiceOrderPdf(finalOrder);
-    }
-  }
-
 
  const generatePdfBase = (title: string): { doc: jsPDF, selectedCustomer: Customer, currentY: number, pageWidth: number, margin: number } | null => {
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
@@ -1073,14 +1063,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                 <DialogClose asChild>
                     <Button variant="ghost">Cancelar</Button>
                 </DialogClose>
-                {status === 'Entregue' ? (
-                    <Button onClick={handleSaveAndPrint}>
-                      <Printer className="mr-2 h-4 w-4" />
-                      Salvar e Imprimir Recibo
-                    </Button>
-                ) : (
-                    <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
-                )}
+                <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
             </div>
         </DialogFooter>
       </DialogContent>

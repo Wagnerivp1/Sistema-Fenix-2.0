@@ -306,7 +306,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             generateContent();
         };
     } else {
-        generateContent();
+      generateContent();
     }
   }
 
@@ -655,20 +655,20 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             let currentY = yOffset;
             const fontColor = '#000000';
 
-            // Header for receipt is smaller, let's re-draw it
+            // Header for receipt is smaller
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
             const companyInfoX = margin + (companyInfo?.logoUrl ? 30 : 0);
-            doc.text(companyInfo?.name || "", companyInfoX, currentY + 7);
+            doc.text(companyInfo.name, companyInfoX, currentY + 7);
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
-            doc.text(`${companyInfo?.address || ""} | Fone: ${companyInfo?.phone || ""}`, companyInfoX, currentY + 12);
+            doc.text(`${companyInfo.address} | Fone: ${companyInfo.phone}`, companyInfoX, currentY + 12);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
 
             // Re-add logo for the second via if needed
-            if (companyInfo?.logoUrl) {
+            if (companyInfo.logoUrl) {
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
                 img.src = companyInfo.logoUrl;

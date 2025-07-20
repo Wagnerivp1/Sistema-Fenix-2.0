@@ -29,7 +29,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { APP_STORAGE_KEYS, getUsers, saveUsers, MASTER_USER_ID } from '@/lib/storage';
+import { APP_STORAGE_KEYS, getUsers, saveUsers, MASTER_USER_ID, getLoggedInUser } from '@/lib/storage';
 import type { User } from '@/types';
 
 const SETTINGS_KEY = 'app_settings';
@@ -38,11 +38,13 @@ interface AppSettings {
   defaultWarrantyDays: number;
 }
 
-const initialNewUser: Omit<User, 'id' | 'role' | 'active'> = {
+const initialNewUser: Partial<User> = {
   name: '',
   username: '',
   password: '',
   phone: '',
+  role: 'normal',
+  active: true,
 };
 
 export default function ConfiguracoesPage() {
@@ -60,6 +62,7 @@ export default function ConfiguracoesPage() {
   const [isUserDialogOpen, setIsUserDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
   const [newUser, setNewUser] = React.useState<Partial<User>>(initialNewUser);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
     try {
@@ -68,6 +71,7 @@ export default function ConfiguracoesPage() {
         setSettings(JSON.parse(savedSettings));
       }
       setUsers(getUsers().filter(u => u.id !== MASTER_USER_ID));
+      setCurrentUser(getLoggedInUser());
     } catch (error) {
       console.error("Failed to load settings from localStorage", error);
     } finally {
@@ -107,11 +111,12 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
-          if (key === SETTINGS_KEY) {
-            backupData[key] = JSON.parse(data);
-          } else {
-            backupData[key] = JSON.parse(data);
-          }
+           if (key === SETTINGS_KEY) {
+             // Settings is an object, not an array
+             backupData[key] = JSON.parse(data);
+           } else {
+             backupData[key] = JSON.parse(data);
+           }
         }
       });
 
@@ -209,7 +214,7 @@ export default function ConfiguracoesPage() {
     if (user) {
       setNewUser(user);
     } else {
-      setNewUser({ ...initialNewUser, role: 'technician', active: true });
+      setNewUser({ ...initialNewUser, role: 'normal', active: true });
     }
     setIsUserDialogOpen(true);
   }
@@ -222,11 +227,15 @@ export default function ConfiguracoesPage() {
 
     let updatedUsers: User[];
     if (editingUser) {
-      updatedUsers = users.map(u => 
-        u.id === editingUser.id ? { ...editingUser, ...newUser } : u
-      );
+      // Logic for editing an existing user
+      const userToUpdate: User = { ...editingUser, ...newUser };
+      if (newUser.password === '') {
+        delete userToUpdate.password;
+      }
+      updatedUsers = users.map(u => u.id === editingUser.id ? userToUpdate : u);
       toast({ title: 'Usuário Atualizado!', description: `Os dados de ${newUser.name} foram salvos.` });
     } else {
+      // Logic for adding a new user
       const userToAdd: User = {
         id: `USER-${Date.now()}`,
         name: newUser.name!,
@@ -247,7 +256,6 @@ export default function ConfiguracoesPage() {
   };
   
   const handleToggleActive = (userId: string) => {
-    // Aqui você adicionaria a lógica de privilégio. Por enquanto, qualquer um pode.
     const updatedUsers = users.map(u => 
         u.id === userId ? { ...u, active: !u.active } : u
       );
@@ -279,10 +287,14 @@ export default function ConfiguracoesPage() {
         return 'Técnico';
       case 'sales':
         return 'Vendedor';
+      case 'normal':
+        return 'Normal';
       default:
         return role;
     }
   };
+  
+  const isCurrentUserAdmin = currentUser?.role === 'admin';
 
 
   if (isLoading) {
@@ -321,6 +333,7 @@ export default function ConfiguracoesPage() {
                 className="max-w-xs" 
                 value={settings.defaultWarrantyDays}
                 onChange={handleSettingsChange}
+                disabled={!isCurrentUserAdmin}
              />
              <p className="text-sm text-muted-foreground">
                 Este valor será usado como padrão para os serviços que não tiverem uma garantia específica.
@@ -329,7 +342,7 @@ export default function ConfiguracoesPage() {
         </div>
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
-        <Button onClick={handleSaveSettings}>
+        <Button onClick={handleSaveSettings} disabled={!isCurrentUserAdmin}>
             <Save className="mr-2 h-4 w-4" />
             Salvar Alterações
         </Button>
@@ -342,7 +355,7 @@ export default function ConfiguracoesPage() {
           <CardTitle>Gerenciamento de Usuários</CardTitle>
           <CardDescription>Adicione, edite ou desative contas de usuário.</CardDescription>
         </div>
-        <Button size="sm" onClick={() => handleOpenUserDialog(null)}>
+        <Button size="sm" onClick={() => handleOpenUserDialog(null)} disabled={!isCurrentUserAdmin}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Adicionar Usuário
         </Button>
@@ -374,17 +387,16 @@ export default function ConfiguracoesPage() {
                     checked={user.active}
                     onCheckedChange={() => handleToggleActive(user.id)}
                     aria-label="Ativar ou desativar usuário"
-                    // Adicionar lógica de privilégio para desabilitar o switch aqui
-                    // disabled={!isCurrentUserAdmin} 
+                    disabled={!isCurrentUserAdmin || user.id === currentUser?.id}
                   />
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                   <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)}>
+                   <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)} disabled={!isCurrentUserAdmin}>
                      Editar
                    </Button>
                    <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">Excluir</Button>
+                        <Button variant="destructive" size="sm" disabled={!isCurrentUserAdmin || user.id === currentUser?.id}>Excluir</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
@@ -426,7 +438,7 @@ export default function ConfiguracoesPage() {
                 <div>
                     <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
                     <CardDescription className="text-destructive/80">
-                        As ações abaixo são irreversíveis. Tenha certeza do que está fazendo.
+                        As ações abaixo são irreversíveis e só podem ser executadas por administradores.
                     </CardDescription>
                 </div>
              </div>
@@ -440,11 +452,11 @@ export default function ConfiguracoesPage() {
                     </p>
                 </div>
                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <Button variant="outline" onClick={handleBackup}>
+                    <Button variant="outline" onClick={handleBackup} disabled={!isCurrentUserAdmin}>
                         <Download className="mr-2 h-4 w-4"/>
                         Fazer Backup
                     </Button>
-                     <Button variant="outline" onClick={handleRestoreClick}>
+                     <Button variant="outline" onClick={handleRestoreClick} disabled={!isCurrentUserAdmin}>
                         <Upload className="mr-2 h-4 w-4"/>
                         Restaurar
                     </Button>
@@ -465,7 +477,7 @@ export default function ConfiguracoesPage() {
                     </p>
                 </div>
                  <div className="flex-shrink-0">
-                    <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)}>
+                    <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={!isCurrentUserAdmin}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Limpar Todos os Dados
                     </Button>
@@ -542,7 +554,7 @@ export default function ConfiguracoesPage() {
           </div>
            <div className="space-y-2">
             <Label htmlFor="role">Cargo / Função</Label>
-            <Select value={newUser.role || 'technician'} onValueChange={(value) => setNewUser(p => ({...p, role: value as User['role']}))}>
+            <Select value={newUser.role || 'normal'} onValueChange={(value) => setNewUser(p => ({...p, role: value as User['role']}))}>
               <SelectTrigger id="role">
                 <SelectValue />
               </SelectTrigger>
@@ -550,6 +562,7 @@ export default function ConfiguracoesPage() {
                 <SelectItem value="admin">Administrador</SelectItem>
                 <SelectItem value="technician">Técnico</SelectItem>
                 <SelectItem value="sales">Vendedor</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
               </SelectContent>
             </Select>
           </div>

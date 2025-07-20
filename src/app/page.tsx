@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { getUsers } from '@/lib/storage';
+import { getUsers, saveLoggedInUser } from '@/lib/storage';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,6 +31,7 @@ export default function LoginPage() {
 
       if (authenticatedUser) {
         if (authenticatedUser.active) {
+            saveLoggedInUser(authenticatedUser); // Save logged in user
             toast({
                 title: 'Login bem-sucedido!',
                 description: 'Redirecionando para o dashboard...',

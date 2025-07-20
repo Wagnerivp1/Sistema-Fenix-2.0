@@ -10,6 +10,7 @@ const SALES_KEY = 'assistec_sales';
 const FINANCIAL_TRANSACTIONS_KEY = 'assistec_financial_transactions';
 const SETTINGS_KEY = 'app_settings';
 const USERS_KEY = 'assistec_users';
+const LOGGED_IN_USER_KEY = 'assistec_logged_in_user';
 
 export const APP_STORAGE_KEYS = [
   CUSTOMERS_KEY,
@@ -19,6 +20,7 @@ export const APP_STORAGE_KEYS = [
   FINANCIAL_TRANSACTIONS_KEY,
   SETTINGS_KEY,
   USERS_KEY,
+  LOGGED_IN_USER_KEY,
 ];
 
 
@@ -93,3 +95,27 @@ export const saveUsers = (users: User[]): void => {
   const usersToSave = users.filter(u => u.id !== MASTER_USER_ID);
   saveToStorage(USERS_KEY, usersToSave);
 };
+
+// Logged In User functions
+export const saveLoggedInUser = (user: User): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const userToSave = { ...user };
+    // Do not store password in localStorage
+    delete userToSave.password;
+    window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(userToSave));
+  } catch (error) {
+    console.error('Error saving logged in user:', error);
+  }
+}
+
+export const getLoggedInUser = (): User | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const item = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+    return item ? JSON.parse(item) : null;
+  } catch (error) {
+    console.error('Error getting logged in user:', error);
+    return null;
+  }
+}

@@ -1,5 +1,7 @@
+
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -20,27 +22,48 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
+import { getLoggedInUser } from '@/lib/storage';
+import type { User } from '@/types';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ElementType;
+  roles: User['role'][];
 }
 
-const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/clientes', label: 'Clientes', icon: Users },
-  { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench },
-  { href: '/vendas', label: 'Vendas', icon: ShoppingCart },
-  { href: '/estoque', label: 'Estoque', icon: Archive },
-  { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign },
-  { href: '/configuracoes', label: 'Configurações', icon: Settings },
+const allNavItems: NavItem[] = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'technician', 'sales', 'normal'] },
+  { href: '/clientes', label: 'Clientes', icon: Users, roles: ['admin', 'technician', 'sales'] },
+  { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, roles: ['admin', 'technician'] },
+  { href: '/vendas', label: 'Vendas', icon: ShoppingCart, roles: ['admin', 'sales', 'normal'] },
+  { href: '/estoque', label: 'Estoque', icon: Archive, roles: ['admin', 'technician', 'sales'] },
+  { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign, roles: ['admin'] },
+  { href: '/configuracoes', label: 'Configurações', icon: Settings, roles: ['admin'] },
 ];
 
 export function MainNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    setCurrentUser(getLoggedInUser());
+  }, []);
+
+  const navItems = React.useMemo(() => {
+    if (!currentUser) return [];
+    return allNavItems.filter(item => item.roles.includes(currentUser.role));
+  }, [currentUser]);
+
+  if (!currentUser) {
+    return (
+        <nav className="flex flex-col gap-2 px-4 py-4">
+            {/* You can add a skeleton loader here */}
+        </nav>
+    );
+  }
 
   return (
     <nav className="flex flex-col gap-2 px-4 py-4">

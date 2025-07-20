@@ -543,7 +543,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     drawReceiptContent(cutLineY + 10, "Via da Loja");
 
     doc.output('dataurlnewwindow');
-};
+  };
 
   const generateServiceOrderPdf = (orderToPrint: ServiceOrder) => {
     // Se a OS estiver entregue, gera o recibo de entrega em duas vias
@@ -842,11 +842,13 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         
         <div className="flex-grow min-h-0">
             <Tabs defaultValue="general" className="h-full flex flex-col">
-                <TabsList className="grid w-full grid-cols-3 mx-4 flex-shrink-0">
-                    <TabsTrigger value="general">Dados Gerais</TabsTrigger>
-                    <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
-                    <TabsTrigger value="notes">Comentários</TabsTrigger>
-                </TabsList>
+                <div className="px-4 pt-4">
+                  <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="general">Dados Gerais</TabsTrigger>
+                      <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
+                      <TabsTrigger value="notes">Comentários</TabsTrigger>
+                  </TabsList>
+                </div>
 
                 <div className="flex-grow min-h-0">
                   <ScrollArea className="h-full">

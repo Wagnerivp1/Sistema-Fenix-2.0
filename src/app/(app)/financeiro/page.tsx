@@ -285,7 +285,7 @@ export default function FinanceiroPage() {
                       id="date"
                       variant={'outline'}
                       className={cn(
-                        'justify-start text-left font-normal',
+                        'text-left font-normal',
                         !dateRange && 'text-muted-foreground'
                       )}
                     >

@@ -68,7 +68,12 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
-          backupData[key] = JSON.parse(data);
+           // As configurações são um objeto, não um array, então precisam ser tratadas de forma diferente.
+          if (key === SETTINGS_KEY) {
+            backupData[key] = JSON.parse(data);
+          } else {
+            backupData[key] = JSON.parse(data);
+          }
         }
       });
 
@@ -86,6 +91,7 @@ export default function ConfiguracoesPage() {
       
       toast({ title: 'Backup Realizado!', description: 'O download do arquivo de backup foi iniciado.' });
     } catch (error) {
+      console.error("Backup error:", error);
       toast({ variant: 'destructive', title: 'Erro no Backup', description: 'Não foi possível gerar o arquivo de backup.' });
     }
   };

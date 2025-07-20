@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, ShoppingCart, Trash2, User } from 'lucide-react';
+import { ShoppingCart, Trash2, ScanLine } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import { getStock, getCustomers } from '@/lib/storage';
 import type { StockItem, Customer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 
 interface SaleItem extends StockItem {
@@ -31,9 +32,7 @@ export default function VendasPage() {
   const [stock, setStock] = React.useState<StockItem[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [saleItems, setSaleItems] = React.useState<SaleItem[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
-
-  // State for barcode scanning
+  
   const [barcode, setBarcode] = React.useState('');
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -41,43 +40,33 @@ export default function VendasPage() {
     setStock(getStock());
     const loadedCustomers = getCustomers();
     setCustomers(loadedCustomers);
-    
-    const avulso = loadedCustomers.find(c => c.name.toLowerCase() === 'cliente avulso');
-    if(avulso) {
-        setSelectedCustomer(avulso);
-    }
   }, []);
 
-  // Barcode scanner listener effect
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-        // Ignore inputs from text fields, etc.
         const target = event.target as HTMLElement;
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
             return;
         }
 
-        // If 'Enter' is pressed, it's the end of the scan
         if (event.key === 'Enter') {
             if (barcode.trim()) {
                 handleBarcodeScan(barcode.trim());
-                setBarcode(''); // Reset for the next scan
+                setBarcode(''); 
             }
             return;
         }
         
-        // Accumulate typed characters
-        if (event.key.length === 1) {
+        if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
             setBarcode(prev => prev + event.key);
         }
 
-        // Reset buffer if typing is too slow
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
         timeoutRef.current = setTimeout(() => {
             setBarcode('');
-        }, 100); // 100ms timeout between keystrokes
+        }, 150);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -88,7 +77,7 @@ export default function VendasPage() {
             clearTimeout(timeoutRef.current);
         }
     };
-  }, [barcode, stock]); // Re-run when barcode or stock changes
+  }, [barcode, stock]);
 
   const handleBarcodeScan = (scannedCode: string) => {
     const product = stock.find(item => item.barcode === scannedCode);
@@ -148,112 +137,143 @@ export default function VendasPage() {
   const total = calculateTotal();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Ponto de Venda (PDV)</CardTitle>
-            <CardDescription>Use um leitor de código de barras ou adicione produtos manualmente.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="p-4 border rounded-lg bg-muted/30 text-center">
-                <p className="text-sm text-muted-foreground">Aguardando leitura do código de barras...</p>
-                <p className="font-mono text-xs text-muted-foreground h-4">{barcode || ''}</p>
-            </div>
-            
-            <div className="border rounded-lg">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[60%]">Produto</TableHead>
-                            <TableHead className="w-[10%] text-center">Qtd.</TableHead>
-                            <TableHead className="text-right">Preço Unit.</TableHead>
-                            <TableHead className="text-right">Subtotal</TableHead>
-                            <TableHead className="w-[50px]"></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {saleItems.length > 0 ? (
-                        saleItems.map(item => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell className="text-center">
-                                <Input 
-                                    type="number"
-                                    value={item.saleQuantity}
-                                    onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value))}
-                                    className="w-16 h-8 text-center"
-                                />
-                            </TableCell>
-                            <TableCell className="text-right">R$ {item.price.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-semibold">R$ {(item.price * item.saleQuantity).toFixed(2)}</TableCell>
-                            <TableCell>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                         <TableRow>
-                            <TableCell colSpan={5} className="text-center h-48 text-muted-foreground">
-                                <ShoppingCart className="mx-auto h-12 w-12 mb-2" />
-                                Nenhum item na venda.
-                            </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                </Table>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+          <div>
+              <h1 className="text-3xl font-bold tracking-tight">Ponto de Venda</h1>
+              <p className="text-muted-foreground">Registre uma nova venda de produtos ou serviços avulsos.</p>
+          </div>
+          <div className="flex items-center gap-2">
+              <Button variant="destructive" onClick={handleCancelSale}>
+                  Cancelar Venda
+                  <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-destructive-foreground opacity-100">
+                    ESC
+                  </kbd>
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700 text-white">
+                  Finalizar Venda
+                  <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-green-900 opacity-100">
+                    F4
+                  </kbd>
+              </Button>
+          </div>
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Carrinho de Venda</CardTitle>
+              <CardDescription>Adicione produtos via código de barras ou busca manual.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                  <div className="relative flex-grow">
+                      <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        placeholder="Ler código de barras..." 
+                        className="pl-10" 
+                        value={barcode}
+                        onChange={(e) => setBarcode(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                handleBarcodeScan(barcode);
+                                setBarcode('');
+                            }
+                        }}
+                      />
+                  </div>
+                  <Button variant="outline">Busca Manual</Button>
+              </div>
+              
+              <div className="border rounded-lg min-h-[300px] flex flex-col">
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead className="w-[50%]">Produto</TableHead>
+                              <TableHead className="w-[15%] text-center">Qtd.</TableHead>
+                              <TableHead className="text-right">Preço</TableHead>
+                              <TableHead className="text-right">Subtotal</TableHead>
+                              <TableHead className="w-[50px]"></TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {saleItems.length > 0 ? (
+                          saleItems.map(item => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium">{item.name}</TableCell>
+                              <TableCell className="text-center">
+                                  <Input 
+                                      type="number"
+                                      value={item.saleQuantity}
+                                      onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value))}
+                                      className="w-16 h-8 text-center mx-auto"
+                                  />
+                              </TableCell>
+                              <TableCell className="text-right">R$ {item.price.toFixed(2)}</TableCell>
+                              <TableCell className="text-right font-semibold">R$ {(item.price * item.saleQuantity).toFixed(2)}</TableCell>
+                              <TableCell>
+                                  <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                           <TableRow className="hover:bg-transparent">
+                              <TableCell colSpan={5} className="text-center h-full py-20 text-muted-foreground">
+                                  <ShoppingCart className="mx-auto h-12 w-12 mb-2" />
+                                  O carrinho está vazio.
+                              </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                  </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      <div className="lg:col-span-1">
-        <Card className="sticky top-6">
-          <CardHeader>
-            <CardTitle>Resumo da Venda</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="customer">Cliente</Label>
-              <Select value={selectedCustomer?.id} onValueChange={(customerId) => {
-                  const customer = customers.find(c => c.id === customerId);
-                  setSelectedCustomer(customer || null);
-              }}>
-                <SelectTrigger id="customer">
-                    <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <SelectValue placeholder="Selecione um cliente" />
-                    </div>
-                </SelectTrigger>
-                <SelectContent>
-                    {customers.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>R$ {total.toFixed(2)}</span>
+        <div className="lg:col-span-1">
+          <Card className="sticky top-6">
+            <CardHeader>
+              <CardTitle>Resumo e Pagamento</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2 text-base">
+                <div className="flex justify-between items-center">
+                  <span>Subtotal</span>
+                  <span className="font-medium">R$ {total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Desconto (R$)</span>
+                  <Input defaultValue="0.00" className="w-28 h-9 text-right font-medium" />
+                </div>
+                <div className="flex justify-between items-center font-bold text-xl text-primary border-t pt-2">
+                  <span>Total</span>
+                  <span>R$ {total.toFixed(2)}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Descontos</span>
-                <span className="text-destructive">- R$ 0.00</span>
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
+                <Select defaultValue="dinheiro">
+                  <SelectTrigger id="paymentMethod">
+                      <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="credito">Cartão de Crédito</SelectItem>
+                      <SelectItem value="debito">Cartão de Débito</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex justify-between font-bold text-lg border-t pt-2">
-                <span>Total</span>
-                <span>R$ {total.toFixed(2)}</span>
+              <div className="space-y-2">
+                <Label htmlFor="observations">Observações</Label>
+                <Textarea id="observations" placeholder="Notas adicionais sobre a venda..." rows={3} />
               </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-2">
-            <Button className="w-full" disabled={saleItems.length === 0}>Finalizar Venda</Button>
-            <Button className="w-full" variant="outline" onClick={handleCancelSale}>Cancelar Venda</Button>
-          </CardFooter>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -55,6 +55,7 @@ declare module 'jspdf' {
 
 
 interface NewOrderSheetProps {
+  onNewOrderClick: (customer?: Customer | null) => void;
   customer?: Customer | null;
   serviceOrder?: ServiceOrder | null;
   isOpen?: boolean;
@@ -72,7 +73,7 @@ interface QuoteItem {
 
 const SETTINGS_KEY = 'app_settings';
 
-export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
+export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
   const { toast } = useToast();
   
   const [customers, setCustomers] = React.useState<Customer[]>([]);
@@ -815,22 +816,21 @@ export function NewOrderSheet({ customer, serviceOrder, isOpen, onOpenChange, on
   };
 
   const trigger = (
-    <DialogTrigger asChild>
-      <Button size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground">
-        <PlusCircle className="h-3.5 w-3.5" />
-        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-          Adicionar OS
-        </span>
-         <kbd className="ml-2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:inline-flex">
-            O
-          </kbd>
-      </Button>
-    </DialogTrigger>
+    <Button size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => onNewOrderClick()}>
+      <PlusCircle className="h-3.5 w-3.5" />
+      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+        Adicionar OS
+      </span>
+        <kbd className="ml-2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:inline-flex">
+          O
+        </kbd>
+    </Button>
   );
 
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      {onOpenChange && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       {!onOpenChange && trigger}
       <DialogContent className="sm:max-w-4xl w-full h-[95vh] flex flex-col p-0">
         <DialogHeader className="p-4 flex-shrink-0 border-b">

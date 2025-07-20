@@ -69,12 +69,30 @@ export default function CustomersPage() {
   const [openCombobox, setOpenCombobox] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = React.useState(false);
   
   React.useEffect(() => {
     // Load data from localStorage on mount
     setCustomers(getCustomers());
     setServiceOrders(getServiceOrders());
     setIsLoading(false);
+  }, []);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'n' && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+        const target = event.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT' && !target.isContentEditable) {
+          event.preventDefault();
+          setIsAddCustomerDialogOpen(true);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleSelectCustomer = (customer: Customer | null) => {
@@ -135,7 +153,7 @@ export default function CustomersPage() {
                 Gerencie seus clientes e consulte o histórico de atendimentos.
               </CardDescription>
             </div>
-            <Dialog>
+            <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm">
                   <PlusCircle className="h-4 w-4 mr-2" />

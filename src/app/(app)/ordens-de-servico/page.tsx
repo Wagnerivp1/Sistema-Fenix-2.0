@@ -88,12 +88,37 @@ export default function ServiceOrdersPage() {
     if (customerId) {
       const customer = loadedCustomers.find(c => c.id === customerId);
       if (customer) {
-        setCustomerForNewOS(customer);
-        setEditingOrder(null);
-        setIsSheetOpen(true);
+        handleNewOrderClick(customer);
       }
     }
   }, [customerId]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'o' && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+        const target = event.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT' && !target.isContentEditable) {
+          event.preventDefault();
+          handleNewOrderClick();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+  
+  const handleNewOrderClick = (customer?: Customer | null) => {
+    if (customer) {
+      setCustomerForNewOS(customer);
+    } else {
+      setCustomerForNewOS(null);
+    }
+    setEditingOrder(null);
+    setIsSheetOpen(true);
+  }
   
   const handleSheetOpenChange = (isOpen: boolean) => {
     setIsSheetOpen(isOpen);
@@ -169,6 +194,7 @@ export default function ServiceOrdersPage() {
               </SelectContent>
             </Select>
             <NewOrderSheet 
+              onNewOrderClick={handleNewOrderClick}
               customer={customerForNewOS}
               serviceOrder={editingOrder}
               isOpen={isSheetOpen}

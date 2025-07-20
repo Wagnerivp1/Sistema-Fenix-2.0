@@ -1,3 +1,7 @@
+
+'use client';
+
+import * as React from 'react';
 import { StatsCards } from '@/components/dashboard/stats-cards';
 import { RecentOrdersTable } from '@/components/dashboard/recent-orders-table';
 import { AlertsAndNotifications } from '@/components/dashboard/alerts-and-notifications';
@@ -10,8 +14,38 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      const key = event.key.toUpperCase();
+
+      if (event.key === 'F2') {
+        event.preventDefault();
+        toast({ title: 'Atalho F2', description: 'Funcionalidade "Nova Venda" ainda não implementada.' });
+      } else if (event.shiftKey && key === 'R') {
+        event.preventDefault();
+        toast({ title: 'Atalho Shift+R', description: 'Funcionalidade "Adicionar Receita" ainda não implementada.' });
+      } else if (event.shiftKey && key === 'D') {
+        event.preventDefault();
+        toast({ title: 'Atalho Shift+D', description: 'Funcionalidade "Adicionar Despesa" ainda não implementada.' });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [toast]);
+
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-8">
       <div className="flex flex-wrap items-center justify-between gap-4">

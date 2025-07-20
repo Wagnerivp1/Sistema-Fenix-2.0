@@ -54,17 +54,6 @@ export function HeaderActions() {
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                        <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-                             <DropdownMenuRadioItem value="light">
-                                <Sun className="mr-2 h-4 w-4" />
-                                Claro
-                            </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="dark">
-                                <Moon className="mr-2 h-4 w-4" />
-                                Escuro
-                            </DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                        <DropdownMenuSeparator />
                          <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
                             <DropdownMenuRadioItem value="default">Padrão</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="slate">Slate</DropdownMenuRadioItem>

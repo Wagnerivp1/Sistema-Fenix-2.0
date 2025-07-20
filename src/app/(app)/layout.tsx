@@ -3,52 +3,29 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useTheme } from 'next-themes';
+import dynamic from 'next/dynamic';
 import {
-  Bell,
-  Home,
-  LineChart,
-  Package,
-  Package2,
-  Settings,
-  ShoppingCart,
-  Users,
   Wrench,
-  CircleUser,
-  Moon,
-  Sun,
-  Paintbrush,
 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuPortal,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { MainNav } from '@/components/main-nav';
 import { Logo } from '@/components/logo';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const HeaderActions = dynamic(() => import('@/components/layout/header-actions').then(mod => mod.HeaderActions), {
+  ssr: false,
+  loading: () => <Skeleton className="h-8 w-8 rounded-full" />,
+});
+
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { setTheme, themes, theme } = useTheme();
   
   return (
     <SidebarProvider>
@@ -89,49 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="w-full flex-1">
               {/* Can add search bar here if needed */}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="icon" className="rounded-full">
-                  <CircleUser className="h-5 w-5" />
-                  <span className="sr-only">Toggle user menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Configurações</DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Paintbrush className="mr-2 h-4 w-4" />
-                    <span>Tema</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => setTheme('light')}>
-                        <Sun className="mr-2 h-4 w-4" />
-                        <span>Claro</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme('dark')}>
-                        <Moon className="mr-2 h-4 w-4" />
-                        <span>Escuro</span>
-                      </DropdownMenuItem>
-                       <DropdownMenuSeparator />
-                        {themes.filter(t => t !== 'light' && t !== 'dark' && t !== 'system').map((t) => (
-                           <DropdownMenuItem key={t} onClick={() => setTheme(t)} className="capitalize">
-                             <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: `hsl(var(--theme-${t}-primary))` }}></div>
-                             <span>{t === 'default' ? 'Padrão' : t}</span>
-                           </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuItem>Suporte</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild>
-                  <Link href="/">Sair</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <HeaderActions />
           </header>
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
             {children}

@@ -22,24 +22,11 @@ export const APP_STORAGE_KEYS = [
 
 
 // Generic getter
-function getFromStorage<T>(key: string, mockData: T[]): T[] {
+function getFromStorage<T>(key: string): T[] {
   if (typeof window === 'undefined') {
     return []; // Return empty array on server
   }
   try {
-    // First, check if the app has ever been initialized.
-    const isAppInitialized = window.localStorage.getItem('assistec_app_initialized');
-    if (!isAppInitialized) {
-      // If not, this is the very first load. Populate all mock data and set the flag.
-      saveToStorage(CUSTOMERS_KEY, mockCustomers);
-      saveToStorage(SERVICE_ORDERS_KEY, mockServiceOrders);
-      saveToStorage(STOCK_KEY, mockStock);
-      saveToStorage(SALES_KEY, mockSales);
-      saveToStorage(FINANCIAL_TRANSACTIONS_KEY, mockFinancialTransactions);
-      window.localStorage.setItem('assistec_app_initialized', 'true');
-    }
-
-    // Now, try to get the specific item for the current key.
     const item = window.localStorage.getItem(key);
     // If the item exists, parse and return it.
     // If it's null (e.g., after a clear), it will correctly fall through and return [].
@@ -66,21 +53,21 @@ function saveToStorage<T>(key: string, data: T[]): void {
 }
 
 // Customer functions
-export const getCustomers = (): Customer[] => getFromStorage(CUSTOMERS_KEY, mockCustomers);
+export const getCustomers = (): Customer[] => getFromStorage(CUSTOMERS_KEY);
 export const saveCustomers = (customers: Customer[]): void => saveToStorage(CUSTOMERS_KEY, customers);
 
 // Service Order functions
-export const getServiceOrders = (): ServiceOrder[] => getFromStorage(SERVICE_ORDERS_KEY, mockServiceOrders);
+export const getServiceOrders = (): ServiceOrder[] => getFromStorage(SERVICE_ORDERS_KEY);
 export const saveServiceOrders = (orders: ServiceOrder[]): void => saveToStorage(SERVICE_ORDERS_KEY, orders);
 
 // Stock functions
-export const getStock = (): StockItem[] => getFromStorage(STOCK_KEY, mockStock);
+export const getStock = (): StockItem[] => getFromStorage(STOCK_KEY);
 export const saveStock = (stock: StockItem[]): void => saveToStorage(STOCK_KEY, stock);
 
 // Sales functions
-export const getSales = (): Sale[] => getFromStorage(SALES_KEY, mockSales);
+export const getSales = (): Sale[] => getFromStorage(SALES_KEY);
 export const saveSales = (sales: Sale[]): void => saveToStorage(SALES_KEY, sales);
 
 // Financial Transactions functions
-export const getFinancialTransactions = (): FinancialTransaction[] => getFromStorage(FINANCIAL_TRANSACTIONS_KEY, mockFinancialTransactions);
+export const getFinancialTransactions = (): FinancialTransaction[] => getFromStorage(FINANCIAL_TRANSACTIONS_KEY);
 export const saveFinancialTransactions = (transactions: FinancialTransaction[]): void => saveToStorage(FINANCIAL_TRANSACTIONS_KEY, transactions);

@@ -164,9 +164,7 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         localStorage.removeItem(key);
       });
-      // Also clear the initialization flag to ensure a full reset
-      localStorage.removeItem('assistec_app_initialized');
-
+      
       toast({ title: 'Sistema Limpo!', description: 'Todos os dados foram removidos. A página será recarregada.' });
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {

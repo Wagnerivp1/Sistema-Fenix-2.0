@@ -1,8 +1,7 @@
 
 'use client';
 
-import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction } from '@/types';
-import { mockCustomers, mockServiceOrders, mockStock, mockSales, mockFinancialTransactions } from './data';
+import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User } from '@/types';
 
 const CUSTOMERS_KEY = 'assistec_customers';
 const SERVICE_ORDERS_KEY = 'assistec_service_orders';
@@ -10,6 +9,7 @@ const STOCK_KEY = 'assistec_stock';
 const SALES_KEY = 'assistec_sales';
 const FINANCIAL_TRANSACTIONS_KEY = 'assistec_financial_transactions';
 const SETTINGS_KEY = 'app_settings';
+const USERS_KEY = 'assistec_users';
 
 export const APP_STORAGE_KEYS = [
   CUSTOMERS_KEY,
@@ -18,24 +18,22 @@ export const APP_STORAGE_KEYS = [
   SALES_KEY,
   FINANCIAL_TRANSACTIONS_KEY,
   SETTINGS_KEY,
+  USERS_KEY,
 ];
 
 
 // Generic getter
-function getFromStorage<T>(key: string): T[] {
+function getFromStorage<T>(key: string, fallback: T[] = []): T[] {
   if (typeof window === 'undefined') {
-    return []; // Return empty array on server
+    return fallback;
   }
   try {
     const item = window.localStorage.getItem(key);
-    // If the item exists, parse and return it.
-    // If it's null (e.g., after a clear), it will correctly fall through and return [].
-    return item ? JSON.parse(item) : [];
+    return item ? JSON.parse(item) : fallback;
 
   } catch (error) {
     console.error(`Error reading from localStorage key “${key}”:`, error);
-    // In case of a parsing error or other issues, return an empty array.
-    return [];
+    return fallback;
   }
 }
 
@@ -71,3 +69,10 @@ export const saveSales = (sales: Sale[]): void => saveToStorage(SALES_KEY, sales
 // Financial Transactions functions
 export const getFinancialTransactions = (): FinancialTransaction[] => getFromStorage(FINANCIAL_TRANSACTIONS_KEY);
 export const saveFinancialTransactions = (transactions: FinancialTransaction[]): void => saveToStorage(FINANCIAL_TRANSACTIONS_KEY, transactions);
+
+// User functions
+const defaultAdmin: User[] = [{ id: 'admin-0', username: 'admin', password: 'admin', role: 'admin', active: true }];
+export const getUsers = (): User[] => getFromStorage(USERS_KEY, defaultAdmin);
+export const saveUsers = (users: User[]): void => saveToStorage(USERS_KEY, users);
+
+    

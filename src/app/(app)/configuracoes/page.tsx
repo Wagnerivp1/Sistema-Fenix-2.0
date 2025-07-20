@@ -7,9 +7,30 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2 } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, MoreHorizontal } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { APP_STORAGE_KEYS } from '@/lib/storage';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { APP_STORAGE_KEYS, getUsers, saveUsers } from '@/lib/storage';
+import type { User } from '@/types';
 
 const SETTINGS_KEY = 'app_settings';
 
@@ -17,16 +38,28 @@ interface AppSettings {
   defaultWarrantyDays: number;
 }
 
+const initialNewUser: Omit<User, 'id'> = {
+  username: '',
+  password: '',
+  role: 'technician',
+  active: true,
+};
+
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [settings, setSettings] = React.useState<AppSettings>({
     defaultWarrantyDays: 90,
   });
+  const [users, setUsers] = React.useState<User[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isClearAlertOpen, setIsClearAlertOpen] = React.useState(false);
   const [isRestoreAlertOpen, setIsRestoreAlertOpen] = React.useState(false);
   const [backupFile, setBackupFile] = React.useState<File | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [isUserDialogOpen, setIsUserDialogOpen] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<User | null>(null);
+  const [newUser, setNewUser] = React.useState<Partial<User>>(initialNewUser);
 
   React.useEffect(() => {
     try {
@@ -34,6 +67,7 @@ export default function ConfiguracoesPage() {
       if (savedSettings) {
         setSettings(JSON.parse(savedSettings));
       }
+      setUsers(getUsers());
     } catch (error) {
       console.error("Failed to load settings from localStorage", error);
     } finally {
@@ -41,7 +75,7 @@ export default function ConfiguracoesPage() {
     }
   }, []);
 
-  const handleSave = () => {
+  const handleSaveSettings = () => {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
       toast({
@@ -57,7 +91,7 @@ export default function ConfiguracoesPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setSettings(prev => ({ ...prev, [id]: Number(value) }));
   };
@@ -68,13 +102,7 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
-           // O item de configurações é um objeto, não um array, então não precisa de JSON.parse
-          if (key === SETTINGS_KEY) {
-            backupData[key] = JSON.parse(data);
-          } else {
-            // Os outros itens são arrays
-            backupData[key] = JSON.parse(data);
-          }
+          backupData[key] = JSON.parse(data);
         }
       });
 
@@ -109,7 +137,6 @@ export default function ConfiguracoesPage() {
     } else {
       toast({ variant: 'destructive', title: 'Arquivo Inválido', description: 'Por favor, selecione um arquivo de backup JSON válido.' });
     }
-     // Reset file input to allow selecting the same file again
     if(event.target) {
       event.target.value = '';
     }
@@ -127,18 +154,15 @@ export default function ConfiguracoesPage() {
         }
         const data = JSON.parse(text);
 
-        // Check for at least one known key to validate the backup file
         const hasKnownKey = APP_STORAGE_KEYS.some(key => key in data);
         if (!hasKnownKey) {
           throw new Error('Arquivo de backup inválido ou corrompido.');
         }
 
-        // Clear existing data before restoring
         APP_STORAGE_KEYS.forEach(key => {
           localStorage.removeItem(key);
         });
 
-        // Restore data from backup
         Object.keys(data).forEach(key => {
            if (APP_STORAGE_KEYS.includes(key)) {
               localStorage.setItem(key, JSON.stringify(data[key]));
@@ -157,10 +181,8 @@ export default function ConfiguracoesPage() {
     reader.readAsText(backupFile);
   };
 
-
   const handleClearSystem = () => {
     try {
-      // Clear all known app keys
       APP_STORAGE_KEYS.forEach(key => {
         localStorage.removeItem(key);
       });
@@ -172,6 +194,47 @@ export default function ConfiguracoesPage() {
     }
     setIsClearAlertOpen(false);
   };
+
+  const handleOpenUserDialog = (user: User | null) => {
+    setEditingUser(user);
+    if (user) {
+      setNewUser(user);
+    } else {
+      setNewUser(initialNewUser);
+    }
+    setIsUserDialogOpen(true);
+  }
+
+  const handleSaveUser = () => {
+    if (!newUser.username || (!newUser.password && !editingUser)) {
+      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Nome de usuário e senha são obrigatórios.' });
+      return;
+    }
+
+    let updatedUsers: User[];
+    if (editingUser) {
+      // Edit existing user
+      updatedUsers = users.map(u => u.id === editingUser.id ? { ...u, ...newUser } : u);
+      toast({ title: 'Usuário Atualizado!', description: `Os dados de ${newUser.username} foram salvos.` });
+    } else {
+      // Add new user
+      const userToAdd: User = {
+        id: `USER-${Date.now()}`,
+        username: newUser.username,
+        password: newUser.password!, // Password is required for new users
+        role: newUser.role as User['role'],
+        active: newUser.active ?? true,
+      };
+      updatedUsers = [...users, userToAdd];
+      toast({ title: 'Usuário Adicionado!', description: `${newUser.username} foi adicionado ao sistema.` });
+    }
+
+    setUsers(updatedUsers);
+    saveUsers(updatedUsers);
+    setIsUserDialogOpen(false);
+    setEditingUser(null);
+  };
+
 
   if (isLoading) {
     return (
@@ -190,10 +253,10 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <>
+    <div className="space-y-6">
     <Card>
       <CardHeader>
-        <CardTitle>Configurações</CardTitle>
+        <CardTitle>Configurações Gerais</CardTitle>
         <CardDescription>
           Ajuste as configurações gerais do sistema. As alterações são salvas localmente no seu navegador.
         </CardDescription>
@@ -208,7 +271,7 @@ export default function ConfiguracoesPage() {
                 type="number" 
                 className="max-w-xs" 
                 value={settings.defaultWarrantyDays}
-                onChange={handleChange}
+                onChange={handleSettingsChange}
              />
              <p className="text-sm text-muted-foreground">
                 Este valor será usado como padrão para os serviços que não tiverem uma garantia específica.
@@ -217,14 +280,73 @@ export default function ConfiguracoesPage() {
         </div>
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
-        <Button onClick={handleSave}>
+        <Button onClick={handleSaveSettings}>
             <Save className="mr-2 h-4 w-4" />
             Salvar Alterações
         </Button>
       </CardFooter>
     </Card>
 
-    <Card className="border-destructive mt-6">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Gerenciamento de Usuários</CardTitle>
+          <CardDescription>Adicione, edite ou desative contas de usuário.</CardDescription>
+        </div>
+        <Button size="sm" onClick={() => handleOpenUserDialog(null)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Adicionar Usuário
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome de Usuário</TableHead>
+              <TableHead>Cargo</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.length > 0 ? users.map(user => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{user.username}</TableCell>
+                <TableCell className="capitalize">{user.role}</TableCell>
+                <TableCell>
+                  <Badge variant={user.active ? 'default' : 'secondary'}>{user.active ? 'Ativo' : 'Inativo'}</Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                   <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Menu de Ações</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => handleOpenUserDialog(user)}>Editar</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive">
+                        Desativar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            )) : (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card className="border-destructive">
         <CardHeader>
              <div className="flex items-start gap-4">
                 <div className="p-2 bg-destructive/10 rounded-full">
@@ -318,6 +440,46 @@ export default function ConfiguracoesPage() {
         </AlertDialogContent>
     </AlertDialog>
 
-    </>
+    <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{editingUser ? 'Editar Usuário' : 'Adicionar Novo Usuário'}</DialogTitle>
+          <DialogDescription>
+            Preencha os dados abaixo para gerenciar a conta de usuário.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="username">Nome de Usuário</Label>
+            <Input id="username" value={newUser.username || ''} onChange={(e) => setNewUser(p => ({...p, username: e.target.value}))} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Senha</Label>
+            <Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha de acesso'} onChange={(e) => setNewUser(p => ({...p, password: e.target.value}))} />
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="role">Cargo / Função</Label>
+            <Select value={newUser.role || 'technician'} onValueChange={(value) => setNewUser(p => ({...p, role: value as User['role']}))}>
+              <SelectTrigger id="role">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="technician">Técnico</SelectItem>
+                <SelectItem value="sales">Vendedor</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setIsUserDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={handleSaveUser}>Salvar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    </div>
   )
 }
+
+    

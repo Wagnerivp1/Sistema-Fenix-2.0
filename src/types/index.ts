@@ -1,3 +1,4 @@
+
 export type Customer = {
   id: string;
   name: string;
@@ -86,3 +87,13 @@ export type FinancialTransaction = {
     relatedSaleId?: string;
     relatedServiceOrderId?: string;
 };
+
+export type User = {
+  id: string;
+  username: string;
+  password?: string;
+  role: 'admin' | 'technician' | 'sales';
+  active: boolean;
+};
+
+    

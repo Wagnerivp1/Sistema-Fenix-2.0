@@ -185,7 +185,11 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       img.crossOrigin = 'Anonymous';
       img.src = companyInfo.logoUrl;
       img.onload = () => {
-        doc.addImage(img, 'PNG', margin, 12, 25, 25);
+        try {
+            doc.addImage(img, 'PNG', margin, 12, 25, 25);
+        } catch(e) {
+            console.error("Error adding image to PDF", e);
+        }
         generateContent();
       };
       img.onerror = () => {

@@ -300,7 +300,11 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         img.crossOrigin = 'Anonymous';
         img.src = companyInfo.logoUrl;
         img.onload = () => {
-            doc.addImage(img, 'PNG', 15, 12, 25, 25);
+            try {
+              doc.addImage(img, 'PNG', 15, 12, 25, 25);
+            } catch(e) {
+                console.error("Error adding image to PDF", e);
+            }
             generateContent();
         };
         img.onerror = () => {
@@ -444,95 +448,97 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 };
 
   const generateDeliveryReceiptPdf = (orderToPrint: ServiceOrder) => {
-    generatePdfBase("Recibo de Entrega", (doc, selectedCustomer, companyInfo, _, pageWidth, margin) => {
+    generatePdfBase("Recibo de Entrega", (doc, selectedCustomer, companyInfo, currentY, pageWidth, margin) => {
         const osId = `#${orderToPrint.id.slice(-4)}`;
 
-        const drawReceiptContent = (yOffset: number, via: string) => {
-            let currentY = yOffset;
+        const drawReceiptContent = (yOffset: number, via: string, isSecondVia: boolean = false) => {
+            let localY = yOffset;
+
+            if (isSecondVia) {
+              const companyInfoX = margin + (companyInfo.logoUrl ? 30 : 0);
+              doc.setFontSize(18);
+              doc.setFont('helvetica', 'bold');
+              doc.text(companyInfo.name || '', companyInfoX, localY - 24);
+              doc.setFontSize(9);
+              doc.setFont('helvetica', 'normal');
+              doc.text(companyInfo.address || '', companyInfoX, localY - 18);
+              doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, localY - 13);
+              if (companyInfo.logoUrl) {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = companyInfo.logoUrl;
+                // It's already loaded, so we can draw it directly
+                doc.addImage(img, 'PNG', 15, localY - 28, 25, 25);
+              }
+            }
+
 
             // Header for the receipt part
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
-            doc.text(`Recibo de Entrega - ${via}`, pageWidth / 2, currentY, { align: 'center' });
-            currentY += 10;
+            doc.text(`Recibo de Entrega - ${via}`, pageWidth / 2, localY, { align: 'center' });
+            localY += 10;
 
             // OS Info
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(9);
-            doc.text('OS:', margin, currentY);
+            doc.text('OS:', margin, localY);
             doc.setFont('helvetica', 'normal');
-            doc.text(osId, margin + 8, currentY);
+            doc.text(osId, margin + 8, localY);
             
             doc.setFont('helvetica', 'bold');
-            doc.text('Cliente:', margin + 30, currentY);
+            doc.text('Cliente:', margin + 30, localY);
             doc.setFont('helvetica', 'normal');
-            doc.text(selectedCustomer.name, margin + 45, currentY);
+            doc.text(selectedCustomer.name, margin + 45, localY);
             
             doc.setFont('helvetica', 'bold');
-            doc.text('Data Entrega:', margin + 120, currentY);
+            doc.text('Data Entrega:', margin + 120, localY);
             doc.setFont('helvetica', 'normal');
-            doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, currentY);
-            currentY += 7;
+            doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, localY);
+            localY += 7;
 
             doc.setFont('helvetica', 'bold');
-            doc.text('Equipamento:', margin, currentY);
+            doc.text('Equipamento:', margin, localY);
             doc.setFont('helvetica', 'normal');
-            doc.text(orderToPrint.equipment, margin + 25, currentY);
+            doc.text(orderToPrint.equipment, margin + 25, localY);
             
             doc.setFont('helvetica', 'bold');
-            doc.text('Nº Série:', margin + 120, currentY);
+            doc.text('Nº Série:', margin + 120, localY);
             doc.setFont('helvetica', 'normal');
-            doc.text(orderToPrint.serialNumber || 'Não informado', margin + 135, currentY);
-            currentY += 7;
+            doc.text(orderToPrint.serialNumber || 'Não informado', margin + 135, localY);
+            localY += 7;
 
             // Warranty Terms
             doc.setFont('helvetica', 'bold');
-            doc.text('Garantia:', margin, currentY);
-            currentY += 4;
+            doc.text('Garantia:', margin, localY);
+            localY += 4;
             doc.setFont('helvetica', 'normal');
             const warrantyText = getWarrantyPeriodText(orderToPrint);
             const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2);
-            doc.text(warrantyLines, margin, currentY);
-            currentY += warrantyLines.length * 4 + 3;
+            doc.text(warrantyLines, margin, localY);
+            localY += warrantyLines.length * 4 + 3;
 
             const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
             const textLines = doc.splitTextToSize(termsText, pageWidth - margin * 2);
-            doc.text(textLines, margin, currentY);
-            currentY += doc.getTextDimensions(textLines).h + 10;
+            doc.text(textLines, margin, localY);
+            localY += doc.getTextDimensions(textLines).h + 10;
             
             // Signature
-            doc.line(margin + 20, currentY, pageWidth - margin - 20, currentY);
-            currentY += 4;
+            doc.line(margin + 20, localY, pageWidth - margin - 20, localY);
+            localY += 4;
             doc.setFontSize(8);
-            doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
+            doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
 
-            return currentY;
+            return localY;
         };
 
-        const firstReceiptEndY = drawReceiptContent(50, "Via do Cliente");
+        const firstReceiptEndY = drawReceiptContent(currentY, "Via do Cliente");
         const cutLineY = firstReceiptEndY + 10;
         doc.setLineDashPattern([2, 1], 0);
         doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
         doc.setLineDashPattern([], 0);
         
-        // Restart drawing for the second copy, but we need a fresh header for it.
-        const secondViaY = cutLineY + 10;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        const companyInfoX = margin + (companyInfo.logoUrl ? 30 : 0);
-        doc.text(companyInfo?.name || "", companyInfoX, secondViaY + 6);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(companyInfo?.address || "", companyInfoX, secondViaY + 12);
-        doc.text(`Telefone: ${companyInfo?.phone || ''} | E-mail: ${companyInfo?.emailOrSite || ''}`, companyInfoX, secondViaY + 17);
-        if (companyInfo.logoUrl) {
-           const img = new Image();
-           img.crossOrigin = 'Anonymous';
-           img.src = companyInfo.logoUrl;
-           doc.addImage(img, 'PNG', 15, secondViaY, 25, 25);
-        }
-        
-        drawReceiptContent(secondViaY + 30, "Via da Loja");
+        drawReceiptContent(cutLineY + 10, "Via da Loja", true);
 
         doc.output('dataurlnewwindow');
     });
@@ -649,10 +655,27 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   };
 
   const generateEntryReceiptPdf = () => {
-    generatePdfBase("Recibo de Entrada", (doc, selectedCustomer, _, currentY, pageWidth, margin) => {
+    generatePdfBase("Recibo de Entrada", (doc, selectedCustomer, companyInfo, currentY, pageWidth, margin) => {
 
-        const drawReceiptContent = (yOffset: number, via: string) => {
+        const drawReceiptContent = (yOffset: number, via: string, isSecondVia: boolean = false) => {
             let localY = yOffset;
+
+            if (isSecondVia) {
+              const companyInfoX = margin + (companyInfo.logoUrl ? 30 : 0);
+              doc.setFontSize(18);
+              doc.setFont('helvetica', 'bold');
+              doc.text(companyInfo.name || '', companyInfoX, localY - 24);
+              doc.setFontSize(9);
+              doc.setFont('helvetica', 'normal');
+              doc.text(companyInfo.address || '', companyInfoX, localY - 18);
+              doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, localY - 13);
+              if (companyInfo.logoUrl) {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = companyInfo.logoUrl;
+                doc.addImage(img, 'PNG', 15, localY - 28, 25, 25);
+              }
+            }
             
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
@@ -729,26 +752,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
         doc.setLineDashPattern([], 0);
 
-        // For the second copy, we need to redraw the main header and logo
-        const secondViaY = cutLineY + 10;
-        const companyInfo = getCompanyInfo(); // Get it again for the second header
-        const companyInfoX = margin + (companyInfo.logoUrl ? 30 : 0);
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || '', companyInfoX, secondViaY + 6);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(companyInfo.address || '', companyInfoX, secondViaY + 12);
-        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, secondViaY + 17);
-        if (companyInfo.logoUrl) {
-           const img = new Image();
-           img.crossOrigin = 'Anonymous';
-           img.src = companyInfo.logoUrl;
-           // The image is likely cached by the browser, so this should be fast
-           doc.addImage(img, 'PNG', 15, secondViaY, 25, 25);
-        }
-
-        drawReceiptContent(secondViaY + 30, "Via da Loja");
+        drawReceiptContent(cutLineY + 10, "Via da Loja", true);
         
         doc.output('dataurlnewwindow');
     });

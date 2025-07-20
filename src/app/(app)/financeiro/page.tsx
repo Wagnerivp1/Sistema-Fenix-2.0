@@ -27,10 +27,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getFinancialTransactions } from '@/lib/storage';
-import type { FinancialTransaction } from '@/types';
-import { ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { getFinancialTransactions, saveFinancialTransactions, getSales, saveSales, getStock, saveStock } from '@/lib/storage';
+import type { FinancialTransaction, Sale, StockItem } from '@/types';
+import { ArrowDownCircle, ArrowUpCircle, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const formatDate = (dateString: string) => {
   const [year, month, day] = dateString.split('-').map(Number);
@@ -39,16 +58,62 @@ const formatDate = (dateString: string) => {
 }
 
 export default function FinanceiroPage() {
+  const { toast } = useToast();
   const [transactions, setTransactions] = React.useState<FinancialTransaction[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [filter, setFilter] = React.useState('');
 
-  React.useEffect(() => {
+  const loadData = () => {
     const loadedTransactions = getFinancialTransactions();
-    // Sort by date, most recent first
     loadedTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setTransactions(loadedTransactions);
+  }
+
+  React.useEffect(() => {
+    loadData();
     setIsLoading(false);
   }, []);
+
+  const handleDeleteTransaction = (transactionId: string) => {
+    const updatedTransactions = transactions.filter(t => t.id !== transactionId);
+    setTransactions(updatedTransactions);
+    saveFinancialTransactions(updatedTransactions);
+    toast({
+      title: 'Lançamento Excluído!',
+      description: 'A transação foi removida do seu histórico financeiro.',
+    });
+  };
+
+  const handleReverseSale = (transaction: FinancialTransaction) => {
+    if (!transaction.relatedSaleId) return;
+
+    // 1. Restore stock
+    const sales = getSales();
+    const saleToReverse = sales.find(s => s.id === transaction.relatedSaleId);
+    if (saleToReverse) {
+        const stock = getStock();
+        const updatedStock = [...stock];
+        saleToReverse.items.forEach(saleItem => {
+            const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
+            if (stockIndex !== -1) {
+                updatedStock[stockIndex].quantity += saleItem.quantity;
+            }
+        });
+        saveStock(updatedStock);
+
+        // 2. Delete sale record
+        const updatedSales = sales.filter(s => s.id !== transaction.relatedSaleId);
+        saveSales(updatedSales);
+    }
+
+    // 3. Delete financial transaction
+    handleDeleteTransaction(transaction.id);
+
+    toast({
+        title: 'Venda Estornada!',
+        description: 'A venda foi estornada e os itens retornaram ao estoque.',
+    });
+  };
 
   const calculateBalance = () => {
     return transactions.reduce((acc, t) => {
@@ -56,8 +121,12 @@ export default function FinanceiroPage() {
     }, 0);
   };
 
-  const totalReceitas = transactions.filter(t => t.type === 'receita').reduce((acc, t) => acc + t.amount, 0);
-  const totalDespesas = transactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + t.amount, 0);
+  const filteredTransactions = transactions.filter(t => 
+    t.description.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const totalReceitas = filteredTransactions.filter(t => t.type === 'receita').reduce((acc, t) => acc + t.amount, 0);
+  const totalDespesas = filteredTransactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + t.amount, 0);
 
   if (isLoading) {
     return <div>Carregando transações...</div>;
@@ -90,6 +159,8 @@ export default function FinanceiroPage() {
                 <Input
                     placeholder="Filtrar por descrição..."
                     className="max-w-sm"
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
                 />
                 <Select defaultValue="all">
                   <SelectTrigger className="w-[180px]">
@@ -119,10 +190,11 @@ export default function FinanceiroPage() {
               <TableHead>Categoria</TableHead>
               <TableHead className="hidden md:table-cell">Data</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="w-[64px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
                     {transaction.type === 'receita' ? 
@@ -140,6 +212,63 @@ export default function FinanceiroPage() {
                     transaction.type === 'receita' ? "text-green-500" : "text-red-500"
                 )}>
                     {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
+                </TableCell>
+                <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        {transaction.relatedSaleId && (
+                           <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                                        Estornar Venda
+                                    </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirmar Estorno</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta ação não pode ser desfeita. A venda será cancelada, o lançamento financeiro removido e os produtos retornarão ao estoque. Deseja continuar?
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleReverseSale(transaction)}>
+                                            Confirmar Estorno
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className={!transaction.relatedSaleId ? "text-destructive" : ""}>
+                                    Excluir Lançamento
+                                </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Atenção: esta ação removerá apenas o registro financeiro. A venda e o estoque não serão alterados. Para reverter tudo, use "Estornar Venda".
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>
+                                        Excluir Mesmo Assim
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}

@@ -63,131 +63,138 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
   const exportToPdf = () => {
     const companyInfo = getCompanyInfo(); // Get fresh data on click
-    const doc = new jsPDF();
     const customerName = filteredHistory[0]?.customerName || "Cliente";
 
+    const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
-    const fontColor = '#000000';
-    const primaryColor = '#e0e7ff';
-    let currentY = 40;
 
-    // Cabeçalho da Empresa e do Documento
-    doc.setFont('helvetica');
-    doc.setTextColor(fontColor);
+    const generateContent = () => {
+        let currentY = 40;
+        const fontColor = '#000000';
+        const primaryColor = '#e0e7ff';
+    
+        // Cabeçalho da Empresa e do Documento
+        doc.setFont('helvetica');
+        doc.setTextColor(fontColor);
 
-    if (companyInfo?.logoUrl) {
-      try {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.src = companyInfo.logoUrl;
-        img.onload = () => {
-          doc.addImage(img, 'PNG', margin, 12, 25, 25);
-        };
-      } catch (e) { console.error("Error loading logo for PDF", e); }
-    }
-
-    const companyInfoX = margin + (companyInfo?.logoUrl ? 35 : 0);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text(companyInfo?.name || "", companyInfoX, 18);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(companyInfo?.address || "", companyInfoX, 24);
-    doc.text(`Telefone: ${companyInfo?.phone || ''} | E-mail: ${companyInfo?.emailOrSite || ''}`, companyInfoX, 29);
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Histórico de Atendimentos`, pageWidth - margin, 18, { align: 'right' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Cliente: ${customerName}`, pageWidth - margin, 24, { align: 'right' });
-    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
-
-
-    const checkPageBreak = (yPosition: number, requiredSpace: number = 20) => {
-        if (yPosition > doc.internal.pageSize.getHeight() - requiredSpace) {
-            doc.addPage();
-            return 20; // Nova posição Y na nova página
-        }
-        return yPosition;
-    };
-
-    filteredHistory.forEach((order) => {
-        currentY = checkPageBreak(currentY, 60);
-
-        // Separador para cada OS
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 8;
-
-        // Título da OS
-        doc.setFontSize(12);
+        const companyInfoX = margin + (companyInfo?.logoUrl ? 35 : 0);
+        doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text(`OS #${order.id.slice(-4)} | Data: ${formatDate(order.date)} | Status: ${order.status}`, margin, currentY);
-        currentY += 6;
+        doc.text(companyInfo?.name || "", companyInfoX, 18);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(companyInfo?.address || "", companyInfoX, 24);
+        doc.text(`Telefone: ${companyInfo?.phone || ''} | E-mail: ${companyInfo?.emailOrSite || ''}`, companyInfoX, 29);
 
-        // Função para desenhar caixas de informação
-        const drawInfoBox = (title: string, content: string, startY: number) => {
-            const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 4);
-            const boxHeight = doc.getTextDimensions(textLines).h + 8;
-            let finalY = startY;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Histórico de Atendimentos`, pageWidth - margin, 18, { align: 'right' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Cliente: ${customerName}`, pageWidth - margin, 24, { align: 'right' });
+        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
 
-            if (finalY + boxHeight + 5 > doc.internal.pageSize.getHeight() - 20) {
-              doc.addPage();
-              finalY = 20;
+
+        const checkPageBreak = (yPosition: number, requiredSpace: number = 20) => {
+            if (yPosition > doc.internal.pageSize.getHeight() - requiredSpace) {
+                doc.addPage();
+                return 20; // Nova posição Y na nova página
+            }
+            return yPosition;
+        };
+
+        filteredHistory.forEach((order) => {
+            currentY = checkPageBreak(currentY, 60);
+
+            // Separador para cada OS
+            doc.setDrawColor(200, 200, 200);
+            doc.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += 8;
+
+            // Título da OS
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`OS #${order.id.slice(-4)} | Data: ${formatDate(order.date)} | Status: ${order.status}`, margin, currentY);
+            currentY += 6;
+
+            // Função para desenhar caixas de informação
+            const drawInfoBox = (title: string, content: string, startY: number) => {
+                const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 4);
+                const boxHeight = doc.getTextDimensions(textLines).h + 8;
+                let finalY = startY;
+
+                if (finalY + boxHeight + 5 > doc.internal.pageSize.getHeight() - 20) {
+                  doc.addPage();
+                  finalY = 20;
+                }
+
+                doc.setFillColor(primaryColor);
+                doc.rect(margin, finalY, pageWidth - margin * 2, 6, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(fontColor);
+                doc.text(title, margin + 2, finalY + 4.5);
+
+                doc.setDrawColor(primaryColor);
+                doc.rect(margin, finalY + 6, pageWidth - margin * 2, boxHeight, 'S');
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.text(textLines, margin + 2, finalY + 11);
+
+                return finalY + boxHeight + 8;
+            };
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Equipamento: `, margin, currentY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${order.equipment}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`, margin + 28, currentY);
+            currentY += 6;
+
+            currentY = drawInfoBox('Problema Relatado', order.reportedProblem || 'Não informado', currentY);
+            currentY = drawInfoBox('Diagnóstico / Laudo Técnico', order.technicalReport || 'Não informado', currentY);
+            
+            currentY = checkPageBreak(currentY, 30);
+            // Tabela de itens
+            if (order.items && order.items.length > 0) {
+                doc.autoTable({
+                    startY: currentY,
+                    head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
+                    body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+                    theme: 'grid',
+                    headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9 },
+                    bodyStyles: { fontSize: 8 },
+                    margin: { left: margin, right: margin }
+                });
+                currentY = doc.lastAutoTable.finalY + 5;
             }
 
-            doc.setFillColor(primaryColor);
-            doc.rect(margin, finalY, pageWidth - margin * 2, 6, 'F');
+            // Valor total da OS
+            doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(9);
-            doc.setTextColor(fontColor);
-            doc.text(title, margin + 2, finalY + 4.5);
+            doc.text(`Valor Total da OS: R$ ${order.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
+            currentY += 10;
+        });
 
-            doc.setDrawColor(primaryColor);
-            doc.rect(margin, finalY + 6, pageWidth - margin * 2, boxHeight, 'S');
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.text(textLines, margin + 2, finalY + 11);
+        doc.save(`Historico_${customerName.replace(/\s+/g, '_')}.pdf`);
+    };
 
-            return finalY + boxHeight + 8;
-        };
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Equipamento: `, margin, currentY);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${order.equipment}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`, margin + 28, currentY);
-        currentY += 6;
-
-        currentY = drawInfoBox('Problema Relatado', order.reportedProblem || 'Não informado', currentY);
-        currentY = drawInfoBox('Diagnóstico / Laudo Técnico', order.technicalReport || 'Não informado', currentY);
-        
-        currentY = checkPageBreak(currentY, 30);
-        // Tabela de itens
-        if (order.items && order.items.length > 0) {
-            doc.autoTable({
-                startY: currentY,
-                head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-                body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
-                theme: 'grid',
-                headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9 },
-                bodyStyles: { fontSize: 8 },
-                margin: { left: margin, right: margin }
-            });
-            currentY = doc.lastAutoTable.finalY + 5;
-        }
-
-        // Valor total da OS
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Valor Total da OS: R$ ${order.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 10;
-    });
-
-
-    doc.save(`Historico_${customerName.replace(/\s+/g, '_')}.pdf`);
+    if (companyInfo?.logoUrl) {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = companyInfo.logoUrl;
+      img.onload = () => {
+        doc.addImage(img, 'PNG', margin, 12, 25, 25);
+        generateContent();
+      };
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
+        generateContent();
+      };
+    } else {
+      generateContent();
+    }
   };
 
   if (history.length === 0) {

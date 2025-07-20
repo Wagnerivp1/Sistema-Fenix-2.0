@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { mockStock } from '@/lib/data';
+import { getStock, saveStock } from '@/lib/storage';
 import type { StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,8 @@ import { AddStockEntryDialog } from '@/components/stock/add-stock-entry-dialog';
 import { PrintLabelDialog } from '@/components/stock/print-label-dialog';
 
 export default function EstoquePage() {
-  const [stockItems, setStockItems] = React.useState<StockItem[]>(mockStock);
+  const [stockItems, setStockItems] = React.useState<StockItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [editingItem, setEditingItem] = React.useState<StockItem | null>(null);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -48,26 +49,36 @@ export default function EstoquePage() {
   const [isPrintOpen, setIsPrintOpen] = React.useState(false);
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    setStockItems(getStock());
+    setIsLoading(false);
+  }, []);
+
   const filteredItems = stockItems.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
   const handleSaveItem = (itemToSave: StockItem) => {
     const exists = stockItems.some(item => item.id === itemToSave.id);
+    let updatedItems;
     if (exists) {
-        setStockItems(stockItems.map(item => item.id === itemToSave.id ? itemToSave : item));
+        updatedItems = stockItems.map(item => item.id === itemToSave.id ? itemToSave : item);
         toast({ title: 'Produto Atualizado!', description: `O item "${itemToSave.name}" foi salvo.` });
     } else {
-        setStockItems([itemToSave, ...stockItems]);
+        updatedItems = [itemToSave, ...stockItems];
         toast({ title: 'Produto Adicionado!', description: `O item "${itemToSave.name}" foi cadastrado.` });
     }
+    setStockItems(updatedItems);
+    saveStock(updatedItems);
     setIsEditOpen(false);
     setEditingItem(null);
   };
   
   const handleAddEntry = (item: StockItem, quantity: number) => {
-    setStockItems(stockItems.map(i => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i));
+    const updatedItems = stockItems.map(i => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i);
+    setStockItems(updatedItems);
+    saveStock(updatedItems);
     toast({ title: 'Entrada Registrada!', description: `${quantity} unidade(s) de "${item.name}" adicionada(s) ao estoque.` });
     setIsEntryOpen(false);
     setItemForEntry(null);
@@ -103,6 +114,10 @@ export default function EstoquePage() {
     }
     return <Badge variant="secondary">Em estoque</Badge>;
   };
+  
+  if (isLoading) {
+    return <div>Carregando estoque...</div>;
+  }
 
   return (
     <>

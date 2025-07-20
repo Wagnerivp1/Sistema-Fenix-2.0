@@ -289,6 +289,8 @@ export default function ConfiguracoesPage() {
         return 'Vendedor';
       case 'normal':
         return 'Normal';
+      case 'receptionist':
+        return 'Recepcionista';
       default:
         return role;
     }
@@ -560,6 +562,7 @@ export default function ConfiguracoesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="receptionist">Recepcionista</SelectItem>
                 <SelectItem value="technician">Técnico</SelectItem>
                 <SelectItem value="sales">Vendedor</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>

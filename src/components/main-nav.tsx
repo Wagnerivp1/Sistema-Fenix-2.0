@@ -33,11 +33,11 @@ interface NavItem {
 }
 
 const allNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'technician', 'sales', 'normal'] },
-  { href: '/clientes', label: 'Clientes', icon: Users, roles: ['admin', 'technician', 'sales'] },
-  { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, roles: ['admin', 'technician'] },
-  { href: '/vendas', label: 'Vendas', icon: ShoppingCart, roles: ['admin', 'sales', 'normal'] },
-  { href: '/estoque', label: 'Estoque', icon: Archive, roles: ['admin', 'technician', 'sales'] },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'technician', 'sales', 'normal', 'receptionist'] },
+  { href: '/clientes', label: 'Clientes', icon: Users, roles: ['admin', 'technician', 'sales', 'receptionist'] },
+  { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, roles: ['admin', 'technician', 'receptionist'] },
+  { href: '/vendas', label: 'Vendas', icon: ShoppingCart, roles: ['admin', 'sales', 'normal', 'receptionist'] },
+  { href: '/estoque', label: 'Estoque', icon: Archive, roles: ['admin', 'technician', 'sales', 'receptionist'] },
   { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign, roles: ['admin'] },
   { href: '/configuracoes', label: 'Configurações', icon: Settings, roles: ['admin'] },
 ];

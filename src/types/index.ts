@@ -1,6 +1,7 @@
 
 
 
+
 export type Customer = {
   id: string;
   name: string;
@@ -96,6 +97,6 @@ export type User = {
   username: string;
   password?: string;
   phone?: string;
-  role: 'admin' | 'technician' | 'sales' | 'normal';
+  role: 'admin' | 'technician' | 'sales' | 'normal' | 'receptionist';
   active: boolean;
 };

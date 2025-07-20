@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { getUsers } from '@/lib/storage';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,14 +23,27 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulação de autenticação
     setTimeout(() => {
-      if (username.toLowerCase() === 'admin' && password.toLowerCase() === 'admin') {
-        toast({
-          title: 'Login bem-sucedido!',
-          description: 'Redirecionando para o dashboard...',
-        });
-        router.push('/dashboard');
+      const users = getUsers();
+      const authenticatedUser = users.find(
+        (user) => user.username === username && user.password === password
+      );
+
+      if (authenticatedUser) {
+        if (authenticatedUser.active) {
+            toast({
+                title: 'Login bem-sucedido!',
+                description: 'Redirecionando para o dashboard...',
+            });
+            router.push('/dashboard');
+        } else {
+             toast({
+                variant: 'destructive',
+                title: 'Usuário Inativo',
+                description: 'Este usuário está desativado. Entre em contato com o administrador.',
+            });
+            setIsLoading(false);
+        }
       } else {
         toast({
           variant: 'destructive',

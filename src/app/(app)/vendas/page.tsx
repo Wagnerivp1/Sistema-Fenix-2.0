@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getStock, getCustomers } from '@/lib/storage';
-import type { StockItem, Customer } from '@/types';
+import { getStock, getCustomers, saveStock, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions } from '@/lib/storage';
+import type { StockItem, Customer, Sale, FinancialTransaction } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +33,9 @@ export default function VendasPage() {
   const [stock, setStock] = React.useState<StockItem[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [saleItems, setSaleItems] = React.useState<SaleItem[]>([]);
+  const [discount, setDiscount] = React.useState(0);
+  const [paymentMethod, setPaymentMethod] = React.useState('dinheiro');
+  const [observations, setObservations] = React.useState('');
   
   const [barcode, setBarcode] = React.useState('');
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -48,7 +51,18 @@ export default function VendasPage() {
     const handleKeyDown = (event: KeyboardEvent) => {
         const target = event.target as HTMLElement;
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+            if (event.key === 'Escape') {
+                (target as HTMLInputElement).blur();
+            }
             return;
+        }
+
+        if (event.key === 'Escape') {
+          handleCancelSale();
+        }
+
+        if (event.key === 'F4') {
+          handleFinishSale();
         }
 
         if (event.key === 'Enter') {
@@ -79,7 +93,7 @@ export default function VendasPage() {
             clearTimeout(timeoutRef.current);
         }
     };
-  }, [barcode, stock]);
+  }, [barcode, stock, saleItems]);
 
   const handleBarcodeScan = (scannedCode: string) => {
     const product = stock.find(item => item.barcode === scannedCode);
@@ -151,13 +165,71 @@ export default function VendasPage() {
   const calculateTotal = () => {
     return saleItems.reduce((total, item) => total + item.price * item.saleQuantity, 0);
   };
+
+  const subtotal = calculateTotal();
+  const finalTotal = subtotal - discount;
+
+  const resetSale = () => {
+    setSaleItems([]);
+    setDiscount(0);
+    setPaymentMethod('dinheiro');
+    setObservations('');
+  }
   
   const handleCancelSale = () => {
-    setSaleItems([]);
+    resetSale();
     toast({ title: 'Venda Cancelada', description: 'Todos os itens foram removidos do carrinho.' });
   };
+  
+  const handleFinishSale = () => {
+    if (saleItems.length === 0) {
+        toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione produtos para finalizar a venda.' });
+        return;
+    }
 
-  const total = calculateTotal();
+    // 1. Update Stock
+    const updatedStock = [...stock];
+    saleItems.forEach(saleItem => {
+        const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
+        if (stockIndex !== -1) {
+            updatedStock[stockIndex].quantity -= saleItem.saleQuantity;
+        }
+    });
+    setStock(updatedStock);
+    saveStock(updatedStock);
+
+    // 2. Create Sale Record
+    const newSale: Sale = {
+        id: `SALE-${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        items: saleItems.map(({ saleQuantity, ...item }) => ({ ...item, quantity: saleQuantity })),
+        subtotal: subtotal,
+        discount: discount,
+        total: finalTotal,
+        paymentMethod: paymentMethod,
+        observations: observations,
+    };
+    const existingSales = getSales();
+    saveSales([...existingSales, newSale]);
+
+    // 3. Create Financial Transaction
+    const newTransaction: FinancialTransaction = {
+        id: `FIN-${Date.now()}`,
+        type: 'receita',
+        description: 'Venda de Produtos (PDV)',
+        amount: finalTotal,
+        date: new Date().toISOString().split('T')[0],
+        category: 'Venda de Produto',
+        paymentMethod: paymentMethod,
+        relatedSaleId: newSale.id,
+    };
+    const existingTransactions = getFinancialTransactions();
+    saveFinancialTransactions([...existingTransactions, newTransaction]);
+
+    // 4. Notify and Reset
+    toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });
+    resetSale();
+  };
 
   return (
     <>
@@ -174,7 +246,7 @@ export default function VendasPage() {
                     ESC
                   </kbd>
               </Button>
-              <Button className="bg-green-600 hover:bg-green-700 text-white">
+              <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleFinishSale}>
                   Finalizar Venda
                   <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-green-900 opacity-100">
                     F4
@@ -266,20 +338,24 @@ export default function VendasPage() {
               <div className="space-y-2 text-base">
                 <div className="flex justify-between items-center">
                   <span>Subtotal</span>
-                  <span className="font-medium">R$ {total.toFixed(2)}</span>
+                  <span className="font-medium">R$ {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Desconto (R$)</span>
-                  <Input defaultValue="0.00" className="w-28 h-9 text-right font-medium" />
+                  <Input 
+                    value={discount.toFixed(2)} 
+                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                    className="w-28 h-9 text-right font-medium" 
+                  />
                 </div>
                 <div className="flex justify-between items-center font-bold text-xl text-primary border-t pt-2">
                   <span>Total</span>
-                  <span>R$ {total.toFixed(2)}</span>
+                  <span>R$ {finalTotal.toFixed(2)}</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
-                <Select defaultValue="dinheiro">
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger id="paymentMethod">
                       <SelectValue />
                   </SelectTrigger>
@@ -293,7 +369,13 @@ export default function VendasPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="observations">Observações</Label>
-                <Textarea id="observations" placeholder="Notas adicionais sobre a venda..." rows={3} />
+                <Textarea 
+                    id="observations" 
+                    placeholder="Notas adicionais sobre a venda..." 
+                    rows={3}
+                    value={observations}
+                    onChange={(e) => setObservations(e.target.value)}
+                />
               </div>
             </CardContent>
           </Card>

@@ -58,3 +58,31 @@ export type StockMovement = {
   user: string;
   notes?: string;
 }
+
+export interface SaleItem extends Omit<StockItem, 'quantity'> {
+  quantity: number;
+}
+
+export type Sale = {
+    id: string;
+    date: string; // YYYY-MM-DD
+    items: SaleItem[];
+    subtotal: number;
+    discount: number;
+    total: number;
+    paymentMethod: string;
+    observations?: string;
+    customerId?: string;
+};
+
+export type FinancialTransaction = {
+    id: string;
+    type: 'receita' | 'despesa';
+    description: string;
+    amount: number;
+    date: string; // YYYY-MM-DD
+    category: 'Venda de Produto' | 'Venda de Serviço' | 'Compra de Peça' | 'Salário' | 'Aluguel' | 'Outra Receita' | 'Outra Despesa';
+    paymentMethod: string;
+    relatedSaleId?: string;
+    relatedServiceOrderId?: string;
+};

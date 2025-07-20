@@ -1,4 +1,4 @@
-import type { Customer, ServiceOrder, StockItem } from '@/types';
+import type { Customer, ServiceOrder, StockItem, FinancialTransaction, Sale } from '@/types';
 
 export const mockCustomers: Customer[] = [
   {
@@ -176,4 +176,38 @@ export const mockStock: StockItem[] = [
   { id: 'PROD-1721935634519', name: 'Teclado ABNT2 Dell Inspiron', quantity: 1, price: 120.00, category: 'Teclados', unitOfMeasure: 'UN', minStock: 2, costPrice: 85.00, barcode: 'PROD-1721935634519' },
   { id: 'PROD-1721935634520', name: 'Fonte Carregador Universal Notebook', quantity: 0, price: 90.00, category: 'Fontes', unitOfMeasure: 'UN', minStock: 3, costPrice: 65.00, barcode: 'PROD-1721935634520' },
   { id: 'PROD-1721935634521', name: 'Pasta Térmica Prata 5g', quantity: 20, price: 25.00, category: 'Insumos', unitOfMeasure: 'UN', minStock: 10, costPrice: 15.00, barcode: 'PROD-1721935634521' },
+];
+
+export const mockSales: Sale[] = [];
+
+export const mockFinancialTransactions: FinancialTransaction[] = [
+    {
+        id: 'FIN-1',
+        type: 'receita',
+        description: 'Venda de Serviço - OS #7978',
+        amount: 120.00,
+        date: '2025-07-16',
+        category: 'Venda de Serviço',
+        paymentMethod: 'PIX',
+        relatedServiceOrderId: 'OS-2024-7978'
+    },
+    {
+        id: 'FIN-2',
+        type: 'despesa',
+        description: 'Compra de peças - Fornecedor ABC',
+        amount: 420.00,
+        date: '2025-07-15',
+        category: 'Compra de Peça',
+        paymentMethod: 'Boleto'
+    },
+     {
+        id: 'FIN-3',
+        type: 'receita',
+        description: 'Venda de Produto - PDV',
+        amount: 205.00,
+        date: '2025-07-22',
+        category: 'Venda de Produto',
+        paymentMethod: 'Dinheiro',
+        relatedSaleId: 'SALE-1'
+    },
 ];

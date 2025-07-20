@@ -1,4 +1,5 @@
 
+
 export type Customer = {
   id: string;
   name: string;
@@ -90,10 +91,10 @@ export type FinancialTransaction = {
 
 export type User = {
   id: string;
+  name: string;
   username: string;
   password?: string;
+  phone?: string;
   role: 'admin' | 'technician' | 'sales';
   active: boolean;
 };
-
-    

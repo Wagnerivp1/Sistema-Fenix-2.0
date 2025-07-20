@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, MoreHorizontal } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
 import { APP_STORAGE_KEYS, getUsers, saveUsers, MASTER_USER_ID } from '@/lib/storage';
 import type { User } from '@/types';
 
@@ -38,11 +38,11 @@ interface AppSettings {
   defaultWarrantyDays: number;
 }
 
-const initialNewUser: Omit<User, 'id'> = {
+const initialNewUser: Omit<User, 'id' | 'role' | 'active'> = {
+  name: '',
   username: '',
   password: '',
-  role: 'technician',
-  active: true,
+  phone: '',
 };
 
 export default function ConfiguracoesPage() {
@@ -67,7 +67,6 @@ export default function ConfiguracoesPage() {
       if (savedSettings) {
         setSettings(JSON.parse(savedSettings));
       }
-      // Filtra o usuário master para não aparecer na UI
       setUsers(getUsers().filter(u => u.id !== MASTER_USER_ID));
     } catch (error) {
       console.error("Failed to load settings from localStorage", error);
@@ -75,6 +74,11 @@ export default function ConfiguracoesPage() {
       setIsLoading(false);
     }
   }, []);
+  
+  const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setNewUser(prev => ({ ...prev, [id]: value }));
+  };
 
   const handleSaveSettings = () => {
     try {
@@ -103,7 +107,6 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
-          // Special handling for settings object vs arrays
           if (key === SETTINGS_KEY) {
             backupData[key] = JSON.parse(data);
           } else {
@@ -206,45 +209,56 @@ export default function ConfiguracoesPage() {
     if (user) {
       setNewUser(user);
     } else {
-      setNewUser(initialNewUser);
+      setNewUser({ ...initialNewUser, role: 'technician', active: true });
     }
     setIsUserDialogOpen(true);
   }
 
   const handleSaveUser = () => {
-    if (!newUser.username || (!newUser.password && !editingUser)) {
-      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Login e senha são obrigatórios.' });
+    if (!newUser.name || !newUser.username || (!newUser.password && !editingUser)) {
+      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Nome, Login e Senha são obrigatórios.' });
       return;
     }
 
     let updatedUsers: User[];
     if (editingUser) {
-      // Edit existing user
       updatedUsers = users.map(u => 
-        u.id === editingUser.id 
-          ? { ...editingUser, ...newUser, id: editingUser.id }
-          : u
+        u.id === editingUser.id ? { ...editingUser, ...newUser } : u
       );
-      toast({ title: 'Usuário Atualizado!', description: `Os dados de ${newUser.username} foram salvos.` });
+      toast({ title: 'Usuário Atualizado!', description: `Os dados de ${newUser.name} foram salvos.` });
     } else {
-      // Add new user
       const userToAdd: User = {
         id: `USER-${Date.now()}`,
+        name: newUser.name!,
         username: newUser.username!,
         password: newUser.password!,
+        phone: newUser.phone || '',
         role: newUser.role! as User['role'],
         active: newUser.active ?? true,
       };
       updatedUsers = [...users, userToAdd];
-      toast({ title: 'Usuário Adicionado!', description: `${newUser.username} foi adicionado ao sistema.` });
+      toast({ title: 'Usuário Adicionado!', description: `${newUser.name} foi adicionado ao sistema.` });
     }
 
     setUsers(updatedUsers);
     saveUsers(updatedUsers);
     setIsUserDialogOpen(false);
     setEditingUser(null);
-    setNewUser(initialNewUser);
   };
+  
+  const handleToggleActive = (userId: string) => {
+    // Aqui você adicionaria a lógica de privilégio. Por enquanto, qualquer um pode.
+    const updatedUsers = users.map(u => 
+        u.id === userId ? { ...u, active: !u.active } : u
+      );
+    setUsers(updatedUsers);
+    saveUsers(updatedUsers);
+    const user = updatedUsers.find(u => u.id === userId);
+    toast({
+        title: `Status Alterado!`,
+        description: `Usuário ${user?.name} foi ${user?.active ? 'ativado' : 'desativado'}.`
+    });
+  }
 
 
   if (isLoading) {
@@ -314,41 +328,41 @@ export default function ConfiguracoesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome de Usuário</TableHead>
+              <TableHead className="w-12"></TableHead>
+              <TableHead>Nome</TableHead>
               <TableHead>Cargo</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="text-center">Ativar/Desativar</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.length > 0 ? users.map(user => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.username}</TableCell>
-                <TableCell className="capitalize">{user.role}</TableCell>
+              <TableRow key={user.id} className={!user.active ? 'bg-muted/30' : ''}>
                 <TableCell>
-                  <Badge variant={user.active ? 'default' : 'secondary'}>{user.active ? 'Ativo' : 'Inativo'}</Badge>
+                  <Badge variant={user.active ? 'default' : 'secondary'} className="w-16 justify-center">
+                    {user.active ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="font-medium">{user.name}</TableCell>
+                <TableCell className="capitalize">{user.role}</TableCell>
+                <TableCell className="text-center">
+                   <Switch
+                    checked={user.active}
+                    onCheckedChange={() => handleToggleActive(user.id)}
+                    aria-label="Ativar ou desativar usuário"
+                    // Adicionar lógica de privilégio para desabilitar o switch aqui
+                    // disabled={!isCurrentUserAdmin} 
+                  />
                 </TableCell>
                 <TableCell className="text-right">
-                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Menu de Ações</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => handleOpenUserDialog(user)}>Editar</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        Desativar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                   <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)}>
+                     Editar
+                   </Button>
                 </TableCell>
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell>
+                <TableCell colSpan={5} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -452,7 +466,7 @@ export default function ConfiguracoesPage() {
     </AlertDialog>
 
     <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{editingUser ? 'Editar Usuário' : 'Adicionar Novo Usuário'}</DialogTitle>
           <DialogDescription>
@@ -460,13 +474,25 @@ export default function ConfiguracoesPage() {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="username">Login</Label>
-            <Input id="username" value={newUser.username || ''} onChange={(e) => setNewUser(p => ({...p, username: e.target.value}))} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome Completo</Label>
+              <Input id="name" placeholder="John Doe" value={newUser.name || ''} onChange={handleUserInputChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input id="phone" placeholder="(99) 99999-9999" value={newUser.phone || ''} onChange={handleUserInputChange} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha de acesso'} onChange={(e) => setNewUser(p => ({...p, password: e.target.value}))} />
+           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Login de Acesso</Label>
+              <Input id="username" placeholder="joao.silva" value={newUser.username || ''} onChange={handleUserInputChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha forte'} onChange={handleUserInputChange} />
+            </div>
           </div>
            <div className="space-y-2">
             <Label htmlFor="role">Cargo / Função</Label>

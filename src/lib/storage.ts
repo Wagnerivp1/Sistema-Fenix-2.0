@@ -72,8 +72,8 @@ export const saveFinancialTransactions = (transactions: FinancialTransaction[]):
 
 // User functions
 export const MASTER_USER_ID = 'master-0';
-const masterUser: User = { id: MASTER_USER_ID, username: 'master', password: 'master', role: 'admin', active: true };
-const defaultAdmin: User = { id: 'admin-0', username: 'admin', password: 'admin', role: 'admin', active: true };
+const masterUser: User = { id: MASTER_USER_ID, name: 'Master User', username: 'master', password: 'master', role: 'admin', active: true, phone: '' };
+const defaultAdmin: User = { id: 'admin-0', name: 'Administrador Padrão', username: 'admin', password: 'admin', role: 'admin', active: true, phone: '' };
 
 export const getUsers = (): User[] => {
     const users = getFromStorage<User>(USERS_KEY);

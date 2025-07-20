@@ -5,13 +5,12 @@ import * as React from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription
 } from '@/components/ui/dialog';
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -57,6 +56,10 @@ export function ManualSearchDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 gap-0" onInteractOutside={(e) => e.preventDefault()}>
+         <DialogHeader className="sr-only">
+          <DialogTitle>Busca Manual de Produto</DialogTitle>
+          <DialogDescription>Selecione um produto da lista para adicioná-lo à venda.</DialogDescription>
+        </DialogHeader>
         <Command shouldFilter={true}>
           <CommandInput placeholder="Digite para buscar um produto..." />
           <CommandList>

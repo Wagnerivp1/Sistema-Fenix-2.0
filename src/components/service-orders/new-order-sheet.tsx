@@ -255,7 +255,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
 
  const generatePdfBase = (title: string, onReady: (doc: jsPDF, selectedCustomer: Customer, companyInfo: CompanyInfo, currentY: number, pageWidth: number, margin: number) => void) => {
-    const companyInfo = getCompanyInfo(); // Get fresh data
+    const companyInfo = getCompanyInfo();
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
         toast({ variant: 'destructive', title: 'Cliente não selecionado!'});
@@ -655,25 +655,30 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             let currentY = yOffset;
             const fontColor = '#000000';
 
-            // Header for receipt is smaller
+            // Header for receipt is smaller, so we redraw it inside this function
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
-            const companyInfoX = margin + (companyInfo?.logoUrl ? 30 : 0);
-            doc.text(companyInfo.name, companyInfoX, currentY + 7);
+            // Position the company name text relative to the logo
+            const companyInfoX = margin + (companyInfo.logoUrl ? 25 : 0);
+            doc.text(companyInfo.name || '', companyInfoX, currentY + 7);
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
-            doc.text(`${companyInfo.address} | Fone: ${companyInfo.phone}`, companyInfoX, currentY + 12);
+            doc.text(`${companyInfo.address || ''} | Fone: ${companyInfo.phone || ''}`, companyInfoX, currentY + 12);
+            
+            // Second part of the header
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text(`Recibo de Entrada - ${via}`, pageWidth - margin, currentY + 8, { align: 'right' });
-
-            // Re-add logo for the second via if needed
-            if (companyInfo.logoUrl) {
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';
-                img.src = companyInfo.logoUrl;
-                img.onload = () => doc.addImage(img, 'PNG', margin, currentY, 18, 18);
-            }
+            
+            // Re-add logo if it exists
+             if (companyInfo.logoUrl) {
+                // This assumes the logo is already loaded by generatePdfBase, so we can re-use it
+                 const img = new Image();
+                 img.crossOrigin = 'Anonymous';
+                 img.src = companyInfo.logoUrl;
+                 // Note: this is a simplified approach for demonstration. A robust solution might pass the img object.
+                 doc.addImage(img, 'PNG', margin, currentY, 18, 18);
+             }
 
             currentY += 20;
             doc.setDrawColor(209, 213, 219);

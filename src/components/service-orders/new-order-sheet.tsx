@@ -78,7 +78,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [stock, setStock] = React.useState<StockItem[]>([]);
-  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>('');
   const [reportedProblem, setReportedProblem] = React.useState('');
   const [equipmentType, setEquipmentType] = React.useState('');
@@ -102,7 +101,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     // Carrega clientes e estoque uma vez
     setCustomers(getCustomers());
     setStock(getStock());
-    setCompanyInfo(getCompanyInfo());
   }, []);
 
   React.useEffect(() => {
@@ -256,7 +254,8 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   };
 
 
- const generatePdfBase = (title: string): { doc: jsPDF, selectedCustomer: Customer, currentY: number, pageWidth: number, margin: number } | null => {
+ const generatePdfBase = (title: string): { doc: jsPDF, selectedCustomer: Customer, companyInfo: CompanyInfo, currentY: number, pageWidth: number, margin: number } | null => {
+    const companyInfo = getCompanyInfo(); // Get fresh data
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
         toast({ variant: 'destructive', title: 'Cliente não selecionado!'});
@@ -308,7 +307,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     doc.text(`Nº: ${osId}`, pageWidth - margin, 24, { align: 'right' });
     doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 29, { align: 'right' });
 
-    return { doc, selectedCustomer, currentY: 40, pageWidth, margin };
+    return { doc, selectedCustomer, companyInfo, currentY: 40, pageWidth, margin };
   }
 
   const generateQuotePdf = () => {
@@ -447,15 +446,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 };
 
   const generateDeliveryReceiptPdf = (orderToPrint: ServiceOrder) => {
-    const selectedCustomer = customers.find(c => c.name === orderToPrint.customerName);
-    if (!selectedCustomer) {
-        toast({ variant: "destructive", title: "Cliente não encontrado!" });
-        return;
-    }
+    const base = generatePdfBase("Recibo de Entrega");
+    if (!base) return;
+    const { doc, selectedCustomer, companyInfo, pageWidth, margin } = base;
 
-    const doc = new jsPDF({ format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 10;
     const osId = `#${orderToPrint.id.slice(-4)}`;
 
     const drawReceiptContent = (yOffset: number, via: string) => {
@@ -679,15 +673,9 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   };
 
   const generateEntryReceiptPdf = () => {
-    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
-    if (!selectedCustomer) {
-        toast({ variant: "destructive", title: "Cliente não selecionado!" });
-        return;
-    }
-
-    const doc = new jsPDF({ format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 10;
+    const base = generatePdfBase("Recibo de Entrada");
+    if (!base) return;
+    const { doc, selectedCustomer, companyInfo, pageWidth, margin } = base;
 
     const drawReceiptContent = (yOffset: number, via: string) => {
         let currentY = yOffset;

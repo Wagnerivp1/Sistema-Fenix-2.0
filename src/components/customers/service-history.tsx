@@ -56,17 +56,13 @@ interface ServiceHistoryProps {
 
 export function ServiceHistory({ history }: ServiceHistoryProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
-
-  React.useEffect(() => {
-    setCompanyInfo(getCompanyInfo());
-  }, []);
 
   const filteredHistory = history.filter(order =>
     order.id.toLowerCase().includes(searchTerm.toLowerCase().replace(/\s+/g, ''))
   );
 
   const exportToPdf = () => {
+    const companyInfo = getCompanyInfo(); // Get fresh data on click
     const doc = new jsPDF();
     const customerName = filteredHistory[0]?.customerName || "Cliente";
 

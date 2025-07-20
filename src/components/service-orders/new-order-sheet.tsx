@@ -37,8 +37,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getCustomers, getStock } from '@/lib/storage';
-import type { Customer, ServiceOrder, StockItem } from '@/types';
+import { getCustomers, getStock, getCompanyInfo } from '@/lib/storage';
+import type { Customer, ServiceOrder, StockItem, CompanyInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import jsPDF from 'jspdf';
@@ -78,6 +78,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [stock, setStock] = React.useState<StockItem[]>([]);
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>('');
   const [reportedProblem, setReportedProblem] = React.useState('');
   const [equipmentType, setEquipmentType] = React.useState('');
@@ -101,6 +102,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     // Carrega clientes e estoque uma vez
     setCustomers(getCustomers());
     setStock(getStock());
+    setCompanyInfo(getCompanyInfo());
   }, []);
 
   React.useEffect(() => {
@@ -269,21 +271,33 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     doc.setFont('helvetica');
     doc.setTextColor(fontColor);
 
-    doc.setFillColor(240, 240, 240);
-    doc.rect(margin, 10, 30, 25, 'F');
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Sua Logo', margin + 7, 23);
-    doc.setTextColor(fontColor);
+    if (companyInfo?.logoUrl) {
+        try {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.src = companyInfo.logoUrl;
+            img.onload = () => {
+                doc.addImage(img, 'PNG', margin, 12, 25, 25);
+            };
+        } catch (e) { console.error("Error loading logo for PDF", e); }
+    } else {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(margin, 10, 30, 25, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Sua Logo', margin + 7, 23);
+        doc.setTextColor(fontColor);
+    }
+    
 
     const companyInfoX = margin + 35;
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("JL Informática", companyInfoX, 18);
+    doc.text(companyInfo?.name || "Sua Empresa", companyInfoX, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text("Rua da Tecnologia, 123 - Centro", companyInfoX, 24);
-    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@jlinformatica.com", companyInfoX, 29);
+    doc.text(companyInfo?.address || "Seu Endereço", companyInfoX, 24);
+    doc.text(`Telefone: ${companyInfo?.phone || 'Seu Telefone'} | E-mail: ${companyInfo?.emailOrSite || 'Seu E-mail'}`, companyInfoX, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -449,20 +463,31 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         const fontColor = '#000000';
 
         // Cabeçalho
-        doc.setFillColor(248, 250, 252);
-        doc.rect(margin, currentY, 25, 18, 'F');
-        doc.setFontSize(7);
-        doc.setTextColor(156, 163, 175);
-        doc.text('Sua Logo', margin + 4.5, currentY + 11);
+        if (companyInfo?.logoUrl) {
+            try {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = companyInfo.logoUrl;
+                img.onload = () => {
+                    doc.addImage(img, 'PNG', margin, currentY, 18, 18);
+                };
+            } catch (e) { console.error("Error loading logo for PDF", e); }
+        } else {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(margin, currentY, 25, 18, 'F');
+            doc.setFontSize(7);
+            doc.setTextColor(156, 163, 175);
+            doc.text('Sua Logo', margin + 4.5, currentY + 11);
+        }
 
         doc.setTextColor(fontColor);
         const companyInfoX = margin + 30;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text("JL Informática", companyInfoX, currentY + 7);
+        doc.text(companyInfo?.name || "Sua Empresa", companyInfoX, currentY + 7);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);
+        doc.text(`${companyInfo?.address || "Seu Endereço"} | Fone: ${companyInfo?.phone || "Seu Telefone"}`, companyInfoX, currentY + 12);
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
@@ -668,20 +693,31 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         let currentY = yOffset;
         const fontColor = '#000000';
 
-        doc.setFillColor(248, 250, 252);
-        doc.rect(margin, currentY, 25, 18, 'F');
-        doc.setFontSize(7);
-        doc.setTextColor(156, 163, 175);
-        doc.text('Sua Logo', margin + 4.5, currentY + 11);
+        if (companyInfo?.logoUrl) {
+            try {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = companyInfo.logoUrl;
+                img.onload = () => {
+                    doc.addImage(img, 'PNG', margin, currentY, 18, 18);
+                };
+            } catch (e) { console.error("Error loading logo for PDF", e); }
+        } else {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(margin, currentY, 25, 18, 'F');
+            doc.setFontSize(7);
+            doc.setTextColor(156, 163, 175);
+            doc.text('Sua Logo', margin + 4.5, currentY + 11);
+        }
 
         doc.setTextColor(fontColor);
         const companyInfoX = margin + 30;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text("JL Informática", companyInfoX, currentY + 7);
+        doc.text(companyInfo?.name || "Sua Empresa", companyInfoX, currentY + 7);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text("Rua da Tecnologia, 123 | Fone: (11) 99999-8888", companyInfoX, currentY + 12);
+        doc.text(`${companyInfo?.address || "Seu Endereço"} | Fone: ${companyInfo?.phone || "Seu Telefone"}`, companyInfoX, currentY + 12);
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');

@@ -2,6 +2,7 @@
 
 
 
+
 export type Customer = {
   id: string;
   name: string;
@@ -99,4 +100,13 @@ export type User = {
   phone?: string;
   role: 'admin' | 'technician' | 'sales' | 'normal' | 'receptionist';
   active: boolean;
+};
+
+export type CompanyInfo = {
+  name: string;
+  address: string;
+  phone: string;
+  emailOrSite: string;
+  document: string; // CPF or CNPJ
+  logoUrl: string;
 };

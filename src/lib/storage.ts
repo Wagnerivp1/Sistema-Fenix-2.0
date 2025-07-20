@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User } from '@/types';
+import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo } from '@/types';
 
 const CUSTOMERS_KEY = 'assistec_customers';
 const SERVICE_ORDERS_KEY = 'assistec_service_orders';
@@ -11,6 +11,8 @@ const FINANCIAL_TRANSACTIONS_KEY = 'assistec_financial_transactions';
 const SETTINGS_KEY = 'app_settings';
 const USERS_KEY = 'assistec_users';
 const LOGGED_IN_USER_KEY = 'assistec_logged_in_user';
+const COMPANY_INFO_KEY = 'assistec_company_info';
+
 
 export const APP_STORAGE_KEYS = [
   CUSTOMERS_KEY,
@@ -21,6 +23,7 @@ export const APP_STORAGE_KEYS = [
   SETTINGS_KEY,
   USERS_KEY,
   LOGGED_IN_USER_KEY,
+  COMPANY_INFO_KEY,
 ];
 
 
@@ -118,4 +121,34 @@ export const getLoggedInUser = (): User | null => {
     console.error('Error getting logged in user:', error);
     return null;
   }
+}
+
+// Company Info functions
+const defaultCompanyInfo: CompanyInfo = {
+  name: 'JL Informática',
+  address: 'Rua da Tecnologia, 123 - Centro, São Paulo/SP',
+  phone: '(11) 99999-8888',
+  emailOrSite: 'contato@jlinformatica.com',
+  document: '12.345.678/0001-90',
+  logoUrl: '',
+};
+
+export const getCompanyInfo = (): CompanyInfo => {
+    if (typeof window === 'undefined') return defaultCompanyInfo;
+    try {
+        const item = window.localStorage.getItem(COMPANY_INFO_KEY);
+        return item ? JSON.parse(item) : defaultCompanyInfo;
+    } catch (error) {
+        console.error('Error reading company info:', error);
+        return defaultCompanyInfo;
+    }
+}
+
+export const saveCompanyInfo = (info: CompanyInfo): void => {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.setItem(COMPANY_INFO_KEY, JSON.stringify(info));
+    } catch (error) {
+        console.error('Error saving company info:', error);
+    }
 }

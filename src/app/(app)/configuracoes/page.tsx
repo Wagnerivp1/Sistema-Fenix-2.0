@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -29,8 +29,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { APP_STORAGE_KEYS, getUsers, saveUsers, MASTER_USER_ID, getLoggedInUser } from '@/lib/storage';
-import type { User } from '@/types';
+import { APP_STORAGE_KEYS, getUsers, saveUsers, MASTER_USER_ID, getLoggedInUser, getCompanyInfo, saveCompanyInfo } from '@/lib/storage';
+import type { User, CompanyInfo } from '@/types';
 
 const SETTINGS_KEY = 'app_settings';
 
@@ -52,6 +52,9 @@ export default function ConfiguracoesPage() {
   const [settings, setSettings] = React.useState<AppSettings>({
     defaultWarrantyDays: 90,
   });
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({
+      name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: ''
+  });
   const [users, setUsers] = React.useState<User[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isClearAlertOpen, setIsClearAlertOpen] = React.useState(false);
@@ -70,6 +73,7 @@ export default function ConfiguracoesPage() {
       if (savedSettings) {
         setSettings(JSON.parse(savedSettings));
       }
+      setCompanyInfo(getCompanyInfo());
       setUsers(getUsers().filter(u => u.id !== MASTER_USER_ID));
       setCurrentUser(getLoggedInUser());
     } catch (error) {
@@ -82,6 +86,21 @@ export default function ConfiguracoesPage() {
   const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setNewUser(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handleCompanyInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setCompanyInfo(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handleSaveCompanyInfo = () => {
+    saveCompanyInfo(companyInfo);
+    toast({
+        title: "Dados da Empresa Salvos!",
+        description: "As informações da sua empresa foram atualizadas.",
+    });
+    // Trigger a reload or a state update in the layout
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleSaveSettings = () => {
@@ -111,8 +130,7 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
-           if (key === SETTINGS_KEY) {
-             // Settings is an object, not an array
+           if (key === SETTINGS_KEY || key === 'assistec_company_info') {
              backupData[key] = JSON.parse(data);
            } else {
              backupData[key] = JSON.parse(data);
@@ -317,6 +335,54 @@ export default function ConfiguracoesPage() {
 
   return (
     <div className="space-y-6">
+    <Card>
+        <CardHeader>
+            <CardTitle>Dados da Empresa</CardTitle>
+            <CardDescription>
+                Informações que aparecerão nos documentos e no sistema.
+            </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                    <Label htmlFor="name">Nome da Empresa</Label>
+                    <Input id="name" value={companyInfo.name} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
+                </div>
+                <div className="space-y-1">
+                    <Label htmlFor="document">CNPJ / CPF</Label>
+                    <Input id="document" value={companyInfo.document} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
+                </div>
+            </div>
+             <div className="space-y-1">
+                <Label htmlFor="address">Endereço</Label>
+                <Input id="address" value={companyInfo.address} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                    <Label htmlFor="phone">Telefone de Contato</Label>
+                    <Input id="phone" value={companyInfo.phone} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
+                </div>
+                <div className="space-y-1">
+                    <Label htmlFor="emailOrSite">E-mail ou Website</Label>
+                    <Input id="emailOrSite" value={companyInfo.emailOrSite} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
+                </div>
+            </div>
+             <div className="space-y-1">
+                <Label htmlFor="logoUrl">URL da Logo</Label>
+                <Input id="logoUrl" value={companyInfo.logoUrl} onChange={handleCompanyInfoChange} placeholder="https://exemplo.com/sua-logo.png" disabled={!isCurrentUserAdmin} />
+                 <p className="text-sm text-muted-foreground">
+                    Hospede sua logo em um site (como o <a href="https://imgur.com/upload" target="_blank" rel="noopener noreferrer" className="underline">Imgur</a>) e cole o link aqui.
+                </p>
+            </div>
+        </CardContent>
+        <CardFooter className="border-t px-6 py-4">
+            <Button onClick={handleSaveCompanyInfo} disabled={!isCurrentUserAdmin}>
+                <Building className="mr-2 h-4 w-4" />
+                Salvar Dados da Empresa
+            </Button>
+        </CardFooter>
+    </Card>
+    
     <Card>
       <CardHeader>
         <CardTitle>Configurações Gerais</CardTitle>

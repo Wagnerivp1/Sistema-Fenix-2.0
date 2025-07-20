@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import type { ServiceOrder } from '@/types';
+import type { ServiceOrder, CompanyInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -13,6 +13,7 @@ import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
 import { add } from 'date-fns';
 import { Input } from '../ui/input';
+import { getCompanyInfo } from '@/lib/storage';
 
 
 declare module 'jspdf' {
@@ -55,6 +56,11 @@ interface ServiceHistoryProps {
 
 export function ServiceHistory({ history }: ServiceHistoryProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
+
+  React.useEffect(() => {
+    setCompanyInfo(getCompanyInfo());
+  }, []);
 
   const filteredHistory = history.filter(order =>
     order.id.toLowerCase().includes(searchTerm.toLowerCase().replace(/\s+/g, ''))
@@ -73,21 +79,34 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
     // Cabeçalho da Empresa e do Documento
     doc.setFont('helvetica');
     doc.setTextColor(fontColor);
-    doc.setFillColor(240, 240, 240);
-    doc.rect(margin, 10, 30, 25, 'F');
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Sua Logo', margin + 7, 23);
-    doc.setTextColor(fontColor);
+
+    if (companyInfo?.logoUrl) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = companyInfo.logoUrl;
+        img.onload = () => {
+          doc.addImage(img, 'PNG', margin, 12, 25, 25);
+        };
+      } catch (e) { console.error("Error loading logo for PDF", e); }
+    } else {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(margin, 10, 30, 25, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Sua Logo', margin + 7, 23);
+        doc.setTextColor(fontColor);
+    }
+
 
     const companyInfoX = margin + 35;
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text("JL Informática", companyInfoX, 18);
+    doc.text(companyInfo?.name || "Sua Empresa", companyInfoX, 18);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text("Rua da Tecnologia, 123 - Centro", companyInfoX, 24);
-    doc.text("Telefone: (11) 99999-8888 | E-mail: contato@jlinformatica.com", companyInfoX, 29);
+    doc.text(companyInfo?.address || "Seu Endereço", companyInfoX, 24);
+    doc.text(`Telefone: ${companyInfo?.phone || 'Seu Telefone'} | E-mail: ${companyInfo?.emailOrSite || 'Seu E-mail'}`, companyInfoX, 29);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');

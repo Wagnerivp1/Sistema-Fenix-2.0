@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Search, ShoppingCart, Trash2, X, ChevronsUpDown, Check, User } from 'lucide-react';
+import { PlusCircle, ShoppingCart, Trash2, User } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -16,19 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
 import { getStock, getCustomers } from '@/lib/storage';
-import type { StockItem, Customer, ServiceOrderItem } from '@/types';
+import type { StockItem, Customer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
@@ -41,42 +31,93 @@ export default function VendasPage() {
   const [stock, setStock] = React.useState<StockItem[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [saleItems, setSaleItems] = React.useState<SaleItem[]>([]);
-  const [selectedProduct, setSelectedProduct] = React.useState<StockItem | null>(null);
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
-  const [isProductComboboxOpen, setIsProductComboboxOpen] = React.useState(false);
-  const [isCustomerComboboxOpen, setIsCustomerComboboxOpen] = React.useState(false);
+
+  // State for barcode scanning
+  const [barcode, setBarcode] = React.useState('');
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
     setStock(getStock());
     const loadedCustomers = getCustomers();
     setCustomers(loadedCustomers);
-    // Definir "CLIENTE AVULSO" como padrão
+    
     const avulso = loadedCustomers.find(c => c.name.toLowerCase() === 'cliente avulso');
     if(avulso) {
         setSelectedCustomer(avulso);
     }
   }, []);
 
-  const handleAddProduct = () => {
-    if (!selectedProduct) {
-      toast({ variant: 'destructive', title: 'Nenhum produto selecionado.' });
-      return;
-    }
+  // Barcode scanner listener effect
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        // Ignore inputs from text fields, etc.
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+            return;
+        }
+
+        // If 'Enter' is pressed, it's the end of the scan
+        if (event.key === 'Enter') {
+            if (barcode.trim()) {
+                handleBarcodeScan(barcode.trim());
+                setBarcode(''); // Reset for the next scan
+            }
+            return;
+        }
+        
+        // Accumulate typed characters
+        if (event.key.length === 1) {
+            setBarcode(prev => prev + event.key);
+        }
+
+        // Reset buffer if typing is too slow
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+            setBarcode('');
+        }, 100); // 100ms timeout between keystrokes
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+    };
+  }, [barcode, stock]); // Re-run when barcode or stock changes
+
+  const handleBarcodeScan = (scannedCode: string) => {
+    const product = stock.find(item => item.barcode === scannedCode);
     
-    // Verifica se o item já está na venda
-    const existingItem = saleItems.find(item => item.id === selectedProduct.id);
-    if (existingItem) {
-        // Se já existe, apenas incrementa a quantidade
-        setSaleItems(saleItems.map(item => 
-            item.id === selectedProduct.id 
-            ? { ...item, saleQuantity: item.saleQuantity + 1 } 
-            : item
-        ));
+    if (product) {
+        if (product.quantity <= 0) {
+            toast({ variant: 'destructive', title: 'Fora de Estoque', description: `O produto "${product.name}" não tem estoque disponível.` });
+            return;
+        }
+        addProductToSale(product);
+        toast({ title: 'Produto Adicionado!', description: `"${product.name}" foi adicionado à venda.` });
     } else {
-        // Se não existe, adiciona com quantidade 1
-        setSaleItems([...saleItems, { ...selectedProduct, saleQuantity: 1 }]);
+        toast({ variant: 'destructive', title: 'Produto Não Encontrado', description: `Nenhum produto encontrado para o código: ${scannedCode}` });
     }
-    setSelectedProduct(null); // Reseta o combobox
+  };
+
+  const addProductToSale = (productToAdd: StockItem) => {
+    setSaleItems(prevItems => {
+        const existingItem = prevItems.find(item => item.id === productToAdd.id);
+        if (existingItem) {
+            return prevItems.map(item =>
+                item.id === productToAdd.id
+                    ? { ...item, saleQuantity: item.saleQuantity + 1 }
+                    : item
+            );
+        } else {
+            return [...prevItems, { ...productToAdd, saleQuantity: 1 }];
+        }
+    });
   };
 
   const handleRemoveItem = (productId: string) => {
@@ -101,60 +142,23 @@ export default function VendasPage() {
   
   const handleCancelSale = () => {
     setSaleItems([]);
+    toast({ title: 'Venda Cancelada', description: 'Todos os itens foram removidos do carrinho.' });
   };
 
   const total = calculateTotal();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Coluna Esquerda: Adicionar Itens e Finalizar */}
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
             <CardTitle>Ponto de Venda (PDV)</CardTitle>
-            <CardDescription>Adicione produtos para registrar uma nova venda.</CardDescription>
+            <CardDescription>Use um leitor de código de barras ou adicione produtos manualmente.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div>
-              <Label>Adicionar Produto à Venda</Label>
-              <div className="flex items-center gap-2 mt-2">
-                 <Popover open={isProductComboboxOpen} onOpenChange={setIsProductComboboxOpen}>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                            {selectedProduct?.name || "Selecione ou pesquise um produto..."}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                        <Command>
-                            <CommandInput placeholder="Procurar produto..."/>
-                            <CommandList>
-                                <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
-                                <CommandGroup>
-                                    {stock.map((product) => (
-                                        <CommandItem
-                                            key={product.id}
-                                            value={product.name}
-                                            onSelect={() => {
-                                                setSelectedProduct(product);
-                                                setIsProductComboboxOpen(false);
-                                            }}
-                                            disabled={product.quantity <= 0}
-                                        >
-                                            <Check className={cn("mr-2 h-4 w-4", selectedProduct?.id === product.id ? "opacity-100" : "opacity-0")} />
-                                            {product.name} {product.quantity <= 0 && '(Sem estoque)'}
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
-                <Button onClick={handleAddProduct} disabled={!selectedProduct}>
-                  <PlusCircle className="mr-2 h-4 w-4"/>
-                  Adicionar
-                </Button>
-              </div>
+            <div className="p-4 border rounded-lg bg-muted/30 text-center">
+                <p className="text-sm text-muted-foreground">Aguardando leitura do código de barras...</p>
+                <p className="font-mono text-xs text-muted-foreground h-4">{barcode || ''}</p>
             </div>
             
             <div className="border rounded-lg">
@@ -205,7 +209,6 @@ export default function VendasPage() {
         </Card>
       </div>
 
-      {/* Coluna Direita: Resumo e Pagamento */}
       <div className="lg:col-span-1">
         <Card className="sticky top-6">
           <CardHeader>

@@ -169,11 +169,11 @@ export const mockRevenueData = [
 
 
 export const mockStock: StockItem[] = [
-  { id: 'PROD-1721935634515', name: 'SSD 240GB Kingston', quantity: 8, price: 180.00, category: 'Armazenamento', unitOfMeasure: 'UN', minStock: 3, costPrice: 130.00, barcode: 'JL Informática | SSD 240GB Kingston | R$180.00' },
-  { id: 'PROD-1721935634516', name: 'Memória RAM 8GB DDR4 Notebook', quantity: 12, price: 220.00, category: 'Componentes', unitOfMeasure: 'UN', minStock: 5, costPrice: 170.00, barcode: 'JL Informática | Memória RAM 8GB DDR4 Notebook | R$220.00' },
-  { id: 'PROD-1721935634517', name: 'Bateria para Acer Aspire 3', quantity: 4, price: 280.00, category: 'Baterias', unitOfMeasure: 'UN', minStock: 2, costPrice: 210.00, barcode: 'JL Informática | Bateria para Acer Aspire 3 | R$280.00' },
-  { id: 'PROD-1721935634518', name: 'Tela 15.6" LED Slim', quantity: 10, price: 350.00, category: 'Telas', unitOfMeasure: 'UN', minStock: 3, costPrice: 290.00, barcode: 'JL Informática | Tela 15.6" LED Slim | R$350.00' },
-  { id: 'PROD-1721935634519', name: 'Teclado ABNT2 Dell Inspiron', quantity: 1, price: 120.00, category: 'Teclados', unitOfMeasure: 'UN', minStock: 2, costPrice: 85.00, barcode: 'JL Informática | Teclado ABNT2 Dell Inspiron | R$120.00' },
-  { id: 'PROD-1721935634520', name: 'Fonte Carregador Universal Notebook', quantity: 0, price: 90.00, category: 'Fontes', unitOfMeasure: 'UN', minStock: 3, costPrice: 65.00, barcode: 'JL Informática | Fonte Carregador Universal Notebook | R$90.00' },
-  { id: 'PROD-1721935634521', name: 'Pasta Térmica Prata 5g', quantity: 20, price: 25.00, category: 'Insumos', unitOfMeasure: 'UN', minStock: 10, costPrice: 15.00, barcode: 'JL Informática | Pasta Térmica Prata 5g | R$25.00' },
+  { id: 'PROD-1721935634515', name: 'SSD 240GB Kingston', quantity: 8, price: 180.00, category: 'Armazenamento', unitOfMeasure: 'UN', minStock: 3, costPrice: 130.00, barcode: 'PROD-1721935634515' },
+  { id: 'PROD-1721935634516', name: 'Memória RAM 8GB DDR4 Notebook', quantity: 12, price: 220.00, category: 'Componentes', unitOfMeasure: 'UN', minStock: 5, costPrice: 170.00, barcode: 'PROD-1721935634516' },
+  { id: 'PROD-1721935634517', name: 'Bateria para Acer Aspire 3', quantity: 4, price: 280.00, category: 'Baterias', unitOfMeasure: 'UN', minStock: 2, costPrice: 210.00, barcode: 'PROD-1721935634517' },
+  { id: 'PROD-1721935634518', name: 'Tela 15.6" LED Slim', quantity: 10, price: 350.00, category: 'Telas', unitOfMeasure: 'UN', minStock: 3, costPrice: 290.00, barcode: 'PROD-1721935634518' },
+  { id: 'PROD-1721935634519', name: 'Teclado ABNT2 Dell Inspiron', quantity: 1, price: 120.00, category: 'Teclados', unitOfMeasure: 'UN', minStock: 2, costPrice: 85.00, barcode: 'PROD-1721935634519' },
+  { id: 'PROD-1721935634520', name: 'Fonte Carregador Universal Notebook', quantity: 0, price: 90.00, category: 'Fontes', unitOfMeasure: 'UN', minStock: 3, costPrice: 65.00, barcode: 'PROD-1721935634520' },
+  { id: 'PROD-1721935634521', name: 'Pasta Térmica Prata 5g', quantity: 20, price: 25.00, category: 'Insumos', unitOfMeasure: 'UN', minStock: 10, costPrice: 15.00, barcode: 'PROD-1721935634521' },
 ];

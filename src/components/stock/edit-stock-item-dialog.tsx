@@ -50,7 +50,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
         setFormData(item);
       } else {
         const newId = `PROD-${Date.now()}`;
-        setFormData({ ...initialFormData, id: newId });
+        setFormData({ ...initialFormData, id: newId, barcode: newId });
       }
     }
   }, [item, isOpen]);
@@ -70,12 +70,10 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
       toast({ variant: 'destructive', title: 'Erro de Validação', description: 'Nome do produto e preço de venda são obrigatórios.' });
       return;
     }
-    
-    const barcodeTextValue = `JL Informática | ${formData.name} | R$${(formData.price || 0).toFixed(2)}`;
 
     const finalItem: StockItem = {
       id: formData.id!,
-      barcode: barcodeTextValue,
+      barcode: formData.id!, // Use ID as barcode
       name: formData.name!,
       price: formData.price || 0,
       quantity: isEditing ? item.quantity : (formData.quantity || 0),
@@ -127,7 +125,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
                     </div>
                     <div className="space-y-2 col-span-1">
                         <Label htmlFor="barcode">Código de Barras</Label>
-                        <Input id="barcode" value={'Gerado automaticamente'} disabled />
+                        <Input id="barcode" value={formData.barcode || 'Gerado automaticamente'} disabled />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
@@ -153,8 +151,8 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
         </ScrollArea>
         <DialogFooter className="p-6 border-t flex-shrink-0 bg-card sm:justify-between items-center">
             <div className="flex-shrink-0">
-                {formData.id ? (
-                    <Barcode value={formData.id} height={40} fontSize={10} width={1.5} />
+                {formData.barcode ? (
+                    <Barcode value={formData.barcode} height={40} fontSize={10} width={1.5} />
                 ) : (
                     <div className="h-[40px] flex items-center text-xs text-muted-foreground">Aguardando ID do produto para gerar o código.</div>
                 )}

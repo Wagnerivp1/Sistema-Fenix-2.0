@@ -102,7 +102,12 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
-          backupData[key] = JSON.parse(data);
+          // Special handling for settings object vs arrays
+          if (key === SETTINGS_KEY) {
+            backupData[key] = JSON.parse(data);
+          } else {
+            backupData[key] = JSON.parse(data);
+          }
         }
       });
 
@@ -214,15 +219,19 @@ export default function ConfiguracoesPage() {
     let updatedUsers: User[];
     if (editingUser) {
       // Edit existing user
-      updatedUsers = users.map(u => u.id === editingUser.id ? { ...u, ...newUser } : u);
+      updatedUsers = users.map(u => 
+        u.id === editingUser.id 
+          ? { ...editingUser, ...newUser } 
+          : u
+      );
       toast({ title: 'Usuário Atualizado!', description: `Os dados de ${newUser.username} foram salvos.` });
     } else {
       // Add new user
       const userToAdd: User = {
         id: `USER-${Date.now()}`,
-        username: newUser.username,
-        password: newUser.password!, // Password is required for new users
-        role: newUser.role as User['role'],
+        username: newUser.username!,
+        password: newUser.password!,
+        role: newUser.role! as User['role'],
         active: newUser.active ?? true,
       };
       updatedUsers = [...users, userToAdd];
@@ -233,6 +242,7 @@ export default function ConfiguracoesPage() {
     saveUsers(updatedUsers);
     setIsUserDialogOpen(false);
     setEditingUser(null);
+    setNewUser(initialNewUser);
   };
 
 
@@ -481,5 +491,3 @@ export default function ConfiguracoesPage() {
     </div>
   )
 }
-
-    

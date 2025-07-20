@@ -36,6 +36,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from '@/components/ui/select';
 import { getServiceOrders, saveServiceOrders, getCustomers } from '@/lib/storage';
 import type { Customer, ServiceOrder } from '@/types';
@@ -65,6 +67,19 @@ const formatDate = (dateString: string) => {
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
+
+const allStatuses: ServiceOrder['status'][] = [
+  'Aberta', 
+  'Em análise', 
+  'Aguardando',
+  'Aguardando peça',
+  'Aguardando Pagamento',
+  'Aprovado',
+  'Em conserto',
+  'Finalizado', 
+  'Entregue', 
+  'Cancelada'
+];
 
 export default function ServiceOrdersPage() {
   const searchParams = useSearchParams();
@@ -190,6 +205,8 @@ export default function ServiceOrdersPage() {
       result = result.filter(o => o.status !== 'Finalizado' && o.status !== 'Entregue');
     } else if (statusFilter === 'finalizadas') {
       result = result.filter(o => o.status === 'Finalizado' || o.status === 'Entregue');
+    } else if (statusFilter !== 'todas') {
+      result = result.filter(o => o.status === statusFilter);
     }
 
     if (searchFilter) {
@@ -219,13 +236,22 @@ export default function ServiceOrdersPage() {
           </div>
           <div className="flex items-center gap-2 ml-auto">
              <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Filtrar por Status..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ativas">Status: Ativas</SelectItem>
-                <SelectItem value="finalizadas">Status: Finalizadas</SelectItem>
-                <SelectItem value="todas">Status: Todas</SelectItem>
+                <SelectGroup>
+                  <SelectLabel>Visualizações Gerais</SelectLabel>
+                  <SelectItem value="ativas">Status: Ativas</SelectItem>
+                  <SelectItem value="finalizadas">Status: Finalizadas</SelectItem>
+                  <SelectItem value="todas">Status: Todas</SelectItem>
+                </SelectGroup>
+                 <SelectGroup>
+                  <SelectLabel>Status Específicos</SelectLabel>
+                   {allStatuses.map(status => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
             <NewOrderSheet 

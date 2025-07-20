@@ -662,122 +662,146 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   };
 
   const generateEntryReceiptPdf = () => {
-    generatePdfBase("Recibo de Entrada", (doc, selectedCustomer, companyInfo, currentY, pageWidth, margin) => {
+    const companyInfo = getCompanyInfo();
+    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+    if (!selectedCustomer) {
+        toast({ variant: 'destructive', title: 'Cliente não selecionado!'});
+        return;
+    }
+    const doc = new jsPDF();
+    const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
 
-        const drawReceiptContent = (yOffset: number, via: string, isSecondVia: boolean = false) => {
-            let localY = yOffset;
-            const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
-            
-            if (isSecondVia) {
-              const companyInfoX = margin + (companyInfo.logoUrl ? 30 : 0);
-              if (companyInfo.name) {
-                doc.setFontSize(18);
-                doc.setFont('helvetica', 'bold');
-                doc.text(companyInfo.name, companyInfoX, localY - 24);
-              }
-              if (companyInfo.address) {
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'normal');
-                doc.text(companyInfo.address, companyInfoX, localY - 18);
-              }
-              if(companyInfo.phone || companyInfo.emailOrSite) {
-                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, localY - 13);
-              }
-              if (companyInfo.logoUrl) {
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';
-                img.src = companyInfo.logoUrl;
-                doc.addImage(img, 'PNG', 15, localY - 28, 25, 25);
-              }
+    const drawPageContent = (via: string) => {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let currentY = 12;
 
-              // Re-add title for second via
-              doc.setFontSize(14);
-              doc.setFont('helvetica', 'bold');
-              doc.text("Recibo de Entrada", pageWidth - margin, localY - 24, { align: 'right' });
-              doc.setFontSize(10);
-              doc.setFont('helvetica', 'normal');
-              doc.text(`Nº: ${osId}`, pageWidth - margin, localY - 18, { align: 'right' });
-              doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, localY - 13, { align: 'right' });
-            }
-            
+        doc.setFont('helvetica');
+        doc.setTextColor('#000000');
+        
+        // Company Info
+        const companyInfoX = margin + (companyInfo?.logoUrl ? 30 : 0);
+        if (companyInfo.logoUrl) {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.src = companyInfo.logoUrl;
+            // Note: jsPDF's addImage is synchronous if the image is a Data URL, which it should be.
+            // If it were a remote URL, this would need to be async.
+            doc.addImage(img, 'PNG', 15, 12, 25, 25);
+        }
+
+        if (companyInfo?.name) {
+            doc.setFontSize(18);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
-            doc.text(`Via do(a) ${via}`, pageWidth / 2, localY, { align: 'center' });
-            localY += 10;
-            
-            doc.setDrawColor(209, 213, 219);
-            doc.line(margin, localY, pageWidth - margin, localY);
-            localY += 5;
-
-            doc.setFont('helvetica', 'bold');
+            doc.text(companyInfo.name, companyInfoX, currentY + 6);
+        }
+        if (companyInfo?.address) {
             doc.setFontSize(9);
-            doc.text('OS:', margin, localY);
             doc.setFont('helvetica', 'normal');
-            doc.text(osId, margin + 8, localY);
+            doc.text(companyInfo.address, companyInfoX, currentY + 12);
+        }
+        if (companyInfo?.phone || companyInfo?.emailOrSite) {
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
+        }
 
-            doc.setFont('helvetica', 'bold');
-            doc.text('Cliente:', margin + 30, localY);
-            doc.setFont('helvetica', 'normal');
-            doc.text(selectedCustomer.name, margin + 45, localY);
-            
-            doc.setFont('helvetica', 'bold');
-            doc.text('Data:', margin + 130, localY);
-            doc.setFont('helvetica', 'normal');
-            doc.text(new Date().toLocaleDateString('pt-BR'), margin + 140, localY);
-            localY += 7;
+        // Document Info
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Recibo de Entrada", pageWidth - margin, currentY + 6, { align: 'right' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Nº: ${osId}`, pageWidth - margin, currentY + 12, { align: 'right' });
+        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
 
-            doc.setFont('helvetica', 'bold');
-            doc.text('Equipamento:', margin, localY);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`${equipmentType} ${equipment.brand} ${equipment.model}`, margin + 25, localY);
-            
-            doc.setFont('helvetica', 'bold');
-            doc.text('Nº Série:', margin + 100, localY);
-            doc.setFont('helvetica', 'normal');
-            doc.text(equipment.serial || 'Não informado', margin + 115, localY);
-            localY += 7;
-            
-            doc.setFont('helvetica', 'bold');
-            doc.text('Acessórios:', margin, localY);
-            doc.setFont('helvetica', 'normal');
-            doc.text(accessories || 'Nenhum', margin + 22, localY);
-            localY += 7;
+        currentY = 50;
 
-            doc.setFont('helvetica', 'bold');
-            doc.text('Problema Relatado:', margin, localY);
-            localY += 4;
-            doc.setFont('helvetica', 'normal');
-            const problemLines = doc.splitTextToSize(reportedProblem || 'Não informado', pageWidth - margin * 2);
-            doc.text(problemLines, margin, localY);
-            localY += problemLines.length * 4 + 5;
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7);
-            const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
-            const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
-            doc.text(textLines, pageWidth / 2, localY, { align: 'center' });
-            localY += doc.getTextDimensions(textLines).h + 15; // Increased space for signature
-
-            doc.line(margin + 20, localY, pageWidth - margin - 20, localY);
-            localY += 4;
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
-
-            return localY;
-        };
-
-        const firstReceiptEndY = drawReceiptContent(currentY, "Cliente");
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text(via, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 10;
         
-        const cutLineY = firstReceiptEndY + 10;
-        doc.setLineDashPattern([2, 1], 0);
-        doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
-        doc.setLineDashPattern([], 0);
+        doc.setDrawColor(209, 213, 219);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        currentY += 10;
 
-        drawReceiptContent(cutLineY + 10, "Loja", true);
+        // Content
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text('Cliente:', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(selectedCustomer.name, margin + 18, currentY);
         
+        doc.setFont('helvetica', 'bold');
+        doc.text('Data:', margin + 120, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(new Date().toLocaleDateString('pt-BR'), margin + 132, currentY);
+        currentY += 10;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipamento:', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${equipmentType} ${equipment.brand} ${equipment.model}`, margin + 28, currentY);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Nº Série:', margin + 120, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(equipment.serial || 'Não informado', margin + 138, currentY);
+        currentY += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Acessórios:', margin, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(accessories || 'Nenhum', margin + 25, currentY);
+        currentY += 10;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Problema Relatado:', margin, currentY);
+        currentY += 7;
+        doc.setFont('helvetica', 'normal');
+        const problemLines = doc.splitTextToSize(reportedProblem || 'Não informado', pageWidth - margin * 2);
+        doc.text(problemLines, margin, currentY);
+        currentY += problemLines.length * 6 + 10;
+        
+        // Footer and Signature
+        currentY = doc.internal.pageSize.getHeight() - 50;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
+        const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
+        doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
+        currentY += doc.getTextDimensions(textLines).h + 20;
+
+        doc.line(margin + 40, currentY, pageWidth - margin - 40, currentY);
+        currentY += 5;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
+    };
+
+    const performGeneration = () => {
+        // Page 1: Via do Cliente
+        drawPageContent("Via do Cliente");
+        // Page 2: Via da Loja
+        doc.addPage();
+        drawPageContent("Via da Loja");
+
         doc.output('dataurlnewwindow');
-    });
+    };
+
+    if (companyInfo?.logoUrl) {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = companyInfo.logoUrl;
+      img.onload = () => {
+        performGeneration();
+      };
+      img.onerror = () => {
+        console.error("Logo could not be loaded for PDF.");
+        performGeneration();
+      };
+    } else {
+        performGeneration();
+    }
   };
 
   const handlePrint = (documentType: string) => {

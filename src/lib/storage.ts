@@ -9,6 +9,16 @@ const SERVICE_ORDERS_KEY = 'assistec_service_orders';
 const STOCK_KEY = 'assistec_stock';
 const SALES_KEY = 'assistec_sales';
 const FINANCIAL_TRANSACTIONS_KEY = 'assistec_financial_transactions';
+const SETTINGS_KEY = 'app_settings';
+
+export const APP_STORAGE_KEYS = [
+  CUSTOMERS_KEY,
+  SERVICE_ORDERS_KEY,
+  STOCK_KEY,
+  SALES_KEY,
+  FINANCIAL_TRANSACTIONS_KEY,
+  SETTINGS_KEY,
+];
 
 
 // Generic getter

@@ -2,6 +2,20 @@
 'use client';
 
 import * as React from 'react';
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  MoreHorizontal,
+  Calendar as CalendarIcon,
+  Printer,
+  X,
+} from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,29 +59,47 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { getFinancialTransactions, saveFinancialTransactions, getSales, saveSales, getStock, saveStock } from '@/lib/storage';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+
+import {
+  getFinancialTransactions,
+  saveFinancialTransactions,
+  getSales,
+  saveSales,
+  getStock,
+  saveStock,
+} from '@/lib/storage';
 import type { FinancialTransaction, Sale, StockItem } from '@/types';
-import { ArrowDownCircle, ArrowUpCircle, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
-const formatDate = (dateString: string) => {
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+      lastAutoTable: { finalY: number };
+    }
+}
+
+const formatDateForDisplay = (dateString: string) => {
   const [year, month, day] = dateString.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-}
+};
 
 export default function FinanceiroPage() {
   const { toast } = useToast();
-  const [transactions, setTransactions] = React.useState<FinancialTransaction[]>([]);
+  const [allTransactions, setAllTransactions] = React.useState<FinancialTransaction[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [filter, setFilter] = React.useState('');
+  const [descriptionFilter, setDescriptionFilter] = React.useState('');
+  const [typeFilter, setTypeFilter] = React.useState('all');
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
 
   const loadData = () => {
     const loadedTransactions = getFinancialTransactions();
     loadedTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    setTransactions(loadedTransactions);
-  }
+    setAllTransactions(loadedTransactions);
+  };
 
   React.useEffect(() => {
     loadData();
@@ -75,8 +107,8 @@ export default function FinanceiroPage() {
   }, []);
 
   const handleDeleteTransaction = (transactionId: string) => {
-    const updatedTransactions = transactions.filter(t => t.id !== transactionId);
-    setTransactions(updatedTransactions);
+    const updatedTransactions = allTransactions.filter(t => t.id !== transactionId);
+    setAllTransactions(updatedTransactions);
     saveFinancialTransactions(updatedTransactions);
     toast({
       title: 'Lançamento Excluído!',
@@ -87,46 +119,119 @@ export default function FinanceiroPage() {
   const handleReverseSale = (transaction: FinancialTransaction) => {
     if (!transaction.relatedSaleId) return;
 
-    // 1. Restore stock
     const sales = getSales();
     const saleToReverse = sales.find(s => s.id === transaction.relatedSaleId);
     if (saleToReverse) {
-        const stock = getStock();
-        const updatedStock = [...stock];
-        saleToReverse.items.forEach(saleItem => {
-            const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
-            if (stockIndex !== -1) {
-                updatedStock[stockIndex].quantity += saleItem.quantity;
-            }
-        });
-        saveStock(updatedStock);
+      const stock = getStock();
+      const updatedStock = [...stock];
+      saleToReverse.items.forEach(saleItem => {
+        const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
+        if (stockIndex !== -1) {
+          updatedStock[stockIndex].quantity += saleItem.quantity;
+        }
+      });
+      saveStock(updatedStock);
 
-        // 2. Delete sale record
-        const updatedSales = sales.filter(s => s.id !== transaction.relatedSaleId);
-        saveSales(updatedSales);
+      const updatedSales = sales.filter(s => s.id !== transaction.relatedSaleId);
+      saveSales(updatedSales);
     }
 
-    // 3. Delete financial transaction
     handleDeleteTransaction(transaction.id);
 
     toast({
-        title: 'Venda Estornada!',
-        description: 'A venda foi estornada e os itens retornaram ao estoque.',
+      title: 'Venda Estornada!',
+      description: 'A venda foi estornada e os itens retornaram ao estoque.',
     });
   };
 
+  const filteredTransactions = React.useMemo(() => {
+    return allTransactions.filter(t => {
+      const transactionDate = parseISO(`${t.date}T00:00:00Z`);
+      const matchesDescription = t.description.toLowerCase().includes(descriptionFilter.toLowerCase());
+      const matchesType = typeFilter === 'all' || t.type === typeFilter;
+      const matchesDate = !dateRange || 
+                          !dateRange.from || 
+                          (transactionDate >= dateRange.from && (!dateRange.to || transactionDate <= dateRange.to));
+
+      return matchesDescription && matchesType && matchesDate;
+    });
+  }, [allTransactions, descriptionFilter, typeFilter, dateRange]);
+
+
+  const totalReceitas = filteredTransactions
+    .filter(t => t.type === 'receita')
+    .reduce((acc, t) => acc + t.amount, 0);
+  const totalDespesas = filteredTransactions
+    .filter(t => t.type === 'despesa')
+    .reduce((acc, t) => acc + t.amount, 0);
+  const saldoPeriodo = totalReceitas - totalDespesas;
+  
   const calculateBalance = () => {
-    return transactions.reduce((acc, t) => {
+    return allTransactions.reduce((acc, t) => {
         return t.type === 'receita' ? acc + t.amount : acc - t.amount;
     }, 0);
   };
 
-  const filteredTransactions = transactions.filter(t => 
-    t.description.toLowerCase().includes(filter.toLowerCase())
-  );
+  const generatePdf = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const fontColor = '#000000';
 
-  const totalReceitas = filteredTransactions.filter(t => t.type === 'receita').reduce((acc, t) => acc + t.amount, 0);
-  const totalDespesas = filteredTransactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + t.amount, 0);
+    // Cabeçalho
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text("Relatório Financeiro", pageWidth / 2, 20, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const period = dateRange?.from ? 
+                   `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${dateRange.to ? format(dateRange.to, 'dd/MM/yyyy') : 'hoje'}` :
+                   'Período: Todas as Transações';
+    doc.text(period, pageWidth / 2, 26, { align: 'center' });
+
+    // Resumo
+    let currentY = 40;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text("Resumo do Período", margin, currentY);
+    currentY += 8;
+
+    doc.autoTable({
+        startY: currentY,
+        body: [
+            ['Total de Receitas', `R$ ${totalReceitas.toFixed(2)}`],
+            ['Total de Despesas', `R$ ${totalDespesas.toFixed(2)}`],
+            ['Saldo do Período', `R$ ${saldoPeriodo.toFixed(2)}`],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [241, 245, 249] },
+        styles: { fontStyle: 'bold' }
+    });
+    currentY = doc.lastAutoTable.finalY + 10;
+    
+    // Tabela de Transações
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text("Transações Detalhadas", margin, currentY);
+    currentY += 8;
+
+    doc.autoTable({
+        startY: currentY,
+        head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor (R$)']],
+        body: filteredTransactions.map(t => [
+            formatDateForDisplay(t.date),
+            t.description,
+            t.category,
+            t.type === 'receita' ? 'Receita' : 'Despesa',
+            { content: t.amount.toFixed(2), styles: { halign: 'right', textColor: t.type === 'receita' ? '#16a34a' : '#dc2626' } }
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 41, 59] },
+    });
+
+    doc.save(`Relatorio_Financeiro_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  }
 
   if (isLoading) {
     return <div>Carregando transações...</div>;
@@ -136,52 +241,109 @@ export default function FinanceiroPage() {
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
-            <div>
-                <CardTitle>Controle Financeiro</CardTitle>
-                <CardDescription>
-                  Acompanhe suas receitas e despesas.
-                </CardDescription>
-            </div>
-            <div className="text-right">
-                <p className="text-sm text-muted-foreground">Saldo Atual</p>
-                <p className={cn(
-                    "text-2xl font-bold",
-                    calculateBalance() >= 0 ? "text-green-500" : "text-destructive"
-                )}>
-                    R$ {calculateBalance().toFixed(2)}
-                </p>
-            </div>
+          <div>
+            <CardTitle>Controle Financeiro</CardTitle>
+            <CardDescription>
+              Acompanhe suas receitas e despesas. Filtre por período para gerar relatórios.
+            </CardDescription>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Saldo Geral</p>
+            <p
+              className={cn(
+                'text-2xl font-bold',
+                calculateBalance() >= 0 ? 'text-green-500' : 'text-destructive'
+              )}
+            >
+              R$ {calculateBalance().toFixed(2)}
+            </p>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="mb-4 p-4 border rounded-lg space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Input
                     placeholder="Filtrar por descrição..."
-                    className="max-w-sm"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
+                    className="lg:col-span-2"
+                    value={descriptionFilter}
+                    onChange={(e) => setDescriptionFilter(e.target.value)}
                 />
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Tipos</SelectItem>
-                    <SelectItem value="receita">Receitas</SelectItem>
-                    <SelectItem value="despesa">Despesas</SelectItem>
-                  </SelectContent>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Tipos</SelectItem>
+                        <SelectItem value="receita">Receitas</SelectItem>
+                        <SelectItem value="despesa">Despesas</SelectItem>
+                    </SelectContent>
                 </Select>
+                 <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant={'outline'}
+                      className={cn(
+                        'justify-start text-left font-normal',
+                        !dateRange && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, 'LLL dd, y', { locale: ptBR })} -{' '}
+                            {format(dateRange.to, 'LLL dd, y', { locale: ptBR })}
+                          </>
+                        ) : (
+                          format(dateRange.from, 'LLL dd, y', { locale: ptBR })
+                        )
+                      ) : (
+                        <span>Selecione um período</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={setDateRange}
+                      numberOfMonths={2}
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
             </div>
-            <div className="flex gap-4 text-sm">
-                <div className="text-green-500">
-                    <span className="font-semibold">Receitas:</span> R$ {totalReceitas.toFixed(2)}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                     {dateRange && (
+                         <Button variant="ghost" size="sm" onClick={() => setDateRange(undefined)}>
+                            <X className="mr-2 h-4 w-4" />
+                            Limpar Filtro de Data
+                        </Button>
+                     )}
+                     <Button variant="outline" size="sm" onClick={generatePdf} disabled={filteredTransactions.length === 0}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir Relatório
+                     </Button>
                 </div>
-                <div className="text-red-500">
-                    <span className="font-semibold">Despesas:</span> R$ {totalDespesas.toFixed(2)}
+                <div className="flex gap-4 text-sm font-medium text-right">
+                    <div className="text-green-500">
+                        <span>Receitas no Período:</span> R$ {totalReceitas.toFixed(2)}
+                    </div>
+                    <div className="text-red-500">
+                        <span>Despesas no Período:</span> R$ {totalDespesas.toFixed(2)}
+                    </div>
+                     <div className={cn(saldoPeriodo >= 0 ? "text-primary" : "text-destructive")}>
+                        <span>Saldo do Período:</span> R$ {saldoPeriodo.toFixed(2)}
+                    </div>
                 </div>
             </div>
-         </div>
+        </div>
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -197,81 +359,98 @@ export default function FinanceiroPage() {
             {filteredTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
-                    {transaction.type === 'receita' ? 
-                        <ArrowUpCircle className="h-5 w-5 text-green-500" /> : 
-                        <ArrowDownCircle className="h-5 w-5 text-red-500" />
-                    }
+                  {transaction.type === 'receita' ? (
+                    <ArrowUpCircle className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <ArrowDownCircle className="h-5 w-5 text-red-500" />
+                  )}
                 </TableCell>
                 <TableCell className="font-medium">{transaction.description}</TableCell>
                 <TableCell>
-                    <Badge variant="outline">{transaction.category}</Badge>
+                  <Badge variant="outline">{transaction.category}</Badge>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{formatDate(transaction.date)}</TableCell>
-                <TableCell className={cn(
-                    "text-right font-semibold",
-                    transaction.type === 'receita' ? "text-green-500" : "text-red-500"
-                )}>
-                    {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
+                <TableCell className="hidden md:table-cell">
+                  {formatDateForDisplay(transaction.date)}
+                </TableCell>
+                <TableCell
+                  className={cn(
+                    'text-right font-semibold',
+                    transaction.type === 'receita' ? 'text-green-500' : 'text-red-500'
+                  )}
+                >
+                  {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
                 </TableCell>
                 <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        {transaction.relatedSaleId && (
-                           <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                                        Estornar Venda
-                                    </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Confirmar Estorno</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta ação não pode ser desfeita. A venda será cancelada, o lançamento financeiro removido e os produtos retornarão ao estoque. Deseja continuar?
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleReverseSale(transaction)}>
-                                            Confirmar Estorno
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      {transaction.relatedSaleId && (
                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className={!transaction.relatedSaleId ? "text-destructive" : ""}>
-                                    Excluir Lançamento
-                                </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Atenção: esta ação removerá apenas o registro financeiro. A venda e o estoque não serão alterados. Para reverter tudo, use "Estornar Venda".
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>
-                                        Excluir Mesmo Assim
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                              Estornar Venda
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar Estorno</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. A venda será cancelada, o lançamento
+                                financeiro removido e os produtos retornarão ao estoque. Deseja continuar?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleReverseSale(transaction)}>
+                                Confirmar Estorno
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
                         </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                            className={!transaction.relatedSaleId ? 'text-destructive' : ''}
+                          >
+                            Excluir Lançamento
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Atenção: esta ação removerá apenas o registro financeiro. A venda e o
+                              estoque não serão alterados. Para reverter tudo, use "Estornar Venda".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>
+                              Excluir Mesmo Assim
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
+             {filteredTransactions.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    Nenhuma transação encontrada para os filtros selecionados.
+                  </TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

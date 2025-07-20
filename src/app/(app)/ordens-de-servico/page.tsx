@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Undo2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
@@ -168,6 +169,18 @@ export default function ServiceOrdersPage() {
     handleSheetOpenChange(false);
   }
 
+  const handleReopenOrder = (orderId: string) => {
+    const updatedOrders = orders.map(o => 
+      o.id === orderId ? { ...o, status: 'Aberta' as const } : o
+    );
+    setOrders(updatedOrders);
+    saveServiceOrders(updatedOrders);
+    toast({
+      title: 'Ordem de Serviço Reaberta!',
+      description: `A OS #${orderId.slice(-4)} foi movida para o status "Aberta".`,
+    });
+  };
+
   if (isLoading) {
     return <div>Carregando ordens de serviço...</div>;
   }
@@ -253,6 +266,15 @@ export default function ServiceOrdersPage() {
                       <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar</DropdownMenuItem>
                       <DropdownMenuItem>Imprimir</DropdownMenuItem>
+                      {(order.status === 'Finalizado' || order.status === 'Entregue') && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
+                            <Undo2 className="mr-2 h-4 w-4" />
+                            Reabrir OS
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

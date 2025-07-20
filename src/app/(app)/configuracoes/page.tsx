@@ -213,7 +213,7 @@ export default function ConfiguracoesPage() {
 
   const handleSaveUser = () => {
     if (!newUser.username || (!newUser.password && !editingUser)) {
-      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Nome de usuário e senha são obrigatórios.' });
+      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Login e senha são obrigatórios.' });
       return;
     }
 
@@ -461,7 +461,7 @@ export default function ConfiguracoesPage() {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Nome de Usuário</Label>
+            <Label htmlFor="username">Login</Label>
             <Input id="username" value={newUser.username || ''} onChange={(e) => setNewUser(p => ({...p, username: e.target.value}))} />
           </div>
           <div className="space-y-2">

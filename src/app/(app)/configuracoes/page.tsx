@@ -29,7 +29,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { APP_STORAGE_KEYS, getUsers, saveUsers } from '@/lib/storage';
+import { APP_STORAGE_KEYS, getUsers, saveUsers, MASTER_USER_ID } from '@/lib/storage';
 import type { User } from '@/types';
 
 const SETTINGS_KEY = 'app_settings';
@@ -67,7 +67,8 @@ export default function ConfiguracoesPage() {
       if (savedSettings) {
         setSettings(JSON.parse(savedSettings));
       }
-      setUsers(getUsers());
+      // Filtra o usuário master para não aparecer na UI
+      setUsers(getUsers().filter(u => u.id !== MASTER_USER_ID));
     } catch (error) {
       console.error("Failed to load settings from localStorage", error);
     } finally {
@@ -221,7 +222,7 @@ export default function ConfiguracoesPage() {
       // Edit existing user
       updatedUsers = users.map(u => 
         u.id === editingUser.id 
-          ? { ...editingUser, ...newUser } 
+          ? { ...editingUser, ...newUser, id: editingUser.id }
           : u
       );
       toast({ title: 'Usuário Atualizado!', description: `Os dados de ${newUser.username} foram salvos.` });

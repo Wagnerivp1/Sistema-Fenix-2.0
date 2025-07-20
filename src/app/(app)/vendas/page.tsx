@@ -21,6 +21,7 @@ import type { StockItem, Customer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { ManualSearchDialog } from '@/components/sales/manual-search-dialog';
 
 
 interface SaleItem extends StockItem {
@@ -35,6 +36,7 @@ export default function VendasPage() {
   
   const [barcode, setBarcode] = React.useState('');
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [isManualSearchOpen, setIsManualSearchOpen] = React.useState(false);
 
   React.useEffect(() => {
     setStock(getStock());
@@ -98,12 +100,20 @@ export default function VendasPage() {
     setSaleItems(prevItems => {
         const existingItem = prevItems.find(item => item.id === productToAdd.id);
         if (existingItem) {
+            if (existingItem.saleQuantity >= productToAdd.quantity) {
+                toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Não há mais unidades de "${productToAdd.name}" em estoque.` });
+                return prevItems;
+            }
             return prevItems.map(item =>
                 item.id === productToAdd.id
                     ? { ...item, saleQuantity: item.saleQuantity + 1 }
                     : item
             );
         } else {
+             if (productToAdd.quantity <= 0) {
+                toast({ variant: 'destructive', title: 'Fora de Estoque', description: `O produto "${productToAdd.name}" não tem estoque disponível.` });
+                return prevItems;
+            }
             return [...prevItems, { ...productToAdd, saleQuantity: 1 }];
         }
     });
@@ -114,6 +124,19 @@ export default function VendasPage() {
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
+    const productInStock = stock.find(p => p.id === productId);
+    if (!productInStock) return;
+
+    if (quantity > productInStock.quantity) {
+        toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Apenas ${productInStock.quantity} unidades de "${productInStock.name}" em estoque.` });
+        setSaleItems(saleItems.map(item => 
+            item.id === productId 
+            ? { ...item, saleQuantity: productInStock.quantity } 
+            : item
+        ));
+        return;
+    }
+
     if (quantity <= 0) {
         handleRemoveItem(productId);
         return;
@@ -137,6 +160,7 @@ export default function VendasPage() {
   const total = calculateTotal();
 
   return (
+    <>
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
           <div>
@@ -182,7 +206,7 @@ export default function VendasPage() {
                         }}
                       />
                   </div>
-                  <Button variant="outline">Busca Manual</Button>
+                  <Button variant="outline" onClick={() => setIsManualSearchOpen(true)}>Busca Manual</Button>
               </div>
               
               <div className="border rounded-lg min-h-[300px] flex flex-col">
@@ -276,5 +300,12 @@ export default function VendasPage() {
         </div>
       </div>
     </div>
+    <ManualSearchDialog
+        isOpen={isManualSearchOpen}
+        onOpenChange={setIsManualSearchOpen}
+        stockItems={stock}
+        onProductSelect={addProductToSale}
+    />
+    </>
   );
 }

@@ -260,6 +260,19 @@ export default function ConfiguracoesPage() {
     });
   }
 
+  const getRoleInPortuguese = (role: User['role']) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrador';
+      case 'technician':
+        return 'Técnico';
+      case 'sales':
+        return 'Vendedor';
+      default:
+        return role;
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -344,7 +357,7 @@ export default function ConfiguracoesPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell className="capitalize">{user.role}</TableCell>
+                <TableCell>{getRoleInPortuguese(user.role)}</TableCell>
                 <TableCell className="text-center">
                    <Switch
                     checked={user.active}

@@ -68,12 +68,7 @@ export default function ConfiguracoesPage() {
       APP_STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
-           // As configurações são um objeto, não um array, então precisam ser tratadas de forma diferente.
-          if (key === SETTINGS_KEY) {
-            backupData[key] = JSON.parse(data);
-          } else {
-            backupData[key] = JSON.parse(data);
-          }
+          backupData[key] = JSON.parse(data);
         }
       });
 
@@ -126,13 +121,22 @@ export default function ConfiguracoesPage() {
         }
         const data = JSON.parse(text);
 
-        const allKeysPresent = APP_STORAGE_KEYS.every(key => key in data);
-        if (!allKeysPresent) {
+        // Check for at least one known key to validate the backup file
+        const hasKnownKey = APP_STORAGE_KEYS.some(key => key in data);
+        if (!hasKnownKey) {
           throw new Error('Arquivo de backup inválido ou corrompido.');
         }
 
+        // Clear existing data before restoring
         APP_STORAGE_KEYS.forEach(key => {
-          localStorage.setItem(key, JSON.stringify(data[key]));
+          localStorage.removeItem(key);
+        });
+
+        // Restore data from backup
+        Object.keys(data).forEach(key => {
+           if (APP_STORAGE_KEYS.includes(key)) {
+              localStorage.setItem(key, JSON.stringify(data[key]));
+           }
         });
 
         toast({ title: 'Restauração Concluída!', description: 'Os dados foram restaurados com sucesso. A página será recarregada.' });
@@ -150,9 +154,13 @@ export default function ConfiguracoesPage() {
 
   const handleClearSystem = () => {
     try {
+      // Clear all known app keys
       APP_STORAGE_KEYS.forEach(key => {
         localStorage.removeItem(key);
       });
+      // Also clear the initialization flag
+      localStorage.removeItem('assistec_app_initialized');
+
       toast({ title: 'Sistema Limpo!', description: 'Todos os dados foram removidos. A página será recarregada.' });
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {

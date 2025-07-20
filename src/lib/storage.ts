@@ -24,20 +24,25 @@ export const APP_STORAGE_KEYS = [
 // Generic getter
 function getFromStorage<T>(key: string, mockData: T[]): T[] {
   if (typeof window === 'undefined') {
-    return mockData;
+    return []; // Return empty array on server
   }
   try {
     const item = window.localStorage.getItem(key);
     if (item) {
       return JSON.parse(item);
     } else {
-      // If no data, initialize with mock data
-      window.localStorage.setItem(key, JSON.stringify(mockData));
-      return mockData;
+      // On first load for a key, populate with mock data.
+      // Subsequent loads after clearing will find `null` and return `[]` from the next check.
+      const isAppInitialized = window.localStorage.getItem('assistec_app_initialized');
+      if (!isAppInitialized) {
+        saveToStorage(key, mockData);
+        return mockData;
+      }
+      return [];
     }
   } catch (error) {
     console.error(`Error reading from localStorage key “${key}”:`, error);
-    return mockData;
+    return [];
   }
 }
 
@@ -49,6 +54,10 @@ function saveToStorage<T>(key: string, data: T[]): void {
   try {
     const serializedData = JSON.stringify(data);
     window.localStorage.setItem(key, serializedData);
+    // Mark that the app has been initialized at least once
+    if (!window.localStorage.getItem('assistec_app_initialized')) {
+        window.localStorage.setItem('assistec_app_initialized', 'true');
+    }
   } catch (error) {
     console.error(`Error writing to localStorage key “${key}”:`, error);
   }

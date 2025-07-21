@@ -236,8 +236,9 @@ export default function FinanceiroPage() {
 
       doc.line(margin + 40, currentY, pageWidth - margin - 40, currentY);
       doc.text(companyInfo.name || 'Assinatura', pageWidth / 2, currentY + 5, { align: 'center'});
-
-      doc.save(`Recibo_${transaction.id}.pdf`);
+      
+      doc.autoPrint();
+      doc.output('dataurlnewwindow');
     };
     
     if (companyInfo?.logoUrl) {

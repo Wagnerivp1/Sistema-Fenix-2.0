@@ -74,6 +74,7 @@ import {
 import type { FinancialTransaction, Sale, StockItem } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { PrintReceiptDialog } from '@/components/financials/print-receipt-dialog';
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -95,6 +96,8 @@ export default function FinanceiroPage() {
   const [descriptionFilter, setDescriptionFilter] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
+  const [transactionToPrint, setTransactionToPrint] = React.useState<FinancialTransaction | null>(null);
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = React.useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -174,84 +177,9 @@ export default function FinanceiroPage() {
     }, 0);
   };
   
-    const generateReceiptPdf = async (transaction: FinancialTransaction) => {
-    const companyInfo = await getCompanyInfo();
-
-    const generateContent = (logoImage: HTMLImageElement | null = null) => {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 15;
-      const fontColor = '#000000';
-      let currentY = 12;
-
-      // Cabeçalho
-      if (logoImage) {
-        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
-      }
-      const companyInfoX = margin + (logoImage ? 30 : 0);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(fontColor);
-      doc.setFontSize(16);
-      doc.text(companyInfo.name || "Recibo", companyInfoX, currentY + 10);
-      
-      const title = transaction.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
-      doc.setFontSize(20);
-      doc.text(title, pageWidth / 2, currentY + 30, { align: 'center' });
-      currentY += 45;
-
-      // Corpo
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Pelo presente, declaramos ter ${transaction.type === 'receita' ? 'recebido' : 'pago'} a quantia de:`, margin, currentY);
-      currentY += 10;
-      
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`R$ ${transaction.amount.toFixed(2)}`, margin, currentY);
-      currentY += 15;
-      
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      doc.text(`Referente a: ${transaction.description}`, margin, currentY);
-      currentY += 15;
-
-      // Detalhes
-      doc.autoTable({
-        startY: currentY,
-        theme: 'plain',
-        styles: { fontSize: 10 },
-        body: [
-          [{content: 'Data:', styles: {fontStyle: 'bold'}}, formatDateForDisplay(transaction.date)],
-          [{content: 'Forma de Pag.:', styles: {fontStyle: 'bold'}}, transaction.paymentMethod],
-          [{content: 'Categoria:', styles: {fontStyle: 'bold'}}, transaction.category],
-        ],
-        columnStyles: { 0: { cellWidth: 35 } },
-      });
-      currentY = doc.lastAutoTable.finalY + 30;
-
-      // Assinatura
-      const city = companyInfo.address?.split('-')[0]?.split(',')[1]?.trim() || "___________________";
-      doc.text(`${city}, ${new Date().toLocaleDateString('pt-BR')}.`, pageWidth / 2, currentY, { align: 'center'});
-      currentY += 20;
-
-      doc.line(margin + 40, currentY, pageWidth - margin - 40, currentY);
-      doc.text(companyInfo.name || 'Assinatura', pageWidth / 2, currentY + 5, { align: 'center'});
-      
-      doc.autoPrint();
-      doc.output('dataurlnewwindow');
-    };
-    
-    if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.src = companyInfo.logoUrl;
-      img.onload = () => generateContent(img);
-      img.onerror = () => {
-        console.error("Error loading logo for PDF, proceeding without it.");
-        generateContent();
-      };
-    } else {
-      generateContent();
-    }
+  const handlePrintClick = (transaction: FinancialTransaction) => {
+    setTransactionToPrint(transaction);
+    setIsPrintDialogOpen(true);
   };
 
 
@@ -337,6 +265,7 @@ export default function FinanceiroPage() {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
@@ -489,7 +418,7 @@ export default function FinanceiroPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => generateReceiptPdf(transaction)}>
+                      <DropdownMenuItem onSelect={() => handlePrintClick(transaction)}>
                         <Printer className="mr-2 h-4 w-4" />
                         Imprimir Recibo
                       </DropdownMenuItem>
@@ -558,5 +487,11 @@ export default function FinanceiroPage() {
         </Table>
       </CardContent>
     </Card>
+     <PrintReceiptDialog
+      isOpen={isPrintDialogOpen}
+      onOpenChange={setIsPrintDialogOpen}
+      transaction={transactionToPrint}
+    />
+    </>
   );
 }

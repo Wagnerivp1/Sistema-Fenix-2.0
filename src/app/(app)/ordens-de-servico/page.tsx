@@ -160,6 +160,14 @@ export default function ServiceOrdersPage() {
     setCommentsOrder(order);
     setIsCommentsDialogOpen(true);
   }
+  
+  const handleCommentAdded = (updatedOrder: ServiceOrder) => {
+    // Atualiza a lista principal de ordens
+    const updatedOrders = orders.map(o => o.id === updatedOrder.id ? updatedOrder : o);
+    setOrders(updatedOrders);
+    // Atualiza a ordem no dialog de comentários
+    setCommentsOrder(updatedOrder);
+  }
 
   const handleSaveOrder = (savedOrder: ServiceOrder) => {
     let updatedOrders;
@@ -359,6 +367,7 @@ export default function ServiceOrdersPage() {
       isOpen={isCommentsDialogOpen}
       onOpenChange={setIsCommentsDialogOpen}
       serviceOrder={commentsOrder}
+      onCommentAdded={handleCommentAdded}
     />
     </>
   );

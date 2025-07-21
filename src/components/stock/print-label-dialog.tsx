@@ -18,6 +18,7 @@ import type { StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import Barcode from 'react-barcode';
+import { getCompanyInfo } from '@/lib/storage';
 
 interface PrintLabelDialogProps {
   item: StockItem | null;
@@ -60,7 +61,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     }
   }, [isOpen]);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!item || !barcodeSvgString) {
       toast({
         variant: 'destructive',
@@ -69,6 +70,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       });
       return;
     }
+
+    const companyInfo = await getCompanyInfo();
 
     const canvas = document.createElement('canvas');
     canvas.width = 300;
@@ -89,8 +92,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
           format: 'a4'
         });
         
-        const labelWidth = 100; // 10 cm
-        const labelHeight = 40;  // 4 cm
+        const labelWidth = 100;
+        const labelHeight = 40;
         const page = { width: 210, height: 297 };
         const margin = { top: 10, left: 5 };
         const gap = { x: 0, y: 0 };
@@ -118,19 +121,22 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
             const centerX = currentX + labelWidth / 2;
 
-            doc.setDrawColor(220, 220, 220); // Light gray border for preview
+            doc.setDrawColor(220, 220, 220);
             doc.rect(currentX, currentY, labelWidth, labelHeight);
             
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text(companyInfo.name || 'Sua Empresa', centerX, currentY + 5, { align: 'center' });
+
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10); // leave some padding
-            doc.text(productNameLines, centerX, currentY + 8, { align: 'center', maxWidth: labelWidth - 10 });
+            const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10);
+            doc.text(productNameLines, centerX, currentY + 11, { align: 'center', maxWidth: labelWidth - 10 });
 
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
             doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 22, { align: 'center' });
             
-            // Barcode image is wider now
             doc.addImage(barcodeDataUrl, 'PNG', currentX + 15, currentY + 26, 70, 12);
 
             col++;

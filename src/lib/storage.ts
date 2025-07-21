@@ -3,6 +3,44 @@
 
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo } from '@/types';
 
+// Central API endpoint for all data operations
+const API_BASE_URL = '/api/data';
+
+// --- Helper Functions for API communication ---
+
+async function fetchData<T>(dataType: string, fallback: T[] = []): Promise<T[]> {
+  if (typeof window === 'undefined') {
+    return fallback;
+  }
+  try {
+    const response = await fetch(`${API_BASE_URL}/${dataType}`);
+    if (!response.ok) {
+      console.error(`Error fetching ${dataType}:`, response.statusText);
+      return fallback;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching ${dataType}:`, error);
+    return fallback;
+  }
+}
+
+async function saveData<T>(dataType: string, data: T[]): Promise<void> {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    try {
+        await fetch(`${API_BASE_URL}/${dataType}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+    } catch (error) {
+        console.error(`Error saving ${dataType}:`, error);
+    }
+}
+
+
 const CUSTOMERS_KEY = 'assistec_customers';
 const SERVICE_ORDERS_KEY = 'assistec_service_orders';
 const STOCK_KEY = 'assistec_stock';
@@ -56,8 +94,10 @@ function saveToStorage<T>(key: string, data: T[]): void {
 }
 
 // Customer functions
+// TODO: Convert to async and use API
 export const getCustomers = (): Customer[] => getFromStorage(CUSTOMERS_KEY);
 export const saveCustomers = (customers: Customer[]): void => saveToStorage(CUSTOMERS_KEY, customers);
+
 
 // Service Order functions
 export const getServiceOrders = (): ServiceOrder[] => getFromStorage(SERVICE_ORDERS_KEY);

@@ -72,10 +72,13 @@ export default function CustomersPage() {
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = React.useState(false);
   
   React.useEffect(() => {
-    // Load data from localStorage on mount
-    setCustomers(getCustomers());
-    setServiceOrders(getServiceOrders());
-    setIsLoading(false);
+    // TODO: Convert to async API call
+    const loadData = () => {
+        setCustomers(getCustomers());
+        setServiceOrders(getServiceOrders());
+        setIsLoading(false);
+    };
+    loadData();
   }, []);
 
   React.useEffect(() => {

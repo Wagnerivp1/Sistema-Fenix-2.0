@@ -38,7 +38,6 @@ export default function VendasPage() {
   const [observations, setObservations] = React.useState('');
   
   const [barcode, setBarcode] = React.useState('');
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [isManualSearchOpen, setIsManualSearchOpen] = React.useState(false);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -55,20 +54,10 @@ export default function VendasPage() {
     barcodeInputRef.current?.focus();
   }, []);
   
-  const addProductToSale = (productToAdd: StockItem) => {
-    const stockItem = stock.find(s => s.id === productToAdd.id);
-     if (!stockItem || stockItem.quantity <= 0) {
-        toast({ variant: 'destructive', title: 'Fora de Estoque', description: `O produto "${productToAdd.name}" não tem estoque disponível.` });
-        return;
-    }
-
+ const addProductToSale = (productToAdd: StockItem) => {
     setSaleItems(prevItems => {
         const existingItem = prevItems.find(item => item.id === productToAdd.id);
         if (existingItem) {
-            if (existingItem.saleQuantity >= stockItem.quantity) {
-                 toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Não há mais unidades de "${productToAdd.name}" em estoque.` });
-                return prevItems;
-            }
             return prevItems.map(item =>
                 item.id === productToAdd.id
                     ? { ...item, saleQuantity: item.saleQuantity + 1 }
@@ -78,15 +67,22 @@ export default function VendasPage() {
             return [...prevItems, { ...productToAdd, saleQuantity: 1 }];
         }
     });
-
-    toast({ title: 'Produto Adicionado!', description: `"${productToAdd.name}" foi adicionado à venda.` });
   };
 
   const handleBarcodeScan = (scannedCode: string) => {
     const product = stock.find(item => item.barcode === scannedCode);
 
     if (product) {
-      addProductToSale(product);
+        const stockItem = stock.find(s => s.id === product.id);
+        const saleItem = saleItems.find(i => i.id === product.id);
+        const currentQuantityInCart = saleItem ? saleItem.saleQuantity : 0;
+
+        if (!stockItem || stockItem.quantity <= currentQuantityInCart) {
+            toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Não há mais unidades de "${product.name}" em estoque.` });
+        } else {
+            addProductToSale(product);
+            toast({ title: 'Produto Adicionado!', description: `"${product.name}" foi adicionado à venda.` });
+        }
     } else {
       toast({ variant: 'destructive', title: 'Produto Não Encontrado', description: `Nenhum produto encontrado para o código: ${scannedCode}` });
     }
@@ -96,7 +92,17 @@ export default function VendasPage() {
   };
 
   const handleManualProductSelect = (product: StockItem) => {
-    addProductToSale(product);
+    const stockItem = stock.find(s => s.id === product.id);
+    const saleItem = saleItems.find(i => i.id === product.id);
+    const currentQuantityInCart = saleItem ? saleItem.saleQuantity : 0;
+    
+    if (!stockItem || stockItem.quantity <= currentQuantityInCart) {
+        toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Não há mais unidades de "${product.name}" em estoque.` });
+    } else {
+        addProductToSale(product);
+        toast({ title: 'Produto Adicionado!', description: `"${product.name}" foi adicionado à venda.` });
+    }
+    barcodeInputRef.current?.focus();
   }
 
   React.useEffect(() => {
@@ -126,9 +132,6 @@ export default function VendasPage() {
 
     return () => {
         window.removeEventListener('keydown', handleKeyDown);
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
     };
   }, [saleItems, discount, paymentMethod, observations]);
 

@@ -26,6 +26,7 @@ export default function DashboardPage() {
 
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = React.useState(false);
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = React.useState(false);
+  const [dataVersion, setDataVersion] = React.useState(0); // State to trigger re-renders
 
   const handleNewSale = () => {
     router.push('/vendas');
@@ -44,6 +45,7 @@ export default function DashboardPage() {
     });
     setIsIncomeDialogOpen(false);
     setIsExpenseDialogOpen(false);
+    setDataVersion(v => v + 1); // Trigger data refresh in children components
   };
 
   React.useEffect(() => {
@@ -110,7 +112,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatsCards />
+          <StatsCards dataVersion={dataVersion} />
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 md:gap-8">
           <div className="lg:col-span-2">

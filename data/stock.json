@@ -1,2 +1,14 @@
-
-[]
+[
+  {
+    "id": "PROD-1753065361831",
+    "barcode": "PROD-1753065361831",
+    "name": "TESCLADO GENERICO ",
+    "price": 25,
+    "quantity": 2,
+    "category": "Periféricos",
+    "description": "DFSDD",
+    "unitOfMeasure": "UN",
+    "costPrice": 10,
+    "minStock": 1
+  }
+]

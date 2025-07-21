@@ -115,17 +115,20 @@ export const getLoggedInUser = (): User | null => {
 
 // Settings functions (remains in localStorage for per-user preference)
 const SETTINGS_KEY = 'app_settings';
-export const getSettings = () => {
+export const getSettings = async (): Promise<{ defaultWarrantyDays: number }> => {
     if (typeof window === 'undefined') {
         return { defaultWarrantyDays: 90 };
     }
     try {
         const item = window.localStorage.getItem(SETTINGS_KEY);
+        // Ensure you return a default object if nothing is found
         return item ? JSON.parse(item) : { defaultWarrantyDays: 90 };
     } catch (error) {
+        console.error("Failed to parse settings from localStorage", error);
         return { defaultWarrantyDays: 90 };
     }
 };
+
 
 export const saveSettings = (settings: { defaultWarrantyDays: number }) => {
     if (typeof window !== 'undefined') {

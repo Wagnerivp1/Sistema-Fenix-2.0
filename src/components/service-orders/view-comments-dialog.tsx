@@ -60,7 +60,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     setNewComment('');
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!serviceOrder) {
         toast({
             variant: "destructive",
@@ -70,7 +70,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
         return;
     }
 
-    const companyInfo = getCompanyInfo();
+    const companyInfo = await getCompanyInfo();
     const sortedNotes = sortNotesChronologically(serviceOrder.internalNotes);
 
     const generatePdfContent = (logoImage: HTMLImageElement | null) => {

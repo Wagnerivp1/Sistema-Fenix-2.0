@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getCustomers, getStock, getCompanyInfo, getLoggedInUser } from '@/lib/storage';
+import { getCustomers, getStock, getCompanyInfo, getLoggedInUser, getSettings } from '@/lib/storage';
 import type { Customer, ServiceOrder, StockItem, CompanyInfo, User, InternalNote } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -72,8 +72,6 @@ interface QuoteItem {
   type: 'service' | 'part';
 }
 
-const SETTINGS_KEY = 'app_settings';
-
 export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
   const { toast } = useToast();
   
@@ -103,67 +101,67 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   React.useEffect(() => {
     // Carrega clientes, estoque e usuário logado
     const loadData = async () => {
-      const customersData = await getCustomers();
+      const [customersData, stockData, loggedInUser] = await Promise.all([
+        getCustomers(),
+        getStock(),
+        getLoggedInUser()
+      ]);
       setCustomers(customersData);
-      setStock(getStock());
-      setCurrentUser(getLoggedInUser());
+      setStock(stockData);
+      setCurrentUser(loggedInUser);
     };
     loadData();
   }, []);
 
   React.useEffect(() => {
-    let defaultWarrantyDays = 90;
-    try {
-      const savedSettings = localStorage.getItem(SETTINGS_KEY);
-      if (savedSettings) {
-        defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
-      }
-    } catch (error) {
-      console.error("Failed to load settings from localStorage", error);
-    }
-    const defaultWarranty = `${defaultWarrantyDays} dias`;
+    const loadWarranty = async () => {
+      const settings = await getSettings();
+      let defaultWarrantyDays = settings.defaultWarrantyDays || 90;
+      const defaultWarranty = `${defaultWarrantyDays} dias`;
 
-    if (isOpen) { 
-      if (isEditing && serviceOrder) {
-          const selectedCustomer = customers.find(c => c.name === serviceOrder.customerName);
-          setSelectedCustomerId(selectedCustomer?.id || '');
-          const [type, brand, ...modelParts] = serviceOrder.equipment.split(' ');
-          const model = modelParts.join(' ');
-          setEquipmentType(type || '');
-          setEquipment({
-              brand: brand || '',
-              model: model || '',
-              serial: serviceOrder.serialNumber || '',
-          });
-          setAccessories(serviceOrder.accessories || ''); 
-          setReportedProblem(serviceOrder.reportedProblem || '');
-          setTechnicalReport(serviceOrder.technicalReport || ''); 
-          setItems(serviceOrder.items || []); 
-          setStatus(serviceOrder.status);
-          // BACKWARDS COMPATIBILITY: if internalNotes is a string, convert it to the new format
-          if (typeof serviceOrder.internalNotes === 'string') {
-              setInternalNotes([{ user: 'Sistema', date: new Date().toISOString(), comment: serviceOrder.internalNotes as string }]);
-          } else {
-              setInternalNotes(serviceOrder.internalNotes || []);
-          }
-          setNewComment('');
-          setWarranty(serviceOrder.warranty || defaultWarranty);
-      } else {
-          // Reset form for a new OS
-          const customerIdToSet = customer ? customer.id : '';
-          setSelectedCustomerId(customerIdToSet);
-          setEquipmentType('');
-          setEquipment({ brand: '', model: '', serial: '' });
-          setAccessories('');
-          setReportedProblem('');
-          setTechnicalReport('');
-          setItems([]);
-          setStatus('Aberta');
-          setInternalNotes([]);
-          setNewComment('');
-          setWarranty(defaultWarranty);
+      if (isOpen) { 
+        if (isEditing && serviceOrder) {
+            const selectedCustomer = customers.find(c => c.name === serviceOrder.customerName);
+            setSelectedCustomerId(selectedCustomer?.id || '');
+            const [type, brand, ...modelParts] = serviceOrder.equipment.split(' ');
+            const model = modelParts.join(' ');
+            setEquipmentType(type || '');
+            setEquipment({
+                brand: brand || '',
+                model: model || '',
+                serial: serviceOrder.serialNumber || '',
+            });
+            setAccessories(serviceOrder.accessories || ''); 
+            setReportedProblem(serviceOrder.reportedProblem || '');
+            setTechnicalReport(serviceOrder.technicalReport || ''); 
+            setItems(serviceOrder.items || []); 
+            setStatus(serviceOrder.status);
+            // BACKWARDS COMPATIBILITY: if internalNotes is a string, convert it to the new format
+            if (typeof serviceOrder.internalNotes === 'string') {
+                setInternalNotes([{ user: 'Sistema', date: new Date().toISOString(), comment: serviceOrder.internalNotes as string }]);
+            } else {
+                setInternalNotes(serviceOrder.internalNotes || []);
+            }
+            setNewComment('');
+            setWarranty(serviceOrder.warranty || defaultWarranty);
+        } else {
+            // Reset form for a new OS
+            const customerIdToSet = customer ? customer.id : '';
+            setSelectedCustomerId(customerIdToSet);
+            setEquipmentType('');
+            setEquipment({ brand: '', model: '', serial: '' });
+            setAccessories('');
+            setReportedProblem('');
+            setTechnicalReport('');
+            setItems([]);
+            setStatus('Aberta');
+            setInternalNotes([]);
+            setNewComment('');
+            setWarranty(defaultWarranty);
+        }
       }
-    }
+    };
+    loadWarranty();
   }, [serviceOrder, customer, isEditing, isOpen, customers]);
 
 
@@ -273,14 +271,14 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
   };
 
-  const generateQuotePdf = () => {
+  const generateQuotePdf = async () => {
     const orderData = getFinalOrderData();
     if (!orderData) {
         toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
         return;
     }
 
-    const companyInfo = getCompanyInfo();
+    const companyInfo = await getCompanyInfo();
 
     const generateContent = (logoImage: HTMLImageElement | null) => {
         const doc = new jsPDF();
@@ -428,18 +426,13 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
   };
 
-  const getWarrantyPeriodText = (order: ServiceOrder) => {
+  const getWarrantyPeriodText = async (order: ServiceOrder) => {
     if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
         return "Garantia não aplicável ou pendente.";
     }
 
-    let defaultWarrantyDays = 90;
-    try {
-        const savedSettings = localStorage.getItem(SETTINGS_KEY);
-        if (savedSettings) {
-            defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
-        }
-    } catch (e) { /* ignore */ }
+    const settings = await getSettings();
+    let defaultWarrantyDays = settings.defaultWarrantyDays || 90;
 
     const match = order.warranty.match(/(\d+)\s*(dias|meses|mes|ano|anos)/i);
     let duration: Duration = { days: defaultWarrantyDays };
@@ -460,14 +453,15 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     return `Período da Garantia: de ${formatDate(startDate)} até ${formatDate(endDate)}.`;
 };
 
-  const generateDeliveryReceiptPdf = () => {
+  const generateDeliveryReceiptPdf = async () => {
     const orderToPrint = getFinalOrderData();
     if (!orderToPrint || !orderToPrint.deliveredDate) {
         toast({ variant: 'destructive', title: 'Erro', description: 'A OS precisa estar com status "Entregue" e ter uma data de entrega.' });
         return;
     }
     
-    const companyInfo = getCompanyInfo();
+    const companyInfo = await getCompanyInfo();
+    const warrantyText = await getWarrantyPeriodText(orderToPrint);
     
     const performGeneration = (logoImage: HTMLImageElement | null) => {
         const doc = new jsPDF();
@@ -529,7 +523,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             doc.setFont('helvetica', 'bold');
             doc.text('Garantia:', margin, localY);
             doc.setFont('helvetica', 'normal');
-            const warrantyText = getWarrantyPeriodText(orderToPrint);
+            
             const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2 - 17);
             doc.text(warrantyLines, margin + 17, localY);
             localY += (warrantyLines.length * 4) + 10;
@@ -573,14 +567,14 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
   };
 
-  const generateEntryReceiptPdf = () => {
+  const generateEntryReceiptPdf = async () => {
     const orderToPrint = getFinalOrderData();
     if (!orderToPrint) {
         toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
         return;
     }
     
-    const companyInfo = getCompanyInfo();
+    const companyInfo = await getCompanyInfo();
 
     const performGeneration = (logoImage: HTMLImageElement | null) => {
         const doc = new jsPDF();

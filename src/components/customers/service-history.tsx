@@ -13,7 +13,7 @@ import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
 import { add } from 'date-fns';
 import { Input } from '../ui/input';
-import { getCompanyInfo } from '@/lib/storage';
+import { getCompanyInfo, getSettings } from '@/lib/storage';
 
 
 declare module 'jspdf' {
@@ -61,8 +61,8 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
     order.id.toLowerCase().includes(searchTerm.toLowerCase().replace(/\s+/g, ''))
   );
 
-  const exportToPdf = () => {
-    const companyInfo = getCompanyInfo();
+  const exportToPdf = async () => {
+    const companyInfo = await getCompanyInfo();
     const customerName = filteredHistory[0]?.customerName || "Cliente";
     
     const generateContent = (logoImage: HTMLImageElement | null = null) => {
@@ -297,7 +297,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                     <InfoItem icon={Tag} label="Forma de Pagamento" value={order.paymentMethod || 'Não informado'} />
                     <InfoItem icon={ShieldCheck} label="Garantia Aplicada" value={order.warranty || 'Não informado'} />
                     <WarrantyInfo order={order} />
-                    <InfoItem icon={MessageSquare} label="Observações Internas" value={order.internalNotes || 'Nenhuma'} />
+                    <InfoItem icon={MessageSquare} label="Observações Internas" value={Array.isArray(order.internalNotes) ? `${order.internalNotes.length} anotação(ões)` : (order.internalNotes || 'Nenhuma')} />
                   </div>
 
                 </AccordionContent>
@@ -335,47 +335,42 @@ const InfoBlock = ({ icon: Icon, title, content }: { icon: React.ElementType, ti
 );
 
 const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
-  const getWarrantyInfo = () => {
-    if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
-      return { text: "Garantia pendente de entrega do equipamento.", icon: AlertCircle };
-    }
-    
-    const SETTINGS_KEY = 'app_settings';
-    let defaultWarrantyDays = 90; // Default fallback
+  const [warrantyInfoText, setWarrantyInfoText] = React.useState("Garantia pendente de entrega do equipamento.");
 
-    try {
-        const savedSettings = typeof window !== 'undefined' ? localStorage.getItem(SETTINGS_KEY) : null;
-        if (savedSettings) {
-            defaultWarrantyDays = JSON.parse(savedSettings).defaultWarrantyDays || 90;
-        }
-    } catch (e) {
-        console.error("Could not parse warranty settings, using default.", e);
-    }
-    
-    const match = order.warranty.match(/(\d+)\s*(dias|meses|mes|ano|anos)/i);
-    let duration: Duration = { days: defaultWarrantyDays };
-
-    if (match) {
-      const value = parseInt(match[1], 10);
-      const unit = match[2].toLowerCase();
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
+        setWarrantyInfoText("Garantia pendente de entrega do equipamento.");
+        return;
+      }
       
-      if (unit.startsWith('dia')) duration = { days: value };
-      else if (unit.startsWith('mes')) duration = { months: value };
-      else if (unit.startsWith('ano')) duration = { years: value };
-    }
+      const settings = await getSettings();
+      let defaultWarrantyDays = settings?.defaultWarrantyDays || 90;
+      
+      const match = order.warranty.match(/(\d+)\s*(dias|meses|mes|ano|anos)/i);
+      let duration: Duration = { days: defaultWarrantyDays };
 
-    // Corrigido: Tratar a data como UTC para evitar problemas de fuso horário
-    const [year, month, day] = order.deliveredDate.split('-').map(Number);
-    const startDate = new Date(Date.UTC(year, month - 1, day));
-    const endDate = add(startDate, duration);
-    
-    return {
-      text: `Início: ${formatDate(order.deliveredDate)} | Fim: ${formatDate(endDate.toISOString().split('T')[0])}`,
-      icon: ShieldCheck
+      if (match) {
+        const value = parseInt(match[1], 10);
+        const unit = match[2].toLowerCase();
+        
+        if (unit.startsWith('dia')) duration = { days: value };
+        else if (unit.startsWith('mes')) duration = { months: value };
+        else if (unit.startsWith('ano')) duration = { years: value };
+      }
+
+      const [year, month, day] = order.deliveredDate.split('-').map(Number);
+      const startDate = new Date(Date.UTC(year, month - 1, day));
+      const endDate = add(startDate, duration);
+      
+      const text = `Início: ${formatDate(order.deliveredDate)} | Fim: ${formatDate(endDate.toISOString().split('T')[0])}`;
+      setWarrantyInfoText(text);
     };
-  }
-  
-  const warranty = getWarrantyInfo();
 
-  return <InfoItem icon={warranty.icon} label="Período de Garantia" value={warranty.text} />
+    fetchSettings();
+  }, [order]);
+  
+  const warrantyIcon = warrantyInfoText.startsWith("Garantia pendente") ? AlertCircle : ShieldCheck;
+
+  return <InfoItem icon={warrantyIcon} label="Período de Garantia" value={warrantyInfoText} />
 };

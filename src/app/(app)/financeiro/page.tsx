@@ -69,6 +69,7 @@ import {
   saveSales,
   getStock,
   saveStock,
+  getCompanyInfo,
 } from '@/lib/storage';
 import type { FinancialTransaction, Sale, StockItem } from '@/types';
 import { cn } from '@/lib/utils';
@@ -173,65 +174,81 @@ export default function FinanceiroPage() {
     }, 0);
   };
 
-  const generatePdf = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    const fontColor = '#000000';
+  const generatePdf = async () => {
+    const companyInfo = await getCompanyInfo();
 
-    // Cabeçalho
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text("Relatório Financeiro", pageWidth / 2, 20, { align: 'center' });
+    const generateContent = (logoImage: HTMLImageElement | null = null) => {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 15;
+      const fontColor = '#000000';
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const period = dateRange?.from ? 
-                   `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${dateRange.to ? format(dateRange.to, 'dd/MM/yyyy') : 'hoje'}` :
-                   'Período: Todas as Transações';
-    doc.text(period, pageWidth / 2, 26, { align: 'center' });
+      // Cabeçalho
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(companyInfo.name || "Relatório Financeiro", pageWidth / 2, 20, { align: 'center' });
 
-    // Resumo
-    let currentY = 40;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text("Resumo do Período", margin, currentY);
-    currentY += 8;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const period = dateRange?.from ? 
+                    `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${dateRange.to ? format(dateRange.to, 'dd/MM/yyyy') : 'hoje'}` :
+                    'Período: Todas as Transações';
+      doc.text(period, pageWidth / 2, 26, { align: 'center' });
 
-    doc.autoTable({
-        startY: currentY,
-        body: [
-            ['Total de Receitas', `R$ ${totalReceitas.toFixed(2)}`],
-            ['Total de Despesas', `R$ ${totalDespesas.toFixed(2)}`],
-            ['Saldo do Período', `R$ ${saldoPeriodo.toFixed(2)}`],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [241, 245, 249] },
-        styles: { fontStyle: 'bold' }
-    });
-    currentY = doc.lastAutoTable.finalY + 10;
-    
-    // Tabela de Transações
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text("Transações Detalhadas", margin, currentY);
-    currentY += 8;
+      // Resumo
+      let currentY = 40;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text("Resumo do Período", margin, currentY);
+      currentY += 8;
 
-    doc.autoTable({
-        startY: currentY,
-        head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor (R$)']],
-        body: filteredTransactions.map(t => [
-            formatDateForDisplay(t.date),
-            t.description,
-            t.category,
-            t.type === 'receita' ? 'Receita' : 'Despesa',
-            { content: t.amount.toFixed(2), styles: { halign: 'right', textColor: t.type === 'receita' ? '#16a34a' : '#dc2626' } }
-        ]),
-        theme: 'striped',
-        headStyles: { fillColor: [30, 41, 59] },
-    });
+      doc.autoTable({
+          startY: currentY,
+          body: [
+              ['Total de Receitas', `R$ ${totalReceitas.toFixed(2)}`],
+              ['Total de Despesas', `R$ ${totalDespesas.toFixed(2)}`],
+              ['Saldo do Período', `R$ ${saldoPeriodo.toFixed(2)}`],
+          ],
+          theme: 'grid',
+          headStyles: { fillColor: [241, 245, 249] },
+          styles: { fontStyle: 'bold' }
+      });
+      currentY = doc.lastAutoTable.finalY + 10;
+      
+      // Tabela de Transações
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text("Transações Detalhadas", margin, currentY);
+      currentY += 8;
 
-    doc.save(`Relatorio_Financeiro_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.autoTable({
+          startY: currentY,
+          head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor (R$)']],
+          body: filteredTransactions.map(t => [
+              formatDateForDisplay(t.date),
+              t.description,
+              t.category,
+              t.type === 'receita' ? 'Receita' : 'Despesa',
+              { content: t.amount.toFixed(2), styles: { halign: 'right', textColor: t.type === 'receita' ? '#16a34a' : '#dc2626' } }
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [30, 41, 59] },
+      });
+
+      doc.save(`Relatorio_Financeiro_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    };
+
+    if (companyInfo?.logoUrl) {
+      const img = new Image();
+      img.src = companyInfo.logoUrl;
+      img.onload = () => generateContent(img);
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
+        generateContent();
+      };
+    } else {
+      generateContent();
+    }
   }
 
   if (isLoading) {

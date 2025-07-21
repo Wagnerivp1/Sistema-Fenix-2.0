@@ -48,15 +48,7 @@ export function ManualSearchDialog({
     const product = stockItems.find(item => item.name === productName);
     if (!product) return;
 
-    if (product.quantity <= 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Fora de Estoque',
-        description: `O produto "${product.name}" não tem estoque disponível.`,
-      });
-    } else {
-      onProductSelect(product);
-    }
+    onProductSelect(product);
     onOpenChange(false);
   };
   

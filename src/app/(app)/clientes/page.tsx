@@ -87,7 +87,7 @@ export default function CustomersPage() {
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === 'n' && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+      if (event.key && event.key.toLowerCase() === 'n' && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
         const target = event.target as HTMLElement;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT' && !target.isContentEditable) {
           event.preventDefault();

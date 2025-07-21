@@ -108,7 +108,7 @@ export default function ServiceOrdersPage() {
             getServiceOrders(),
             getCustomers()
         ]);
-        const loggedInUser = getLoggedInUser();
+        const loggedInUser = await getLoggedInUser();
 
         setOrders(loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setCustomers(loadedCustomers);
@@ -127,7 +127,7 @@ export default function ServiceOrdersPage() {
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === 'o' && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+      if (event.key && event.key.toLowerCase() === 'o' && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
         const target = event.target as HTMLElement;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT' && !target.isContentEditable) {
           event.preventDefault();
@@ -174,10 +174,11 @@ export default function ServiceOrdersPage() {
   }
   
   const handleCommentAdded = async (orderId: string, commentText: string) => {
-    if (!currentUser) return;
+    const loggedInUser = await getLoggedInUser();
+    if (!loggedInUser) return;
     
     const commentToAdd: InternalNote = {
-      user: currentUser.name,
+      user: loggedInUser.name,
       date: new Date().toISOString(),
       comment: commentText,
     };
@@ -196,11 +197,10 @@ export default function ServiceOrdersPage() {
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
     
-    if (commentsOrder && commentsOrder.id === orderId) {
-      const freshOrderData = updatedOrders.find(o => o.id === orderId);
-      if (freshOrderData) {
-        setCommentsOrder(freshOrderData);
-      }
+    // Ensure the dialog gets the fresh data
+    const freshOrderData = updatedOrders.find(o => o.id === orderId);
+    if (freshOrderData) {
+      setCommentsOrder(freshOrderData);
     }
     
     toast({

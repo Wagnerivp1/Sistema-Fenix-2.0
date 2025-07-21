@@ -23,11 +23,6 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  // Allow connections from ngrok tunnels for development
-  experimental: {
-    serverComponentsExternalPackages: ['ngrok'],
-    allowedForwardedHosts: ['localhost', '*.ngrok-free.app'],
-  },
 };
 
 export default nextConfig;

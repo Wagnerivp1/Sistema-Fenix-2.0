@@ -83,11 +83,18 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text(companyInfo?.name || "", companyInfoX, currentY + 6);
+      if (companyInfo?.name) {
+          doc.text(companyInfo.name, companyInfoX, currentY + 6);
+      }
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text(companyInfo?.address || "", companyInfoX, currentY + 12);
-      doc.text(`Telefone: ${companyInfo?.phone || ''} | E-mail: ${companyInfo?.emailOrSite || ''}`, companyInfoX, currentY + 17);
+      if (companyInfo?.address) {
+          doc.text(companyInfo.address, companyInfoX, currentY + 12);
+      }
+      if (companyInfo?.phone || companyInfo?.emailOrSite) {
+        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
+      }
+
 
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');

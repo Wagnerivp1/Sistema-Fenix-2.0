@@ -157,15 +157,19 @@ export default function ServiceOrdersPage() {
   }
 
   const handleViewCommentsClick = (order: ServiceOrder) => {
-    setCommentsOrder(order);
+    // Find the latest version of the order from the state
+    const currentOrder = orders.find(o => o.id === order.id);
+    setCommentsOrder(currentOrder || order);
     setIsCommentsDialogOpen(true);
   }
   
   const handleCommentAdded = (updatedOrder: ServiceOrder) => {
-    // Atualiza a lista principal de ordens
+    // First, update the main list of orders. This is the source of truth.
     const updatedOrders = orders.map(o => o.id === updatedOrder.id ? updatedOrder : o);
     setOrders(updatedOrders);
-    // Atualiza a ordem no dialog de comentários
+    
+    // Then, update the specific order being viewed in the dialog
+    // to ensure the dialog itself shows the new comment immediately.
     setCommentsOrder(updatedOrder);
   }
 

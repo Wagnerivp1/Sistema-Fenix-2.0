@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { StatsCards } from '@/components/dashboard/stats-cards';
 import { RecentOrdersTable } from '@/components/dashboard/recent-orders-table';
 import { AlertsAndNotifications } from '@/components/dashboard/alerts-and-notifications';
@@ -18,6 +19,11 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
   const { toast } = useToast();
+  const router = useRouter();
+
+  const handleNewSale = () => {
+    router.push('/vendas');
+  };
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -32,7 +38,7 @@ export default function DashboardPage() {
 
       if (event.key === 'F2') {
         event.preventDefault();
-        toast({ title: 'Atalho F2', description: 'Funcionalidade "Nova Venda" ainda não implementada.' });
+        handleNewSale();
       } else if (event.shiftKey && key === 'R') {
         event.preventDefault();
         toast({ title: 'Atalho Shift+R', description: 'Funcionalidade "Adicionar Receita" ainda não implementada.' });
@@ -46,7 +52,7 @@ export default function DashboardPage() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [toast]);
+  }, [toast, router]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-8">
@@ -58,7 +64,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button>
+          <Button onClick={handleNewSale}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Nova Venda
             <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">

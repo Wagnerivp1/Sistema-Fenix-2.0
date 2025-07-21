@@ -1,1 +1,48 @@
-[]
+[
+  {
+    "id": "SALE-1753125600912",
+    "date": "2025-07-21",
+    "items": [
+      {
+        "id": "PROD-1753065361831",
+        "barcode": "PROD-1753065361831",
+        "name": "TECLADO GENERICO ",
+        "price": 25,
+        "quantity": 1,
+        "category": "Periféricos",
+        "description": "DFSDD",
+        "unitOfMeasure": "UN",
+        "costPrice": 10,
+        "minStock": 1
+      }
+    ],
+    "subtotal": 25,
+    "discount": 0,
+    "total": 25,
+    "paymentMethod": "dinheiro",
+    "observations": ""
+  },
+  {
+    "id": "SALE-1753125600918",
+    "date": "2025-07-21",
+    "items": [
+      {
+        "id": "PROD-1753065361831",
+        "barcode": "PROD-1753065361831",
+        "name": "TECLADO GENERICO ",
+        "price": 25,
+        "quantity": 1,
+        "category": "Periféricos",
+        "description": "DFSDD",
+        "unitOfMeasure": "UN",
+        "costPrice": 10,
+        "minStock": 1
+      }
+    ],
+    "subtotal": 25,
+    "discount": 0,
+    "total": 25,
+    "paymentMethod": "dinheiro",
+    "observations": ""
+  }
+]

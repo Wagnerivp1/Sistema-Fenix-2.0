@@ -41,6 +41,7 @@ export default function VendasPage() {
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [isManualSearchOpen, setIsManualSearchOpen] = React.useState(false);
   const stockRef = React.useRef<StockItem[]>([]);
+  const barcodeInputRef = React.useRef<HTMLInputElement>(null);
   
   React.useEffect(() => {
     stockRef.current = stock;
@@ -56,6 +57,7 @@ export default function VendasPage() {
       setCustomers(customersData);
     };
     loadData();
+    barcodeInputRef.current?.focus();
   }, []);
   
   const handleBarcodeScan = React.useCallback((scannedCode: string) => {
@@ -96,6 +98,8 @@ export default function VendasPage() {
             return [...prevItems, { ...productToAdd, saleQuantity: 1 }];
         }
     });
+    setBarcode('');
+    barcodeInputRef.current?.focus();
   }, [stock, toast]);
 
 
@@ -192,6 +196,8 @@ export default function VendasPage() {
     setDiscount(0);
     setPaymentMethod('dinheiro');
     setObservations('');
+    setBarcode('');
+    barcodeInputRef.current?.focus();
   }
   
   const handleCancelSale = () => {
@@ -284,6 +290,7 @@ export default function VendasPage() {
                   <div className="relative flex-grow">
                       <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input 
+                        ref={barcodeInputRef}
                         placeholder="Ler código de barras..." 
                         className="pl-10" 
                         value={barcode}

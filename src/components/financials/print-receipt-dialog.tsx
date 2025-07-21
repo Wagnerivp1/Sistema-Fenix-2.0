@@ -20,6 +20,14 @@ import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
 import type { FinancialTransaction, CompanyInfo } from '@/types';
 
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+      lastAutoTable: { finalY: number };
+    }
+}
+
+
 interface PrintReceiptDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
@@ -53,36 +61,57 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
   };
 
   const generateA4Pdf = (tx: FinancialTransaction, info: CompanyInfo) => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    const fontColor = '#000000';
-    let currentY = 12;
+    const performGeneration = (logoImage: HTMLImageElement | null) => {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let currentY = 12;
+        const fontColor = '#000000';
+        const primaryColor = '#e0e7ff';
+        const titleText = tx.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
 
-    const img = new Image();
-    img.src = info.logoUrl;
-    img.onload = () => {
-        if (info.logoUrl) {
-            doc.addImage(img, img.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
+        // Header
+        if (logoImage) {
+            const logoAR = logoImage.width / logoImage.height;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20 * logoAR, 20);
         }
         
-        const companyInfoX = margin + (info.logoUrl ? 30 : 0);
-        doc.setFont('helvetica', 'bold');
+        const companyInfoX = margin + (logoImage ? 25 : 0);
+        doc.setFont('helvetica');
         doc.setTextColor(fontColor);
-        doc.setFontSize(16);
-        doc.text(info.name || "Recibo", companyInfoX, currentY + 10);
         
-        const title = tx.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
-        doc.setFontSize(20);
-        doc.text(title, pageWidth / 2, currentY + 30, { align: 'center' });
-        currentY += 45;
+        if (info.name) {
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text(info.name, companyInfoX, currentY + 6);
+        }
+        if (info.address) {
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(info.address, companyInfoX, currentY + 12);
+        }
+        if (info.phone || info.emailOrSite) {
+            doc.text(`Telefone: ${info.phone || ''} | E-mail: ${info.emailOrSite || ''}`, companyInfoX, currentY + 17);
+        }
 
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(titleText, pageWidth - margin, currentY + 6, { align: 'right' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Transação #${tx.id.slice(-6)}`, pageWidth - margin, currentY + 12, { align: 'right' });
+        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
+
+        currentY = 50;
+
+        // Body Text
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Pelo presente, declaramos ter ${tx.type === 'receita' ? 'recebido' : 'pago'} a quantia de:`, margin, currentY);
+        const mainText = `Pelo presente, declaramos para os devidos fins que ${tx.type === 'receita' ? 'recebemos' : 'pagamos'} a quantia de:`;
+        doc.text(mainText, margin, currentY);
         currentY += 10;
         
-        doc.setFontSize(20);
+        doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
         doc.text(`R$ ${tx.amount.toFixed(2)}`, margin, currentY);
         currentY += 15;
@@ -92,33 +121,42 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         doc.text(`Referente a: ${tx.description}`, margin, currentY);
         currentY += 15;
 
+        // Details Table
         doc.autoTable({
             startY: currentY,
             theme: 'plain',
-            styles: { fontSize: 10 },
+            styles: { fontSize: 10, cellPadding: 2 },
             body: [
-            [{content: 'Data:', styles: {fontStyle: 'bold'}}, formatDateForDisplay(tx.date)],
-            [{content: 'Forma de Pag.:', styles: {fontStyle: 'bold'}}, tx.paymentMethod],
-            [{content: 'Categoria:', styles: {fontStyle: 'bold'}}, tx.category],
+                [{content: 'Data do Lançamento:', styles: {fontStyle: 'bold'}}, formatDateForDisplay(tx.date)],
+                [{content: 'Forma de Pagamento:', styles: {fontStyle: 'bold'}}, tx.paymentMethod],
+                [{content: 'Categoria:', styles: {fontStyle: 'bold'}}, tx.category],
             ],
-            columnStyles: { 0: { cellWidth: 35 } },
+            columnStyles: { 0: { cellWidth: 45 } },
         });
-        currentY = doc.lastAutoTable.finalY + 30;
-
+        currentY = doc.lastAutoTable.finalY + 40;
+        
+        // Footer and Signature
         const city = info.address?.split('-')[0]?.split(',')[1]?.trim() || "___________________";
-        doc.text(`${city}, ${new Date().toLocaleDateString('pt-BR')}.`, pageWidth / 2, currentY, { align: 'center'});
+        doc.text(`${city}, ${new Date().toLocaleDateString('pt-BR', {day: '2-digit', month: 'long', year: 'numeric'})}.`, pageWidth / 2, currentY, { align: 'center'});
         currentY += 20;
 
-        doc.line(margin + 40, currentY, pageWidth - margin - 40, currentY);
+        doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
         doc.text(info.name || 'Assinatura', pageWidth / 2, currentY + 5, { align: 'center'});
         
         doc.autoPrint();
         doc.output('dataurlnewwindow');
     };
-    img.onerror = () => generateA4Pdf(tx, { ...info, logoUrl: '' });
 
-    if (!info.logoUrl) {
-      img.onload();
+    if (info.logoUrl) {
+        const img = new Image();
+        img.src = info.logoUrl;
+        img.onload = () => performGeneration(img);
+        img.onerror = () => {
+            console.error("Error loading logo for PDF, proceeding without it.");
+            performGeneration(null);
+        };
+    } else {
+        performGeneration(null);
     }
   };
 

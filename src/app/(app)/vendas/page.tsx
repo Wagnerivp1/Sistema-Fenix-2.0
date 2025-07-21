@@ -60,29 +60,13 @@ export default function VendasPage() {
     barcodeInputRef.current?.focus();
   }, []);
   
-  const handleBarcodeScan = React.useCallback((scannedCode: string) => {
-    const product = stockRef.current.find(item => item.barcode === scannedCode);
-
-    if (product) {
-      if (product.quantity <= 0) {
-        toast({ variant: 'destructive', title: 'Fora de Estoque', description: `O produto "${product.name}" não tem estoque disponível.` });
-        return;
-      }
-      addProductToSale(product);
-      toast({ title: 'Produto Adicionado!', description: `"${product.name}" foi adicionado à venda.` });
-    } else {
-      toast({ variant: 'destructive', title: 'Produto Não Encontrado', description: `Nenhum produto encontrado para o código: ${scannedCode}` });
-    }
-  }, [toast]); // addProductToSale is memoized, so this is safe
-
   const addProductToSale = React.useCallback((productToAdd: StockItem) => {
     setSaleItems(prevItems => {
         const existingItem = prevItems.find(item => item.id === productToAdd.id);
         if (existingItem) {
-            // Find current quantity from the main stock state, not the potentially stale ref
             const stockItem = stock.find(s => s.id === productToAdd.id);
             if (!stockItem || existingItem.saleQuantity >= stockItem.quantity) {
-                toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Não há mais unidades de "${productToAdd.name}" em estoque.` });
+                 toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Não há mais unidades de "${productToAdd.name}" em estoque.` });
                 return prevItems;
             }
             return prevItems.map(item =>
@@ -98,10 +82,25 @@ export default function VendasPage() {
             return [...prevItems, { ...productToAdd, saleQuantity: 1 }];
         }
     });
-    setBarcode('');
-    barcodeInputRef.current?.focus();
   }, [stock, toast]);
 
+  const handleBarcodeScan = React.useCallback((scannedCode: string) => {
+    const product = stockRef.current.find(item => item.barcode === scannedCode);
+
+    if (product) {
+      if (product.quantity <= 0) {
+        toast({ variant: 'destructive', title: 'Fora de Estoque', description: `O produto "${product.name}" não tem estoque disponível.` });
+        return;
+      }
+      addProductToSale(product);
+      toast({ title: 'Produto Adicionado!', description: `"${product.name}" foi adicionado à venda.` });
+    } else {
+      toast({ variant: 'destructive', title: 'Produto Não Encontrado', description: `Nenhum produto encontrado para o código: ${scannedCode}` });
+    }
+    
+    setBarcode('');
+    barcodeInputRef.current?.focus();
+  }, [toast, addProductToSale]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -120,14 +119,6 @@ export default function VendasPage() {
         
         if (event.key === 'Escape') {
             handleCancelSale();
-            return;
-        }
-
-        if (event.key === 'Enter') {
-            if (barcode.trim()) {
-                handleBarcodeScan(barcode.trim());
-                setBarcode(''); 
-            }
             return;
         }
         
@@ -151,8 +142,7 @@ export default function VendasPage() {
             clearTimeout(timeoutRef.current);
         }
     };
-  }, [barcode, handleBarcodeScan]);
-
+  }, []); // Removed barcode and handleBarcodeScan from dependencies
 
 
   const handleRemoveItem = (productId: string) => {
@@ -296,9 +286,8 @@ export default function VendasPage() {
                         value={barcode}
                         onChange={(e) => setBarcode(e.target.value)}
                         onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                handleBarcodeScan(barcode);
-                                setBarcode('');
+                            if (e.key === 'Enter' && barcode.trim()) {
+                                handleBarcodeScan(barcode.trim());
                             }
                         }}
                       />

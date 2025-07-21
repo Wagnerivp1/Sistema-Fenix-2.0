@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check, ShieldCheck, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -37,8 +38,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getCustomers, getStock, getCompanyInfo } from '@/lib/storage';
-import type { Customer, ServiceOrder, StockItem, CompanyInfo } from '@/types';
+import { getCustomers, getStock, getCompanyInfo, getLoggedInUser } from '@/lib/storage';
+import type { Customer, ServiceOrder, StockItem, CompanyInfo, User, InternalNote } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import jsPDF from 'jspdf';
@@ -84,13 +85,15 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   const [equipment, setEquipment] = React.useState({ brand: '', model: '', serial: '' });
   const [accessories, setAccessories] = React.useState('');
   const [technicalReport, setTechnicalReport] = React.useState('');
-  const [internalNotes, setInternalNotes] = React.useState('');
+  const [internalNotes, setInternalNotes] = React.useState<InternalNote[]>([]);
+  const [newComment, setNewComment] = React.useState('');
   const [items, setItems] = React.useState<QuoteItem[]>([]);
   const [status, setStatus] = React.useState<ServiceOrder['status']>('Aberta');
   const [warranty, setWarranty] = React.useState('');
   const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = React.useState(false);
   const [isManualAddDialogOpen, setIsManualAddDialogOpen] = React.useState(false);
   const [manualAddItem, setManualAddItem] = React.useState<QuoteItem | null>(null);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0, type: 'service' as 'service' | 'part' });
   const [openCombobox, setOpenCombobox] = React.useState(false);
@@ -98,9 +101,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   const isEditing = !!serviceOrder;
   
   React.useEffect(() => {
-    // Carrega clientes e estoque uma vez
+    // Carrega clientes, estoque e usuário logado
     setCustomers(getCustomers());
     setStock(getStock());
+    setCurrentUser(getLoggedInUser());
   }, []);
 
   React.useEffect(() => {
@@ -132,22 +136,18 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
           setTechnicalReport(serviceOrder.technicalReport || ''); 
           setItems(serviceOrder.items || []); 
           setStatus(serviceOrder.status);
-          setInternalNotes(serviceOrder.internalNotes || '');
+          // BACKWARDS COMPATIBILITY: if internalNotes is a string, convert it to the new format
+          if (typeof serviceOrder.internalNotes === 'string') {
+              setInternalNotes([{ user: 'Sistema', date: new Date().toISOString(), comment: serviceOrder.internalNotes as string }]);
+          } else {
+              setInternalNotes(serviceOrder.internalNotes || []);
+          }
+          setNewComment('');
           setWarranty(serviceOrder.warranty || defaultWarranty);
-      } else if (customer) {
-          setSelectedCustomerId(customer.id);
-          setEquipmentType('');
-          setEquipment({ brand: '', model: '', serial: '' });
-          setAccessories('');
-          setReportedProblem('');
-          setTechnicalReport('');
-          setItems([]);
-          setStatus('Aberta');
-          setInternalNotes('');
-          setWarranty(defaultWarranty);
       } else {
-          // Reset form for a new blank OS
-          setSelectedCustomerId('');
+          // Reset form for a new OS
+          const customerIdToSet = customer ? customer.id : '';
+          setSelectedCustomerId(customerIdToSet);
           setEquipmentType('');
           setEquipment({ brand: '', model: '', serial: '' });
           setAccessories('');
@@ -155,7 +155,8 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
           setTechnicalReport('');
           setItems([]);
           setStatus('Aberta');
-          setInternalNotes('');
+          setInternalNotes([]);
+          setNewComment('');
           setWarranty(defaultWarranty);
       }
     }
@@ -207,6 +208,17 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     const filteredItems = type ? items.filter(item => item.type === type) : items;
     return filteredItems.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
   };
+
+  const handleAddComment = () => {
+    if (!newComment.trim() || !currentUser) return;
+    const comment: InternalNote = {
+      user: currentUser.name,
+      date: new Date().toISOString(),
+      comment: newComment.trim(),
+    };
+    setInternalNotes(prev => [...prev, comment]);
+    setNewComment('');
+  };
   
   const getFinalOrderData = () => {
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
@@ -235,7 +247,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         accessories: accessories,
         serialNumber: equipment.serial,
         warranty: warranty,
-        attendant: 'Admin', // Placeholder for now
+        attendant: serviceOrder?.attendant || currentUser?.name || 'Admin',
     };
 
     // If status is 'Entregue' and no deliveredDate, set it
@@ -260,156 +272,155 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   const generateQuotePdf = () => {
     const orderData = getFinalOrderData();
     if (!orderData) {
-      toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
-      return;
+        toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
+        return;
     }
-  
+
     const companyInfo = getCompanyInfo();
-  
-    const performPdfGeneration = (logoImage: HTMLImageElement | null) => {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 15;
-      let currentY = 12;
-      const fontColor = '#000000';
-      const primaryColor = '#e0e7ff';
-      const secondaryColor = '#f3f4f6';
-  
-      // Header
-      if (logoImage) {
-        const logoAR = logoImage.width / logoImage.height;
-        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20 * logoAR, 20);
-      }
-      
-      const companyInfoX = margin + (logoImage ? 25 : 0);
-      doc.setFont('helvetica');
-      doc.setTextColor(fontColor);
-      
-      if (companyInfo.name) {
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name, companyInfoX, currentY + 6);
-      }
-      if (companyInfo.address) {
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(companyInfo.address, companyInfoX, currentY + 12);
-      }
-      if (companyInfo.phone || companyInfo.emailOrSite) {
-        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
-      }
-  
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text("Orçamento de Serviço", pageWidth - margin, currentY + 6, { align: 'right' });
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Nº: #${orderData.id.slice(-4)}`, pageWidth - margin, currentY + 12, { align: 'right' });
-      doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
-  
-      currentY = 40;
-  
-      // Content
-      const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
-        const textArray = Array.isArray(text) ? text : [text];
-        const textHeight = doc.getTextDimensions(textArray).h;
-        const boxHeight = Math.max(minHeight, textHeight + 4);
+
+    const generateContent = (logoImage: HTMLImageElement | null) => {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let currentY = 12;
+        const fontColor = '#000000';
+        const primaryColor = '#e0e7ff';
+        const secondaryColor = '#f3f4f6';
+
+        // Header
+        if (logoImage) {
+            const logoAR = logoImage.width / logoImage.height;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20 * logoAR, 20);
+        }
         
-        doc.setFillColor(primaryColor);
-        doc.rect(x, y, width, 6, 'F');
+        const companyInfoX = margin + (logoImage ? 25 : 0);
+        doc.setFont('helvetica');
+        doc.setTextColor(fontColor);
+        
+        if (companyInfo.name) {
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text(companyInfo.name, companyInfoX, currentY + 6);
+        }
+        if (companyInfo.address) {
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(companyInfo.address, companyInfoX, currentY + 12);
+        }
+        if (companyInfo.phone || companyInfo.emailOrSite) {
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
+        }
+
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
+        doc.text("Orçamento de Serviço", pageWidth - margin, currentY + 6, { align: 'right' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Nº: #${orderData.id.slice(-4)}`, pageWidth - margin, currentY + 12, { align: 'right' });
+        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
+
+        currentY = 40;
+
+        // Content
+        const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
+            const textArray = Array.isArray(text) ? text : [text];
+            const textHeight = doc.getTextDimensions(textArray).h;
+            const boxHeight = Math.max(minHeight, textHeight + 4);
+            
+            doc.setFillColor(primaryColor);
+            doc.rect(x, y, width, 6, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(fontColor);
+            doc.text(title, x + 2, y + 4.5);
+            
+            doc.setDrawColor(primaryColor);
+            doc.rect(x, y + 6, width, boxHeight, 'S');
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(fontColor);
+            doc.text(textArray, x + 2, y + 10);
+
+            return y + boxHeight + 8;
+        };
+
+        const boxWidth = (pageWidth - (margin * 2));
+        
+        const customer = customers.find(c => c.id === selectedCustomerId);
+        const customerInfo = [
+            `Nome: ${customer?.name}`,
+            `Telefone: ${customer?.phone}`,
+            `Endereço: ${customer?.address || 'Não informado'}`,
+        ];
+        currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 15, customerInfo);
+
+        const equipmentInfo = [
+            `Equipamento: ${orderData.equipment}`,
+            `Nº Série: ${orderData.serialNumber || 'Não informado'}`,
+            `Acessórios: ${orderData.accessories || 'Nenhum'}`,
+        ];
+        currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 15, equipmentInfo);
+        
+        const problemText = doc.splitTextToSize(orderData.reportedProblem || "Não informado", boxWidth - 4);
+        currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 15, problemText);
+
+        const servicesText = doc.splitTextToSize(orderData.technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
+        currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 20, servicesText);
+
+        if (orderData.items && orderData.items.length > 0) {
+            doc.autoTable({
+                startY: currentY,
+                head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
+                body: orderData.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+                theme: 'grid',
+                headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
+                bodyStyles: { fontSize: 8, cellPadding: 1.5 },
+                footStyles: { fillColor: secondaryColor, textColor: fontColor },
+                margin: { left: margin, right: margin }
+            });
+            currentY = doc.lastAutoTable.finalY;
+        }
+        
+        currentY += 5;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(fontColor);
+        doc.text(`Valor Total: R$ ${orderData.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
+        currentY += 6;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(fontColor);
+        doc.text('Validade e Condições:', margin, currentY);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        currentY += 3;
+        const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
+        doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
+        currentY += 12;
+        
+        doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
+        currentY += 4;
         doc.setFontSize(9);
         doc.setTextColor(fontColor);
-        doc.text(title, x + 2, y + 4.5);
-        
-        doc.setDrawColor(primaryColor);
-        doc.rect(x, y + 6, width, boxHeight, 'S');
-  
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor(fontColor);
-        doc.text(textArray, x + 2, y + 10);
-  
-        return y + boxHeight + 8;
-      };
-  
-      const boxWidth = (pageWidth - (margin * 2));
-      
-      const customer = customers.find(c => c.id === selectedCustomerId);
-      const customerInfo = [
-        `Nome: ${customer?.name}`,
-        `Telefone: ${customer?.phone}`,
-        `Endereço: ${customer?.address || 'Não informado'}`,
-      ];
-      currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 15, customerInfo);
-  
-      const equipmentInfo = [
-        `Equipamento: ${orderData.equipment}`,
-        `Nº Série: ${orderData.serialNumber || 'Não informado'}`,
-        `Acessórios: ${orderData.accessories || 'Nenhum'}`,
-      ];
-      currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 15, equipmentInfo);
-      
-      const problemText = doc.splitTextToSize(orderData.reportedProblem || "Não informado", boxWidth - 4);
-      currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 15, problemText);
-  
-      const servicesText = doc.splitTextToSize(orderData.technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
-      currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 20, servicesText);
-  
-      if (orderData.items && orderData.items.length > 0) {
-        doc.autoTable({
-          startY: currentY,
-          head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-          body: orderData.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
-          theme: 'grid',
-          headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
-          bodyStyles: { fontSize: 8, cellPadding: 1.5 },
-          footStyles: { fillColor: secondaryColor, textColor: fontColor },
-          margin: { left: margin, right: margin }
-        });
-        currentY = doc.lastAutoTable.finalY;
-      }
-      
-      currentY += 5;
-      
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor(fontColor);
-      doc.text(`Valor Total: R$ ${orderData.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-      currentY += 6;
-  
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(fontColor);
-      doc.text('Validade e Condições:', margin, currentY);
-      
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      currentY += 3;
-      const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
-      doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-      currentY += 12;
-      
-      doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
-      currentY += 4;
-      doc.setFontSize(9);
-      doc.setTextColor(fontColor);
-      doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
-  
-      doc.output('dataurlnewwindow');
+        doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
+
+        doc.output('dataurlnewwindow');
     };
-  
+
     if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.src = companyInfo.logoUrl;
-      img.crossOrigin = 'anonymous'; // Important for data URIs
-      img.onload = () => performPdfGeneration(img);
-      img.onerror = () => {
-        console.error("Error loading logo, proceeding without it.");
-        performPdfGeneration(null);
-      };
+        const img = new Image();
+        img.src = companyInfo.logoUrl;
+        img.onload = () => generateContent(img);
+        img.onerror = () => {
+            console.error("Error loading logo for PDF, proceeding without it.");
+            generateContent(null);
+        };
     } else {
-      performPdfGeneration(null);
+        generateContent(null);
     }
   };
 
@@ -448,122 +459,121 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   const generateDeliveryReceiptPdf = () => {
     const orderToPrint = getFinalOrderData();
     if (!orderToPrint || !orderToPrint.deliveredDate) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'A OS precisa estar com status "Entregue" e ter uma data de entrega.' });
-      return;
+        toast({ variant: 'destructive', title: 'Erro', description: 'A OS precisa estar com status "Entregue" e ter uma data de entrega.' });
+        return;
     }
     
     const companyInfo = getCompanyInfo();
     
     const performGeneration = (logoImage: HTMLImageElement | null) => {
-      const doc = new jsPDF();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 10;
-      const halfPage = pageHeight / 2;
-  
-      const drawReceiptContent = (yOffset: number, via: string) => {
-        let localY = yOffset;
-        const osId = `#${orderToPrint.id.slice(-4)}`;
-        const customer = customers.find(c => c.name === orderToPrint.customerName);
-  
-        if (!customer) return;
-  
-        // Header
-        if (logoImage) {
-          doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY, 15, 15);
-        }
-        const companyInfoX = margin + (logoImage ? 20 : 0);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || "", companyInfoX, localY + 4);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text(companyInfo.address || "", companyInfoX, localY + 8);
+        const doc = new jsPDF();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 10;
+        const halfPage = pageHeight / 2;
+
+        const drawReceiptContent = (yOffset: number, via: string) => {
+            let localY = yOffset;
+            const osId = `#${orderToPrint.id.slice(-4)}`;
+            const customer = customers.find(c => c.name === orderToPrint.customerName);
+            if (!customer) return;
+
+            // Header
+            if (logoImage) {
+                const logoAR = logoImage.width / logoImage.height;
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY, 15 * logoAR, 15);
+            }
+            const companyInfoX = margin + (logoImage ? 20 : 0);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(companyInfo.name || "Sua Empresa", companyInfoX, localY + 4);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(companyInfo.address || "", companyInfoX, localY + 8);
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Recibo de Entrega', pageWidth - margin, localY + 4, { align: 'right' });
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
+            localY += 18;
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(via, pageWidth / 2, localY, { align: 'center' });
+            localY += 7;
+
+            // Content
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Cliente:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(customer.name, margin + 15, localY);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Data Entrega:', margin + 120, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, localY);
+            localY += 5;
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Equipamento:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(orderToPrint.equipment, margin + 22, localY);
+            localY += 5;
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Garantia:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            const warrantyText = getWarrantyPeriodText(orderToPrint);
+            const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2 - 17);
+            doc.text(warrantyLines, margin + 17, localY);
+            localY += (warrantyLines.length * 4) + 10;
+
+            const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
+            doc.setFontSize(8);
+            doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
+            localY += 20;
+
+            // Signature
+            doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
+            localY += 4;
+            doc.setFontSize(9);
+            doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
+        };
         
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Recibo de Entrega', pageWidth - margin, localY + 4, { align: 'right' });
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
+        // Via Cliente
+        drawReceiptContent(10, "Via do Cliente");
         
-        localY += 18;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text(via, pageWidth / 2, localY, { align: 'center' });
-        localY += 7;
-  
-        // Content
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Cliente:', margin, localY);
-        doc.setFont('helvetica', 'normal');
-        doc.text(customer.name, margin + 15, localY);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Data Entrega:', margin + 120, localY);
-        doc.setFont('helvetica', 'normal');
-        doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, localY);
-        localY += 5;
-  
-        doc.setFont('helvetica', 'bold');
-        doc.text('Equipamento:', margin, localY);
-        doc.setFont('helvetica', 'normal');
-        doc.text(orderToPrint.equipment, margin + 22, localY);
-        localY += 5;
-  
-        doc.setFont('helvetica', 'bold');
-        doc.text('Garantia:', margin, localY);
-        doc.setFont('helvetica', 'normal');
-        const warrantyText = getWarrantyPeriodText(orderToPrint);
-        const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2 - 17);
-        doc.text(warrantyLines, margin + 17, localY);
-        localY += (warrantyLines.length * 4) + 10;
-  
-        const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
-        doc.setFontSize(8);
-        doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
-        localY += 20;
-  
-        // Signature
-        doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
-        localY += 4;
-        doc.setFontSize(9);
-        doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
-      };
-      
-      // Via Cliente
-      drawReceiptContent(10, "Via do Cliente");
-      
-      // Cut line
-      doc.setLineDashPattern([2, 1], 0);
-      doc.line(margin, halfPage, pageWidth - margin, halfPage);
-      doc.setLineDashPattern([], 0);
-      
-      // Via Loja
-      drawReceiptContent(halfPage + 10, "Via da Loja");
-      
-      doc.output('dataurlnewwindow');
+        // Cut line
+        doc.setLineDashPattern([2, 1], 0);
+        doc.line(margin, halfPage, pageWidth - margin, halfPage);
+        doc.setLineDashPattern([], 0);
+        
+        // Via Loja
+        drawReceiptContent(halfPage + 10, "Via da Loja");
+        
+        doc.output('dataurlnewwindow');
     };
 
     if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.src = companyInfo.logoUrl;
-      img.crossOrigin = "anonymous";
-      img.onload = () => performGeneration(img);
-      img.onerror = () => {
-        console.error("Error loading logo for PDF, proceeding without it.");
-        performGeneration(null);
-      };
+        const img = new Image();
+        img.src = companyInfo.logoUrl;
+        img.onload = () => performGeneration(img);
+        img.onerror = () => {
+            console.error("Error loading logo for PDF, proceeding without it.");
+            performGeneration(null);
+        };
     } else {
-      performGeneration(null);
+        performGeneration(null);
     }
   };
 
   const generateEntryReceiptPdf = () => {
     const orderToPrint = getFinalOrderData();
     if (!orderToPrint) {
-      toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
-      return;
+        toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
+        return;
     }
     
     const companyInfo = getCompanyInfo();
@@ -670,7 +680,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     if (companyInfo?.logoUrl) {
       const img = new Image();
       img.src = companyInfo.logoUrl;
-      img.crossOrigin = "anonymous";
       img.onload = () => performGeneration(img);
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");
@@ -947,17 +956,37 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                         </div>
                       </TabsContent>
                       <TabsContent value="notes" className="mt-0">
-                        <div className="py-2">
-                          <div className="grid grid-cols-1 gap-1.5">
-                              <Label htmlFor="internal_notes">Comentários Internos</Label>
-                              <Textarea
-                                id="internal_notes"
-                                placeholder="Adicione observações para a equipe. Este conteúdo não será impresso."
-                                value={internalNotes}
-                                onChange={(e) => setInternalNotes(e.target.value)}
-                                rows={8}
-                              />
-                              <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
+                         <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Histórico de Comentários</Label>
+                                <div className="border rounded-md p-2 bg-muted/30 max-h-60 overflow-y-auto space-y-3">
+                                    {internalNotes.length > 0 ? (
+                                        internalNotes.map((note, index) => (
+                                            <div key={index} className="text-sm p-2 bg-background rounded-md shadow-sm">
+                                                <p className="font-semibold">{note.comment}</p>
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    - {note.user} em {new Date(note.date).toLocaleString('pt-BR')}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground p-4 text-center">Nenhum comentário interno ainda.</p>
+                                    )}
+                                </div>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="new_comment">Adicionar Novo Comentário</Label>
+                                <div className="flex items-start gap-2">
+                                    <Textarea
+                                        id="new_comment"
+                                        placeholder="Adicione observações para a equipe..."
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        rows={3}
+                                    />
+                                    <Button onClick={handleAddComment} className="mt-auto">Adicionar</Button>
+                                </div>
+                                <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
                             </div>
                         </div>
                       </TabsContent>

@@ -1,6 +1,11 @@
 
 
 
+export type InternalNote = {
+  user: string; // The name of the user who made the comment
+  date: string; // ISO 8601 date string
+  comment: string;
+};
 
 
 export type Customer = {
@@ -33,7 +38,7 @@ export type ServiceOrder = {
   warranty?: string; // Ex: "90 dias", "1 ano para a peça"
   totalValue: number;
   items?: ServiceOrderItem[];
-  internalNotes?: string;
+  internalNotes?: InternalNote[];
   technicalReport?: string;
   accessories?: string;
   serialNumber?: string;

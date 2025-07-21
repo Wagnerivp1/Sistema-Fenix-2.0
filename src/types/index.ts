@@ -1,6 +1,7 @@
 
 
 
+
 export type InternalNote = {
   user: string; // The name of the user who made the comment
   date: string; // ISO 8601 date string
@@ -14,7 +15,7 @@ export type Customer = {
   phone: string;
   email: string;
   address: string;
-  observations: string;
+  document: string;
 };
 
 export type ServiceOrderItem = {

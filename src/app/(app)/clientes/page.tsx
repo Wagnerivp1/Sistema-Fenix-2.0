@@ -59,6 +59,14 @@ import { useToast } from '@/hooks/use-toast';
 import { EditCustomerDialog } from '@/components/customers/edit-customer-dialog';
 import { ServiceHistory } from '@/components/customers/service-history';
 
+const initialNewCustomerState: Omit<Customer, 'id'> = {
+  name: '',
+  phone: '',
+  email: '',
+  address: '',
+  document: '',
+};
+
 export default function CustomersPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -70,6 +78,7 @@ export default function CustomersPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = React.useState(false);
+  const [newCustomer, setNewCustomer] = React.useState(initialNewCustomerState);
   
   React.useEffect(() => {
     const loadData = async () => {
@@ -101,6 +110,12 @@ export default function CustomersPage() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+  
+  React.useEffect(() => {
+    if (!isAddCustomerDialogOpen) {
+      setNewCustomer(initialNewCustomerState);
+    }
+  }, [isAddCustomerDialogOpen]);
 
   const handleSelectCustomer = (customer: Customer | null) => {
     setSelectedCustomer(customer);
@@ -145,6 +160,42 @@ export default function CustomersPage() {
     }
   }
 
+  const handleNewCustomerInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setNewCustomer(prev => ({...prev, [id]: value}));
+  };
+
+  const handleSaveCustomer = async (generateOsAfterSave = false) => {
+    if (!newCustomer.name) {
+      toast({
+        variant: 'destructive',
+        title: 'Nome obrigatório',
+        description: 'O nome do cliente precisa ser preenchido.'
+      });
+      return;
+    }
+
+    const customerToAdd: Customer = {
+      ...newCustomer,
+      id: `CUST-${Date.now()}`
+    };
+
+    const updatedCustomers = [...customers, customerToAdd];
+    await saveCustomers(updatedCustomers);
+    setCustomers(updatedCustomers);
+    
+    toast({
+      title: 'Cliente salvo!',
+      description: `${customerToAdd.name} foi adicionado com sucesso.`
+    });
+
+    setIsAddCustomerDialogOpen(false);
+
+    if (generateOsAfterSave) {
+      router.push(`/ordens-de-servico?customerId=${customerToAdd.id}`);
+    }
+  };
+
   if (isLoading) {
     return <div>Carregando clientes...</div>;
   }
@@ -181,34 +232,34 @@ export default function CustomersPage() {
                    <div className="grid grid-cols-1 gap-6">
                       <div>
                           <Label htmlFor="name">Nome Completo</Label>
-                          <Input id="name" placeholder="John Doe" />
+                          <Input id="name" placeholder="John Doe" value={newCustomer.name} onChange={handleNewCustomerInputChange} />
                       </div>
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                       <div>
                           <Label htmlFor="phone">Telefone</Label>
-                          <Input id="phone" placeholder="(99) 99999-9999" />
+                          <Input id="phone" placeholder="(99) 99999-9999" value={newCustomer.phone} onChange={handleNewCustomerInputChange} />
                       </div>
                       <div>
                           <Label htmlFor="email">E-mail (Opcional)</Label>
-                          <Input id="email" type="email" placeholder="email@exemplo.com" />
+                          <Input id="email" type="email" placeholder="email@exemplo.com" value={newCustomer.email} onChange={handleNewCustomerInputChange} />
                       </div>
                   </div>
                    <div className="grid grid-cols-2 gap-6">
                       <div>
                           <Label htmlFor="address">Endereço</Label>
-                          <Input id="address" placeholder="Rua Exemplo, 123" />
+                          <Input id="address" placeholder="Rua Exemplo, 123" value={newCustomer.address} onChange={handleNewCustomerInputChange} />
                       </div>
                       <div>
-                          <Label htmlFor="cpf">CPF / CNPJ (Opcional)</Label>
-                          <Input id="cpf" placeholder="Apenas números" />
+                          <Label htmlFor="document">CPF / CNPJ (Opcional)</Label>
+                          <Input id="document" placeholder="Apenas números" value={newCustomer.document} onChange={handleNewCustomerInputChange} />
                       </div>
                   </div>
                 </div>
                 <DialogFooter className="justify-end gap-2">
-                   <Button variant="ghost">Cancelar</Button>
-                   <Button variant="outline">Salvar</Button>
-                   <Button type="submit">Salvar e Gerar OS</Button>
+                   <Button variant="ghost" onClick={() => setIsAddCustomerDialogOpen(false)}>Cancelar</Button>
+                   <Button variant="outline" onClick={() => handleSaveCustomer(false)}>Salvar</Button>
+                   <Button onClick={() => handleSaveCustomer(true)}>Salvar e Gerar OS</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

@@ -38,7 +38,7 @@ export function EditCustomerDialog({ customer, isOpen, onOpenChange, onSave }: E
 
   const handleSave = () => {
     if (customer) {
-      onSave({ ...customer, ...formData });
+      onSave({ ...customer, ...formData } as Customer);
     }
   };
 
@@ -76,9 +76,8 @@ export function EditCustomerDialog({ customer, isOpen, onOpenChange, onSave }: E
               <Input id="address" value={formData.address || ''} onChange={handleChange} />
             </div>
             <div>
-              <Label htmlFor="cpf">CPF / CNPJ (Opcional)</Label>
-              {/* Usando o ID do cliente como placeholder para o documento */}
-              <Input id="cpf" value={formData.id?.split('-')[1] || ''} onChange={handleChange} />
+              <Label htmlFor="document">CPF / CNPJ (Opcional)</Label>
+              <Input id="document" value={formData.document || ''} onChange={handleChange} />
             </div>
           </div>
         </div>

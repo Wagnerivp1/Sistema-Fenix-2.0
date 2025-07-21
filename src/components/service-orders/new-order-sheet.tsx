@@ -254,7 +254,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   };
 
 
- const generatePdfBase = (title: string, onReady: (doc: jsPDF, selectedCustomer: Customer, companyInfo: CompanyInfo, currentY: number, pageWidth: number, margin: number) => void) => {
+ const generatePdfBase = (title: string, onReady: (doc: jsPDF, selectedCustomer: Customer, companyInfo: CompanyInfo, currentY: number, pageWidth: number, margin: number, logoImage: HTMLImageElement | null) => void) => {
     const companyInfo = getCompanyInfo();
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomer) {
@@ -276,7 +276,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         doc.setFont('helvetica');
         doc.setTextColor('#000000');
         
-        // Company Info
         const companyInfoX = margin + (logoImage ? 30 : 0);
         if (companyInfo?.name) {
             doc.setFontSize(18);
@@ -292,7 +291,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
         }
 
-        // Document Info
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
@@ -302,7 +300,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         doc.text(`Nº: ${osId}`, pageWidth - margin, currentY + 12, { align: 'right' });
         doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
         
-        onReady(doc, selectedCustomer, companyInfo, 40, pageWidth, margin);
+        onReady(doc, selectedCustomer, companyInfo, 40, pageWidth, margin, logoImage);
     };
 
     if (companyInfo?.logoUrl) {
@@ -459,20 +457,19 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
       toast({ variant: 'destructive', title: 'Erro', description: 'Cliente da OS não encontrado.' });
       return;
     }
-  
+
     const doc = new jsPDF();
     
     const drawReceiptContent = (yOffset: number, via: string, logoImage: HTMLImageElement | null) => {
       const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 10;
       const osId = `#${orderToPrint.id.slice(-4)}`;
       let localY = yOffset;
 
+      // Header
       if (logoImage) {
         doc.addImage(logoImage, 'PNG', margin, localY - 4, 15, 15);
       }
-
       const companyInfoX = margin + (logoImage ? 20 : 0);
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
@@ -481,7 +478,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
       doc.setFont('helvetica', 'normal');
       doc.text(companyInfo.address || "", companyInfoX, localY + 4);
       doc.text(`Tel: ${companyInfo.phone || ""} | Email: ${companyInfo.emailOrSite || ""}`, companyInfoX, localY + 8);
-
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text('Recibo de Entrega', pageWidth - margin, localY, { align: 'right' });
@@ -499,12 +495,12 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
       doc.text(via, pageWidth / 2, localY, { align: 'center' });
       localY += 7;
 
+      // Content
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.text('Cliente:', margin, localY);
       doc.setFont('helvetica', 'normal');
       doc.text(selectedCustomer.name, margin + 15, localY);
-
       doc.setFont('helvetica', 'bold');
       doc.text('Data Entrega:', margin + 120, localY);
       doc.setFont('helvetica', 'normal');
@@ -530,6 +526,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
       doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
       localY += 15;
 
+      // Signature
       doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
       localY += 4;
       doc.setFontSize(9);
@@ -537,35 +534,37 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     };
 
     const performGeneration = (logoImage: HTMLImageElement | null) => {
-        const pageHeight = doc.internal.pageSize.getHeight();
-        
-        drawReceiptContent(15, "Via do Cliente", logoImage);
-        
-        const cutLineY = pageHeight / 2;
-        doc.setLineDashPattern([2, 1], 0);
-        doc.line(10, cutLineY, doc.internal.pageSize.getWidth() - 10, cutLineY);
-        doc.setLineDashPattern([], 0);
-        
-        drawReceiptContent(cutLineY + 10, "Via da Loja", logoImage);
-        
-        doc.output('dataurlnewwindow');
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const halfPage = pageHeight / 2;
+      
+      // Via Cliente
+      drawReceiptContent(15, "Via do Cliente", logoImage);
+      
+      // Cut line
+      doc.setLineDashPattern([2, 1], 0);
+      doc.line(10, halfPage, doc.internal.pageSize.getWidth() - 10, halfPage);
+      doc.setLineDashPattern([], 0);
+      
+      // Via Loja
+      drawReceiptContent(halfPage + 10, "Via da Loja", logoImage);
+      
+      doc.output('dataurlnewwindow');
     };
 
     if (companyInfo?.logoUrl) {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.src = companyInfo.logoUrl;
-        img.onload = () => {
-          performGeneration(img);
-        };
-        img.onerror = () => {
-          console.error("Error loading logo for PDF, proceeding without it.");
-          performGeneration(null);
-        };
-    } else {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = companyInfo.logoUrl;
+      img.onload = () => performGeneration(img);
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
         performGeneration(null);
+      };
+    } else {
+      performGeneration(null);
     }
   };
+
 
  const generateServiceOrderPdf = (orderToPrint: ServiceOrder) => {
     if (orderToPrint.status === 'Entregue' && orderToPrint.deliveredDate) {

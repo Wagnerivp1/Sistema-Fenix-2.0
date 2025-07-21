@@ -453,35 +453,40 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     return `Período da Garantia: de ${formatDate(startDate)} até ${formatDate(endDate)}.`;
 };
 
- const generateDeliveryReceiptPdf = (orderToPrint: ServiceOrder) => {
+  const generateDeliveryReceiptPdf = (orderToPrint: ServiceOrder) => {
     const companyInfo = getCompanyInfo();
     const selectedCustomer = customers.find(c => c.name === orderToPrint.customerName);
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'Erro', description: 'Cliente da OS não encontrado.' });
       return;
     }
-
+  
     const doc = new jsPDF();
-
-    const generateContent = () => {
+    
+    const generateContent = (logoImage: HTMLImageElement | null) => {
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 10;
       const osId = `#${orderToPrint.id.slice(-4)}`;
-
+  
       const drawReceipt = (yOffset: number, via: string) => {
         let localY = yOffset;
-        
+  
+        // Adiciona logo se existir
+        if (logoImage) {
+          doc.addImage(logoImage, 'PNG', margin, localY - 4, 15, 15);
+        }
+  
         // Cabeçalho da Empresa
-        const companyInfoX = margin + (companyInfo.logoUrl ? 20 : 0);
+        const companyInfoX = margin + (logoImage ? 20 : 0);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || "Sua Empresa", companyInfoX, localY);
+        doc.text(companyInfo.name || "", companyInfoX, localY);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text(companyInfo.address || "Seu Endereço", companyInfoX, localY + 4);
-        doc.text(`Tel: ${companyInfo.phone || "(00) 0000-0000"} | Email: ${companyInfo.emailOrSite || ""}`, companyInfoX, localY + 8);
-
+        doc.text(companyInfo.address || "", companyInfoX, localY + 4);
+        doc.text(`Tel: ${companyInfo.phone || ""} | Email: ${companyInfo.emailOrSite || ""}`, companyInfoX, localY + 8);
+  
         // Informações do Documento
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
@@ -489,37 +494,37 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.text(`OS: ${osId}`, pageWidth - margin, localY + 5, { align: 'right' });
-
+  
         localY += 15;
         doc.setDrawColor(180, 180, 180);
         doc.line(margin, localY, pageWidth - margin, localY);
         localY += 5;
-        
+  
         // Título da Via
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.text(via, pageWidth / 2, localY, { align: 'center' });
         localY += 7;
-
+  
         // Conteúdo
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.text('Cliente:', margin, localY);
         doc.setFont('helvetica', 'normal');
         doc.text(selectedCustomer.name, margin + 15, localY);
-        
+  
         doc.setFont('helvetica', 'bold');
         doc.text('Data Entrega:', margin + 120, localY);
         doc.setFont('helvetica', 'normal');
         doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, localY);
         localY += 5;
-
+  
         doc.setFont('helvetica', 'bold');
         doc.text('Equipamento:', margin, localY);
         doc.setFont('helvetica', 'normal');
         doc.text(orderToPrint.equipment, margin + 22, localY);
         localY += 5;
-        
+  
         doc.setFont('helvetica', 'bold');
         doc.text('Garantia:', margin, localY);
         doc.setFont('helvetica', 'normal');
@@ -527,48 +532,50 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2 - 17);
         doc.text(warrantyLines, margin + 17, localY);
         localY += (warrantyLines.length * 4) + 5;
-
+  
         const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
         doc.setFontSize(8);
         doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
         localY += 15;
-        
+  
         doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
         localY += 4;
         doc.setFontSize(9);
         doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
-
-        // Adiciona logo se existir
-        if (companyInfo.logoUrl) {
-          const img = new Image();
-          img.crossOrigin = 'Anonymous';
-          img.src = companyInfo.logoUrl;
-          doc.addImage(img, 'PNG', margin, yOffset - 4, 15, 15);
-        }
       };
-
+  
       // Primeira Via (Cliente) - Topo da página
       drawReceipt(15, "Via do Cliente");
-      
+  
       // Linha de Corte
       const cutLineY = pageHeight / 2;
       doc.setLineDashPattern([2, 1], 0);
       doc.line(margin, cutLineY, pageWidth - margin, cutLineY);
       doc.setLineDashPattern([], 0);
-
+  
       // Segunda Via (Loja) - Meio da página
       drawReceipt(cutLineY + 10, "Via da Loja");
-
+  
       doc.output('dataurlnewwindow');
     };
-    
-    // Inicia a geração do conteúdo. Como a logo é adicionada dentro da função `drawReceipt`, 
-    // não precisamos de um `onload` externo. A chamada síncrona do addImage com Data URL 
-    // (que é o que está no localStorage) funciona bem.
-    generateContent();
+  
+    if (companyInfo?.logoUrl) {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = companyInfo.logoUrl;
+      img.onload = () => {
+        generateContent(img);
+      };
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
+        generateContent(null);
+      };
+    } else {
+      generateContent(null);
+    }
   };
 
-  const generateServiceOrderPdf = (orderToPrint: ServiceOrder) => {
+ const generateServiceOrderPdf = (orderToPrint: ServiceOrder) => {
     if (orderToPrint.status === 'Entregue' && orderToPrint.deliveredDate) {
         generateDeliveryReceiptPdf(orderToPrint);
         return;
@@ -699,13 +706,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         
         // Company Info
         const companyInfoX = margin + (companyInfo?.logoUrl ? 30 : 0);
-        if (companyInfo.logoUrl) {
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.src = companyInfo.logoUrl;
-            doc.addImage(img, 'PNG', 15, 12, 25, 25);
-        }
-
+        
         if (companyInfo?.name) {
             doc.setFontSize(18);
             doc.setFont('helvetica', 'bold');
@@ -785,7 +786,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         const termsText = "A apresentação deste recibo é INDISPENSÁVEL para a retirada do equipamento. A não apresentação implicará na necessidade de o titular apresentar documento com foto para a liberação.";
         const textLines = doc.splitTextToSize(termsText, pageWidth - (margin * 2));
         doc.text(textLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += doc.getTextDimensions(textLines).h + 20;
+        currentY += doc.getTextDimensions(textLines).h + 10;
 
         doc.line(margin + 40, currentY, pageWidth - margin - 40, currentY);
         currentY += 5;
@@ -794,17 +795,36 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
     };
 
-    const performGeneration = () => {
+    const performGeneration = (logoImage: HTMLImageElement | null) => {
         // Page 1: Via do Cliente
         drawPageContent("Via do Cliente", 1);
+        if (logoImage) {
+            doc.addImage(logoImage, 'PNG', 15, 12, 25, 25);
+        }
         // Page 2: Via da Loja
         doc.addPage();
         drawPageContent("Via da Loja", 2);
+        if (logoImage) {
+            doc.addImage(logoImage, 'PNG', 15, 12, 25, 25);
+        }
 
         doc.output('dataurlnewwindow');
     };
     
-    performGeneration();
+    if (companyInfo?.logoUrl) {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = companyInfo.logoUrl;
+      img.onload = () => {
+        performGeneration(img);
+      };
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
+        performGeneration(null);
+      };
+    } else {
+      performGeneration(null);
+    }
   };
 
   const handlePrint = (documentType: string) => {

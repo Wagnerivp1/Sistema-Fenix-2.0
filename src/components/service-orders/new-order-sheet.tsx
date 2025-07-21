@@ -216,6 +216,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
 
     const fullEquipmentName = `${equipmentType} ${equipment.brand} ${equipment.model}`.trim();
+    if (!fullEquipmentName) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Por favor, preencha as informações do equipamento.' });
+        return null;
+    }
 
     const finalOrder: ServiceOrder = {
         id: serviceOrder?.id || `OS-${Date.now()}`,
@@ -255,29 +259,31 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
   const generateQuotePdf = () => {
     const companyInfo = getCompanyInfo();
-    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
-    if (!selectedCustomer) {
-        toast({ variant: 'destructive', title: 'Cliente não selecionado!'});
+    const orderData = getFinalOrderData();
+
+    if (!orderData) {
+        toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
         return;
     }
-
-    const title = "Orçamento de Serviço";
-    const osId = serviceOrder?.id ? `#${serviceOrder.id.slice(-4)}` : `#...${Date.now().toString().slice(-4)}`;
 
     const performPdfGeneration = (logoImage: HTMLImageElement | null) => {
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
         let currentY = 12;
+        const fontColor = '#000000';
+        const primaryColor = '#e0e7ff';
+        const secondaryColor = '#f3f4f6';
 
         // Header
         if (logoImage) {
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
+            const logoAR = logoImage.width / logoImage.height;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20 * logoAR, 20);
         }
         
-        const companyInfoX = margin + (logoImage ? 30 : 0);
+        const companyInfoX = margin + (logoImage ? 25 : 0);
         doc.setFont('helvetica');
-        doc.setTextColor('#000000');
+        doc.setTextColor(fontColor);
         
         if (companyInfo.name) {
             doc.setFontSize(18);
@@ -295,19 +301,15 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(title, pageWidth - margin, currentY + 6, { align: 'right' });
+        doc.text("Orçamento de Serviço", pageWidth - margin, currentY + 6, { align: 'right' });
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Nº: ${osId}`, pageWidth - margin, currentY + 12, { align: 'right' });
+        doc.text(`Nº: #${orderData.id.slice(-4)}`, pageWidth - margin, currentY + 12, { align: 'right' });
         doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
 
         currentY = 40;
 
         // Content
-        const fontColor = '#000000';
-        const primaryColor = '#e0e7ff';
-        const secondaryColor = '#f3f4f6';
-        
         const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
           const textArray = Array.isArray(text) ? text : [text];
           const textHeight = doc.getTextDimensions(textArray).h;
@@ -333,32 +335,32 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
         const boxWidth = (pageWidth - (margin * 2));
         
+        const customer = customers.find(c => c.id === selectedCustomerId);
         const customerInfo = [
-          `Nome: ${selectedCustomer.name}`,
-          `Telefone: ${selectedCustomer.phone}`,
-          `Endereço: ${selectedCustomer.address || 'Não informado'}`,
+          `Nome: ${customer?.name}`,
+          `Telefone: ${customer?.phone}`,
+          `Endereço: ${customer?.address || 'Não informado'}`,
         ];
         currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 15, customerInfo);
 
         const equipmentInfo = [
-          `Tipo: ${equipmentType}`,
-          `Marca / Modelo: ${equipment.brand} ${equipment.model}`,
-          `Nº Série: ${equipment.serial || 'Não informado'}`,
-          `Acessórios: ${accessories || 'Nenhum'}`,
+          `Equipamento: ${orderData.equipment}`,
+          `Nº Série: ${orderData.serialNumber || 'Não informado'}`,
+          `Acessórios: ${orderData.accessories || 'Nenhum'}`,
         ];
-        currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 20, equipmentInfo);
+        currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 15, equipmentInfo);
         
-        const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 4);
+        const problemText = doc.splitTextToSize(orderData.reportedProblem || "Não informado", boxWidth - 4);
         currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 15, problemText);
 
-        const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
+        const servicesText = doc.splitTextToSize(orderData.technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
         currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 20, servicesText);
 
-        if (items.length > 0) {
+        if (orderData.items && orderData.items.length > 0) {
           doc.autoTable({
             startY: currentY,
             head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-            body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+            body: orderData.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
             theme: 'grid',
             headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
             bodyStyles: { fontSize: 8, cellPadding: 1.5 },
@@ -368,13 +370,12 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
           currentY = doc.lastAutoTable.finalY;
         }
         
-        const grandTotal = calculateTotal();
         currentY += 5;
         
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         doc.setTextColor(fontColor);
-        doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
+        doc.text(`Valor Total: R$ ${orderData.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
         currentY += 6;
 
         doc.setFont('helvetica', 'bold');
@@ -401,11 +402,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     if (companyInfo?.logoUrl) {
         const img = new Image();
         img.src = companyInfo.logoUrl;
-        img.onload = () => {
-            performPdfGeneration(img);
-        };
+        img.crossOrigin = 'anonymous'; // Important for data URIs
+        img.onload = () => performPdfGeneration(img);
         img.onerror = () => {
-            console.error("Error loading logo for PDF, proceeding without it.");
+            console.error("Error loading logo, proceeding without it.");
             performPdfGeneration(null);
         };
     } else {
@@ -445,14 +445,15 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     return `Período da Garantia: de ${formatDate(startDate)} até ${formatDate(endDate)}.`;
 };
 
-  const generateDeliveryReceiptPdf = (orderToPrint: ServiceOrder) => {
-    const companyInfo = getCompanyInfo();
-    const selectedCustomer = customers.find(c => c.name === orderToPrint.customerName);
-    if (!selectedCustomer) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Cliente da OS não encontrado.' });
+  const generateDeliveryReceiptPdf = () => {
+    const orderToPrint = getFinalOrderData();
+    if (!orderToPrint || !orderToPrint.deliveredDate) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'A OS precisa estar com status "Entregue" e ter uma data de entrega.' });
       return;
     }
-
+    
+    const companyInfo = getCompanyInfo();
+    
     const performGeneration = (logoImage: HTMLImageElement | null) => {
         const doc = new jsPDF();
         const pageHeight = doc.internal.pageSize.getHeight();
@@ -461,8 +462,11 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         const halfPage = pageHeight / 2;
         
         const drawReceiptContent = (yOffset: number, via: string) => {
-            const osId = `#${orderToPrint.id.slice(-4)}`;
             let localY = yOffset;
+            const osId = `#${orderToPrint.id.slice(-4)}`;
+            const customer = customers.find(c => c.name === orderToPrint.customerName);
+
+            if (!customer) return;
 
             // Header
             if (logoImage) {
@@ -494,7 +498,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             doc.setFont('helvetica', 'bold');
             doc.text('Cliente:', margin, localY);
             doc.setFont('helvetica', 'normal');
-            doc.text(selectedCustomer.name, margin + 15, localY);
+            doc.text(customer.name, margin + 15, localY);
             doc.setFont('helvetica', 'bold');
             doc.text('Data Entrega:', margin + 120, localY);
             doc.setFont('helvetica', 'normal');
@@ -544,6 +548,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     if (companyInfo?.logoUrl) {
       const img = new Image();
       img.src = companyInfo.logoUrl;
+      img.crossOrigin = "anonymous";
       img.onload = () => performGeneration(img);
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");
@@ -554,184 +559,138 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
   };
 
-  const generateServiceOrderPdf = (orderToPrint: ServiceOrder) => {
-    if (orderToPrint.status === 'Entregue' && orderToPrint.deliveredDate) {
-        generateDeliveryReceiptPdf(orderToPrint);
-        return;
-    }
-
-    const companyInfo = getCompanyInfo();
-    const selectedCustomer = customers.find(c => c.name === orderToPrint.customerName);
-     if (!selectedCustomer) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Cliente da OS não encontrado.' });
+  const generateEntryReceiptPdf = () => {
+    const orderToPrint = getFinalOrderData();
+    if (!orderToPrint) {
+      toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
       return;
     }
+    
+    const companyInfo = getCompanyInfo();
 
     const performGeneration = (logoImage: HTMLImageElement | null) => {
         const doc = new jsPDF();
+        const pageHeight = doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 15;
-        let currentY = 12;
+        const margin = 10;
+        const halfPage = pageHeight / 2;
 
-        // Header
-        if (logoImage) {
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
-        }
-        
-        const companyInfoX = margin + (logoImage ? 30 : 0);
-        doc.setFont('helvetica');
-        doc.setTextColor('#000000');
-        
-        if (companyInfo.name) {
-            doc.setFontSize(18);
+        const drawReceiptContent = (yOffset: number, via: string) => {
+            let localY = yOffset;
+            const osId = `#${orderToPrint.id.slice(-4)}`;
+            const customer = customers.find(c => c.name === orderToPrint.customerName);
+            if (!customer) return;
+
+            // Header
+            if (logoImage) {
+                const logoAR = logoImage.width / logoImage.height;
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY, 15 * logoAR, 15);
+            }
+            const companyInfoX = margin + (logoImage ? 20 : 0);
+            doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name, companyInfoX, currentY + 6);
-        }
-        if (companyInfo.address) {
+            doc.text(companyInfo.name || "Sua Empresa", companyInfoX, localY + 4);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(companyInfo.address || "", companyInfoX, localY + 8);
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Recibo de Entrada', pageWidth - margin, localY + 4, { align: 'right' });
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(companyInfo.address, companyInfoX, currentY + 12);
-        }
-        if (companyInfo.phone || companyInfo.emailOrSite) {
-            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
-        }
+            doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
+            localY += 18;
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(via, pageWidth / 2, localY, { align: 'center' });
+            localY += 7;
 
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text("Ordem de Serviço", pageWidth - margin, currentY + 6, { align: 'right' });
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Nº: #${orderToPrint.id.slice(-4)}`, pageWidth - margin, currentY + 12, { align: 'right' });
-        doc.text(`Data Emissão: ${new Date(orderToPrint.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}`, pageWidth - margin, currentY + 17, { align: 'right' });
+            // Content
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Data Entrada:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(new Date(orderToPrint.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'}), margin + 25, localY);
+            localY += 5;
+            
+            doc.setFont('helvetica', 'bold');
+            doc.text('Cliente:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(customer.name, margin + 15, localY);
+            localY += 5;
 
-        currentY = 40;
+            doc.setFont('helvetica', 'bold');
+            doc.text('Equipamento:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(orderToPrint.equipment, margin + 22, localY);
+            localY += 5;
+            
+            doc.setFont('helvetica', 'bold');
+            doc.text('Defeito Relatado:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            const problemLines = doc.splitTextToSize(orderToPrint.reportedProblem, pageWidth - margin * 2 - 30);
+            doc.text(problemLines, margin + 30, localY);
+            localY += (problemLines.length * 4) + 2;
 
-        // Content logic...
-        const fontColor = '#000000';
-        const primaryColor = '#e0e7ff';
-        const secondaryColor = '#f3f4f6';
-        
-        const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
-          const textArray = Array.isArray(text) ? text : [text];
-          const textHeight = doc.getTextDimensions(textArray).h;
-          const boxHeight = Math.max(minHeight, textHeight + 4);
-          
-          doc.setFillColor(primaryColor);
-          doc.rect(x, y, width, 6, 'F');
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.setTextColor(fontColor);
-          doc.text(title, x + 2, y + 4.5);
-          
-          doc.setDrawColor(primaryColor);
-          doc.rect(x, y + 6, width, boxHeight, 'S');
+            doc.setFont('helvetica', 'bold');
+            doc.text('Acessórios:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(orderToPrint.accessories || 'Nenhum', margin + 20, localY);
+            localY += 10;
 
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          doc.setTextColor(fontColor);
-          doc.text(textArray, x + 2, y + 10);
+            const termsText = "Declaro que o equipamento acima foi entregue para análise e orçamento. O prazo para orçamento é de 3 dias úteis. A garantia do serviço é de 90 dias, cobrindo apenas o defeito reparado.";
+            doc.setFontSize(7);
+            doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
+            localY += 20;
 
-          return y + boxHeight + 8;
+            // Signature
+            doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
+            localY += 4;
+            doc.setFontSize(9);
+            doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
         };
-        
-        const boxWidth = (pageWidth - (margin * 2));
-        
-        const customerInfo = [
-          `Nome: ${selectedCustomer.name}`,
-          `Telefone: ${selectedCustomer.phone}`,
-          `Endereço: ${selectedCustomer.address || 'Não informado'}`,
-        ];
-        currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 15, customerInfo);
 
-        const equipmentInfo = [
-          `Tipo: ${equipmentType}`,
-          `Marca / Modelo: ${equipment.brand} ${equipment.model}`,
-          `Nº Série: ${equipment.serial || 'Não informado'}`,
-          `Acessórios: ${accessories || 'Nenhum'}`,
-        ];
-        currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 20, equipmentInfo);
+        // Via Cliente
+        drawReceiptContent(10, "Via do Cliente");
         
-        const problemText = doc.splitTextToSize(reportedProblem || "Não informado", boxWidth - 4);
-        currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 15, problemText);
-
-        const servicesText = doc.splitTextToSize(technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
-        currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 20, servicesText);
-
-        if (items.length > 0) {
-          doc.autoTable({
-            startY: currentY,
-            head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-            body: items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
-            theme: 'grid',
-            headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
-            bodyStyles: { fontSize: 8, cellPadding: 1.5 },
-            footStyles: { fillColor: secondaryColor, textColor: fontColor },
-            margin: { left: margin, right: margin }
-          });
-          currentY = doc.lastAutoTable.finalY;
-        }
+        // Cut line
+        doc.setLineDashPattern([2, 1], 0);
+        doc.line(margin, halfPage, pageWidth - margin, halfPage);
+        doc.setLineDashPattern([], 0);
         
-        const grandTotal = calculateTotal();
-        currentY += 5;
-        
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(fontColor);
-        doc.text(`Valor Total: R$ ${grandTotal.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 6;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor(fontColor);
-        doc.text('Termos de Garantia e Serviço:', margin, currentY);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        currentY += 3;
-        
-        let warrantyText = `A garantia para os serviços prestados é de ${warranty}, cobrindo apenas o defeito reparado. A garantia não cobre danos por mau uso, quedas, líquidos ou sobrecarga elétrica.`;
-
-        if (orderToPrint.status === 'Entregue' && orderToPrint.deliveredDate && warranty) {
-            warrantyText = getWarrantyPeriodText(orderToPrint);
-        }
-
-        doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-        currentY += 12;
-        
-        doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
-        currentY += 4;
-        doc.setFontSize(9);
-        doc.setTextColor(fontColor);
-        doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center'});
+        // Via Loja
+        drawReceiptContent(halfPage + 10, "Via da Loja");
         
         doc.output('dataurlnewwindow');
     };
 
     if (companyInfo?.logoUrl) {
-        const img = new Image();
-        img.src = companyInfo.logoUrl;
-        img.onload = () => {
-            performGeneration(img);
-        };
-        img.onerror = () => {
-            console.error("Error loading logo for PDF, proceeding without it.");
-            performGeneration(null);
-        };
-    } else {
+      const img = new Image();
+      img.src = companyInfo.logoUrl;
+      img.crossOrigin = "anonymous";
+      img.onload = () => performGeneration(img);
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
         performGeneration(null);
+      };
+    } else {
+      performGeneration(null);
     }
   };
 
+
   const handlePrint = (documentType: string) => {
     switch (documentType) {
+      case 'Recibo de Entrada':
+        generateEntryReceiptPdf();
+        break;
       case 'Orçamento':
         generateQuotePdf();
         break;
-      case 'Reimpressão de OS':
-        const orderData = getFinalOrderData();
-        if (orderData) {
-            generateServiceOrderPdf(orderData);
-        }
+      case 'Recibo de Entrega':
+        generateDeliveryReceiptPdf();
         break;
       default:
         toast({
@@ -1009,8 +968,9 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         
         <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-between">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                 <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrada')}><Printer className="mr-2 h-4 w-4" />Recibo Entrada</Button>
                  <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Gerar Orçamento</Button>
-                 <Button variant="outline" size="sm" onClick={() => handlePrint('Reimpressão de OS')}><Printer className="mr-2 h-4 w-4" />Reimprimir OS</Button>
+                 <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrega')}><Printer className="mr-2 h-4 w-4" />Recibo Entrega</Button>
             </div>
             <div className="flex justify-end gap-2 mt-4 sm:mt-0">
                 <DialogClose asChild>

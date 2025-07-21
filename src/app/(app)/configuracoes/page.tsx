@@ -29,7 +29,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { APP_STORAGE_KEYS, getUsers, saveUsers, getLoggedInUser, getCompanyInfo, saveCompanyInfo } from '@/lib/storage';
+import { getUsers, saveUsers, getLoggedInUser, getCompanyInfo, saveCompanyInfo } from '@/lib/storage';
 import type { User, CompanyInfo } from '@/types';
 import Image from 'next/image';
 
@@ -79,14 +79,15 @@ export default function ConfiguracoesPage() {
           setSettings(JSON.parse(savedSettings));
         }
         
-        const [companyInfoData, usersData] = await Promise.all([
+        const [companyInfoData, usersData, loggedInUser] = await Promise.all([
             getCompanyInfo(),
-            getUsers()
+            getUsers(),
+            getLoggedInUser()
         ]);
         
         setCompanyInfo(companyInfoData || { name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '' });
         setUsers(usersData.filter(u => u.id !== MASTER_USER_ID));
-        setCurrentUser(getLoggedInUser());
+        setCurrentUser(loggedInUser);
       } catch (error) {
         console.error("Failed to load settings", error);
         toast({ variant: 'destructive', title: 'Erro ao carregar dados', description: 'Não foi possível buscar as informações do servidor.' });

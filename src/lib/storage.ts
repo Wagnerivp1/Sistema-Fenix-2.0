@@ -135,15 +135,3 @@ export const saveSettings = (settings: { defaultWarrantyDays: number }) => {
         window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     }
 };
-
-// For the data backup/restore functionality
-export const APP_STORAGE_KEYS = [
-  'assistec_customers',
-  'assistec_service_orders',
-  'assistec_stock',
-  'assistec_sales',
-  'assistec_financial_transactions',
-  'assistec_users',
-  'assistec_company_info',
-  'app_settings', // Keep settings in the backup
-];

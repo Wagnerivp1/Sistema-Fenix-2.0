@@ -1,2 +1,18 @@
-
-[]
+[
+  {
+    "id": "OS-1753065542800",
+    "customerName": "WAGNER LOPES ",
+    "equipment": "NO Advocacia Arruda  ERT",
+    "reportedProblem": "ZX\\ZX\\ZX",
+    "status": "Em análise",
+    "date": "2025-07-21",
+    "totalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "\\ZX\\ZX\\\\Z",
+    "serialNumber": "ERT",
+    "warranty": "90 dias",
+    "attendant": "Ana Leticia Boeno Lopes "
+  }
+]

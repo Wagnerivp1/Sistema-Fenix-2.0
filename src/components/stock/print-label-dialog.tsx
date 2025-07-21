@@ -33,7 +33,7 @@ const BarcodeSvgRenderer = ({ value, onRender }: { value: string; onRender: (svg
       const svgElement = barcodeRef.current.querySelector('svg');
       if (svgElement) {
         svgElement.setAttribute('width', '300');
-        svgElement.setAttribute('height', '60');
+        svgElement.setAttribute('height', '80');
         const serializer = new XMLSerializer();
         const svgString = serializer.serializeToString(svgElement);
         onRender(svgString);
@@ -43,7 +43,7 @@ const BarcodeSvgRenderer = ({ value, onRender }: { value: string; onRender: (svg
 
   return (
     <div ref={barcodeRef} style={{ position: 'absolute', top: '-9999px', left: '-9999px', zIndex: -100 }}>
-      <Barcode value={value || 'error'} width={1.2} height={30} fontSize={10} background="#FFFFFF" margin={2} />
+      <Barcode value={value || 'error'} width={2} height={40} fontSize={14} background="#FFFFFF" margin={5} />
     </div>
   );
 };
@@ -72,7 +72,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
     const canvas = document.createElement('canvas');
     canvas.width = 300;
-    canvas.height = 60;
+    canvas.height = 80;
     const ctx = canvas.getContext('2d');
     const img = new Image();
 
@@ -83,19 +83,26 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         const barcodeDataUrl = canvas.toDataURL('image/png');
 
-        const doc = new jsPDF();
+        const doc = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
         
-        const labelWidth = 40;
-        const labelHeight = 20;
-        const margin = { top: 10, left: 10 };
-        const gap = { x: 3, y: 3 };
+        const labelWidth = 100; // 10 cm
+        const labelHeight = 40;  // 4 cm
         const page = { width: 210, height: 297 };
+        const margin = { top: 10, left: 5 };
+        const gap = { x: 0, y: 0 };
+        const numCols = 2;
 
         let currentX = margin.left;
         let currentY = margin.top;
+        let col = 0;
         
         for(let i = 0; i < quantity; i++) {
-            if (currentX + labelWidth > page.width - margin.left) {
+            if (col >= numCols) {
+                col = 0;
                 currentX = margin.left;
                 currentY += labelHeight + gap.y;
             }
@@ -104,29 +111,29 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
                 doc.addPage();
                 currentY = margin.top;
                 currentX = margin.left;
+                col = 0;
             }
             
+            currentX = margin.left + (col * (labelWidth + gap.x));
+
             const centerX = currentX + labelWidth / 2;
 
-            doc.setDrawColor(200, 200, 200);
+            doc.setDrawColor(220, 220, 220); // Light gray border for preview
             doc.rect(currentX, currentY, labelWidth, labelHeight);
             
-            doc.setFontSize(6);
-            doc.setFont('helvetica', 'bold');
-            doc.text('JL Informática', centerX, currentY + 3, { align: 'center' });
-
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'normal');
-            const productNameLines = doc.splitTextToSize(item.name, labelWidth - 4);
-            doc.text(productNameLines, centerX, currentY + 6.5, { align: 'center', maxWidth: labelWidth - 4 });
-
             doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10); // leave some padding
+            doc.text(productNameLines, centerX, currentY + 8, { align: 'center', maxWidth: labelWidth - 10 });
+
+            doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 13, { align: 'center' });
+            doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 22, { align: 'center' });
+            
+            // Barcode image is wider now
+            doc.addImage(barcodeDataUrl, 'PNG', currentX + 15, currentY + 26, 70, 12);
 
-            doc.addImage(barcodeDataUrl, 'PNG', currentX + 3, currentY + 14, 34, 5);
-
-            currentX += labelWidth + gap.x;
+            col++;
         }
 
         doc.output('dataurlnewwindow');

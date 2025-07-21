@@ -102,9 +102,13 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   
   React.useEffect(() => {
     // Carrega clientes, estoque e usuário logado
-    setCustomers(getCustomers());
-    setStock(getStock());
-    setCurrentUser(getLoggedInUser());
+    const loadData = async () => {
+      const customersData = await getCustomers();
+      setCustomers(customersData);
+      setStock(getStock());
+      setCurrentUser(getLoggedInUser());
+    };
+    loadData();
   }, []);
 
   React.useEffect(() => {

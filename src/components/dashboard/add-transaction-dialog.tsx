@@ -22,12 +22,13 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { FinancialTransaction } from '@/types';
+import { Printer } from 'lucide-react';
 
 interface AddTransactionDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   type: 'receita' | 'despesa';
-  onSave: (transaction: Omit<FinancialTransaction, 'id' | 'relatedSaleId' | 'relatedServiceOrderId'>) => void;
+  onSave: (transaction: Omit<FinancialTransaction, 'id' | 'relatedSaleId' | 'relatedServiceOrderId'>, printReceipt: boolean) => void;
 }
 
 const initialFormState = {
@@ -63,7 +64,7 @@ export function AddTransactionDialog({ isOpen, onOpenChange, type, onSave }: Add
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = (printReceipt: boolean) => {
     if (!formData.description || formData.amount <= 0) {
       toast({
         variant: 'destructive',
@@ -73,7 +74,7 @@ export function AddTransactionDialog({ isOpen, onOpenChange, type, onSave }: Add
       return;
     }
 
-    onSave({ ...formData, type });
+    onSave({ ...formData, type }, printReceipt);
   };
 
   const title = type === 'receita' ? 'Adicionar Receita Avulsa' : 'Adicionar Nova Despesa';
@@ -157,9 +158,15 @@ export function AddTransactionDialog({ isOpen, onOpenChange, type, onSave }: Add
             </Select>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave}>Salvar Lançamento</Button>
+        <DialogFooter className="sm:justify-between">
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <div className="flex gap-2">
+                <Button variant="outline" onClick={() => handleSave(false)}>Salvar Lançamento</Button>
+                <Button onClick={() => handleSave(true)}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Salvar e Imprimir
+                </Button>
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

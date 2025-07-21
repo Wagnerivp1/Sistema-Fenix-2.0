@@ -3,6 +3,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { StatsCards } from '@/components/dashboard/stats-cards';
 import { RecentOrdersTable } from '@/components/dashboard/recent-orders-table';
 import { AlertsAndNotifications } from '@/components/dashboard/alerts-and-notifications';
@@ -18,7 +20,14 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { AddTransactionDialog } from '@/components/dashboard/add-transaction-dialog';
 import { FinancialTransaction } from '@/types';
-import { getFinancialTransactions, saveFinancialTransactions } from '@/lib/storage';
+import { getFinancialTransactions, saveFinancialTransactions, getCompanyInfo } from '@/lib/storage';
+
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+      lastAutoTable: { finalY: number };
+    }
+}
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -26,12 +35,99 @@ export default function DashboardPage() {
 
   const [isIncomeDialogOpen, setIsIncomeDialogOpen] = React.useState(false);
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = React.useState(false);
+  
+  const formatDateForDisplay = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  };
+  
+  const generateReceiptPdf = async (transaction: FinancialTransaction) => {
+    const companyInfo = await getCompanyInfo();
+
+    const generateContent = (logoImage: HTMLImageElement | null = null) => {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 15;
+      const fontColor = '#000000';
+      let currentY = 12;
+
+      // Header
+      if (logoImage) {
+        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
+      }
+      const companyInfoX = margin + (logoImage ? 30 : 0);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(fontColor);
+      doc.setFontSize(16);
+      doc.text(companyInfo.name || "Recibo", companyInfoX, currentY + 10);
+      
+      const title = transaction.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
+      doc.setFontSize(20);
+      doc.text(title, pageWidth / 2, currentY + 30, { align: 'center' });
+      currentY += 45;
+
+      // Body
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Pelo presente, declaramos ter ${transaction.type === 'receita' ? 'recebido' : 'pago'} a quantia de:`, margin, currentY);
+      currentY += 10;
+      
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`R$ ${transaction.amount.toFixed(2)}`, margin, currentY);
+      currentY += 15;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.text(`Referente a: ${transaction.description}`, margin, currentY);
+      currentY += 15;
+
+      // Details
+      doc.autoTable({
+        startY: currentY,
+        theme: 'plain',
+        styles: { fontSize: 10 },
+        body: [
+          [{content: 'Data:', styles: {fontStyle: 'bold'}}, formatDateForDisplay(transaction.date)],
+          [{content: 'Forma de Pag.:', styles: {fontStyle: 'bold'}}, transaction.paymentMethod],
+          [{content: 'Categoria:', styles: {fontStyle: 'bold'}}, transaction.category],
+        ],
+        columnStyles: { 0: { cellWidth: 35 } },
+      });
+      currentY = doc.lastAutoTable.finalY + 30;
+
+      // Signature
+      const city = companyInfo.address?.split('-')[0]?.split(',')[1]?.trim() || "___________________";
+      doc.text(`${city}, ${new Date().toLocaleDateString('pt-BR')}.`, pageWidth / 2, currentY, { align: 'center'});
+      currentY += 20;
+
+      doc.line(margin + 40, currentY, pageWidth - margin - 40, currentY);
+      doc.text(companyInfo.name || 'Assinatura', pageWidth / 2, currentY + 5, { align: 'center'});
+      
+      doc.autoPrint();
+      doc.output('dataurlnewwindow');
+    };
+    
+    if (companyInfo?.logoUrl) {
+      const img = new Image();
+      img.src = companyInfo.logoUrl;
+      img.onload = () => generateContent(img);
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
+        generateContent();
+      };
+    } else {
+      generateContent();
+    }
+  };
+
 
   const handleNewSale = () => {
     router.push('/vendas');
   };
   
-  const handleAddTransaction = async (transaction: Omit<FinancialTransaction, 'id'>) => {
+  const handleAddTransaction = async (transaction: Omit<FinancialTransaction, 'id'>, printReceipt: boolean) => {
     const existingTransactions = await getFinancialTransactions();
     const newTransaction: FinancialTransaction = {
       ...transaction,
@@ -44,6 +140,10 @@ export default function DashboardPage() {
     });
     setIsIncomeDialogOpen(false);
     setIsExpenseDialogOpen(false);
+    
+    if (printReceipt) {
+        await generateReceiptPdf(newTransaction);
+    }
   };
 
   React.useEffect(() => {

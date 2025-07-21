@@ -24,6 +24,10 @@ export default function DashboardPage() {
   const handleNewSale = () => {
     router.push('/vendas');
   };
+  
+  const handleNavigateToFinanceiro = () => {
+    router.push('/financeiro');
+  }
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -41,10 +45,12 @@ export default function DashboardPage() {
         handleNewSale();
       } else if (event.shiftKey && key === 'R') {
         event.preventDefault();
-        toast({ title: 'Atalho Shift+R', description: 'Funcionalidade "Adicionar Receita" ainda não implementada.' });
+        toast({ title: 'Redirecionando...', description: 'Abrindo a tela de controle financeiro.' });
+        handleNavigateToFinanceiro();
       } else if (event.shiftKey && key === 'D') {
         event.preventDefault();
-        toast({ title: 'Atalho Shift+D', description: 'Funcionalidade "Adicionar Despesa" ainda não implementada.' });
+        toast({ title: 'Redirecionando...', description: 'Abrindo a tela de controle financeiro.' });
+        handleNavigateToFinanceiro();
       }
     };
 
@@ -71,14 +77,14 @@ export default function DashboardPage() {
               F2
             </kbd>
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleNavigateToFinanceiro}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Adicionar Receita
              <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
               Shift+R
             </kbd>
           </Button>
-          <Button variant="destructive">
+          <Button variant="outline" onClick={handleNavigateToFinanceiro}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Adicionar Despesa
              <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">

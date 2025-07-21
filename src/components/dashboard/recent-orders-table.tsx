@@ -37,9 +37,12 @@ export function RecentOrdersTable() {
   const [recentOrders, setRecentOrders] = React.useState<ServiceOrder[]>([]);
 
   React.useEffect(() => {
-    const allOrders = getServiceOrders();
-    const sortedOrders = [...allOrders].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-    setRecentOrders(sortedOrders);
+    const loadData = async () => {
+      const allOrders = await getServiceOrders();
+      const sortedOrders = [...allOrders].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+      setRecentOrders(sortedOrders);
+    };
+    loadData();
   }, []);
 
 

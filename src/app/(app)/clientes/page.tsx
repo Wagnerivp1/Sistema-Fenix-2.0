@@ -72,10 +72,14 @@ export default function CustomersPage() {
   const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = React.useState(false);
   
   React.useEffect(() => {
-    // TODO: Convert to async API call
-    const loadData = () => {
-        setCustomers(getCustomers());
-        setServiceOrders(getServiceOrders());
+    const loadData = async () => {
+        setIsLoading(true);
+        const [customersData, serviceOrdersData] = await Promise.all([
+            getCustomers(),
+            getServiceOrders()
+        ]);
+        setCustomers(customersData);
+        setServiceOrders(serviceOrdersData);
         setIsLoading(false);
     };
     loadData();
@@ -110,10 +114,10 @@ export default function CustomersPage() {
     }
   };
   
-  const handleUpdateCustomer = (updatedCustomer: Customer) => {
+  const handleUpdateCustomer = async (updatedCustomer: Customer) => {
     const updatedCustomers = customers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c);
+    await saveCustomers(updatedCustomers);
     setCustomers(updatedCustomers);
-    saveCustomers(updatedCustomers); // Save to localStorage
     setSelectedCustomer(updatedCustomer);
     toast({
       title: 'Cliente atualizado!',
@@ -122,10 +126,10 @@ export default function CustomersPage() {
     setIsEditDialogOpen(false);
   };
 
-  const handleDeleteCustomer = (customerId: string) => {
+  const handleDeleteCustomer = async (customerId: string) => {
     const updatedCustomers = customers.filter(c => c.id !== customerId);
+    await saveCustomers(updatedCustomers);
     setCustomers(updatedCustomers);
-    saveCustomers(updatedCustomers); // Save to localStorage
     setSelectedCustomer(null);
     setCustomerServiceHistory([]);
     toast({

@@ -8,24 +8,28 @@ const API_BASE_URL = '/api/data';
 
 // --- Helper Functions for API communication ---
 
-async function fetchData<T>(dataType: string, fallback: T[] = []): Promise<T[]> {
+async function fetchData<T>(dataType: string): Promise<T> {
   if (typeof window === 'undefined') {
-    return fallback;
+    // This is a sensible default for server-side rendering or build steps.
+    // The specific fallback should be handled by the caller.
+    return (dataType === 'companyInfo' ? {} : []) as T;
   }
   try {
     const response = await fetch(`${API_BASE_URL}/${dataType}`);
     if (!response.ok) {
       console.error(`Error fetching ${dataType}:`, response.statusText);
-      return fallback;
+      // Return a default value based on expected type
+      return (dataType === 'companyInfo' ? {} : []) as T;
     }
     return await response.json();
   } catch (error) {
     console.error(`Error fetching ${dataType}:`, error);
-    return fallback;
+    return (dataType === 'companyInfo' ? {} : []) as T;
   }
 }
 
-async function saveData<T>(dataType: string, data: T[]): Promise<void> {
+
+async function saveData<T>(dataType: string, data: T): Promise<void> {
     if (typeof window === 'undefined') {
         return;
     }
@@ -66,7 +70,7 @@ export const APP_STORAGE_KEYS = [
 
 
 // Generic getter
-function getFromStorage<T>(key: string, fallback: T[] = []): T[] {
+function getFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') {
     return fallback;
   }
@@ -81,7 +85,7 @@ function getFromStorage<T>(key: string, fallback: T[] = []): T[] {
 }
 
 // Generic setter
-function saveToStorage<T>(key: string, data: T[]): void {
+function saveToStorage<T>(key: string, data: T): void {
   if (typeof window === 'undefined') {
     return;
   }
@@ -93,26 +97,36 @@ function saveToStorage<T>(key: string, data: T[]): void {
   }
 }
 
-// Customer functions
-// TODO: Convert to async and use API
-export const getCustomers = (): Customer[] => getFromStorage(CUSTOMERS_KEY);
-export const saveCustomers = (customers: Customer[]): void => saveToStorage(CUSTOMERS_KEY, customers);
+// --- DATA HOOKS ---
+// These functions will now be async and fetch from the API
+
+export const getCustomers = async (): Promise<Customer[]> => {
+    return fetchData<Customer[]>('customers');
+}
+export const saveCustomers = async (customers: Customer[]): Promise<void> => {
+    return saveData('customers', customers);
+}
+
+export const getServiceOrders = async (): Promise<ServiceOrder[]> => {
+    return fetchData<ServiceOrder[]>('serviceOrders');
+}
+
+export const saveServiceOrders = async (orders: ServiceOrder[]): Promise<void> => {
+    return saveData('serviceOrders', orders);
+}
 
 
-// Service Order functions
-export const getServiceOrders = (): ServiceOrder[] => getFromStorage(SERVICE_ORDERS_KEY);
-export const saveServiceOrders = (orders: ServiceOrder[]): void => saveToStorage(SERVICE_ORDERS_KEY, orders);
-
+// TODO: Convert remaining functions to use the API
 // Stock functions
-export const getStock = (): StockItem[] => getFromStorage(STOCK_KEY);
+export const getStock = (): StockItem[] => getFromStorage(STOCK_KEY, []);
 export const saveStock = (stock: StockItem[]): void => saveToStorage(STOCK_KEY, stock);
 
 // Sales functions
-export const getSales = (): Sale[] => getFromStorage(SALES_KEY);
+export const getSales = (): Sale[] => getFromStorage(SALES_KEY, []);
 export const saveSales = (sales: Sale[]): void => saveToStorage(SALES_KEY, sales);
 
 // Financial Transactions functions
-export const getFinancialTransactions = (): FinancialTransaction[] => getFromStorage(FINANCIAL_TRANSACTIONS_KEY);
+export const getFinancialTransactions = (): FinancialTransaction[] => getFromStorage(FINANCIAL_TRANSACTIONS_KEY, []);
 export const saveFinancialTransactions = (transactions: FinancialTransaction[]): void => saveToStorage(FINANCIAL_TRANSACTIONS_KEY, transactions);
 
 // User functions
@@ -121,7 +135,7 @@ const masterUser: User = { id: MASTER_USER_ID, name: 'Master User', username: 'm
 const defaultAdmin: User = { id: 'admin-0', name: 'Administrador Padrão', username: 'admin', password: 'admin', role: 'admin', active: true, phone: '' };
 
 export const getUsers = (): User[] => {
-    const users = getFromStorage<User>(USERS_KEY);
+    const users = getFromStorage<User[]>(USERS_KEY, []);
     
     // Ensure default admin exists if no users are present
     if (users.length === 0) {
@@ -174,14 +188,7 @@ const defaultCompanyInfo: CompanyInfo = {
 };
 
 export const getCompanyInfo = (): CompanyInfo => {
-    if (typeof window === 'undefined') return defaultCompanyInfo;
-    try {
-        const item = window.localStorage.getItem(COMPANY_INFO_KEY);
-        return item ? JSON.parse(item) : defaultCompanyInfo;
-    } catch (error) {
-        console.error('Error reading company info:', error);
-        return defaultCompanyInfo;
-    }
+    return getFromStorage<CompanyInfo>(COMPANY_INFO_KEY, defaultCompanyInfo);
 }
 
 export const saveCompanyInfo = (info: CompanyInfo): void => {

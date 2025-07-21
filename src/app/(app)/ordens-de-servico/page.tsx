@@ -102,21 +102,27 @@ export default function ServiceOrdersPage() {
 
   React.useEffect(() => {
     // Load data from localStorage on mount
-    const loadedOrders = getServiceOrders();
-    const loadedCustomers = getCustomers();
-    const loggedInUser = getLoggedInUser();
+    const loadData = async () => {
+        setIsLoading(true);
+        const [loadedOrders, loadedCustomers] = await Promise.all([
+            getServiceOrders(),
+            getCustomers()
+        ]);
+        const loggedInUser = getLoggedInUser();
 
-    setOrders(loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setCustomers(loadedCustomers);
-    setCurrentUser(loggedInUser);
-    setIsLoading(false);
+        setOrders(loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setCustomers(loadedCustomers);
+        setCurrentUser(loggedInUser);
+        setIsLoading(false);
 
-    if (customerId) {
-      const customer = loadedCustomers.find(c => c.id === customerId);
-      if (customer) {
-        handleNewOrderClick(customer);
-      }
+        if (customerId) {
+          const customer = loadedCustomers.find(c => c.id === customerId);
+          if (customer) {
+            handleNewOrderClick(customer);
+          }
+        }
     }
+    loadData();
   }, [customerId]);
 
   React.useEffect(() => {
@@ -162,13 +168,12 @@ export default function ServiceOrdersPage() {
   }
 
   const handleViewCommentsClick = (order: ServiceOrder) => {
-    // Sempre busca a versão mais recente do estado
     const currentOrder = orders.find(o => o.id === order.id);
     setCommentsOrder(currentOrder || order);
     setIsCommentsDialogOpen(true);
   }
   
-  const handleCommentAdded = (orderId: string, commentText: string) => {
+  const handleCommentAdded = async (orderId: string, commentText: string) => {
     if (!currentUser) return;
     
     const commentToAdd: InternalNote = {
@@ -179,7 +184,6 @@ export default function ServiceOrdersPage() {
     
     const updatedOrders = orders.map(o => {
       if (o.id === orderId) {
-        // Assegura que internalNotes seja um array
         const existingNotes = Array.isArray(o.internalNotes) ? o.internalNotes : [];
         return {
           ...o,
@@ -188,11 +192,10 @@ export default function ServiceOrdersPage() {
       }
       return o;
     });
-
-    setOrders(updatedOrders);
-    saveServiceOrders(updatedOrders);
     
-    // Atualiza o estado do diálogo se ele estiver aberto para a OS modificada
+    await saveServiceOrders(updatedOrders);
+    setOrders(updatedOrders);
+    
     if (commentsOrder && commentsOrder.id === orderId) {
       const freshOrderData = updatedOrders.find(o => o.id === orderId);
       if (freshOrderData) {
@@ -206,16 +209,14 @@ export default function ServiceOrdersPage() {
     });
   }
 
-  const handleSaveOrder = (savedOrder: ServiceOrder) => {
+  const handleSaveOrder = async (savedOrder: ServiceOrder) => {
     let updatedOrders;
     const orderExists = orders.some(o => o.id === savedOrder.id);
     const finalOrder = { ...savedOrder };
 
-    // Se o status for 'Entregue' e não houver data de entrega, defina-a
     if (finalOrder.status === 'Entregue' && !finalOrder.deliveredDate) {
       finalOrder.deliveredDate = new Date().toISOString().split('T')[0];
     }
-    // Se o status não for mais 'Entregue', limpe a data de entrega
     else if (finalOrder.status !== 'Entregue') {
       delete finalOrder.deliveredDate;
     }
@@ -234,17 +235,18 @@ export default function ServiceOrdersPage() {
         });
     }
     
-    setOrders(updatedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    saveServiceOrders(updatedOrders); // Save to localStorage
+    const sortedOrders = updatedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    await saveServiceOrders(sortedOrders);
+    setOrders(sortedOrders); 
     handleSheetOpenChange(false);
   }
 
-  const handleReopenOrder = (orderId: string) => {
+  const handleReopenOrder = async (orderId: string) => {
     const updatedOrders = orders.map(o => 
       o.id === orderId ? { ...o, status: 'Aberta' as const } : o
     );
+    await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
-    saveServiceOrders(updatedOrders);
     toast({
       title: 'Ordem de Serviço Reaberta!',
       description: `A OS #${orderId.slice(-4)} foi movida para o status "Aberta".`,

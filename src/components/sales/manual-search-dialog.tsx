@@ -35,6 +35,14 @@ export function ManualSearchDialog({
   onProductSelect,
 }: ManualSearchDialogProps) {
   const { toast } = useToast();
+  const [searchValue, setSearchValue] = React.useState('');
+
+  const filteredStock = React.useMemo(() => {
+    if (!searchValue) return stockItems;
+    return stockItems.filter(item =>
+      item.name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [stockItems, searchValue]);
 
   const handleSelect = (productName: string) => {
     const product = stockItems.find(item => item.name === productName);
@@ -51,6 +59,12 @@ export function ManualSearchDialog({
     }
     onOpenChange(false);
   };
+  
+  React.useEffect(() => {
+    if(!isOpen) {
+      setSearchValue('');
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -59,16 +73,20 @@ export function ManualSearchDialog({
           <DialogTitle>Busca Manual de Produto</DialogTitle>
           <DialogDescription>Selecione um produto da lista para adicioná-lo à venda.</DialogDescription>
         </DialogHeader>
-        <Command shouldFilter={true}>
-          <CommandInput placeholder="Digite para buscar um produto..." />
+        <Command>
+          <CommandInput
+            placeholder="Digite para buscar um produto..."
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandList>
             <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
             <CommandGroup>
-              {stockItems.map((item) => (
+              {filteredStock.map((item) => (
                 <CommandItem
                   key={item.id}
                   value={item.name}
-                  onSelect={handleSelect}
+                  onSelect={() => handleSelect(item.name)}
                   className="flex justify-between items-center"
                 >
                   <div className="flex items-center gap-3">

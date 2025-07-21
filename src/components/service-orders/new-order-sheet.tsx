@@ -258,158 +258,158 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   };
 
   const generateQuotePdf = () => {
-    const companyInfo = getCompanyInfo();
     const orderData = getFinalOrderData();
-
     if (!orderData) {
-        toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
-        return;
+      toast({ variant: 'destructive', title: 'Dados Incompletos', description: 'Preencha os dados do cliente e equipamento.' });
+      return;
     }
-
+  
+    const companyInfo = getCompanyInfo();
+  
     const performPdfGeneration = (logoImage: HTMLImageElement | null) => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 15;
-        let currentY = 12;
-        const fontColor = '#000000';
-        const primaryColor = '#e0e7ff';
-        const secondaryColor = '#f3f4f6';
-
-        // Header
-        if (logoImage) {
-            const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20 * logoAR, 20);
-        }
-        
-        const companyInfoX = margin + (logoImage ? 25 : 0);
-        doc.setFont('helvetica');
-        doc.setTextColor(fontColor);
-        
-        if (companyInfo.name) {
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name, companyInfoX, currentY + 6);
-        }
-        if (companyInfo.address) {
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text(companyInfo.address, companyInfoX, currentY + 12);
-        }
-        if (companyInfo.phone || companyInfo.emailOrSite) {
-            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
-        }
-
-        doc.setFontSize(14);
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 15;
+      let currentY = 12;
+      const fontColor = '#000000';
+      const primaryColor = '#e0e7ff';
+      const secondaryColor = '#f3f4f6';
+  
+      // Header
+      if (logoImage) {
+        const logoAR = logoImage.width / logoImage.height;
+        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20 * logoAR, 20);
+      }
+      
+      const companyInfoX = margin + (logoImage ? 25 : 0);
+      doc.setFont('helvetica');
+      doc.setTextColor(fontColor);
+      
+      if (companyInfo.name) {
+        doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text("Orçamento de Serviço", pageWidth - margin, currentY + 6, { align: 'right' });
-        doc.setFontSize(10);
+        doc.text(companyInfo.name, companyInfoX, currentY + 6);
+      }
+      if (companyInfo.address) {
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Nº: #${orderData.id.slice(-4)}`, pageWidth - margin, currentY + 12, { align: 'right' });
-        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
-
-        currentY = 40;
-
-        // Content
-        const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
-          const textArray = Array.isArray(text) ? text : [text];
-          const textHeight = doc.getTextDimensions(textArray).h;
-          const boxHeight = Math.max(minHeight, textHeight + 4);
-          
-          doc.setFillColor(primaryColor);
-          doc.rect(x, y, width, 6, 'F');
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.setTextColor(fontColor);
-          doc.text(title, x + 2, y + 4.5);
-          
-          doc.setDrawColor(primaryColor);
-          doc.rect(x, y + 6, width, boxHeight, 'S');
-
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          doc.setTextColor(fontColor);
-          doc.text(textArray, x + 2, y + 10);
-
-          return y + boxHeight + 8;
-        };
-
-        const boxWidth = (pageWidth - (margin * 2));
+        doc.text(companyInfo.address, companyInfoX, currentY + 12);
+      }
+      if (companyInfo.phone || companyInfo.emailOrSite) {
+        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
+      }
+  
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text("Orçamento de Serviço", pageWidth - margin, currentY + 6, { align: 'right' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Nº: #${orderData.id.slice(-4)}`, pageWidth - margin, currentY + 12, { align: 'right' });
+      doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
+  
+      currentY = 40;
+  
+      // Content
+      const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
+        const textArray = Array.isArray(text) ? text : [text];
+        const textHeight = doc.getTextDimensions(textArray).h;
+        const boxHeight = Math.max(minHeight, textHeight + 4);
         
-        const customer = customers.find(c => c.id === selectedCustomerId);
-        const customerInfo = [
-          `Nome: ${customer?.name}`,
-          `Telefone: ${customer?.phone}`,
-          `Endereço: ${customer?.address || 'Não informado'}`,
-        ];
-        currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 15, customerInfo);
-
-        const equipmentInfo = [
-          `Equipamento: ${orderData.equipment}`,
-          `Nº Série: ${orderData.serialNumber || 'Não informado'}`,
-          `Acessórios: ${orderData.accessories || 'Nenhum'}`,
-        ];
-        currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 15, equipmentInfo);
-        
-        const problemText = doc.splitTextToSize(orderData.reportedProblem || "Não informado", boxWidth - 4);
-        currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 15, problemText);
-
-        const servicesText = doc.splitTextToSize(orderData.technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
-        currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 20, servicesText);
-
-        if (orderData.items && orderData.items.length > 0) {
-          doc.autoTable({
-            startY: currentY,
-            head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-            body: orderData.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
-            theme: 'grid',
-            headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
-            bodyStyles: { fontSize: 8, cellPadding: 1.5 },
-            footStyles: { fillColor: secondaryColor, textColor: fontColor },
-            margin: { left: margin, right: margin }
-          });
-          currentY = doc.lastAutoTable.finalY;
-        }
-        
-        currentY += 5;
-        
+        doc.setFillColor(primaryColor);
+        doc.rect(x, y, width, 6, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(fontColor);
-        doc.text(`Valor Total: R$ ${orderData.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 6;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor(fontColor);
-        doc.text('Validade e Condições:', margin, currentY);
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        currentY += 3;
-        const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
-        doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
-        currentY += 12;
-        
-        doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
-        currentY += 4;
         doc.setFontSize(9);
         doc.setTextColor(fontColor);
-        doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
-
-        doc.output('dataurlnewwindow');
+        doc.text(title, x + 2, y + 4.5);
+        
+        doc.setDrawColor(primaryColor);
+        doc.rect(x, y + 6, width, boxHeight, 'S');
+  
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(fontColor);
+        doc.text(textArray, x + 2, y + 10);
+  
+        return y + boxHeight + 8;
+      };
+  
+      const boxWidth = (pageWidth - (margin * 2));
+      
+      const customer = customers.find(c => c.id === selectedCustomerId);
+      const customerInfo = [
+        `Nome: ${customer?.name}`,
+        `Telefone: ${customer?.phone}`,
+        `Endereço: ${customer?.address || 'Não informado'}`,
+      ];
+      currentY = drawBoxWithTitle('Dados do Cliente', margin, currentY, boxWidth, 15, customerInfo);
+  
+      const equipmentInfo = [
+        `Equipamento: ${orderData.equipment}`,
+        `Nº Série: ${orderData.serialNumber || 'Não informado'}`,
+        `Acessórios: ${orderData.accessories || 'Nenhum'}`,
+      ];
+      currentY = drawBoxWithTitle('Informações do Equipamento', margin, currentY, boxWidth, 15, equipmentInfo);
+      
+      const problemText = doc.splitTextToSize(orderData.reportedProblem || "Não informado", boxWidth - 4);
+      currentY = drawBoxWithTitle('Defeito Reclamado', margin, currentY, boxWidth, 15, problemText);
+  
+      const servicesText = doc.splitTextToSize(orderData.technicalReport || 'Aguardando diagnóstico técnico.', boxWidth - 4);
+      currentY = drawBoxWithTitle('Diagnóstico / Laudo Técnico', margin, currentY, boxWidth, 20, servicesText);
+  
+      if (orderData.items && orderData.items.length > 0) {
+        doc.autoTable({
+          startY: currentY,
+          head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
+          body: orderData.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+          theme: 'grid',
+          headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
+          bodyStyles: { fontSize: 8, cellPadding: 1.5 },
+          footStyles: { fillColor: secondaryColor, textColor: fontColor },
+          margin: { left: margin, right: margin }
+        });
+        currentY = doc.lastAutoTable.finalY;
+      }
+      
+      currentY += 5;
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(fontColor);
+      doc.text(`Valor Total: R$ ${orderData.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
+      currentY += 6;
+  
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(fontColor);
+      doc.text('Validade e Condições:', margin, currentY);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      currentY += 3;
+      const warrantyText = "Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente. Peças e serviços podem ser alterados após análise técnica.";
+      doc.text(doc.splitTextToSize(warrantyText, pageWidth - (margin * 2)), margin, currentY);
+      currentY += 12;
+      
+      doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
+      currentY += 4;
+      doc.setFontSize(9);
+      doc.setTextColor(fontColor);
+      doc.text('Assinatura do Cliente (Aprovação)', pageWidth / 2, currentY, { align: 'center'});
+  
+      doc.output('dataurlnewwindow');
     };
-
+  
     if (companyInfo?.logoUrl) {
-        const img = new Image();
-        img.src = companyInfo.logoUrl;
-        img.crossOrigin = 'anonymous'; // Important for data URIs
-        img.onload = () => performPdfGeneration(img);
-        img.onerror = () => {
-            console.error("Error loading logo, proceeding without it.");
-            performPdfGeneration(null);
-        };
-    } else {
+      const img = new Image();
+      img.src = companyInfo.logoUrl;
+      img.crossOrigin = 'anonymous'; // Important for data URIs
+      img.onload = () => performPdfGeneration(img);
+      img.onerror = () => {
+        console.error("Error loading logo, proceeding without it.");
         performPdfGeneration(null);
+      };
+    } else {
+      performPdfGeneration(null);
     }
   };
 
@@ -455,94 +455,94 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     const companyInfo = getCompanyInfo();
     
     const performGeneration = (logoImage: HTMLImageElement | null) => {
-        const doc = new jsPDF();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 10;
-        const halfPage = pageHeight / 2;
+      const doc = new jsPDF();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 10;
+      const halfPage = pageHeight / 2;
+  
+      const drawReceiptContent = (yOffset: number, via: string) => {
+        let localY = yOffset;
+        const osId = `#${orderToPrint.id.slice(-4)}`;
+        const customer = customers.find(c => c.name === orderToPrint.customerName);
+  
+        if (!customer) return;
+  
+        // Header
+        if (logoImage) {
+          doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY, 15, 15);
+        }
+        const companyInfoX = margin + (logoImage ? 20 : 0);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(companyInfo.name || "", companyInfoX, localY + 4);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(companyInfo.address || "", companyInfoX, localY + 8);
         
-        const drawReceiptContent = (yOffset: number, via: string) => {
-            let localY = yOffset;
-            const osId = `#${orderToPrint.id.slice(-4)}`;
-            const customer = customers.find(c => c.name === orderToPrint.customerName);
-
-            if (!customer) return;
-
-            // Header
-            if (logoImage) {
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY, 15, 15);
-            }
-            const companyInfoX = margin + (logoImage ? 20 : 0);
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name || "", companyInfoX, localY + 4);
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text(companyInfo.address || "", companyInfoX, localY + 8);
-            
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Recibo de Entrega', pageWidth - margin, localY + 4, { align: 'right' });
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
-            
-            localY += 18;
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(via, pageWidth / 2, localY, { align: 'center' });
-            localY += 7;
-
-            // Content
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Cliente:', margin, localY);
-            doc.setFont('helvetica', 'normal');
-            doc.text(customer.name, margin + 15, localY);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Data Entrega:', margin + 120, localY);
-            doc.setFont('helvetica', 'normal');
-            doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, localY);
-            localY += 5;
-
-            doc.setFont('helvetica', 'bold');
-            doc.text('Equipamento:', margin, localY);
-            doc.setFont('helvetica', 'normal');
-            doc.text(orderToPrint.equipment, margin + 22, localY);
-            localY += 5;
-
-            doc.setFont('helvetica', 'bold');
-            doc.text('Garantia:', margin, localY);
-            doc.setFont('helvetica', 'normal');
-            const warrantyText = getWarrantyPeriodText(orderToPrint);
-            const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2 - 17);
-            doc.text(warrantyLines, margin + 17, localY);
-            localY += (warrantyLines.length * 4) + 10;
-
-            const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
-            doc.setFontSize(8);
-            doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
-            localY += 20;
-
-            // Signature
-            doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
-            localY += 4;
-            doc.setFontSize(9);
-            doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
-        };
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Recibo de Entrega', pageWidth - margin, localY + 4, { align: 'right' });
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
         
-        // Via Cliente
-        drawReceiptContent(10, "Via do Cliente");
-        
-        // Cut line
-        doc.setLineDashPattern([2, 1], 0);
-        doc.line(margin, halfPage, pageWidth - margin, halfPage);
-        doc.setLineDashPattern([], 0);
-        
-        // Via Loja
-        drawReceiptContent(halfPage + 10, "Via da Loja");
-        
-        doc.output('dataurlnewwindow');
+        localY += 18;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(via, pageWidth / 2, localY, { align: 'center' });
+        localY += 7;
+  
+        // Content
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Cliente:', margin, localY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(customer.name, margin + 15, localY);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Data Entrega:', margin + 120, localY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, localY);
+        localY += 5;
+  
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipamento:', margin, localY);
+        doc.setFont('helvetica', 'normal');
+        doc.text(orderToPrint.equipment, margin + 22, localY);
+        localY += 5;
+  
+        doc.setFont('helvetica', 'bold');
+        doc.text('Garantia:', margin, localY);
+        doc.setFont('helvetica', 'normal');
+        const warrantyText = getWarrantyPeriodText(orderToPrint);
+        const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2 - 17);
+        doc.text(warrantyLines, margin + 17, localY);
+        localY += (warrantyLines.length * 4) + 10;
+  
+        const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
+        doc.setFontSize(8);
+        doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
+        localY += 20;
+  
+        // Signature
+        doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
+        localY += 4;
+        doc.setFontSize(9);
+        doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
+      };
+      
+      // Via Cliente
+      drawReceiptContent(10, "Via do Cliente");
+      
+      // Cut line
+      doc.setLineDashPattern([2, 1], 0);
+      doc.line(margin, halfPage, pageWidth - margin, halfPage);
+      doc.setLineDashPattern([], 0);
+      
+      // Via Loja
+      drawReceiptContent(halfPage + 10, "Via da Loja");
+      
+      doc.output('dataurlnewwindow');
     };
 
     if (companyInfo?.logoUrl) {
@@ -640,10 +640,11 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             doc.text(orderToPrint.accessories || 'Nenhum', margin + 20, localY);
             localY += 10;
 
-            const termsText = "Declaro que o equipamento acima foi entregue para análise e orçamento. O prazo para orçamento é de 3 dias úteis. A garantia do serviço é de 90 dias, cobrindo apenas o defeito reparado.";
+            const termsText = "Declaro que o equipamento acima foi entregue para análise e orçamento. O prazo para orçamento é de 3 dias úteis. A apresentação deste recibo é obrigatória para a retirada do equipamento.";
             doc.setFontSize(7);
-            doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
-            localY += 20;
+            const textLines = doc.splitTextToSize(termsText, pageWidth - margin * 2);
+            doc.text(textLines, margin, localY);
+            localY += (textLines.length * 4) + 10;
 
             // Signature
             doc.line(margin + 30, localY, pageWidth - margin - 30, localY);

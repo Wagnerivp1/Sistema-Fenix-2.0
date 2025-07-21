@@ -14,62 +14,37 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import type { ServiceOrder, InternalNote, User } from '@/types';
-import { getLoggedInUser, saveServiceOrders, getServiceOrders } from '@/lib/storage';
-import { useToast } from '@/hooks/use-toast';
+import type { ServiceOrder, InternalNote } from '@/types';
 
 interface ViewCommentsDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   serviceOrder: ServiceOrder | null;
-  onCommentAdded: (updatedOrder: ServiceOrder) => void;
+  onCommentAdd: (orderId: string, commentText: string) => void;
 }
 
-const sortNotesChronologically = (notes: InternalNote[] = []): InternalNote[] => {
+const sortNotesChronologically = (notes: InternalNote[] | string | undefined): InternalNote[] => {
+  if (!notes) return [];
+  // Retrocompatibilidade: se for uma string, converte para o formato de array
+  if (typeof notes === 'string') {
+    return [{ user: 'Sistema', date: new Date(0).toISOString(), comment: notes }];
+  }
   return [...notes].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
-export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onCommentAdded }: ViewCommentsDialogProps) {
-  const { toast } = useToast();
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onCommentAdd }: ViewCommentsDialogProps) {
   const [newComment, setNewComment] = React.useState('');
 
   React.useEffect(() => {
     if (isOpen) {
-      setCurrentUser(getLoggedInUser());
       setNewComment('');
     }
   }, [isOpen]);
 
   const handleAddComment = () => {
-    if (!newComment.trim() || !currentUser || !serviceOrder) return;
-
-    const commentToAdd: InternalNote = {
-      user: currentUser.name,
-      date: new Date().toISOString(),
-      comment: newComment.trim(),
-    };
-
-    // Garantir que internalNotes seja um array
-    const existingNotes = Array.isArray(serviceOrder.internalNotes) ? serviceOrder.internalNotes : [];
-
-    const updatedOrder = {
-      ...serviceOrder,
-      internalNotes: [...existingNotes, commentToAdd],
-    };
-
-    // Ler todas as OS, atualizar a específica e salvar de volta no localStorage
-    const allOrders = getServiceOrders();
-    const updatedOrders = allOrders.map(o => o.id === serviceOrder.id ? updatedOrder : o);
-    saveServiceOrders(updatedOrders);
-
-    // Notificar o componente pai e limpar o estado local
-    onCommentAdded(updatedOrder);
+    if (!newComment.trim() || !serviceOrder) return;
+    onCommentAdd(serviceOrder.id, newComment.trim());
     setNewComment('');
-    toast({
-      title: 'Comentário Adicionado!',
-      description: 'A anotação foi salva na OS.',
-    });
   };
 
   if (!serviceOrder) {

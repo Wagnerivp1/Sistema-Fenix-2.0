@@ -39,8 +39,8 @@ import {
   SelectGroup,
   SelectLabel,
 } from '@/components/ui/select';
-import { getServiceOrders, saveServiceOrders, getCustomers } from '@/lib/storage';
-import type { Customer, ServiceOrder } from '@/types';
+import { getServiceOrders, saveServiceOrders, getCustomers, getLoggedInUser } from '@/lib/storage';
+import type { Customer, ServiceOrder, User, InternalNote } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { ViewCommentsDialog } from '@/components/service-orders/view-comments-dialog';
 import { cn } from '@/lib/utils';
@@ -97,13 +97,18 @@ export default function ServiceOrdersPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState('ativas');
   const [searchFilter, setSearchFilter] = React.useState('');
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+
 
   React.useEffect(() => {
     // Load data from localStorage on mount
     const loadedOrders = getServiceOrders();
     const loadedCustomers = getCustomers();
+    const loggedInUser = getLoggedInUser();
+
     setOrders(loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setCustomers(loadedCustomers);
+    setCurrentUser(loggedInUser);
     setIsLoading(false);
 
     if (customerId) {
@@ -157,20 +162,48 @@ export default function ServiceOrdersPage() {
   }
 
   const handleViewCommentsClick = (order: ServiceOrder) => {
-    // Find the latest version of the order from the state
+    // Sempre busca a versão mais recente do estado
     const currentOrder = orders.find(o => o.id === order.id);
     setCommentsOrder(currentOrder || order);
     setIsCommentsDialogOpen(true);
   }
   
-  const handleCommentAdded = (updatedOrder: ServiceOrder) => {
-    // First, update the main list of orders. This is the source of truth.
-    const updatedOrders = orders.map(o => o.id === updatedOrder.id ? updatedOrder : o);
-    setOrders(updatedOrders);
+  const handleCommentAdded = (orderId: string, commentText: string) => {
+    if (!currentUser) return;
     
-    // Then, update the specific order being viewed in the dialog
-    // to ensure the dialog itself shows the new comment immediately.
-    setCommentsOrder(updatedOrder);
+    const commentToAdd: InternalNote = {
+      user: currentUser.name,
+      date: new Date().toISOString(),
+      comment: commentText,
+    };
+    
+    const updatedOrders = orders.map(o => {
+      if (o.id === orderId) {
+        // Assegura que internalNotes seja um array
+        const existingNotes = Array.isArray(o.internalNotes) ? o.internalNotes : [];
+        return {
+          ...o,
+          internalNotes: [...existingNotes, commentToAdd],
+        };
+      }
+      return o;
+    });
+
+    setOrders(updatedOrders);
+    saveServiceOrders(updatedOrders);
+    
+    // Atualiza o estado do diálogo se ele estiver aberto para a OS modificada
+    if (commentsOrder && commentsOrder.id === orderId) {
+      const freshOrderData = updatedOrders.find(o => o.id === orderId);
+      if (freshOrderData) {
+        setCommentsOrder(freshOrderData);
+      }
+    }
+    
+    toast({
+      title: 'Comentário Adicionado!',
+      description: 'A anotação foi salva na OS.',
+    });
   }
 
   const handleSaveOrder = (savedOrder: ServiceOrder) => {
@@ -371,7 +404,7 @@ export default function ServiceOrdersPage() {
       isOpen={isCommentsDialogOpen}
       onOpenChange={setIsCommentsDialogOpen}
       serviceOrder={commentsOrder}
-      onCommentAdded={handleCommentAdded}
+      onCommentAdd={handleCommentAdded}
     />
     </>
   );

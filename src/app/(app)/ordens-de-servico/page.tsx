@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MoreHorizontal, Undo2 } from 'lucide-react';
+import { MoreHorizontal, Undo2, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,6 +42,7 @@ import {
 import { getServiceOrders, saveServiceOrders, getCustomers } from '@/lib/storage';
 import type { Customer, ServiceOrder } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
+import { ViewCommentsDialog } from '@/components/service-orders/view-comments-dialog';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -89,6 +90,8 @@ export default function ServiceOrdersPage() {
   const [orders, setOrders] = React.useState<ServiceOrder[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [editingOrder, setEditingOrder] = React.useState<ServiceOrder | null>(null);
+  const [commentsOrder, setCommentsOrder] = React.useState<ServiceOrder | null>(null);
+  const [isCommentsDialogOpen, setIsCommentsDialogOpen] = React.useState(false);
   const [customerForNewOS, setCustomerForNewOS] = React.useState<Customer | null>(null);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -151,6 +154,11 @@ export default function ServiceOrdersPage() {
     setEditingOrder(order);
     setCustomerForNewOS(null);
     setIsSheetOpen(true);
+  }
+
+  const handleViewCommentsClick = (order: ServiceOrder) => {
+    setCommentsOrder(order);
+    setIsCommentsDialogOpen(true);
   }
 
   const handleSaveOrder = (savedOrder: ServiceOrder) => {
@@ -225,6 +233,7 @@ export default function ServiceOrdersPage() {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
@@ -315,6 +324,10 @@ export default function ServiceOrdersPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleViewCommentsClick(order)}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Exibir Comentários
+                      </DropdownMenuItem>
                       <DropdownMenuItem>Imprimir</DropdownMenuItem>
                       {(order.status === 'Finalizado' || order.status === 'Entregue') && (
                         <>
@@ -341,5 +354,12 @@ export default function ServiceOrdersPage() {
         </Table>
       </CardContent>
     </Card>
+
+    <ViewCommentsDialog 
+      isOpen={isCommentsDialogOpen}
+      onOpenChange={setIsCommentsDialogOpen}
+      serviceOrder={commentsOrder}
+    />
+    </>
   );
 }

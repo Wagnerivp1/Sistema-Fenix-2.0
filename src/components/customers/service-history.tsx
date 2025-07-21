@@ -64,11 +64,11 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
   const exportToPdf = () => {
     const companyInfo = getCompanyInfo();
     const customerName = filteredHistory[0]?.customerName || "Cliente";
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-
+    
     const generateContent = (logoImage: HTMLImageElement | null = null) => {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 15;
       let currentY = 12;
       const fontColor = '#000000';
       const primaryColor = '#e0e7ff';
@@ -373,5 +373,3 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   return <InfoItem icon={warranty.icon} label="Período de Garantia" value={warranty.text} />
 };
-
-    

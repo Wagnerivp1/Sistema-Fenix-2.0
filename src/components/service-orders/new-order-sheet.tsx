@@ -272,7 +272,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
         // Header
         if (logoImage) {
-            doc.addImage(logoImage, 'PNG', margin, currentY, 25, 25);
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
         }
         
         const companyInfoX = margin + (logoImage ? 30 : 0);
@@ -400,7 +400,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
     if (companyInfo?.logoUrl) {
         const img = new Image();
-        img.crossOrigin = 'Anonymous';
         img.src = companyInfo.logoUrl;
         img.onload = () => {
             performPdfGeneration(img);
@@ -455,96 +454,95 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
 
     const performGeneration = (logoImage: HTMLImageElement | null) => {
-      const doc = new jsPDF();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 10;
-      const halfPage = pageHeight / 2;
-      
-      const drawReceiptContent = (yOffset: number, via: string) => {
-        const osId = `#${orderToPrint.id.slice(-4)}`;
-        let localY = yOffset;
-
-        // Header
-        if (logoImage) {
-          doc.addImage(logoImage, 'PNG', margin, localY, 15, 15);
-        }
-        const companyInfoX = margin + (logoImage ? 20 : 0);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || "", companyInfoX, localY + 4);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text(companyInfo.address || "", companyInfoX, localY + 8);
+        const doc = new jsPDF();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 10;
+        const halfPage = pageHeight / 2;
         
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Recibo de Entrega', pageWidth - margin, localY + 4, { align: 'right' });
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
+        const drawReceiptContent = (yOffset: number, via: string) => {
+            const osId = `#${orderToPrint.id.slice(-4)}`;
+            let localY = yOffset;
+
+            // Header
+            if (logoImage) {
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY, 15, 15);
+            }
+            const companyInfoX = margin + (logoImage ? 20 : 0);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(companyInfo.name || "", companyInfoX, localY + 4);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(companyInfo.address || "", companyInfoX, localY + 8);
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Recibo de Entrega', pageWidth - margin, localY + 4, { align: 'right' });
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
+            
+            localY += 18;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(via, pageWidth / 2, localY, { align: 'center' });
+            localY += 7;
+
+            // Content
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Cliente:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(selectedCustomer.name, margin + 15, localY);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Data Entrega:', margin + 120, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, localY);
+            localY += 5;
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Equipamento:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(orderToPrint.equipment, margin + 22, localY);
+            localY += 5;
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Garantia:', margin, localY);
+            doc.setFont('helvetica', 'normal');
+            const warrantyText = getWarrantyPeriodText(orderToPrint);
+            const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2 - 17);
+            doc.text(warrantyLines, margin + 17, localY);
+            localY += (warrantyLines.length * 4) + 10;
+
+            const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
+            doc.setFontSize(8);
+            doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
+            localY += 20;
+
+            // Signature
+            doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
+            localY += 4;
+            doc.setFontSize(9);
+            doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
+        };
         
-        localY += 18;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text(via, pageWidth / 2, localY, { align: 'center' });
-        localY += 7;
-
-        // Content
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Cliente:', margin, localY);
-        doc.setFont('helvetica', 'normal');
-        doc.text(selectedCustomer.name, margin + 15, localY);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Data Entrega:', margin + 120, localY);
-        doc.setFont('helvetica', 'normal');
-        doc.text(new Date(orderToPrint.deliveredDate!).toLocaleDateString('pt-BR', { timeZone: 'UTC' }), margin + 143, localY);
-        localY += 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('Equipamento:', margin, localY);
-        doc.setFont('helvetica', 'normal');
-        doc.text(orderToPrint.equipment, margin + 22, localY);
-        localY += 5;
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('Garantia:', margin, localY);
-        doc.setFont('helvetica', 'normal');
-        const warrantyText = getWarrantyPeriodText(orderToPrint);
-        const warrantyLines = doc.splitTextToSize(warrantyText, pageWidth - margin * 2 - 17);
-        doc.text(warrantyLines, margin + 17, localY);
-        localY += (warrantyLines.length * 4) + 10;
-
-        const termsText = `Confirmo a retirada do equipamento acima descrito, nas condições em que se encontra, após a realização do serviço de manutenção.`;
-        doc.setFontSize(8);
-        doc.text(doc.splitTextToSize(termsText, pageWidth - margin * 2), margin, localY);
-        localY += 20;
-
-        // Signature
-        doc.line(margin + 30, localY, pageWidth - margin - 30, localY);
-        localY += 4;
-        doc.setFontSize(9);
-        doc.text('Assinatura do Cliente', pageWidth / 2, localY, { align: 'center' });
-      };
-      
-      // Via Cliente
-      drawReceiptContent(10, "Via do Cliente");
-      
-      // Cut line
-      doc.setLineDashPattern([2, 1], 0);
-      doc.line(margin, halfPage, pageWidth - margin, halfPage);
-      doc.setLineDashPattern([], 0);
-      
-      // Via Loja
-      drawReceiptContent(halfPage + 10, "Via da Loja");
-      
-      doc.output('dataurlnewwindow');
+        // Via Cliente
+        drawReceiptContent(10, "Via do Cliente");
+        
+        // Cut line
+        doc.setLineDashPattern([2, 1], 0);
+        doc.line(margin, halfPage, pageWidth - margin, halfPage);
+        doc.setLineDashPattern([], 0);
+        
+        // Via Loja
+        drawReceiptContent(halfPage + 10, "Via da Loja");
+        
+        doc.output('dataurlnewwindow');
     };
 
     if (companyInfo?.logoUrl) {
       const img = new Image();
-      img.crossOrigin = 'Anonymous';
       img.src = companyInfo.logoUrl;
       img.onload = () => performGeneration(img);
       img.onerror = () => {
@@ -577,7 +575,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
         // Header
         if (logoImage) {
-            doc.addImage(logoImage, 'PNG', margin, currentY, 25, 25);
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
         }
         
         const companyInfoX = margin + (logoImage ? 30 : 0);
@@ -711,7 +709,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
     if (companyInfo?.logoUrl) {
         const img = new Image();
-        img.crossOrigin = 'Anonymous';
         img.src = companyInfo.logoUrl;
         img.onload = () => {
             performGeneration(img);

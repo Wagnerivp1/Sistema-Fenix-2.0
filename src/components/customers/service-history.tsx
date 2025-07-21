@@ -74,7 +74,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       const primaryColor = '#e0e7ff';
 
       if (logoImage) {
-        doc.addImage(logoImage, 'PNG', margin, currentY, 25, 25);
+        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
       }
 
       const companyInfoX = margin + (logoImage ? 30 : 0);
@@ -184,7 +184,6 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
     if (companyInfo?.logoUrl) {
       const img = new Image();
-      img.crossOrigin = 'Anonymous';
       img.src = companyInfo.logoUrl;
       img.onload = () => {
         generateContent(img);

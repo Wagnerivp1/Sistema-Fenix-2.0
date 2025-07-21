@@ -60,7 +60,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
 
     // Ler todas as OS, atualizar a específica e salvar de volta no localStorage
     const allOrders = getServiceOrders();
-    const updatedOrders = allOrders.map(o => o.id === updatedOrder.id ? updatedOrder : o);
+    const updatedOrders = allOrders.map(o => o.id === serviceOrder.id ? updatedOrder : o);
     saveServiceOrders(updatedOrders);
 
     // Notificar o componente pai e limpar o estado local

@@ -1,5 +1,14 @@
 [
   {
+    "description": "COMPRA DE FONTE UNIVERAL ",
+    "amount": 25,
+    "date": "2025-07-21",
+    "category": "Outra Receita",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1753140777329"
+  },
+  {
     "description": "compra de café",
     "amount": 35,
     "date": "2025-07-21",

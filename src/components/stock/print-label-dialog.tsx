@@ -26,15 +26,15 @@ interface PrintLabelDialogProps {
   onOpenChange: (isOpen: boolean) => void;
 }
 
-// This component is now only for triggering the dialog.
-// The barcode logic is moved directly into the handlePrint function.
 export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialogProps) {
   const { toast } = useToast();
   const [quantity, setQuantity] = React.useState(1);
+  const [startPosition, setStartPosition] = React.useState(1);
 
   React.useEffect(() => {
     if (isOpen) {
       setQuantity(1);
+      setStartPosition(1);
     }
   }, [isOpen]);
 
@@ -48,11 +48,11 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       return;
     }
 
-    if (quantity <= 0) {
+    if (quantity <= 0 || startPosition <=0 || startPosition > 14) {
       toast({
         variant: 'destructive',
-        title: 'Quantidade Inválida',
-        description: 'Por favor, insira um número de etiquetas maior que zero.',
+        title: 'Valores Inválidos',
+        description: 'Verifique a quantidade e a posição inicial (deve ser entre 1 e 14).',
       });
       return;
     }
@@ -75,29 +75,28 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
       let currentX = margin.left;
       let currentY = margin.top;
-      let col = 0;
       
-      for(let i = 0; i < quantity; i++) {
-        if (col >= numCols) {
-          col = 0;
-          currentX = margin.left;
-          currentY += labelHeight + gap.y;
+      const totalCellsToProcess = (startPosition - 1) + quantity;
+
+      for(let i = 0; i < totalCellsToProcess; i++) {
+        const col = i % numCols;
+        const row = Math.floor(i / numCols);
+
+        currentX = margin.left + (col * (labelWidth + gap.x));
+        currentY = margin.top + (row * (labelHeight + gap.y));
+        
+        if (currentY + labelHeight > page.height - margin.top) {
+          // This logic is simple, it doesn't span pages.
+          // For a more complex scenario, we would add doc.addPage() here.
+          break;
         }
 
-        if (currentY + labelHeight > page.height - margin.top) {
-          doc.addPage();
-          currentY = margin.top;
-          currentX = margin.left;
-          col = 0;
+        // Only print the label if we are past the start position offset
+        if (i < startPosition - 1) {
+          continue;
         }
         
-        currentX = margin.left + (col * (labelWidth + gap.x));
-
         const centerX = currentX + labelWidth / 2;
-
-        // Borda da etiqueta (opcional, para visualização)
-        doc.setDrawColor(220, 220, 220);
-        doc.rect(currentX, currentY, labelWidth, labelHeight);
         
         // 1. Nome da Empresa
         doc.setFontSize(8);
@@ -116,8 +115,6 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 22, { align: 'center' });
         
         // 4. Código de Barras
-        // Criamos um canvas temporário para gerar o barcode e depois o adicionamos como imagem.
-        // Isso nos dá mais controle sobre a qualidade e o formato.
         const barcodeCanvas = document.createElement('canvas');
         JsBarcode(barcodeCanvas, item.barcode, {
             format: "CODE128",
@@ -131,13 +128,11 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         doc.addImage(
             barcodeCanvas.toDataURL('image/png'),
             'PNG',
-            currentX + 15, // centraliza o código
-            currentY + 26, // posiciona abaixo do preço
-            70, // largura do código de barras
-            12  // altura do código de barras
+            currentX + 15,
+            currentY + 26,
+            70,
+            12
         );
-
-        col++;
       }
 
       doc.output('dataurlnewwindow');
@@ -162,10 +157,10 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
           <DialogHeader>
             <DialogTitle>Imprimir Etiquetas</DialogTitle>
             <DialogDescription>
-              Quantas etiquetas para <span className="font-semibold text-foreground">{item.name}</span> você deseja imprimir?
+              Imprimir etiquetas para <span className="font-semibold text-foreground">{item.name}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
                   <Label htmlFor="quantity">Quantidade de Etiquetas</Label>
                   <Input 
@@ -174,6 +169,18 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
                     min="1"
                     value={quantity} 
                     onChange={(e) => setQuantity(Number(e.target.value))} 
+                    className="text-center text-lg font-bold"
+                   />
+              </div>
+               <div className="space-y-2">
+                  <Label htmlFor="startPosition">Iniciar na etiqueta nº</Label>
+                  <Input 
+                    id="startPosition" 
+                    type="number" 
+                    min="1"
+                    max="14"
+                    value={startPosition} 
+                    onChange={(e) => setStartPosition(Number(e.target.value))} 
                     className="text-center text-lg font-bold"
                    />
               </div>

@@ -1,9 +1,10 @@
+
 {
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --hostname 0.0.0.0 --port 3000",
+    "dev": "node -e \"(async () => { const ngrok = require('ngrok'); const url = await ngrok.connect({ addr: 3000, authtoken: process.env.NGROK_AUTHTOKEN }); console.log('נגיש בכתובת: ', url); require('child_process').spawn('next', ['dev', '--port', '3000'], { stdio: 'inherit' }); })();\"",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
@@ -49,6 +50,7 @@
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
     "next-themes": "^0.3.0",
+    "ngrok": "^5.0.0-beta.2",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",
     "react-barcode": "^1.5.1",

@@ -50,8 +50,13 @@ export default function EstoquePage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    setStockItems(getStock());
-    setIsLoading(false);
+    const loadStock = async () => {
+      setIsLoading(true);
+      const data = await getStock();
+      setStockItems(data);
+      setIsLoading(false);
+    }
+    loadStock();
   }, []);
 
   const filteredItems = stockItems.filter((item) =>
@@ -59,7 +64,7 @@ export default function EstoquePage() {
     (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  const handleSaveItem = (itemToSave: StockItem) => {
+  const handleSaveItem = async (itemToSave: StockItem) => {
     const exists = stockItems.some(item => item.id === itemToSave.id);
     let updatedItems;
     if (exists) {
@@ -70,15 +75,15 @@ export default function EstoquePage() {
         toast({ title: 'Produto Adicionado!', description: `O item "${itemToSave.name}" foi cadastrado.` });
     }
     setStockItems(updatedItems);
-    saveStock(updatedItems);
+    await saveStock(updatedItems);
     setIsEditOpen(false);
     setEditingItem(null);
   };
   
-  const handleAddEntry = (item: StockItem, quantity: number) => {
+  const handleAddEntry = async (item: StockItem, quantity: number) => {
     const updatedItems = stockItems.map(i => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i);
     setStockItems(updatedItems);
-    saveStock(updatedItems);
+    await saveStock(updatedItems);
     toast({ title: 'Entrada Registrada!', description: `${quantity} unidade(s) de "${item.name}" adicionada(s) ao estoque.` });
     setIsEntryOpen(false);
     setItemForEntry(null);

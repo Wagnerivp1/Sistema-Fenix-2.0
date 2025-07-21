@@ -42,9 +42,15 @@ export default function VendasPage() {
   const [isManualSearchOpen, setIsManualSearchOpen] = React.useState(false);
 
   React.useEffect(() => {
-    setStock(getStock());
-    const loadedCustomers = getCustomers();
-    setCustomers(loadedCustomers);
+    const loadData = async () => {
+      const [stockData, customersData] = await Promise.all([
+        getStock(),
+        getCustomers()
+      ]);
+      setStock(stockData);
+      setCustomers(customersData);
+    };
+    loadData();
   }, []);
 
   React.useEffect(() => {
@@ -181,7 +187,7 @@ export default function VendasPage() {
     toast({ title: 'Venda Cancelada', description: 'Todos os itens foram removidos do carrinho.' });
   };
   
-  const handleFinishSale = () => {
+  const handleFinishSale = async () => {
     if (saleItems.length === 0) {
         toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione produtos para finalizar a venda.' });
         return;
@@ -196,7 +202,7 @@ export default function VendasPage() {
         }
     });
     setStock(updatedStock);
-    saveStock(updatedStock);
+    await saveStock(updatedStock);
 
     // 2. Create Sale Record
     const newSale: Sale = {
@@ -209,8 +215,8 @@ export default function VendasPage() {
         paymentMethod: paymentMethod,
         observations: observations,
     };
-    const existingSales = getSales();
-    saveSales([...existingSales, newSale]);
+    const existingSales = await getSales();
+    await saveSales([...existingSales, newSale]);
 
     // 3. Create Financial Transaction
     const newTransaction: FinancialTransaction = {
@@ -223,8 +229,8 @@ export default function VendasPage() {
         paymentMethod: paymentMethod,
         relatedSaleId: newSale.id,
     };
-    const existingTransactions = getFinancialTransactions();
-    saveFinancialTransactions([...existingTransactions, newTransaction]);
+    const existingTransactions = await getFinancialTransactions();
+    await saveFinancialTransactions([...existingTransactions, newTransaction]);
 
     // 4. Notify and Reset
     toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });

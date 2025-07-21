@@ -19,41 +19,40 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      const users = getUsers();
-      const authenticatedUser = users.find(
-        (user) => user.username === username && user.password === password
-      );
+    // Fetch users from the server
+    const users = await getUsers();
+    const authenticatedUser = users.find(
+      (user) => user.username === username && user.password === password
+    );
 
-      if (authenticatedUser) {
-        if (authenticatedUser.active) {
-            saveLoggedInUser(authenticatedUser); // Save logged in user
-            toast({
-                title: 'Login bem-sucedido!',
-                description: 'Redirecionando para o dashboard...',
-            });
-            router.push('/dashboard');
-        } else {
-             toast({
-                variant: 'destructive',
-                title: 'Usuário Inativo',
-                description: 'Este usuário está desativado. Entre em contato com o administrador.',
-            });
-            setIsLoading(false);
-        }
+    if (authenticatedUser) {
+      if (authenticatedUser.active) {
+          saveLoggedInUser(authenticatedUser); // Save logged in user to localStorage
+          toast({
+              title: 'Login bem-sucedido!',
+              description: 'Redirecionando para o dashboard...',
+          });
+          router.push('/dashboard');
       } else {
-        toast({
-          variant: 'destructive',
-          title: 'Credenciais inválidas',
-          description: 'Por favor, verifique seu usuário e senha.',
-        });
-        setIsLoading(false);
+           toast({
+              variant: 'destructive',
+              title: 'Usuário Inativo',
+              description: 'Este usuário está desativado. Entre em contato com o administrador.',
+          });
+          setIsLoading(false);
       }
-    }, 1000);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Credenciais inválidas',
+        description: 'Por favor, verifique seu usuário e senha.',
+      });
+      setIsLoading(false);
+    }
   };
 
   return (

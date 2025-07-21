@@ -95,34 +95,35 @@ export default function FinanceiroPage() {
   const [typeFilter, setTypeFilter] = React.useState('all');
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
 
-  const loadData = () => {
-    const loadedTransactions = getFinancialTransactions();
+  const loadData = async () => {
+    setIsLoading(true);
+    const loadedTransactions = await getFinancialTransactions();
     loadedTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setAllTransactions(loadedTransactions);
+    setIsLoading(false);
   };
 
   React.useEffect(() => {
     loadData();
-    setIsLoading(false);
   }, []);
 
-  const handleDeleteTransaction = (transactionId: string) => {
+  const handleDeleteTransaction = async (transactionId: string) => {
     const updatedTransactions = allTransactions.filter(t => t.id !== transactionId);
     setAllTransactions(updatedTransactions);
-    saveFinancialTransactions(updatedTransactions);
+    await saveFinancialTransactions(updatedTransactions);
     toast({
       title: 'Lançamento Excluído!',
       description: 'A transação foi removida do seu histórico financeiro.',
     });
   };
 
-  const handleReverseSale = (transaction: FinancialTransaction) => {
+  const handleReverseSale = async (transaction: FinancialTransaction) => {
     if (!transaction.relatedSaleId) return;
 
-    const sales = getSales();
+    const sales = await getSales();
     const saleToReverse = sales.find(s => s.id === transaction.relatedSaleId);
     if (saleToReverse) {
-      const stock = getStock();
+      const stock = await getStock();
       const updatedStock = [...stock];
       saleToReverse.items.forEach(saleItem => {
         const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
@@ -130,13 +131,13 @@ export default function FinanceiroPage() {
           updatedStock[stockIndex].quantity += saleItem.quantity;
         }
       });
-      saveStock(updatedStock);
+      await saveStock(updatedStock);
 
       const updatedSales = sales.filter(s => s.id !== transaction.relatedSaleId);
-      saveSales(updatedSales);
+      await saveSales(updatedSales);
     }
 
-    handleDeleteTransaction(transaction.id);
+    await handleDeleteTransaction(transaction.id);
 
     toast({
       title: 'Venda Estornada!',

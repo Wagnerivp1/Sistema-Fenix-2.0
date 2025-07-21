@@ -1,2 +1,9 @@
 
-{}
+{
+  "name": "JL Informática",
+  "address": "Rua da Tecnologia, 123 - Centro, São Paulo/SP",
+  "phone": "(11) 99999-8888",
+  "emailOrSite": "contato@jlinformatica.com",
+  "document": "12.345.678/0001-90",
+  "logoUrl": ""
+}

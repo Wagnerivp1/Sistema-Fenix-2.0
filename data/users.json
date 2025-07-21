@@ -1,2 +1,12 @@
 
-[]
+[
+  {
+    "id": "admin-0",
+    "name": "Administrador Padrão",
+    "username": "admin",
+    "password": "admin",
+    "role": "admin",
+    "active": true,
+    "phone": ""
+  }
+]

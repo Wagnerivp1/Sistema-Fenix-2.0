@@ -12,16 +12,19 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
   const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
 
   React.useEffect(() => {
-    const fetchCompanyInfo = () => {
-        setCompanyInfo(getCompanyInfo());
+    const fetchCompanyInfo = async () => {
+        const info = await getCompanyInfo();
+        setCompanyInfo(info);
     };
 
     fetchCompanyInfo();
 
-    // Listen for storage changes to update the logo/name in real-time
-    window.addEventListener('storage', fetchCompanyInfo);
+    const handleStorageChange = () => fetchCompanyInfo();
+    
+    // Custom event listener since we are not using localStorage anymore for companyInfo
+    window.addEventListener('companyInfoChanged', handleStorageChange);
     return () => {
-        window.removeEventListener('storage', fetchCompanyInfo);
+        window.removeEventListener('companyInfoChanged', handleStorageChange);
     };
   }, []);
 

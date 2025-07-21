@@ -29,11 +29,12 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { APP_STORAGE_KEYS, getUsers, saveUsers, MASTER_USER_ID, getLoggedInUser, getCompanyInfo, saveCompanyInfo } from '@/lib/storage';
+import { APP_STORAGE_KEYS, getUsers, saveUsers, getLoggedInUser, getCompanyInfo, saveCompanyInfo } from '@/lib/storage';
 import type { User, CompanyInfo } from '@/types';
 import Image from 'next/image';
 
 const SETTINGS_KEY = 'app_settings';
+const MASTER_USER_ID = 'master-0';
 
 interface AppSettings {
   defaultWarrantyDays: number;
@@ -70,20 +71,31 @@ export default function ConfiguracoesPage() {
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem(SETTINGS_KEY);
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const savedSettings = localStorage.getItem(SETTINGS_KEY);
+        if (savedSettings) {
+          setSettings(JSON.parse(savedSettings));
+        }
+        
+        const [companyInfoData, usersData] = await Promise.all([
+            getCompanyInfo(),
+            getUsers()
+        ]);
+        
+        setCompanyInfo(companyInfoData || { name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '' });
+        setUsers(usersData.filter(u => u.id !== MASTER_USER_ID));
+        setCurrentUser(getLoggedInUser());
+      } catch (error) {
+        console.error("Failed to load settings", error);
+        toast({ variant: 'destructive', title: 'Erro ao carregar dados', description: 'Não foi possível buscar as informações do servidor.' });
+      } finally {
+        setIsLoading(false);
       }
-      setCompanyInfo(getCompanyInfo());
-      setUsers(getUsers().filter(u => u.id !== MASTER_USER_ID));
-      setCurrentUser(getLoggedInUser());
-    } catch (error) {
-      console.error("Failed to load settings from localStorage", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    };
+    loadData();
+  }, [toast]);
   
   const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -95,13 +107,12 @@ export default function ConfiguracoesPage() {
     setCompanyInfo(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleSaveCompanyInfo = () => {
-    saveCompanyInfo(companyInfo);
+  const handleSaveCompanyInfo = async () => {
+    await saveCompanyInfo(companyInfo);
     toast({
         title: "Dados da Empresa Salvos!",
         description: "As informações da sua empresa foram atualizadas.",
     });
-    window.dispatchEvent(new Event('storage'));
   };
   
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,19 +163,22 @@ export default function ConfiguracoesPage() {
     setSettings(prev => ({ ...prev, [id]: Number(value) }));
   };
 
-  const handleBackup = () => {
+  const handleBackup = async () => {
     try {
       const backupData: Record<string, any> = {};
-      APP_STORAGE_KEYS.forEach(key => {
-        const data = localStorage.getItem(key);
-        if (data) {
-           if (key === SETTINGS_KEY || key === 'assistec_company_info') {
-             backupData[key] = JSON.parse(data);
-           } else {
-             backupData[key] = JSON.parse(data);
-           }
+      const dataTypes = ['customers', 'serviceOrders', 'stock', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+      
+      for (const type of dataTypes) {
+        const response = await fetch(`/api/data/${type}`);
+        if(response.ok) {
+            backupData[type] = await response.json();
         }
-      });
+      }
+      
+      const settingsData = localStorage.getItem(SETTINGS_KEY);
+      if(settingsData) {
+        backupData.settings = JSON.parse(settingsData);
+      }
 
       const jsonString = JSON.stringify(backupData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
@@ -206,7 +220,7 @@ export default function ConfiguracoesPage() {
     if (!backupFile) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') {
@@ -214,21 +228,25 @@ export default function ConfiguracoesPage() {
         }
         const data = JSON.parse(text);
 
-        const hasKnownKey = APP_STORAGE_KEYS.some(key => key in data);
+        const dataTypes = ['customers', 'serviceOrders', 'stock', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+        const hasKnownKey = dataTypes.some(key => key in data);
+
         if (!hasKnownKey) {
           throw new Error('Arquivo de backup inválido ou corrompido.');
         }
 
-        APP_STORAGE_KEYS.forEach(key => {
-          localStorage.removeItem(key);
-        });
-
-        Object.keys(data).forEach(key => {
-           if (APP_STORAGE_KEYS.includes(key)) {
-              localStorage.setItem(key, JSON.stringify(data[key]));
-           }
-        });
-
+        for (const type in data) {
+            if(dataTypes.includes(type)) {
+                 await fetch(`/api/data/${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data[type]),
+                });
+            } else if (type === 'settings') {
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
+            }
+        }
+        
         toast({ title: 'Restauração Concluída!', description: 'Os dados foram restaurados com sucesso. A página será recarregada.' });
         setTimeout(() => window.location.reload(), 2000);
       } catch (error: any) {
@@ -241,11 +259,17 @@ export default function ConfiguracoesPage() {
     reader.readAsText(backupFile);
   };
 
-  const handleClearSystem = () => {
+  const handleClearSystem = async () => {
     try {
-      APP_STORAGE_KEYS.forEach(key => {
-        localStorage.removeItem(key);
-      });
+      const dataTypes = ['customers', 'serviceOrders', 'stock', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+      for (const type of dataTypes) {
+         await fetch(`/api/data/${type}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(type === 'companyInfo' ? {} : []),
+        });
+      }
+      localStorage.removeItem(SETTINGS_KEY);
       
       toast({ title: 'Sistema Limpo!', description: 'Todos os dados foram removidos. A página será recarregada.' });
       setTimeout(() => window.location.reload(), 2000);
@@ -265,7 +289,7 @@ export default function ConfiguracoesPage() {
     setIsUserDialogOpen(true);
   }
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     if (!newUser.name || !newUser.username || (!newUser.password && !editingUser)) {
       toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Nome, Login e Senha são obrigatórios.' });
       return;
@@ -296,17 +320,17 @@ export default function ConfiguracoesPage() {
     }
 
     setUsers(updatedUsers);
-    saveUsers(updatedUsers);
+    await saveUsers(updatedUsers);
     setIsUserDialogOpen(false);
     setEditingUser(null);
   };
   
-  const handleToggleActive = (userId: string) => {
+  const handleToggleActive = async (userId: string) => {
     const updatedUsers = users.map(u => 
         u.id === userId ? { ...u, active: !u.active } : u
       );
     setUsers(updatedUsers);
-    saveUsers(updatedUsers);
+    await saveUsers(updatedUsers);
     const user = updatedUsers.find(u => u.id === userId);
     toast({
         title: `Status Alterado!`,
@@ -314,10 +338,10 @@ export default function ConfiguracoesPage() {
     });
   }
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     const updatedUsers = users.filter(u => u.id !== userId);
     setUsers(updatedUsers);
-    saveUsers(updatedUsers);
+    await saveUsers(updatedUsers);
     toast({
       title: 'Usuário Excluído!',
       description: 'O usuário foi removido permanentemente do sistema.',

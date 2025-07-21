@@ -15,28 +15,34 @@ export function StatsCards() {
   });
   
   React.useEffect(() => {
-    const serviceOrders = getServiceOrders();
-    const customers = getCustomers();
-    const stock = getStock();
+    const fetchStats = async () => {
+      const [serviceOrders, customers, stock] = await Promise.all([
+        getServiceOrders(),
+        getCustomers(),
+        getStock()
+      ]);
 
-    const activeOrders = serviceOrders.filter(
-      (order) => !['Finalizado', 'Entregue', 'Cancelada'].includes(order.status)
-    ).length;
+      const activeOrders = serviceOrders.filter(
+        (order) => !['Finalizado', 'Entregue', 'Cancelada'].includes(order.status)
+      ).length;
 
-    const completedOrders = serviceOrders.filter(
-      (order) => ['Finalizado', 'Entregue'].includes(order.status)
-    ).length;
-    
-    const totalCustomers = customers.length;
-    
-    const lowStockItems = stock.filter(item => item.minStock && item.quantity <= item.minStock).length;
+      const completedOrders = serviceOrders.filter(
+        (order) => ['Finalizado', 'Entregue'].includes(order.status)
+      ).length;
+      
+      const totalCustomers = customers.length;
+      
+      const lowStockItems = stock.filter(item => item.minStock && item.quantity <= item.minStock).length;
 
-    setStats({
-      activeOrders,
-      completedOrders,
-      totalCustomers,
-      lowStockItems,
-    });
+      setStats({
+        activeOrders,
+        completedOrders,
+        totalCustomers,
+        lowStockItems,
+      });
+    };
+
+    fetchStats();
   }, []);
 
   return (

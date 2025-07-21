@@ -36,7 +36,10 @@ export function ManualSearchDialog({
 }: ManualSearchDialogProps) {
   const { toast } = useToast();
 
-  const handleSelect = (product: StockItem) => {
+  const handleSelect = (productName: string) => {
+    const product = stockItems.find(item => item.name === productName);
+    if (!product) return;
+
     if (product.quantity <= 0) {
       toast({
         variant: 'destructive',
@@ -45,10 +48,6 @@ export function ManualSearchDialog({
       });
     } else {
       onProductSelect(product);
-      toast({
-        title: 'Produto Adicionado!',
-        description: `"${product.name}" foi adicionado à venda.`,
-      });
     }
     onOpenChange(false);
   };
@@ -69,7 +68,7 @@ export function ManualSearchDialog({
                 <CommandItem
                   key={item.id}
                   value={item.name}
-                  onSelect={() => handleSelect(item)}
+                  onSelect={handleSelect}
                   className="flex justify-between items-center"
                 >
                   <div className="flex items-center gap-3">

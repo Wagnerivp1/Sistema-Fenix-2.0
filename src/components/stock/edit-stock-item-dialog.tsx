@@ -76,8 +76,13 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
       barcode: formData.id!, // Use ID as barcode
       name: formData.name!,
       price: formData.price || 0,
-      quantity: isEditing ? item.quantity : (formData.quantity || 0),
-      ...formData
+      quantity: isEditing ? (item?.quantity ?? 0) : (formData.quantity || 0),
+      category: formData.category,
+      description: formData.description,
+      unitOfMeasure: formData.unitOfMeasure,
+      costPrice: formData.costPrice,
+      minStock: formData.minStock,
+      location: formData.location
     };
     onSave(finalItem);
   };
@@ -139,7 +144,7 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
                 <div className="grid grid-cols-4 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="quantity">Quantidade Inicial</Label>
-                        <Input id="quantity" type="number" value={isEditing ? item.quantity : (formData.quantity || '')} onChange={handleChange} disabled={isEditing} />
+                        <Input id="quantity" type="number" value={isEditing ? item?.quantity : (formData.quantity || '')} onChange={handleChange} disabled={isEditing} />
                         {isEditing && <p className="text-xs text-muted-foreground">Use "Adicionar Entrada" para alterar o estoque.</p>}
                     </div>
                     <div className="space-y-2">

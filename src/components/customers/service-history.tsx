@@ -24,7 +24,7 @@ declare module 'jspdf' {
 }
 
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string | undefined) => {
     if (!dateString || isNaN(new Date(dateString).getTime())) {
       return 'Data inválida';
     }
@@ -36,6 +36,16 @@ const formatDate = (dateString: string) => {
         year: 'numeric',
         timeZone: 'UTC',
     }).format(date);
+};
+
+const getEquipmentName = (equipment: any): string => {
+  if (typeof equipment === 'string') {
+    return equipment;
+  }
+  if (typeof equipment === 'object' && equipment !== null) {
+    return `${equipment.type || ''} ${equipment.brand || ''} ${equipment.model || ''}`.trim();
+  }
+  return 'Equipamento não identificado';
 };
 
 const getStatusVariant = (status: string) => {
@@ -152,11 +162,12 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
           return finalY + boxHeight + 8;
         };
         
+        const equipmentName = getEquipmentName(order.equipment);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.text(`Equipamento: `, margin, currentY);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${order.equipment}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`, margin + 28, currentY);
+        doc.text(`${equipmentName}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`, margin + 28, currentY);
         currentY += 6;
 
         currentY = drawInfoBox('Problema Relatado', order.reportedProblem || 'Não informado', currentY);
@@ -244,7 +255,9 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       <CardContent>
         {filteredHistory.length > 0 ? (
           <Accordion type="single" collapsible className="w-full">
-            {filteredHistory.map((order) => (
+            {filteredHistory.map((order) => {
+              const equipmentName = getEquipmentName(order.equipment);
+              return (
               <AccordionItem value={order.id} key={order.id}>
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center justify-between w-full pr-4">
@@ -252,7 +265,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                       <Calendar className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="font-semibold text-left">
-                          {order.equipment}
+                          {equipmentName}
                         </p>
                         <p className="text-sm text-muted-foreground text-left">
                           OS #{order.id.slice(-4)} - {formatDate(order.date)}
@@ -267,7 +280,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                 <AccordionContent className="pt-2 pb-4 px-2 space-y-4 bg-muted/30 rounded-md border">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4">
                     <InfoItem icon={User} label="Atendente" value={order.attendant} />
-                    <InfoItem icon={HardDrive} label="Equipamento" value={`${order.equipment}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`} />
+                    <InfoItem icon={HardDrive} label="Equipamento" value={`${equipmentName}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`} />
                     <InfoItem icon={Tag} label="Tipo de Atendimento" value="Manutenção Corretiva" />
                     <InfoItem icon={ShoppingBag} label="Acessórios" value={order.accessories || 'Nenhum'} />
                   </div>
@@ -305,7 +318,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
                 </AccordionContent>
               </AccordionItem>
-            ))}
+            )})}
           </Accordion>
         ) : (
           <div className="flex flex-col items-center justify-center text-center gap-4 min-h-[250px]">

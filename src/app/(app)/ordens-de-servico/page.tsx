@@ -268,11 +268,16 @@ export default function ServiceOrdersPage() {
     }
 
     if (searchFilter) {
-      result = result.filter(o => 
-        (o.customerName && o.customerName.toLowerCase().includes(searchFilter.toLowerCase())) ||
-        (o.equipment && o.equipment.toLowerCase().includes(searchFilter.toLowerCase())) ||
-        (o.id && o.id.toLowerCase().includes(searchFilter.toLowerCase()))
-      );
+      const lowerCaseFilter = searchFilter.toLowerCase();
+      result = result.filter(o => {
+        const equipmentName = typeof o.equipment === 'string' 
+          ? o.equipment.toLowerCase() 
+          : `${o.equipment?.type || ''} ${o.equipment?.brand || ''} ${o.equipment?.model || ''}`.trim().toLowerCase();
+          
+        return (o.customerName && o.customerName.toLowerCase().includes(lowerCaseFilter)) ||
+               (equipmentName.includes(lowerCaseFilter)) ||
+               (o.id && o.id.toLowerCase().includes(lowerCaseFilter));
+      });
     }
 
     return result;
@@ -348,51 +353,56 @@ export default function ServiceOrdersPage() {
           </TableHeader>
           <TableBody>
             {filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="hidden sm:table-cell">
-                   <Link href="#" className="font-medium text-primary hover:underline">
-                    #{order.id.slice(-4)}
-                  </Link>
-                </TableCell>
-                <TableCell className="font-medium">{order.customerName}</TableCell>
-                <TableCell>{order.equipment}</TableCell>
-                <TableCell className="hidden md:table-cell">{formatDate(order.date)}</TableCell>
-                <TableCell>
-                   <Badge className={cn('font-semibold', getStatusVariant(order.status))} variant="outline">
-                    {order.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleViewCommentsClick(order)}>
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Exibir Comentários
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Imprimir</DropdownMenuItem>
-                      {(order.status === 'Finalizado' || order.status === 'Entregue') && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
-                            <Undo2 className="mr-2 h-4 w-4" />
-                            Reabrir OS
+              filteredOrders.map((order) => {
+                const equipmentName = typeof order.equipment === 'string'
+                  ? order.equipment
+                  : `${order.equipment.type || ''} ${order.equipment.brand || ''} ${order.equipment.model || ''}`.trim();
+                return (
+                  <TableRow key={order.id}>
+                    <TableCell className="hidden sm:table-cell">
+                       <Link href="#" className="font-medium text-primary hover:underline">
+                        #{order.id.slice(-4)}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="font-medium">{order.customerName}</TableCell>
+                    <TableCell>{equipmentName}</TableCell>
+                    <TableCell className="hidden md:table-cell">{formatDate(order.date)}</TableCell>
+                    <TableCell>
+                       <Badge className={cn('font-semibold', getStatusVariant(order.status))} variant="outline">
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleViewCommentsClick(order)}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Exibir Comentários
                           </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
+                          <DropdownMenuItem>Imprimir</DropdownMenuItem>
+                          {(order.status === 'Finalizado' || order.status === 'Entregue') && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
+                                <Undo2 className="mr-2 h-4 w-4" />
+                                Reabrir OS
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center">
@@ -414,3 +424,5 @@ export default function ServiceOrdersPage() {
     </>
   );
 }
+
+    

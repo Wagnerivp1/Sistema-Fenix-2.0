@@ -62,7 +62,10 @@ const getStatusVariant = (status: string) => {
     }
 }
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string | undefined) => {
+  if (!dateString || isNaN(new Date(dateString).getTime())) {
+    return 'Data inválida';
+  }
   const [year, month, day] = dateString.split('-').map(Number);
   // Adiciona o fuso UTC para evitar problemas de timezone
   const date = new Date(Date.UTC(year, month - 1, day));
@@ -266,9 +269,9 @@ export default function ServiceOrdersPage() {
 
     if (searchFilter) {
       result = result.filter(o => 
-        o.customerName.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        o.equipment.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        o.id.toLowerCase().includes(searchFilter.toLowerCase())
+        (o.customerName && o.customerName.toLowerCase().includes(searchFilter.toLowerCase())) ||
+        (o.equipment && o.equipment.toLowerCase().includes(searchFilter.toLowerCase())) ||
+        (o.id && o.id.toLowerCase().includes(searchFilter.toLowerCase()))
       );
     }
 

@@ -86,7 +86,10 @@ declare module 'jspdf' {
     }
 }
 
-const formatDateForDisplay = (dateString: string) => {
+const formatDateForDisplay = (dateString: string | undefined) => {
+  if (!dateString || isNaN(new Date(dateString).getTime())) {
+    return 'Data inválida';
+  }
   const [year, month, day] = dateString.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
@@ -161,12 +164,12 @@ export default function FinanceiroPage() {
 
   const filteredTransactions = React.useMemo(() => {
     return allTransactions.filter(t => {
-      const transactionDate = parseISO(`${t.date}T00:00:00Z`);
+      const transactionDate = t.date ? parseISO(`${t.date}T00:00:00Z`) : null;
       const matchesDescription = t.description.toLowerCase().includes(descriptionFilter.toLowerCase());
       const matchesType = typeFilter === 'all' || t.type === typeFilter;
       const matchesDate = !dateRange || 
                           !dateRange.from || 
-                          (transactionDate >= dateRange.from && (!dateRange.to || transactionDate <= dateRange.to));
+                          (transactionDate && transactionDate >= dateRange.from && (!dateRange.to || transactionDate <= dateRange.to));
 
       return matchesDescription && matchesType && matchesDate;
     });

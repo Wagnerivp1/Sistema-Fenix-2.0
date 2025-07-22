@@ -25,6 +25,9 @@ declare module 'jspdf' {
 
 
 const formatDate = (dateString: string) => {
+    if (!dateString || isNaN(new Date(dateString).getTime())) {
+      return 'Data inválida';
+    }
     // Adiciona o fuso UTC para evitar problemas de timezone na conversão
     const date = new Date(`${dateString}T00:00:00Z`);
     return new Intl.DateTimeFormat('pt-BR', {

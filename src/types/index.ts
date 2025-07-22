@@ -2,6 +2,7 @@
 
 
 
+
 export type InternalNote = {
   user: string; // The name of the user who made the comment
   date: string; // ISO 8601 date string
@@ -77,6 +78,8 @@ export interface SaleItem extends Omit<StockItem, 'quantity'> {
 export type Sale = {
     id: string;
     date: string; // YYYY-MM-DD
+    time: string; // HH:MM:SS
+    user: string; // Nome do usuário que efetuou a venda
     items: SaleItem[];
     subtotal: number;
     discount: number;

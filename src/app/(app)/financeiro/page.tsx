@@ -9,6 +9,7 @@ import {
   Calendar as CalendarIcon,
   Printer,
   X,
+  FileText,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -47,6 +48,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -75,6 +77,7 @@ import type { FinancialTransaction, Sale, StockItem } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PrintReceiptDialog } from '@/components/financials/print-receipt-dialog';
+import { SaleDetailsDialog } from '@/components/financials/sale-details-dialog';
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -92,18 +95,25 @@ const formatDateForDisplay = (dateString: string) => {
 export default function FinanceiroPage() {
   const { toast } = useToast();
   const [allTransactions, setAllTransactions] = React.useState<FinancialTransaction[]>([]);
+  const [allSales, setAllSales] = React.useState<Sale[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [descriptionFilter, setDescriptionFilter] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
   const [transactionToPrint, setTransactionToPrint] = React.useState<FinancialTransaction | null>(null);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = React.useState(false);
+  const [saleForDetails, setSaleForDetails] = React.useState<Sale | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
-    const loadedTransactions = await getFinancialTransactions();
+    const [loadedTransactions, loadedSales] = await Promise.all([
+        getFinancialTransactions(),
+        getSales()
+    ]);
     loadedTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setAllTransactions(loadedTransactions);
+    setAllSales(loadedSales);
     setIsLoading(false);
   };
 
@@ -124,8 +134,7 @@ export default function FinanceiroPage() {
   const handleReverseSale = async (transaction: FinancialTransaction) => {
     if (!transaction.relatedSaleId) return;
 
-    const sales = await getSales();
-    const saleToReverse = sales.find(s => s.id === transaction.relatedSaleId);
+    const saleToReverse = allSales.find(s => s.id === transaction.relatedSaleId);
     if (saleToReverse) {
       const stock = await getStock();
       const updatedStock = [...stock];
@@ -137,7 +146,8 @@ export default function FinanceiroPage() {
       });
       await saveStock(updatedStock);
 
-      const updatedSales = sales.filter(s => s.id !== transaction.relatedSaleId);
+      const updatedSales = allSales.filter(s => s.id !== transaction.relatedSaleId);
+      setAllSales(updatedSales);
       await saveSales(updatedSales);
     }
 
@@ -181,6 +191,17 @@ export default function FinanceiroPage() {
     setTransactionToPrint(transaction);
     setIsPrintDialogOpen(true);
   };
+
+  const handleDetailsClick = (transaction: FinancialTransaction) => {
+    if (!transaction.relatedSaleId) return;
+    const sale = allSales.find(s => s.id === transaction.relatedSaleId);
+    if (sale) {
+        setSaleForDetails(sale);
+        setIsDetailsOpen(true);
+    } else {
+        toast({ variant: "destructive", title: "Erro", description: "Detalhes da venda não encontrados." });
+    }
+  }
 
 
   const generatePdf = async () => {
@@ -418,11 +439,19 @@ export default function FinanceiroPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      {transaction.relatedSaleId && (
+                         <DropdownMenuItem onSelect={() => handleDetailsClick(transaction)}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Ver Detalhes da Venda
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onSelect={() => handlePrintClick(transaction)}>
                         <Printer className="mr-2 h-4 w-4" />
                         Imprimir Recibo
                       </DropdownMenuItem>
                       {transaction.relatedSaleId && (
+                        <>
+                        <DropdownMenuSeparator />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
@@ -445,6 +474,7 @@ export default function FinanceiroPage() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
+                        </>
                       )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -492,6 +522,11 @@ export default function FinanceiroPage() {
       onOpenChange={setIsPrintDialogOpen}
       transaction={transactionToPrint}
     />
+     <SaleDetailsDialog
+      isOpen={isDetailsOpen}
+      onOpenChange={setIsDetailsOpen}
+      sale={saleForDetails}
+     />
     </>
   );
 }

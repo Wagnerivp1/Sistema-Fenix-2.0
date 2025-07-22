@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getStock, getCustomers, saveStock, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions } from '@/lib/storage';
-import type { StockItem, Customer, Sale, FinancialTransaction } from '@/types';
+import { getStock, getCustomers, saveStock, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser } from '@/lib/storage';
+import type { StockItem, Customer, Sale, FinancialTransaction, User } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,15 +42,18 @@ export default function VendasPage() {
   const [isManualSearchOpen, setIsManualSearchOpen] = React.useState(false);
   const [isChangeCalcOpen, setIsChangeCalcOpen] = React.useState(false);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
     const loadData = async () => {
-      const [stockData, customersData] = await Promise.all([
+      const [stockData, customersData, loggedInUser] = await Promise.all([
         getStock(),
-        getCustomers()
+        getCustomers(),
+        getLoggedInUser()
       ]);
       setStock(stockData);
       setCustomers(customersData);
+      setCurrentUser(loggedInUser);
     };
     loadData();
     barcodeInputRef.current?.focus();
@@ -209,6 +212,8 @@ export default function VendasPage() {
     const newSale: Sale = {
         id: `SALE-${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString('pt-BR'),
+        user: currentUser?.name || 'Não identificado',
         items: saleItems.map(({ saleQuantity, ...item }) => ({ ...item, quantity: saleQuantity })),
         subtotal: subtotal,
         discount: discount,
@@ -231,7 +236,7 @@ export default function VendasPage() {
         relatedSaleId: newSale.id,
     };
     const existingTransactions = await getFinancialTransactions();
-    await saveFinancialTransactions([...existingTransactions, newTransaction]);
+    await saveFinancialTransactions([newTransaction, ...existingTransactions]);
 
     // 4. Notify and Reset
     toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });

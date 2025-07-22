@@ -72,5 +72,25 @@
     "category": "Venda de Produto",
     "paymentMethod": "dinheiro",
     "relatedSaleId": "SALE-1753145871591"
+  },
+  {
+    "id": "FIN-1753146420843",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 40,
+    "date": "2025-07-22",
+    "category": "Venda de Produto",
+    "paymentMethod": "dinheiro",
+    "relatedSaleId": "SALE-1753146420106"
+  },
+  {
+    "id": "FIN-1753146540617",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 75,
+    "date": "2025-07-22",
+    "category": "Venda de Produto",
+    "paymentMethod": "dinheiro",
+    "relatedSaleId": "SALE-1753146539811"
   }
 ]

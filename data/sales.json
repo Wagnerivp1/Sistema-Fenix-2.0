@@ -67,5 +67,51 @@
     "total": 25,
     "paymentMethod": "dinheiro",
     "observations": ""
+  },
+  {
+    "id": "SALE-1753146420106",
+    "date": "2025-07-22",
+    "items": [
+      {
+        "id": "PROD-1753146048116",
+        "barcode": "PROD-1753146048116",
+        "name": "teste 7",
+        "price": 20,
+        "quantity": 2,
+        "category": "peças",
+        "description": "uygjhgjh",
+        "unitOfMeasure": "UN",
+        "costPrice": 15,
+        "minStock": 2
+      }
+    ],
+    "subtotal": 40,
+    "discount": 0,
+    "total": 40,
+    "paymentMethod": "dinheiro",
+    "observations": ""
+  },
+  {
+    "id": "SALE-1753146539811",
+    "date": "2025-07-22",
+    "items": [
+      {
+        "id": "PROD-1753065361831",
+        "barcode": "PROD-1753065361831",
+        "name": "TECLADO GENERICO ",
+        "price": 25,
+        "quantity": 3,
+        "category": "Periféricos",
+        "description": "DFSDD",
+        "unitOfMeasure": "UN",
+        "costPrice": 10,
+        "minStock": 1
+      }
+    ],
+    "subtotal": 75,
+    "discount": 0,
+    "total": 75,
+    "paymentMethod": "dinheiro",
+    "observations": ""
   }
 ]

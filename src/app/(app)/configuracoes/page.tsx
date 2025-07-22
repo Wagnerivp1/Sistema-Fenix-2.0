@@ -2,12 +2,13 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -574,6 +575,29 @@ export default function ConfiguracoesPage() {
       </CardContent>
     </Card>
 
+    <Card>
+        <CardHeader>
+            <CardTitle>Ferramentas</CardTitle>
+            <CardDescription>Recursos adicionais para gerenciamento de dados.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h4 className="font-semibold">Conversor de Backup</h4>
+                    <p className="text-sm text-muted-foreground">
+                        Converta um arquivo de backup de uma versão anterior do sistema para o formato atual.
+                    </p>
+                </div>
+                <Button variant="secondary" asChild disabled={!isCurrentUserAdmin}>
+                    <Link href="/configuracoes/ferramentas">
+                        <Wrench className="mr-2 h-4 w-4"/>
+                        Abrir Ferramenta
+                    </Link>
+                </Button>
+            </div>
+        </CardContent>
+    </Card>
+
     <Card className="border-2 border-destructive bg-destructive/5">
         <CardHeader>
              <div className="flex items-start gap-4">
@@ -723,5 +747,3 @@ export default function ConfiguracoesPage() {
     </div>
   )
 }
-
-    

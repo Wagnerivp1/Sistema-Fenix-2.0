@@ -1,5 +1,21 @@
 [
   {
+    "id": "OS-1753147061481",
+    "customerName": "teste 2",
+    "equipment": "NO JL informática  ERT",
+    "reportedProblem": "4rterrt",
+    "status": "Aberta",
+    "date": "2025-07-22",
+    "totalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "erere",
+    "serialNumber": "ERT",
+    "warranty": "90 dias",
+    "attendant": "Master User"
+  },
+  {
     "id": "OS-1753065542800",
     "customerName": "WAGNER LOPES ",
     "equipment": "NO Advocacia Arruda  ERT",

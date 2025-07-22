@@ -6,5 +6,13 @@
     "address": "Rua Marechal Floriano ",
     "document": "",
     "id": "CUST-1753065204319"
+  },
+  {
+    "name": "teste 2",
+    "phone": "43996024065",
+    "email": "jl.solucoes@hotmail.com",
+    "address": "RUA MARECHAL FLORIANO PEIXOTO, 80",
+    "document": "",
+    "id": "CUST-1753147044441"
   }
 ]

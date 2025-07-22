@@ -789,10 +789,11 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                                   <SelectItem value="Aberta">Aberta</SelectItem>
                                   <SelectItem value="Em análise">Em análise</SelectItem>
                                   <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
-                                  <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
                                   <SelectItem value="Aprovado">Aprovado</SelectItem>
                                   <SelectItem value="Em conserto">Em conserto</SelectItem>
-                                  <SelectItem value="Finalizar">Finalizar</SelectItem>
+                                  <SelectItem value="Finalizar">Finalizar...</SelectItem>
+                                  <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
+                                  <SelectItem value="Finalizado">Finalizado</SelectItem>
                                   <SelectItem value="Entregue">Entregue</SelectItem>
                                 </SelectContent>
                               </Select>
@@ -1020,10 +1021,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         </AlertDialogHeader>
         <AlertDialogFooter>
           <Button variant="outline" onClick={() => handleFinalize(false)}>
-            Não, aguardando
+            Não, aguardando pagamento
           </Button>
           <Button onClick={() => handleFinalize(true)}>
-            Sim, foi paga
+            Sim, já foi paga
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

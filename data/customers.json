@@ -1,18 +1,90 @@
 [
   {
-    "name": "WAGNER LOPES ",
-    "phone": "43996024065 ",
-    "email": "jlsolucoesivp1@gmail.com",
-    "address": "Rua Marechal Floriano ",
+    "name": "ADVOCACIA JOÃO FABIO HILARIO (fILHO)",
+    "phone": "43996375274",
+    "email": "TESTE@TESTE.COM",
+    "address": "RUA MARECHAL FLORIANO PEIXOTO, 80",
     "document": "",
-    "id": "CUST-1753065204319"
+    "id": "1752520699538-0.03593661342012322"
   },
   {
-    "name": "teste 2",
+    "name": "CESTA BASICA SANTA RITA",
+    "phone": "43988633294",
+    "email": "TESTE@TESTE.COM",
+    "address": "Avenida Minas gerais",
+    "document": "",
+    "id": "1752524196787-0.21135363759111103"
+  },
+  {
+    "name": "ARMAZEM NATUREBA",
+    "phone": "43999769063",
+    "email": "TESTE@TESTE.COM",
+    "address": "AVENIDA BRASIL",
+    "document": "",
+    "id": "1752525160400-0.21769594684339721"
+  },
+  {
+    "name": "CINE FOTO REGINA ",
+    "phone": "4334721917",
+    "email": "TESTES@TESTE.COM",
+    "address": "AVENIDA SOUZA NAVES 945",
+    "document": "",
+    "id": "1752581309250-0.23832530068551883"
+  },
+  {
+    "name": "JULIANO JOSÉ PALMA ",
+    "phone": "43999157381",
+    "email": "TESTE@TESTE.COM",
+    "address": "Avenida Minas gerais",
+    "document": "",
+    "id": "1752587568423-0.36339501987805745"
+  },
+  {
+    "name": "CLIENTE AVULSO",
     "phone": "43996024065",
     "email": "jl.solucoes@hotmail.com",
     "address": "RUA MARECHAL FLORIANO PEIXOTO, 80",
     "document": "",
-    "id": "CUST-1753147044441"
+    "id": "1752591100370-0.5475282037034886"
+  },
+  {
+    "name": "VALDECIR ALVARINO",
+    "phone": "4399140365",
+    "email": "ALVARINOVAL@HOTMAIL.COM",
+    "address": "TANCREDO NEVES 3030",
+    "document": "63829070900",
+    "id": "1752611147131-0.8346904741613428"
+  },
+  {
+    "name": "IVAIPLACAS",
+    "phone": "43999185358",
+    "email": "TESTE@TESTE.COM",
+    "address": "Avenida Minas gerais",
+    "document": "",
+    "id": "1752765902944-0.6165074972827616"
+  },
+  {
+    "name": "JOÃO MARCOS .( ADVOGADO)",
+    "phone": "4343999272236",
+    "email": "TESTE@TESTE.COM",
+    "address": "Avenida Minas gerais",
+    "document": "",
+    "id": "1752777085090-0.3401838834676074"
+  },
+  {
+    "name": "CIAMÁQUINAS OFFCE",
+    "phone": "43999341490",
+    "email": "TESTE@TESTE.COM",
+    "address": "AVENIDA PRANÁ",
+    "document": "",
+    "id": "1752779276427-0.007760477428592205"
+  },
+  {
+    "name": "EDILSON LEHN IURAK",
+    "phone": "43999563742",
+    "email": "adv.edilsoniurak@gmail.com",
+    "address": "RUA JULIO GUERRA ",
+    "document": "09265730986",
+    "id": "1752849925498-0.4483191486437327"
   }
 ]

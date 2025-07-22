@@ -121,7 +121,10 @@ export default function CustomersPage() {
     setSelectedCustomer(customer);
     if (customer) {
       const history = serviceOrders.filter(
-        (order) => order.customerName.toLowerCase() === customer.name.toLowerCase()
+        (order: any) => {
+          const orderCustomerName = order.customerName || order.client?.name;
+          return orderCustomerName && orderCustomerName.toLowerCase() === customer.name.toLowerCase();
+        }
       ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setCustomerServiceHistory(history);
     } else {

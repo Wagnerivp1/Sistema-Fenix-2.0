@@ -1,117 +1,50 @@
 [
   {
-    "id": "SALE-1753125600912",
-    "date": "2025-07-21",
+    "date": "2025-07-14T19:25:18.633Z",
     "items": [
       {
-        "id": "PROD-1753065361831",
-        "barcode": "PROD-1753065361831",
-        "name": "TECLADO GENERICO ",
-        "price": 25,
+        "id": "cart_1752521055186-0.09776767299452749",
+        "partId": "1752521055186-0.09776767299452749",
+        "name": "IMPRESSORA HP P1102 SEMI NOVA ",
         "quantity": 1,
-        "category": "Periféricos",
-        "description": "DFSDD",
-        "unitOfMeasure": "UN",
-        "costPrice": 10,
-        "minStock": 1
+        "unitPrice": 400,
+        "totalPrice": 400
       }
     ],
-    "subtotal": 25,
+    "subtotal": 400,
     "discount": 0,
-    "total": 25,
-    "paymentMethod": "dinheiro",
-    "observations": ""
+    "total": 400,
+    "paymentMethod": "Dinheiro",
+    "status": "Finalizada",
+    "userId": "1752520921537-0.9328935433699823",
+    "userName": "Wagner Lopes",
+    "notes": "",
+    "id": "1752521118633-0.5933779120052836",
+    "time": "16:25:18",
+    "user": "Não identificado"
   },
   {
-    "id": "SALE-1753125600918",
-    "date": "2025-07-21",
+    "date": "2025-07-16T18:52:52.780Z",
     "items": [
       {
-        "id": "PROD-1753065361831",
-        "barcode": "PROD-1753065361831",
-        "name": "TECLADO GENERICO ",
-        "price": 25,
+        "id": "cart_1752690773908-0.9374151604165823",
+        "partId": "1752690773908-0.9374151604165823",
+        "name": "TAMPA SCANNER  M1132",
         "quantity": 1,
-        "category": "Periféricos",
-        "description": "DFSDD",
-        "unitOfMeasure": "UN",
-        "costPrice": 10,
-        "minStock": 1
+        "unitPrice": 100,
+        "totalPrice": 100
       }
     ],
-    "subtotal": 25,
+    "subtotal": 100,
     "discount": 0,
-    "total": 25,
-    "paymentMethod": "dinheiro",
-    "observations": ""
-  },
-  {
-    "id": "SALE-1753145871591",
-    "date": "2025-07-22",
-    "items": [
-      {
-        "id": "PROD-1753065361831",
-        "barcode": "PROD-1753065361831",
-        "name": "TECLADO GENERICO ",
-        "price": 25,
-        "quantity": 1,
-        "category": "Periféricos",
-        "description": "DFSDD",
-        "unitOfMeasure": "UN",
-        "costPrice": 10,
-        "minStock": 1
-      }
-    ],
-    "subtotal": 25,
-    "discount": 0,
-    "total": 25,
-    "paymentMethod": "dinheiro",
-    "observations": ""
-  },
-  {
-    "id": "SALE-1753146420106",
-    "date": "2025-07-22",
-    "items": [
-      {
-        "id": "PROD-1753146048116",
-        "barcode": "PROD-1753146048116",
-        "name": "teste 7",
-        "price": 20,
-        "quantity": 2,
-        "category": "peças",
-        "description": "uygjhgjh",
-        "unitOfMeasure": "UN",
-        "costPrice": 15,
-        "minStock": 2
-      }
-    ],
-    "subtotal": 40,
-    "discount": 0,
-    "total": 40,
-    "paymentMethod": "dinheiro",
-    "observations": ""
-  },
-  {
-    "id": "SALE-1753146539811",
-    "date": "2025-07-22",
-    "items": [
-      {
-        "id": "PROD-1753065361831",
-        "barcode": "PROD-1753065361831",
-        "name": "TECLADO GENERICO ",
-        "price": 25,
-        "quantity": 3,
-        "category": "Periféricos",
-        "description": "DFSDD",
-        "unitOfMeasure": "UN",
-        "costPrice": 10,
-        "minStock": 1
-      }
-    ],
-    "subtotal": 75,
-    "discount": 0,
-    "total": 75,
-    "paymentMethod": "dinheiro",
-    "observations": ""
+    "total": 100,
+    "paymentMethod": "Dinheiro",
+    "status": "Finalizada",
+    "userId": "1752520921537-0.9328935433699823",
+    "userName": "Wagner Lopes",
+    "notes": "",
+    "id": "1752691972781-0.45823819003991484",
+    "time": "15:52:52",
+    "user": "Não identificado"
   }
 ]

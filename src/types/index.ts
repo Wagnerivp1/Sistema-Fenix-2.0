@@ -1,8 +1,5 @@
 
 
-
-
-
 export type InternalNote = {
   user: string; // The name of the user who made the comment
   date: string; // ISO 8601 date string
@@ -30,6 +27,7 @@ export type ServiceOrderItem = {
 export type ServiceOrder = {
   id: string;
   customerName: string;
+  client?: Customer; // For backwards compatibility
   equipment: string;
   reportedProblem: string;
   status: 'Recebido' | 'Em análise' | 'Aprovado' | 'Em conserto' | 'Finalizado' | 'Entregue' | 'Aberta' | 'Aguardando Pagamento' | 'Aguardando peça' | 'Aguardando' | 'Cancelada';

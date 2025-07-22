@@ -1,34 +1,537 @@
 [
   {
-    "id": "OS-1753147061481",
-    "customerName": "teste 2",
-    "equipment": "NO JL informática  ERT",
-    "reportedProblem": "4rterrt",
-    "status": "Aberta",
-    "date": "2025-07-22",
-    "totalValue": 0,
-    "items": [],
-    "internalNotes": [],
-    "technicalReport": "",
-    "accessories": "erere",
-    "serialNumber": "ERT",
-    "warranty": "90 dias",
-    "attendant": "Master User"
+    "client": {
+      "name": "ADVOCACIA JOÃO FABIO HILARIO (fILHO)",
+      "phone": "43996375274",
+      "email": "TESTE@TESTE.COM",
+      "address": "RUA MARECHAL FLORIANO PEIXOTO, 80",
+      "document": "",
+      "id": "1752520699538-0.03593661342012322"
+    },
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "1111",
+      "id": "1752520779948-0.2685609538229643",
+      "clientId": "1752520699538-0.03593661342012322"
+    },
+    "entryDate": "2025-07-14T19:19:39.948Z",
+    "defectReported": "NÃO RECONHECE SSD",
+    "status": "Entregue",
+    "accessories": "SEM TAMPA LATERAL E COM OS COOLER SOLTOS ",
+    "technicalDiagnosis": "EFETUADO DIAGNOSTICO E CONSTATADO  QUE O SSD M2 ESTA DANIFICADO SENDO NECESSÁRIO TROCA ",
+    "servicesPerformed": [
+      {
+        "id": "id_1752600275465_lcqfbg4ag",
+        "description": "FORMATAÇÃO ",
+        "value": 120
+      }
+    ],
+    "usedParts": [],
+    "comments": [],
+    "serviceValue": 120,
+    "partsValue": 0,
+    "totalValue": 120,
+    "id": "1752520779948-0.508259989288888",
+    "completionDate": "2025-07-16T21:06:39.949Z",
+    "paymentDate": "2025-07-16T21:06:39.949Z"
   },
   {
-    "id": "OS-1753065542800",
-    "customerName": "WAGNER LOPES ",
-    "equipment": "NO Advocacia Arruda  ERT",
-    "reportedProblem": "ZX\\ZX\\ZX",
-    "status": "Em análise",
-    "date": "2025-07-21",
-    "totalValue": 0,
-    "items": [],
-    "internalNotes": [],
-    "technicalReport": "",
-    "accessories": "\\ZX\\ZX\\\\Z",
-    "serialNumber": "ERT",
-    "warranty": "90 dias",
-    "attendant": "Ana Leticia Boeno Lopes "
+    "client": {
+      "name": "CESTA BASICA SANTA RITA",
+      "phone": "43988633294",
+      "email": "TESTE@TESTE.COM",
+      "address": "Avenida Minas gerais",
+      "document": "",
+      "id": "1752524196787-0.21135363759111103"
+    },
+    "equipment": {
+      "type": "Notebook",
+      "brand": "ACER",
+      "model": "ASPIRE 3",
+      "serialNumber": "ABC12345",
+      "id": "1752524270527-0.9724207698061066",
+      "clientId": "1752524196787-0.21135363759111103"
+    },
+    "entryDate": "2025-07-14T20:17:50.527Z",
+    "defectReported": "DOBRADIÇAS QUEBRADAS",
+    "status": "Entregue",
+    "accessories": "SEM ACESSORIOS",
+    "technicalDiagnosis": "EFETUADO DIAGNÓSTICO E CONSTATADO QUE A TAMPA ESTA QUEBRADA SENDO NECESS´RIO A TROCA .",
+    "servicesPerformed": [
+      {
+        "id": "id_1753101404560_9e4ygfo1x",
+        "description": "MONTAGEM TROCA DA TAMPA",
+        "value": 60
+      }
+    ],
+    "usedParts": [
+      {
+        "id": "id_1753101411776_bho3zis22",
+        "part": {
+          "name": "TAMPA TRASEIRA NOTEBOOK ACER ASPIRE (COM PARAFUSOS)",
+          "quantity": 0,
+          "costPrice": 160,
+          "sellPrice": 240,
+          "minStock": 0,
+          "barcode": "P-312898",
+          "id": "1753101297663-0.5106075742312898"
+        },
+        "quantity": 1,
+        "unitPrice": 240
+      }
+    ],
+    "comments": [
+      {
+        "id": "id_1752591568191_7txq5sbx1",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-15T14:59:28.191Z",
+        "text": "CLIENTE JA FOI INFORMADO SOBRE O VALOR DO ORÇAMENTO , FALTA PEDIR A TAMPA , VALOR PASSADO DA TAMPA 240,00, VALOR DA MAO DE OBRA 60,00\nVALOR DE CUSTO DA TAMPA 170,00. TOTAL DOS SERVIÇOS 300,00"
+      }
+    ],
+    "serviceValue": 60,
+    "partsValue": 240,
+    "totalValue": 300,
+    "id": "1752524270527-0.30751067415024125",
+    "completionDate": "2025-07-21T13:46:27.073Z",
+    "paymentDate": "2025-07-21T20:49:09.547Z"
+  },
+  {
+    "client": {
+      "name": "ARMAZEM NATUREBA",
+      "phone": "43999769063",
+      "email": "TESTE@TESTE.COM",
+      "address": "AVENIDA BRASIL",
+      "document": "",
+      "id": "1752525160400-0.21769594684339721"
+    },
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "HP",
+      "model": "LJ 1020",
+      "serialNumber": "ABC12345",
+      "id": "1752525205780-0.16828237228810683",
+      "clientId": "1752525160400-0.21769594684339721"
+    },
+    "entryDate": "2025-07-14T20:33:25.780Z",
+    "defectReported": "ENROSCANDO PAPEL ",
+    "status": "Entregue",
+    "accessories": "TONNER",
+    "technicalDiagnosis": "",
+    "servicesPerformed": [
+      {
+        "id": "id_1752525258941_9m864r5dl",
+        "description": "MANUTENÇÕ PREVENTIVA ",
+        "value": 120
+      }
+    ],
+    "usedParts": [],
+    "comments": [],
+    "serviceValue": 120,
+    "partsValue": 0,
+    "totalValue": 120,
+    "id": "1752525205781-0.222365992264843",
+    "completionDate": "2025-07-14T20:35:01.719Z"
+  },
+  {
+    "client": {
+      "name": "CINE FOTO REGINA ",
+      "phone": "4334721917",
+      "email": "TESTES@TESTE.COM",
+      "address": "AVENIDA SOUZA NAVES 945",
+      "document": "",
+      "id": "1752581309250-0.23832530068551883"
+    },
+    "equipment": {
+      "type": "IMPRESSORA ",
+      "brand": "BROTHER",
+      "model": "DCP-T830",
+      "serialNumber": "U67681F4H848003",
+      "id": "1752581466827-0.8791945667285874",
+      "clientId": "1752581309250-0.23832530068551883"
+    },
+    "entryDate": "2025-07-15T12:11:06.827Z",
+    "defectReported": "ENROSCANDO PAPEL QUANDO IMPRIME FRENTE E VERSO",
+    "status": "Entregue",
+    "accessories": "SEM ACESSÓRIOS",
+    "technicalDiagnosis": "EFEYUADO DIAGNOSTICO E CONSTATADO PAPEL ENROSCADO NO MECANISMO NECESSARIO INTERVENÇAO TECNICA ",
+    "servicesPerformed": [
+      {
+        "id": "id_1752617329268_5gshkzc68",
+        "description": "MANUTENÇAO PREVENTIVA ",
+        "value": 130
+      }
+    ],
+    "usedParts": [],
+    "comments": [],
+    "serviceValue": 130,
+    "partsValue": 0,
+    "totalValue": 130,
+    "id": "1752581466827-0.8915826343848778",
+    "completionDate": "2025-07-15T22:11:19.195Z",
+    "paymentDate": "2025-07-16T13:53:12.820Z"
+  },
+  {
+    "client": {
+      "name": "JULIANO JOSÉ PALMA ",
+      "phone": "43999157381",
+      "email": "TESTE@TESTE.COM",
+      "address": "Avenida Minas gerais",
+      "document": "",
+      "id": "1752587568423-0.36339501987805745"
+    },
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "GENÉRICO",
+      "model": "SM",
+      "serialNumber": "ABC12345",
+      "id": "1752587625121-0.3989865236801051",
+      "clientId": "1752587568423-0.36339501987805745"
+    },
+    "entryDate": "2025-07-15T13:53:45.121Z",
+    "defectReported": "NÃO ENTRA NO WINDOWS ",
+    "status": "Entregue",
+    "accessories": "SEM ACESSORIOS",
+    "technicalDiagnosis": "EFETUADO DIAGNOSTICO E CONSTATADO . QUE O hd ESTA DANIFICADO SENDO NECESSÁRIO A SUBSTITUIÇÃO POR UM SSD ",
+    "servicesPerformed": [
+      {
+        "id": "id_1752608982815_d6s46x9c2",
+        "description": "FORMATAÇÃO  + CONFIGURAÇÃO SSD ",
+        "value": 100
+      }
+    ],
+    "usedParts": [
+      {
+        "id": "id_1752608953663_pvj82tetw",
+        "part": {
+          "name": "SSD 240GB",
+          "quantity": 0,
+          "costPrice": 140,
+          "sellPrice": 280,
+          "minStock": 0,
+          "barcode": "P-781736",
+          "id": "1752608543601-0.37467261524781736"
+        },
+        "quantity": 1,
+        "unitPrice": 280
+      }
+    ],
+    "comments": [
+      {
+        "id": "id_1752601324547_h4zno6cw3",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-15T17:42:04.547Z",
+        "text": "TROCAR SSD VALOR PASSADO PARA O CLIENTE 380,00\nBKP DOS DADOS JA FOI FEITO"
+      }
+    ],
+    "serviceValue": 100,
+    "partsValue": 280,
+    "totalValue": 380,
+    "id": "1752587625121-0.4228871275677658",
+    "completionDate": "2025-07-15T20:41:51.692Z"
+  },
+  {
+    "client": {
+      "name": "CLIENTE AVULSO",
+      "phone": "43996024065",
+      "email": "jl.solucoes@hotmail.com",
+      "address": "RUA MARECHAL FLORIANO PEIXOTO, 80",
+      "document": "",
+      "id": "1752591100370-0.5475282037034886"
+    },
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "HP",
+      "model": "ALL IN ONE ",
+      "serialNumber": "ABC12345",
+      "id": "1752591164026-0.9092236190630624",
+      "clientId": "1752591100370-0.5475282037034886"
+    },
+    "entryDate": "2025-07-15T14:52:44.026Z",
+    "defectReported": "LENTO NAO ENTRA NO WINDOWS",
+    "status": "Aguardando Pagamento",
+    "accessories": "CARREGADOR ",
+    "technicalDiagnosis": "TROCA HD PO SSD CLIENTE TROUXE SSD",
+    "servicesPerformed": [
+      {
+        "id": "id_1752591265855_xj3hsj91y",
+        "description": "FORMATAÇÃO +MONTAGEM ",
+        "value": 150
+      }
+    ],
+    "usedParts": [],
+    "comments": [],
+    "serviceValue": 150,
+    "partsValue": 0,
+    "totalValue": 150,
+    "id": "1752591164026-0.16961268312957978",
+    "completionDate": "2025-07-15T14:53:06.829Z"
+  },
+  {
+    "client": {
+      "name": "VALDECIR ALVARINO",
+      "phone": "4399140365",
+      "email": "ALVARINOVAL@HOTMAIL.COM",
+      "address": "TANCREDO NEVES 3030",
+      "document": "63829070900",
+      "id": "1752611147131-0.8346904741613428"
+    },
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "HP",
+      "model": "ALL IN ONE ",
+      "serialNumber": "ABC12345",
+      "id": "1752611194334-0.3852978845903745",
+      "clientId": "1752611147131-0.8346904741613428"
+    },
+    "entryDate": "2025-07-15T20:26:34.333Z",
+    "defectReported": "NÃO ENTRA NO WINDOS ",
+    "status": "Entregue",
+    "accessories": "CARREGADOR",
+    "technicalDiagnosis": "ATUALIZAÇÃO DE SISTEMA E APLICATIVOS ",
+    "servicesPerformed": [
+      {
+        "id": "id_1752781715589_506hp69yj",
+        "description": "ATUALIZAÇÃO DE SISTEMA",
+        "value": 80
+      }
+    ],
+    "usedParts": [],
+    "comments": [
+      {
+        "id": "id_1752781735261_lizb0agp5",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-17T19:48:55.261Z",
+        "text": "PASSADO VALOR JUNTO COM A IMPRESSORA 220,00"
+      }
+    ],
+    "serviceValue": 80,
+    "partsValue": 0,
+    "totalValue": 80,
+    "id": "1752611194334-0.4733699327957318",
+    "completionDate": "2025-07-18T18:38:24.103Z",
+    "paymentDate": "2025-07-18T18:59:20.286Z"
+  },
+  {
+    "client": {
+      "name": "VALDECIR ALVARINO",
+      "phone": "4399140365",
+      "email": "ALVARINOVAL@HOTMAIL.COM",
+      "address": "TANCREDO NEVES 3030",
+      "document": "63829070900",
+      "id": "1752611147131-0.8346904741613428"
+    },
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "EPSON ",
+      "model": "L3150",
+      "serialNumber": "ABC12345",
+      "id": "1752611303031-0.37063881780163666",
+      "clientId": "1752611147131-0.8346904741613428"
+    },
+    "entryDate": "2025-07-15T20:28:23.031Z",
+    "defectReported": "NAO IMPRIME ",
+    "status": "Entregue",
+    "accessories": "",
+    "technicalDiagnosis": "MANUTENÇAO PREVENTIVA LIMPEZA INTERNA EXTERNA LUBRIFICAÇOES E AJUSTE DE MECANISMO . DESINTUPIR MANGUEIRAS E CABEÇA DE IMPRESSÃO ",
+    "servicesPerformed": [
+      {
+        "id": "id_1752781641205_zog5xyqbs",
+        "description": "MANUTENÇÃO PREVENTIVA ",
+        "value": 120
+      }
+    ],
+    "usedParts": [],
+    "comments": [
+      {
+        "id": "id_1752781667358_96ur88cd5",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-17T19:47:47.358Z",
+        "text": "PSSADO VALOR TOTAL JUNTAMENTE COM O COMPUTADOR 220,00"
+      }
+    ],
+    "serviceValue": 120,
+    "partsValue": 0,
+    "totalValue": 120,
+    "id": "1752611303031-0.7760006876203803",
+    "completionDate": "2025-07-18T18:38:12.329Z",
+    "paymentDate": "2025-07-18T18:59:11.389Z"
+  },
+  {
+    "client": {
+      "name": "IVAIPLACAS",
+      "phone": "43999185358",
+      "email": "TESTE@TESTE.COM",
+      "address": "Avenida Minas gerais",
+      "document": "",
+      "id": "1752765902944-0.6165074972827616"
+    },
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "EPSON",
+      "model": "L375",
+      "serialNumber": "WBJK226305",
+      "id": "1752766038863-0.20575460493877407",
+      "clientId": "1752765902944-0.6165074972827616"
+    },
+    "entryDate": "2025-07-17T15:27:18.863Z",
+    "defectReported": "CORREIA ARREBENTADA",
+    "status": "Entregue",
+    "accessories": "SEM ACESSORIOS",
+    "technicalDiagnosis": "EFETUADO DIAGNOSTICO E CONSTATADO QUE A CORREIA ESTAVA ARREBENTADA E GASTA AS ENGRENAGENS DO SISTEMA DO CARRO DE IMPRESSÃO TAMBEM ESTÃO GASTAS NECESSARIO TROCA .",
+    "servicesPerformed": [
+      {
+        "id": "id_1752766220421_6ev8ibd9x",
+        "description": "MAO DE OBRA ",
+        "value": 40
+      }
+    ],
+    "usedParts": [
+      {
+        "id": "id_1752766191973_6nxwad4x6",
+        "part": {
+          "name": "CORREIA EPSON L375",
+          "quantity": 0,
+          "costPrice": 80,
+          "sellPrice": 90,
+          "minStock": 1,
+          "barcode": "P-311324",
+          "id": "1752766106731-0.44889361546311324"
+        },
+        "quantity": 1,
+        "unitPrice": 90
+      },
+      {
+        "id": "id_1752766199941_7bhbuiowh",
+        "part": {
+          "name": "KIT ENGRENAGEM IMPRESSARAS EPSON",
+          "quantity": 0,
+          "costPrice": 20,
+          "sellPrice": 50,
+          "minStock": 0,
+          "barcode": "P-285115",
+          "id": "1752766159619-0.5910737233285115"
+        },
+        "quantity": 1,
+        "unitPrice": 50
+      }
+    ],
+    "comments": [
+      {
+        "id": "id_1752766425749_1zpx74ur9",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-17T15:33:45.749Z",
+        "text": "EFETUADO A TROCA DA CORREIA (ROBERTO)"
+      }
+    ],
+    "serviceValue": 40,
+    "partsValue": 140,
+    "totalValue": 180,
+    "id": "1752766038863-0.633127456261339",
+    "completionDate": "2025-07-17T15:33:09.652Z",
+    "paymentDate": "2025-07-17T17:58:08.857Z"
+  },
+  {
+    "client": {
+      "name": "JOÃO MARCOS .( ADVOGADO)",
+      "phone": "4343999272236",
+      "email": "TESTE@TESTE.COM",
+      "address": "Avenida Minas gerais",
+      "document": "",
+      "id": "1752777085090-0.3401838834676074"
+    },
+    "equipment": {
+      "type": "Notebook",
+      "brand": "DELL",
+      "model": "INSPIRON 15",
+      "serialNumber": "28086073417",
+      "id": "1752777236701-0.8449981107624771",
+      "clientId": "1752777085090-0.3401838834676074"
+    },
+    "entryDate": "2025-07-17T18:33:56.701Z",
+    "defectReported": "UPGRADE DE PEÇAS ",
+    "status": "Entregue",
+    "accessories": "CARREGADOR E CABO DE FORÇA , LEITOR DE CD ORIGINAL ",
+    "technicalDiagnosis": "CLIENTE SOLICITA O UPGRADE DE SSD E DE MEMÓRIAS  \nOBS. PEÇAS FORNECEIDAS PELO CLIENTE ",
+    "servicesPerformed": [
+      {
+        "id": "id_1752777268929_09wm7e767",
+        "description": "MAO DE OBRA UPGRADE PEÇAS NOTEBOOK ",
+        "value": 150
+      }
+    ],
+    "usedParts": [],
+    "comments": [
+      {
+        "id": "id_1752777309201_ysqp8wslo",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-17T18:35:09.201Z",
+        "text": "CLIENTE TROUXE AS PEÇAS QUER QUE RETIRE O ADAPTADOR E VOLTE O LEITOR DE CD . CLIENTE TROUXE O LEITOR DE CD ORIGINAL ."
+      }
+    ],
+    "serviceValue": 150,
+    "partsValue": 0,
+    "totalValue": 150,
+    "id": "1752777236701-0.4927395514167461",
+    "completionDate": "2025-07-18T17:30:53.343Z",
+    "paymentDate": "2025-07-18T17:30:53.343Z"
+  },
+  {
+    "client": {
+      "name": "CIAMÁQUINAS OFFCE",
+      "phone": "43999341490",
+      "email": "TESTE@TESTE.COM",
+      "address": "AVENIDA PRANÁ",
+      "document": "",
+      "id": "1752779276427-0.007760477428592205"
+    },
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "EPSON",
+      "model": "L395",
+      "serialNumber": "X2P4046193",
+      "id": "1752779410369-0.5975560298355475",
+      "clientId": "1752779276427-0.007760477428592205"
+    },
+    "entryDate": "2025-07-17T19:10:10.367Z",
+    "defectReported": "NÃO IMPRIME ",
+    "status": "Aguardando aprovação",
+    "accessories": "SEM ACESSORIO",
+    "technicalDiagnosis": "EFETUADO DIAGNOSTICO CONSTADO QUE A CABEÇA DE IMPRESSÃO ESTA DANIFICADA SENDO NECESSARIO A TROCA.",
+    "servicesPerformed": [
+      {
+        "id": "id_1752863017587_p9hc6dct8",
+        "description": "MANUTENÇAO PREVENTIVA ",
+        "value": 120
+      }
+    ],
+    "usedParts": [
+      {
+        "id": "id_1752862983852_1p9v4c2bq",
+        "part": {
+          "name": "CABEÇA DE IMPRESSÃO EPSON",
+          "quantity": 0,
+          "costPrice": 10,
+          "sellPrice": 280,
+          "minStock": 0,
+          "barcode": "P-555747",
+          "id": "1752862961623-0.439644185555747"
+        },
+        "quantity": 1,
+        "unitPrice": 280
+      }
+    ],
+    "comments": [],
+    "serviceValue": 120,
+    "partsValue": 280,
+    "totalValue": 400,
+    "id": "1752779410369-0.32822606573457314"
   }
 ]

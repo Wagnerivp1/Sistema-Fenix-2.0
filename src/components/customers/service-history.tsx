@@ -63,7 +63,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
   const exportToPdf = async () => {
     const companyInfo = await getCompanyInfo();
-    const customerName = filteredHistory[0]?.customerName || "Cliente";
+    const customerName = (filteredHistory[0] as any)?.customerName || (filteredHistory[0] as any)?.client?.name || "Cliente";
     
     const generateContent = (logoImage: HTMLImageElement | null = null) => {
       const doc = new jsPDF();

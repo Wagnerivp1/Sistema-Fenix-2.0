@@ -45,6 +45,16 @@ export function RecentOrdersTable() {
     loadData();
   }, []);
 
+  const getEquipmentName = (order: ServiceOrder): string => {
+    if (typeof order.equipment === 'string') {
+      return order.equipment;
+    }
+    if (typeof order.equipment === 'object' && order.equipment !== null) {
+      const eq = order.equipment as any;
+      return `${eq.type || ''} ${eq.brand || ''} ${eq.model || ''}`.trim();
+    }
+    return 'Equipamento não identificado';
+  };
 
   return (
     <Card className="h-full flex flex-col">
@@ -60,7 +70,7 @@ export function RecentOrdersTable() {
               <div key={order.id} className="flex items-center justify-between gap-4 px-6 py-3 border-b border-border last:border-b-0">
                 <div>
                   <p className="font-semibold">{order.customerName}</p>
-                  <p className="text-sm text-muted-foreground">{order.equipment} - {order.reportedProblem}</p>
+                  <p className="text-sm text-muted-foreground">{getEquipmentName(order)} - {order.reportedProblem}</p>
                 </div>
                 <Badge className={cn('font-semibold', getStatusVariant(order.status))} variant="outline">
                     {order.status}

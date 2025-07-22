@@ -14,10 +14,19 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { User, Calendar, Clock, Printer, ShoppingCart, Percent, DollarSign, StickyNote } from 'lucide-react';
-import type { Sale } from '@/types';
+import { User, Calendar, Clock, Printer, ShoppingCart, DollarSign, StickyNote } from 'lucide-react';
+import type { Sale, CompanyInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { getCompanyInfo } from '@/lib/storage';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+      lastAutoTable: { finalY: number };
+    }
+}
 
 interface SaleDetailsDialogProps {
   isOpen: boolean;
@@ -44,10 +53,105 @@ const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label
 export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDialogProps) {
     const { toast } = useToast();
 
-    const handlePrint = () => {
-        // Lógica de impressão pode ser adicionada aqui no futuro
-        toast({ title: "Função em desenvolvimento", description: "A impressão de detalhes da venda será implementada em breve." });
+    const handlePrint = async () => {
+        if (!sale) {
+            toast({ variant: "destructive", title: "Erro", description: "Não há dados da venda para imprimir." });
+            return;
+        }
+
+        const companyInfo = await getCompanyInfo();
+
+        const generateContent = (logoImage: HTMLImageElement | null = null) => {
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 15;
+            let currentY = 12;
+            const fontColor = '#000000';
+            const primaryColor = '#e0e7ff';
+            
+            // Cabeçalho
+            if (logoImage) {
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20, 20);
+            }
+            const companyInfoX = margin + (logoImage ? 25 : 0);
+            if (companyInfo?.name) {
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text(companyInfo.name, companyInfoX, currentY + 6);
+            }
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            if (companyInfo?.address) {
+                doc.text(companyInfo.address, companyInfoX, currentY + 12);
+            }
+
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Comprovante de Venda`, pageWidth - margin, currentY + 6, { align: 'right' });
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Venda #${sale.id.slice(-6)}`, pageWidth - margin, currentY + 12, { align: 'right' });
+            doc.text(`Data: ${formatDate(sale.date)} ${sale.time}`, pageWidth - margin, currentY + 17, { align: 'right' });
+            
+            currentY = 40;
+            
+            // Detalhes da Venda
+            doc.setFontSize(9);
+            doc.text(`Vendedor: ${sale.user}`, margin, currentY);
+            doc.text(`Forma de Pagamento: ${sale.paymentMethod}`, pageWidth - margin, currentY, { align: 'right' });
+            currentY += 8;
+
+            // Tabela de Itens
+            doc.autoTable({
+                startY: currentY,
+                head: [['Produto', 'Qtd.', 'Preço Unit.', 'Subtotal']],
+                body: sale.items.map(item => [
+                    item.name,
+                    item.quantity,
+                    `R$ ${item.price.toFixed(2)}`,
+                    `R$ ${(item.price * item.quantity).toFixed(2)}`
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [30, 41, 59], textColor: '#FFFFFF' },
+                footStyles: { fillColor: [241, 245, 249], textColor: '#000000', fontStyle: 'bold' },
+                foot: [
+                    [{ content: 'Subtotal:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${sale.subtotal.toFixed(2)}`],
+                    [{ content: 'Desconto:', colSpan: 3, styles: { halign: 'right' } }, `- R$ ${sale.discount.toFixed(2)}`],
+                    [{ content: 'Total Final:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${sale.total.toFixed(2)}`],
+                ]
+            });
+            currentY = doc.lastAutoTable.finalY + 10;
+            
+            // Observações
+            if (sale.observations) {
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text("Observações:", margin, currentY);
+                currentY += 5;
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                const obsLines = doc.splitTextToSize(sale.observations, pageWidth - (margin * 2));
+                doc.text(obsLines, margin, currentY);
+            }
+            
+            doc.autoPrint();
+            doc.output('dataurlnewwindow');
+        };
+
+        if (companyInfo?.logoUrl) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = companyInfo.logoUrl;
+            img.onload = () => generateContent(img);
+            img.onerror = () => {
+                console.error("Error loading logo for PDF, proceeding without it.");
+                generateContent(null);
+            };
+        } else {
+            generateContent();
+        }
     }
+
 
     if (!sale) return null;
 

@@ -574,7 +574,7 @@ export default function ConfiguracoesPage() {
       </CardContent>
     </Card>
 
-    <Card className="border-destructive">
+    <Card className="border-2 border-destructive bg-destructive/5">
         <CardHeader>
              <div className="flex items-start gap-4">
                 <div className="p-2 bg-destructive/10 rounded-full">
@@ -589,10 +589,10 @@ export default function ConfiguracoesPage() {
              </div>
         </CardHeader>
         <CardContent className="space-y-4">
-            <div className="p-4 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="p-4 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-destructive/10">
                 <div>
-                    <h4 className="font-semibold">Backup e Restauração</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <h4 className="font-semibold text-destructive">Backup e Restauração</h4>
+                    <p className="text-sm text-destructive/80">
                         Salve uma cópia de segurança de todos os seus dados ou restaure a partir de um arquivo.
                     </p>
                 </div>
@@ -614,10 +614,10 @@ export default function ConfiguracoesPage() {
                     />
                 </div>
             </div>
-             <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+             <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h4 className="font-semibold">Limpar Sistema</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <h4 className="font-semibold text-destructive">Limpar Sistema</h4>
+                    <p className="text-sm text-destructive/80">
                         Exclui permanentemente todos os clientes, OS, estoque, vendas e finanças.
                     </p>
                 </div>
@@ -723,3 +723,5 @@ export default function ConfiguracoesPage() {
     </div>
   )
 }
+
+    

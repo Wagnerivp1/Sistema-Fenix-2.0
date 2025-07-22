@@ -1,10 +1,22 @@
 [
   {
+    "id": "PROD-1753146048116",
+    "barcode": "PROD-1753146048116",
+    "name": "teste 7",
+    "price": 20,
+    "quantity": 10,
+    "category": "peças",
+    "description": "uygjhgjh",
+    "unitOfMeasure": "UN",
+    "costPrice": 15,
+    "minStock": 2
+  },
+  {
     "id": "PROD-1753065361831",
     "barcode": "PROD-1753065361831",
     "name": "TECLADO GENERICO ",
     "price": 25,
-    "quantity": 10,
+    "quantity": 9,
     "category": "Periféricos",
     "description": "DFSDD",
     "unitOfMeasure": "UN",

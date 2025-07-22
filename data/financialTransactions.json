@@ -1,6 +1,33 @@
 [
   {
     "description": "COMPRA DE FONTE UNIVERAL ",
+    "amount": 100,
+    "date": "2025-07-21",
+    "category": "Outra Despesa",
+    "paymentMethod": "Dinheiro",
+    "type": "despesa",
+    "id": "FIN-1753145947461"
+  },
+  {
+    "description": "ACERTO MARCIO",
+    "amount": 200,
+    "date": "2025-07-21",
+    "category": "Outra Receita",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1753145906504"
+  },
+  {
+    "description": "COMPRA DE FONTE UNIVERAL ",
+    "amount": 424,
+    "date": "2025-07-21",
+    "category": "Outra Receita",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1753145890050"
+  },
+  {
+    "description": "COMPRA DE FONTE UNIVERAL ",
     "amount": 4141,
     "date": "2025-07-21",
     "category": "Outra Receita",
@@ -35,5 +62,15 @@
     "category": "Venda de Produto",
     "paymentMethod": "dinheiro",
     "relatedSaleId": "SALE-1753125600918"
+  },
+  {
+    "id": "FIN-1753145872316",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 25,
+    "date": "2025-07-22",
+    "category": "Venda de Produto",
+    "paymentMethod": "dinheiro",
+    "relatedSaleId": "SALE-1753145871591"
   }
 ]

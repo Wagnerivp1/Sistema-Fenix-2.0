@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ManualSearchDialog } from '@/components/sales/manual-search-dialog';
+import { ChangeCalculatorDialog } from '@/components/sales/change-calculator-dialog';
 
 
 interface SaleItem extends StockItem {
@@ -39,6 +40,7 @@ export default function VendasPage() {
   
   const [barcode, setBarcode] = React.useState('');
   const [isManualSearchOpen, setIsManualSearchOpen] = React.useState(false);
+  const [isChangeCalcOpen, setIsChangeCalcOpen] = React.useState(false);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -186,7 +188,7 @@ export default function VendasPage() {
     toast({ title: 'Venda Cancelada', description: 'Todos os itens foram removidos do carrinho.' });
   };
   
-  const handleFinishSale = async () => {
+  const processSale = async () => {
     if (saleItems.length === 0) {
         toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione produtos para finalizar a venda.' });
         return;
@@ -234,7 +236,21 @@ export default function VendasPage() {
     // 4. Notify and Reset
     toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });
     resetSale();
-  };
+    setIsChangeCalcOpen(false);
+  }
+
+  const handleFinishSale = () => {
+    if (saleItems.length === 0) {
+      toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione produtos para finalizar a venda.' });
+      return;
+    }
+
+    if (paymentMethod === 'dinheiro') {
+        setIsChangeCalcOpen(true);
+    } else {
+        processSale();
+    }
+  }
 
   return (
     <>
@@ -392,6 +408,12 @@ export default function VendasPage() {
         onOpenChange={setIsManualSearchOpen}
         stockItems={stock}
         onProductSelect={handleManualProductSelect}
+    />
+    <ChangeCalculatorDialog
+        isOpen={isChangeCalcOpen}
+        onOpenChange={setIsChangeCalcOpen}
+        total={finalTotal}
+        onConfirm={processSale}
     />
     </>
   );

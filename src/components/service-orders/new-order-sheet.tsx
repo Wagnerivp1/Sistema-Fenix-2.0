@@ -3,7 +3,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check, ShieldCheck, MessageSquare } from 'lucide-react';
+import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check, ShieldCheck, MessageSquare, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,8 +38,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getCustomers, getStock, getCompanyInfo, getLoggedInUser, getSettings } from '@/lib/storage';
-import type { Customer, ServiceOrder, StockItem, CompanyInfo, User, InternalNote } from '@/types';
+import { getCustomers, getStock, getCompanyInfo, getLoggedInUser, getSettings, saveFinancialTransactions, getFinancialTransactions } from '@/lib/storage';
+import type { Customer, ServiceOrder, StockItem, CompanyInfo, User, InternalNote, FinancialTransaction } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import jsPDF from 'jspdf';
@@ -92,6 +92,11 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   const [isManualAddDialogOpen, setIsManualAddDialogOpen] = React.useState(false);
   const [manualAddItem, setManualAddItem] = React.useState<QuoteItem | null>(null);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  
+  const [paymentDetails, setPaymentDetails] = React.useState({
+    discount: 0,
+    paymentMethod: 'Dinheiro',
+  });
 
   const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0, type: 'service' as 'service' | 'part' });
   const [openCombobox, setOpenCombobox] = React.useState(false);
@@ -148,6 +153,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             }
             setNewComment('');
             setWarranty(serviceOrder.warranty || defaultWarranty);
+            setPaymentDetails({
+              discount: serviceOrder.discount || 0,
+              paymentMethod: serviceOrder.paymentMethod || 'Dinheiro'
+            });
         } else {
             // Reset form for a new OS
             const customerIdToSet = customer ? customer.id : '';
@@ -162,6 +171,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             setInternalNotes([]);
             setNewComment('');
             setWarranty(defaultWarranty);
+            setPaymentDetails({ discount: 0, paymentMethod: 'Dinheiro' });
         }
       }
     };
@@ -239,6 +249,9 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         return null;
     }
 
+    const totalValue = calculateTotal();
+    const finalValue = totalValue - (paymentDetails.discount || 0);
+
     const finalOrder: ServiceOrder = {
         id: serviceOrder?.id || `OS-${Date.now()}`,
         customerName: selectedCustomer.name,
@@ -246,7 +259,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         reportedProblem: reportedProblem,
         status: status,
         date: serviceOrder?.date || new Date().toISOString().split('T')[0],
-        totalValue: calculateTotal(),
+        totalValue: totalValue,
+        discount: paymentDetails.discount,
+        finalValue: finalValue,
+        paymentMethod: paymentDetails.paymentMethod,
         items: items,
         internalNotes: internalNotes,
         technicalReport: technicalReport,
@@ -721,12 +737,33 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
   };
 
-  const handleFinalize = (paid: boolean) => {
-    if (paid) {
-      setStatus('Finalizado');
-    } else {
-      setStatus('Aguardando Pagamento');
+  const handleFinalize = async (isPaid: boolean) => {
+    const finalStatus = isPaid ? 'Finalizado' : 'Aguardando Pagamento';
+    setStatus(finalStatus);
+    
+    // Create a temporary order object with the new status to get the final data
+    const tempOrder = { ...getFinalOrderData(), status: finalStatus };
+    
+    if (isPaid && tempOrder.finalValue && tempOrder.finalValue > 0) {
+      const transaction: Omit<FinancialTransaction, 'id'> = {
+        type: 'receita',
+        description: `Recebimento OS #${tempOrder.id.slice(-4)}`,
+        amount: tempOrder.finalValue,
+        date: new Date().toISOString().split('T')[0],
+        category: 'Venda de Serviço',
+        paymentMethod: tempOrder.paymentMethod || 'Dinheiro',
+        relatedServiceOrderId: tempOrder.id,
+      };
+      
+      const existingTransactions = await getFinancialTransactions();
+      await saveFinancialTransactions([{ ...transaction, id: `FIN-${Date.now()}` }, ...existingTransactions]);
+      
+      toast({
+          title: 'Lançamento Financeiro Criado!',
+          description: `Receita de R$ ${tempOrder.finalValue.toFixed(2)} registrada.`,
+      });
     }
+
     setIsFinalizeDialogOpen(false);
   };
 
@@ -1015,24 +1052,55 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
       </DialogContent>
     </Dialog>
 
-    <AlertDialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar Finalização</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta Ordem de Serviço já foi paga pelo cliente?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <Button variant="outline" onClick={() => handleFinalize(false)}>
-            Não, aguardando pagamento
-          </Button>
-          <Button onClick={() => handleFinalize(true)}>
-            Sim, já foi paga
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Dialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Finalizar e Cobrar Ordem de Serviço</DialogTitle>
+                <DialogDescription>
+                    Confirme o valor final e a forma de pagamento.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="flex justify-between items-center text-lg">
+                    <span>Subtotal</span>
+                    <span className="font-semibold">R$ {calculateTotal().toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <Label htmlFor="discount">Desconto (R$)</Label>
+                    <Input
+                        id="discount"
+                        type="number"
+                        className="w-28 h-9 text-right font-medium"
+                        value={paymentDetails.discount || ''}
+                        onChange={(e) => setPaymentDetails(p => ({...p, discount: parseFloat(e.target.value) || 0}))}
+                    />
+                </div>
+                <div className="flex justify-between items-center text-xl font-bold text-primary border-t pt-2">
+                    <span>Total a Pagar</span>
+                    <span>R$ {(calculateTotal() - paymentDetails.discount).toFixed(2)}</span>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
+                     <Select value={paymentDetails.paymentMethod} onValueChange={(v) => setPaymentDetails(p => ({ ...p, paymentMethod: v }))}>
+                        <SelectTrigger id="paymentMethod">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                            <SelectItem value="PIX">PIX</SelectItem>
+                            <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                            <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => handleFinalize(false)}>Salvar como Pendente</Button>
+                <Button onClick={() => handleFinalize(true)}>Confirmar Pagamento</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
 
     <AlertDialog open={isManualAddDialogOpen} onOpenChange={setIsManualAddDialogOpen}>
       <AlertDialogContent>

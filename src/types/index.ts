@@ -28,7 +28,7 @@ export type ServiceOrder = {
   id: string;
   customerName: string;
   client?: Customer; // For backwards compatibility
-  equipment: string;
+  equipment: any;
   reportedProblem: string;
   status: 'Recebido' | 'Em análise' | 'Aprovado' | 'Em conserto' | 'Finalizado' | 'Entregue' | 'Aberta' | 'Aguardando Pagamento' | 'Aguardando peça' | 'Aguardando' | 'Cancelada';
   date: string; // YYYY-MM-DD
@@ -37,8 +37,10 @@ export type ServiceOrder = {
   paymentMethod?: 'Dinheiro' | 'Cartão de Crédito' | 'Cartão de Débito' | 'PIX' | 'Transferência' | 'Pendente';
   warranty?: string; // Ex: "90 dias", "1 ano para a peça"
   totalValue: number;
+  discount?: number;
+  finalValue?: number;
   items?: ServiceOrderItem[];
-  internalNotes?: InternalNote[];
+  internalNotes?: InternalNote[] | string;
   technicalReport?: string;
   accessories?: string;
   serialNumber?: string;

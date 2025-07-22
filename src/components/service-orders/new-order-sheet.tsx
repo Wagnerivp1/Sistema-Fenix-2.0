@@ -123,14 +123,18 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         if (isEditing && serviceOrder) {
             const selectedCustomer = customers.find(c => c.name === serviceOrder.customerName);
             setSelectedCustomerId(selectedCustomer?.id || '');
-            const [type, brand, ...modelParts] = serviceOrder.equipment.split(' ');
-            const model = modelParts.join(' ');
-            setEquipmentType(type || '');
-            setEquipment({
-                brand: brand || '',
-                model: model || '',
-                serial: serviceOrder.serialNumber || '',
-            });
+
+            if (typeof serviceOrder.equipment === 'string') {
+                const [type, brand, ...modelParts] = serviceOrder.equipment.split(' ');
+                const model = modelParts.join(' ');
+                setEquipmentType(type || '');
+                setEquipment({ brand: brand || '', model: model || '', serial: serviceOrder.serialNumber || '' });
+            } else if (typeof serviceOrder.equipment === 'object' && serviceOrder.equipment !== null) {
+                const eq = serviceOrder.equipment as any; // Cast for backward compatibility
+                setEquipmentType(eq.type || '');
+                setEquipment({ brand: eq.brand || '', model: eq.model || '', serial: eq.serialNumber || serviceOrder.serialNumber || '' });
+            }
+
             setAccessories(serviceOrder.accessories || ''); 
             setReportedProblem(serviceOrder.reportedProblem || '');
             setTechnicalReport(serviceOrder.technicalReport || ''); 

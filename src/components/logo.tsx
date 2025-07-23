@@ -20,6 +20,20 @@ const localVerses: BibleVerse[] = [
   { verseText: "O coração do homem planeja o seu caminho, mas o Senhor lhe dirige os passos.", verseReference: "Provérbios 16:9" },
   { verseText: "Deleitem-se no Senhor, e ele atenderá aos desejos do seu coração.", verseReference: "Salmos 37:4" },
   { verseText: "Lancem sobre ele toda a sua ansiedade, porque ele tem cuidado de vocês.", verseReference: "1 Pedro 5:7" },
+  { verseText: "O Senhor é a minha luz e a minha salvação; a quem temerei?", verseReference: "Salmos 27:1" },
+  { verseText: "Porque eu bem sei os pensamentos que tenho a vosso respeito, diz o Senhor; pensamentos de paz, e não de mal.", verseReference: "Jeremias 29:11" },
+  { verseText: "Confie no Senhor de todo o seu coração e não se apoie em seu próprio entendimento.", verseReference: "Provérbios 3:5" },
+  { verseText: "Eu vim para que tenham vida, e a tenham com abundância.", verseReference: "João 10:10" },
+  { verseText: "Mas os que esperam no Senhor renovarão as suas forças, subirão com asas como águias.", verseReference: "Isaías 40:31" },
+  { verseText: "Porque o Senhor, teu Deus, é contigo por onde quer que andares.", verseReference: "Josué 1:9" },
+  { verseText: "O choro pode durar uma noite, mas a alegria vem pela manhã.", verseReference: "Salmos 30:5" },
+  { verseText: "Em tudo dai graças, porque esta é a vontade de Deus em Cristo Jesus para convosco.", verseReference: "1 Tessalonicenses 5:18" },
+  { verseText: "Se Deus é por nós, quem será contra nós?", verseReference: "Romanos 8:31" },
+  { verseText: "O Senhor te abençoe e te guarde.", verseReference: "Números 6:24" },
+  { verseText: "Aquietai-vos e sabei que eu sou Deus.", verseReference: "Salmos 46:10" },
+  { verseText: "Eu sou o caminho, e a verdade, e a vida.", verseReference: "João 14:6" },
+  { verseText: "No mundo tereis aflições, mas tende bom ânimo, eu venci o mundo.", verseReference: "João 16:33" },
+  { verseText: "A fé é o firme fundamento das coisas que se esperam e a prova das que não se veem.", verseReference: "Hebreus 11:1" }
 ];
 
 interface LogoProps {

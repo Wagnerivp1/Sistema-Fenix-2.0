@@ -47,21 +47,6 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
-const getStatusVariant = (status: string) => {
-    switch (status) {
-        case 'Aberta': return 'border-transparent bg-blue-500/20 text-blue-400';
-        case 'Aguardando Pagamento': return 'border-transparent bg-red-500/20 text-red-400';
-        case 'Aguardando peça': return 'border-transparent bg-yellow-500/20 text-yellow-400';
-        case 'Em análise': return 'border-transparent bg-cyan-500/20 text-cyan-400';
-        case 'Aprovado': return 'border-transparent bg-green-500/20 text-green-400';
-        case 'Em conserto': return 'border-transparent bg-indigo-500/20 text-indigo-400';
-        case 'Finalizado': return 'border-transparent bg-gray-500/20 text-gray-400';
-        case 'Entregue': return 'border-transparent bg-purple-500/20 text-purple-400';
-        case 'Aguardando': return 'border-transparent bg-orange-500/20 text-orange-400';
-        default: return 'border-transparent bg-gray-700/50 text-gray-300';
-    }
-}
-
 const formatDate = (dateString: string | undefined) => {
   if (!dateString || isNaN(new Date(dateString).getTime())) {
     return 'Data inválida';
@@ -102,6 +87,20 @@ function ServiceOrdersComponent() {
   const [searchFilter, setSearchFilter] = React.useState('');
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+        case 'Aberta': return 'border-transparent bg-blue-500/20 text-blue-400';
+        case 'Aguardando Pagamento': return 'border-transparent bg-red-500/20 text-red-400';
+        case 'Aguardando peça': return 'border-transparent bg-yellow-500/20 text-yellow-400';
+        case 'Em análise': return 'border-transparent bg-cyan-500/20 text-cyan-400';
+        case 'Aprovado': return 'border-transparent bg-green-500/20 text-green-400';
+        case 'Em conserto': return 'border-transparent bg-indigo-500/20 text-indigo-400';
+        case 'Finalizado': return 'border-transparent bg-gray-500/20 text-gray-400';
+        case 'Entregue': return 'border-transparent bg-purple-500/20 text-purple-400';
+        case 'Aguardando': return 'border-transparent bg-orange-500/20 text-orange-400';
+        default: return 'border-transparent bg-gray-700/50 text-gray-300';
+    }
+  }
 
   React.useEffect(() => {
     // Load data from localStorage on mount

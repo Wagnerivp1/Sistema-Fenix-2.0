@@ -55,7 +55,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="hidden border-r bg-card md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              {/* This space is intentionally left blank to remove the top-left logo */}
+              <div>
+                <h2 className="font-bold text-lg">Sistema Fenix <span className="text-xs font-mono text-muted-foreground">v1.0</span></h2>
+                <p className="text-xs font-code text-muted-foreground">By Wagner Lopes</p>
+              </div>
             </div>
             <div className="flex-1">
               <MainNav />
@@ -72,8 +75,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         <span className="sr-only">Toggle navigation menu</span>
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="flex flex-col">
-                      <nav className="grid gap-2 text-lg font-medium">
+                    <SheetContent side="left" className="flex flex-col p-0">
+                      <div className="flex h-14 items-center border-b px-6">
+                         <div>
+                            <h2 className="font-bold text-lg">Sistema Fenix <span className="text-xs font-mono text-muted-foreground">v1.0</span></h2>
+                            <p className="text-xs font-code text-muted-foreground">By Wagner Lopes</p>
+                          </div>
+                      </div>
+                      <nav className="grid gap-2 text-lg font-medium p-4">
                         <MainNav />
                       </nav>
                     </SheetContent>

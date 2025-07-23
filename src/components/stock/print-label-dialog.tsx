@@ -99,20 +99,20 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const centerX = currentX + labelWidth / 2;
         
         // 1. Nome da Empresa
-        doc.setFontSize(8);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || 'Sua Empresa', centerX, currentY + 5, { align: 'center' });
+        doc.text(companyInfo.name || 'Sua Empresa', centerX, currentY + 6, { align: 'center' });
 
         // 2. Nome do Produto
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10);
-        doc.text(productNameLines, centerX, currentY + 11, { align: 'center', maxWidth: labelWidth - 10 });
+        doc.text(productNameLines, centerX, currentY + 12, { align: 'center', maxWidth: labelWidth - 10 });
         
         // 3. Preço
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 22, { align: 'center' });
+        doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 23, { align: 'center' });
         
         // 4. Código de Barras
         const barcodeCanvas = document.createElement('canvas');
@@ -129,7 +129,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
             barcodeCanvas.toDataURL('image/png'),
             'PNG',
             currentX + 15,
-            currentY + 26,
+            currentY + 27,
             70,
             12
         );

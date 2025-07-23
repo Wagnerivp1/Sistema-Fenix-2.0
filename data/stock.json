@@ -1,5 +1,17 @@
 [
   {
+    "id": "PROD-1753232548260",
+    "barcode": "PROD-1753232548260",
+    "name": "tela",
+    "price": 512121,
+    "quantity": 1,
+    "category": "peças",
+    "description": "teksjksk",
+    "unitOfMeasure": "UN",
+    "costPrice": 4554,
+    "minStock": 1
+  },
+  {
     "id": "PROD-1753146048116",
     "barcode": "PROD-1753146048116",
     "name": "teste 7",

@@ -97,8 +97,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         }
         
         // Borda da etiqueta
-        doc.setLineWidth(0.5); // Aumenta a espessura da borda
-        doc.setDrawColor(150, 150, 150); // Cor da borda
+        doc.setLineWidth(0.8);
+        doc.setDrawColor(0, 0, 0); // Cor da borda preta
         doc.rect(currentX + 1, currentY + 1, labelWidth - 2, labelHeight - 2, 'S'); // 'S' para stroke
         
         const centerX = currentX + labelWidth / 2;

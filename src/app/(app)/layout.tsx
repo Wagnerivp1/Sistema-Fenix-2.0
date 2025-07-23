@@ -76,20 +76,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </SheetTrigger>
                     <SheetContent side="left" className="flex flex-col">
                       <nav className="grid gap-2 text-lg font-medium">
-                        <Link
-                          href="#"
-                          className="flex items-center justify-center gap-2 text-lg font-semibold mb-4"
-                        >
-                          <Logo />
-                        </Link>
                         <MainNav />
                       </nav>
                     </SheetContent>
                   </Sheet>
-                  <div className="hidden md:block">
-                    <h1 className="font-semibold text-lg">Sistema Fenix <span className="font-normal text-sm text-muted-foreground">v1.0</span></h1>
-                    <p className="font-code text-xs text-muted-foreground">By Wagner Lopes</p>
-                  </div>
              </div>
             
             <div className="absolute left-1/2 -translate-x-1/2">

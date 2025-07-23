@@ -96,23 +96,27 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
           continue;
         }
         
+        // Borda da etiqueta
+        doc.setDrawColor(150, 150, 150); // Cor da borda
+        doc.rect(currentX + 1, currentY + 1, labelWidth - 2, labelHeight - 2, 'S'); // 'S' para stroke
+        
         const centerX = currentX + labelWidth / 2;
         
         // 1. Nome da Empresa
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || 'Sua Empresa', centerX, currentY + 6, { align: 'center' });
+        doc.text(companyInfo.name || 'Sua Empresa', centerX, currentY + 7, { align: 'center' });
 
         // 2. Nome do Produto
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10);
-        doc.text(productNameLines, centerX, currentY + 12, { align: 'center', maxWidth: labelWidth - 10 });
+        doc.text(productNameLines, centerX, currentY + 13, { align: 'center', maxWidth: labelWidth - 10 });
         
         // 3. Preço
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 23, { align: 'center' });
+        doc.text(`R$ ${item.price.toFixed(2)}`, centerX, currentY + 24, { align: 'center' });
         
         // 4. Código de Barras
         const barcodeCanvas = document.createElement('canvas');
@@ -129,9 +133,9 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
             barcodeCanvas.toDataURL('image/png'),
             'PNG',
             currentX + 15,
-            currentY + 27,
+            currentY + 28,
             70,
-            12
+            10
         );
       }
 

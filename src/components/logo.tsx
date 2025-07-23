@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -80,7 +79,7 @@ export function Logo({ className, iconOnly = false, onLoginPage = false }: LogoP
   }
 
   return (
-    <div className={cn('flex items-center gap-3 text-primary', className)}>
+    <div className={cn('flex items-baseline gap-3 text-primary', className)}>
       {companyInfo?.logoUrl ? (
         <Image src={companyInfo.logoUrl} alt="Logo" width={48} height={48} className="h-12 w-12 object-contain" />
       ) : (

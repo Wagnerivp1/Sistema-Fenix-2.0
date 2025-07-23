@@ -65,7 +65,6 @@ export function HeaderActions() {
                     </DropdownMenuSubContent>
                 </DropdownMenuPortal>
             </DropdownMenuSub>
-            <DropdownMenuItem>Suporte</DropdownMenuItem>
             <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                 <Link href="/">Sair</Link>

@@ -1,5 +1,17 @@
 [
   {
+    "id": "PROD-1753232934190",
+    "barcode": "PROD-1753232934190",
+    "name": "TECLADO USB MULTILAZER ",
+    "price": 20,
+    "quantity": 2,
+    "category": "Periféricos",
+    "description": "TECLADO USB ",
+    "unitOfMeasure": "UN",
+    "costPrice": 15,
+    "minStock": 1
+  },
+  {
     "id": "PROD-1753232548260",
     "barcode": "PROD-1753232548260",
     "name": "tela",

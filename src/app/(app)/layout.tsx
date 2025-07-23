@@ -4,6 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import {
   Wrench,
 } from 'lucide-react';
@@ -18,14 +19,35 @@ import { MainNav } from '@/components/main-nav';
 import { Logo } from '@/components/logo';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getLoggedInUser } from '@/lib/storage';
 
 const HeaderActions = dynamic(() => import('@/components/layout/header-actions').then(mod => mod.HeaderActions), {
   ssr: false,
   loading: () => <Skeleton className="h-8 w-8 rounded-full" />,
 });
 
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [isVerified, setIsVerified] = React.useState(false);
+
+  React.useEffect(() => {
+    const user = getLoggedInUser();
+    if (!user) {
+      router.replace('/');
+    } else {
+      setIsVerified(true);
+    }
+  }, [router]);
+
+  if (!isVerified) {
+    // Render a skeleton or loading state while verifying authentication
+    // This prevents a flash of the old page content
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <p>Verificando autenticação...</p>
+      </div>
+    );
+  }
   
   return (
     <SidebarProvider>

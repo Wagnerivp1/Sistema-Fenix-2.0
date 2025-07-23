@@ -54,6 +54,7 @@ const getCrc16 = (payload: string): string => {
   return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
 
+
 const generatePixPayload = (companyInfo: CompanyInfo, sale: { total: number, id: string }) => {
     const merchantAccountInfo = formatText('00', 'br.gov.bcb.pix') + formatText('01', companyInfo.pixKey);
     const txid = `***${sale.id.slice(-22)}`.substring(0, 25);
@@ -67,8 +68,7 @@ const generatePixPayload = (companyInfo: CompanyInfo, sale: { total: number, id:
         formatText('59', companyInfo.name.replace(/[^a-zA-Z0-9 ]/g, '').substring(0, 25)),
         formatText('60', 'SAO PAULO'),
         formatText('62', formatText('05', txid)),
-        '6304'
-    ].join('');
+    ].join('') + '6304';
     
     const crc = getCrc16(payloadWithoutCrc);
 

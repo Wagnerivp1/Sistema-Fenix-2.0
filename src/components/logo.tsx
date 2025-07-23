@@ -7,13 +7,25 @@ import { Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCompanyInfo } from '@/lib/storage';
 import type { CompanyInfo } from '@/types';
-import { getBibleVerse, BibleVerseOutput } from '@/ai/flows/bible-verse-flow';
+
+interface BibleVerse {
+  verseText: string;
+  verseReference: string;
+}
+
+const localVerses: BibleVerse[] = [
+  { verseText: "Tudo posso naquele que me fortalece.", verseReference: "Filipenses 4:13" },
+  { verseText: "O Senhor é o meu pastor; nada me faltará.", verseReference: "Salmos 23:1" },
+  { verseText: "Porque para Deus nada é impossível.", verseReference: "Lucas 1:37" },
+  { verseText: "O coração do homem planeja o seu caminho, mas o Senhor lhe dirige os passos.", verseReference: "Provérbios 16:9" },
+  { verseText: "Deleitem-se no Senhor, e ele atenderá aos desejos do seu coração.", verseReference: "Salmos 37:4" },
+  { verseText: "Lancem sobre ele toda a sua ansiedade, porque ele tem cuidado de vocês.", verseReference: "1 Pedro 5:7" },
+];
 
 
 export function Logo({ className, iconOnly = false }: { className?: string; iconOnly?: boolean }) {
   const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
-  const [verse, setVerse] = React.useState<BibleVerseOutput | null>(null);
-  const [isLoadingVerse, setIsLoadingVerse] = React.useState(true);
+  const [verse, setVerse] = React.useState<BibleVerse | null>(null);
 
   React.useEffect(() => {
     const fetchCompanyInfo = async () => {
@@ -21,23 +33,12 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
         setCompanyInfo(info);
     };
 
-    const fetchVerse = async () => {
-      setIsLoadingVerse(true);
-      try {
-        const result = await getBibleVerse();
-        setVerse(result);
-      } catch (error) {
-        console.error("Failed to fetch bible verse", error);
-        setVerse(null); // Clear verse on error
-      } finally {
-        setIsLoadingVerse(false);
-      }
-    };
-
     fetchCompanyInfo();
-    fetchVerse();
 
     const handleStorageChange = () => fetchCompanyInfo();
+    
+    // Select a random verse on the client-side to avoid hydration mismatch
+    setVerse(localVerses[Math.floor(Math.random() * localVerses.length)]);
     
     window.addEventListener('companyInfoChanged', handleStorageChange);
     return () => {
@@ -56,9 +57,7 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
         {!iconOnly && companyInfo?.name && (
             <span className="text-3xl font-bold tracking-tight">{companyInfo.name}</span>
         )}
-         {isLoadingVerse ? (
-            <p className="text-sm text-muted-foreground animate-pulse">Carregando versículo...</p>
-        ) : verse && (
+         {verse && (
             <div className="text-sm text-muted-foreground italic hidden md:block">
               <p>"{verse.verseText}"</p>
               <p className="text-right font-semibold text-xs mt-1">- {verse.verseReference}</p>

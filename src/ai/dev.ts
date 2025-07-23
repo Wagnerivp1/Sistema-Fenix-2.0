@@ -1,8 +1,5 @@
 
 /**
- * @fileoverview This file is the entry point for the Genkit development server.
- * It imports all the defined flows so that they can be run and managed by the
- * Genkit development UI.
+ * @fileoverview This file is no longer in use.
+ * The Genkit development server and its related flows have been removed.
  */
-
-import './flows/bible-verse-flow';

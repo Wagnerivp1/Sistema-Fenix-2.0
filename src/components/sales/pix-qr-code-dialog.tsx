@@ -113,7 +113,8 @@ export function PixQrCodeDialog({
         setQrCodeDataUrl('');
         setPixCopyPaste('');
     }
-  }, [isOpen, companyInfo, sale, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
   
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(pixCopyPaste);

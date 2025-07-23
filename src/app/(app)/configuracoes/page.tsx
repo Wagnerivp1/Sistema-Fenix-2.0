@@ -113,11 +113,23 @@ export default function ConfiguracoesPage() {
     setNewUser(prev => ({
       ...prev,
       permissions: {
-        ...prev.permissions,
+        ...prev?.permissions,
         [permission]: checked
       }
     }));
   };
+
+  const handleSelectAllPermissions = () => {
+    const allPermissions = Object.keys(newUser.permissions || {}).reduce((acc, key) => {
+      acc[key as keyof UserPermissions] = true;
+      return acc;
+    }, {} as UserPermissions);
+
+    setNewUser(prev => ({
+      ...prev,
+      permissions: allPermissions,
+    }));
+  }
 
   const handleCompanyInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -540,7 +552,10 @@ export default function ConfiguracoesPage() {
               </div>
               <Separator className="md:col-span-2" />
                <div className="md:col-span-2 space-y-4">
-                <h3 className="text-lg font-semibold flex items-center"><ShieldCheck className="mr-2 h-5 w-5" /> Permissões do Usuário</h3>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold flex items-center"><ShieldCheck className="mr-2 h-5 w-5" /> Permissões do Usuário</h3>
+                    <Button variant="outline" size="sm" onClick={handleSelectAllPermissions}>Selecionar Tudo</Button>
+                </div>
                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm text-primary">Acesso a Módulos</h4>

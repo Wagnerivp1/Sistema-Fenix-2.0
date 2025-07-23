@@ -31,21 +31,21 @@ const formatText = (id: string, text: string | undefined, maxLength = 99) => {
     return `${id}${length}${cleanText}`;
 };
 
-const getCrc16 = (payload: string) => {
-    let crc = 0xFFFF;
-    const polynomial = 0x1021;
-    for (const b of Buffer.from(payload, 'utf8')) {
-        crc ^= (b << 8);
-        for (let i = 0; i < 8; i++) {
-            if ((crc & 0x8000) !== 0) {
-                crc = (crc << 1) ^ polynomial;
-            } else {
-                crc <<= 1;
-            }
-        }
+const getCrc16 = (payload: string): string => {
+  let crc = 0xFFFF;
+  const polynomial = 0x1021;
+  const buffer = Buffer.from(payload, 'utf8');
+
+  for (const b of buffer) {
+    crc ^= (b << 8);
+    for (let i = 0; i < 8; i++) {
+      crc = (crc & 0x8000) ? (crc << 1) ^ polynomial : crc << 1;
     }
-    return crc.toString(16).toUpperCase().padStart(4, '0');
+  }
+
+  return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
+
 
 const generatePixPayload = (companyInfo: CompanyInfo, sale: { total: number, id: string }) => {
     const merchantAccountInfo = formatText('00', 'br.gov.bcb.pix') + formatText('01', companyInfo.pixKey);

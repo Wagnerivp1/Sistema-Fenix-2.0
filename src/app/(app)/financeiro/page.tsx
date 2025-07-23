@@ -268,7 +268,8 @@ export default function FinanceiroPage() {
           headStyles: { fillColor: [30, 41, 59] },
       });
 
-      doc.save(`Relatorio_Financeiro_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.autoPrint();
+      doc.output('dataurlnewwindow');
     };
 
     if (companyInfo?.logoUrl) {

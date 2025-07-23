@@ -55,9 +55,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="hidden border-r bg-card md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center justify-center border-b px-4 lg:h-[60px] lg:px-6">
-              <Link href="/" className="flex items-center gap-2 font-semibold">
-                <Logo />
-              </Link>
+              {/* O Logo foi removido daqui para o cabeçalho principal */}
             </div>
             <div className="flex-1">
               <MainNav />
@@ -77,7 +75,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <nav className="grid gap-2 text-lg font-medium">
                   <Link
                     href="#"
-                    className="flex items-center gap-2 text-lg font-semibold mb-4"
+                    className="flex items-center justify-center gap-2 text-lg font-semibold mb-4"
                   >
                     <Logo />
                   </Link>
@@ -85,12 +83,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </nav>
               </SheetContent>
             </Sheet>
-            <div className="w-full flex-1 md:hidden">
-              <div className="flex justify-center">
+            
+            {/* Div para centralizar o logo */}
+            <div className="flex-1 flex justify-center">
+               <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
                 <Logo />
-              </div>
+              </Link>
             </div>
-            <div className="md:w-full md:flex-1" />
+
             <HeaderActions />
           </header>
           <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">

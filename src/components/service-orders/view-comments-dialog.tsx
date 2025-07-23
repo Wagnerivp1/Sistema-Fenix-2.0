@@ -77,36 +77,32 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
-        let currentY = 12;
+        let currentY = 15;
 
         if (logoImage) {
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 25, 25);
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - 12.5, currentY, 25, 25);
+            currentY += 30;
         }
 
-        const companyInfoX = margin + (logoImage ? 30 : 0);
         doc.setFont('helvetica');
         doc.setTextColor('#000000');
         
-        doc.setFontSize(18);
+        doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
         if (companyInfo?.name) {
-            doc.text(companyInfo.name, companyInfoX, currentY + 6);
-        }
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        if (companyInfo?.address) {
-            doc.text(companyInfo.address, companyInfoX, currentY + 12);
+            doc.text(companyInfo.name, pageWidth/2, currentY, { align: 'center' });
+            currentY += 8;
         }
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Histórico de Comentários`, pageWidth - margin, currentY + 6, { align: 'right' });
+        doc.text(`Histórico de Comentários`, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 6;
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`OS: #${serviceOrder.id.slice(-4)}`, pageWidth - margin, currentY + 12, { align: 'right' });
-        doc.text(`Cliente: ${serviceOrder.customerName}`, pageWidth - margin, currentY + 17, { align: 'right' });
+        doc.text(`OS: #${serviceOrder.id.slice(-4)} | Cliente: ${serviceOrder.customerName}`, pageWidth / 2, currentY, { align: 'center'});
 
-        currentY = 40;
+        currentY += 10;
 
         doc.autoTable({
             startY: currentY,

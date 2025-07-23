@@ -65,44 +65,37 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
-        let currentY = 12;
+        let currentY = 15;
         const fontColor = '#000000';
-        const primaryColor = '#e0e7ff';
         const titleText = tx.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
 
         // Header
         if (logoImage) {
             const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20 * logoAR, 20);
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (20 * logoAR / 2), currentY, 20 * logoAR, 20);
+            currentY += 25;
         }
         
-        const companyInfoX = margin + (logoImage ? 25 : 0);
         doc.setFont('helvetica');
         doc.setTextColor(fontColor);
         
         if (info.name) {
-            doc.setFontSize(18);
+            doc.setFontSize(20);
             doc.setFont('helvetica', 'bold');
-            doc.text(info.name, companyInfoX, currentY + 6);
-        }
-        if (info.address) {
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text(info.address, companyInfoX, currentY + 12);
-        }
-        if (info.phone || info.emailOrSite) {
-            doc.text(`Telefone: ${info.phone || ''} | E-mail: ${info.emailOrSite || ''}`, companyInfoX, currentY + 17);
+            doc.text(info.name, pageWidth / 2, currentY, { align: 'center'});
+            currentY += 8;
         }
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(titleText, pageWidth - margin, currentY + 6, { align: 'right' });
+        doc.text(titleText, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 6;
+
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Transação #${tx.id.slice(-6)}`, pageWidth - margin, currentY + 12, { align: 'right' });
-        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
+        doc.text(`Transação #${tx.id.slice(-6)} | Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 15;
 
-        currentY = 50;
 
         // Body Text
         doc.setFontSize(11);

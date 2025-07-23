@@ -65,35 +65,37 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.getWidth();
             const margin = 15;
-            let currentY = 12;
+            let currentY = 15;
             const fontColor = '#000000';
-            const primaryColor = '#e0e7ff';
             
             // Cabeçalho
             if (logoImage) {
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20, 20);
+                const logoAR = logoImage.width / logoImage.height;
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (20 * logoAR / 2), currentY, 20 * logoAR, 20);
+                currentY += 25;
             }
-            const companyInfoX = margin + (logoImage ? 25 : 0);
             if (companyInfo?.name) {
-                doc.setFontSize(18);
+                doc.setFontSize(20);
                 doc.setFont('helvetica', 'bold');
-                doc.text(companyInfo.name, companyInfoX, currentY + 6);
+                doc.text(companyInfo.name, pageWidth / 2, currentY, { align: 'center'});
+                currentY += 7;
             }
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
             if (companyInfo?.address) {
-                doc.text(companyInfo.address, companyInfoX, currentY + 12);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(companyInfo.address, pageWidth / 2, currentY, { align: 'center'});
+                currentY += 4;
             }
 
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text(`Comprovante de Venda`, pageWidth - margin, currentY + 6, { align: 'right' });
+            doc.text(`Comprovante de Venda`, pageWidth / 2, currentY, { align: 'center'});
+            currentY += 6;
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            doc.text(`Venda #${sale.id.slice(-6)}`, pageWidth - margin, currentY + 12, { align: 'right' });
-            doc.text(`Data: ${formatDate(sale.date)} ${sale.time}`, pageWidth - margin, currentY + 17, { align: 'right' });
+            doc.text(`Venda #${sale.id.slice(-6)} | Data: ${formatDate(sale.date)} ${sale.time}`, pageWidth / 2, currentY, { align: 'center'});
             
-            currentY = 40;
+            currentY += 10;
             
             // Detalhes da Venda
             doc.setFontSize(9);

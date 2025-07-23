@@ -29,16 +29,16 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
   }, []);
 
   const logoUrl = companyInfo?.logoUrl;
-  const companyName = companyInfo?.name || 'JL Informática';
+  const companyName = companyInfo?.name || 'Assistec Now';
 
   return (
-    <div className={cn('flex items-center gap-2 text-primary', className)}>
+    <div className={cn('flex items-center gap-3 text-primary', className)}>
       {logoUrl ? (
-        <Image src={logoUrl} alt={`${companyName} Logo`} width={24} height={24} className="h-6 w-6 object-contain" />
+        <Image src={logoUrl} alt={`${companyName} Logo`} width={32} height={32} className="h-8 w-8 object-contain" />
       ) : (
-        <Wrench className="h-6 w-6" />
+        <Wrench className="h-8 w-8" />
       )}
-      {!iconOnly && <span className="text-xl font-bold">{companyName}</span>}
+      {!iconOnly && <span className="text-2xl font-bold">{companyName}</span>}
     </div>
   );
 }

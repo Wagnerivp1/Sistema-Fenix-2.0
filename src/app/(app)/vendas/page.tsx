@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ManualSearchDialog } from '@/components/sales/manual-search-dialog';
 import { ChangeCalculatorDialog } from '@/components/sales/change-calculator-dialog';
+import { PrintSaleReceiptDialog } from '@/components/sales/print-sale-receipt-dialog';
 
 
 interface SaleItem extends StockItem {
@@ -43,6 +44,9 @@ export default function VendasPage() {
   const [isChangeCalcOpen, setIsChangeCalcOpen] = React.useState(false);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  
+  const [isPrintReceiptOpen, setIsPrintReceiptOpen] = React.useState(false);
+  const [saleToPrint, setSaleToPrint] = React.useState<Sale | null>(null);
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -242,6 +246,10 @@ export default function VendasPage() {
     toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });
     resetSale();
     setIsChangeCalcOpen(false);
+    
+    // 5. Trigger print dialog
+    setSaleToPrint(newSale);
+    setIsPrintReceiptOpen(true);
   }
 
   const handleFinishSale = () => {
@@ -419,6 +427,11 @@ export default function VendasPage() {
         onOpenChange={setIsChangeCalcOpen}
         total={finalTotal}
         onConfirm={processSale}
+    />
+    <PrintSaleReceiptDialog
+      isOpen={isPrintReceiptOpen}
+      onOpenChange={setIsPrintReceiptOpen}
+      sale={saleToPrint}
     />
     </>
   );

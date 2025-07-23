@@ -282,7 +282,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
     
     return finalOrder;
-  }
+  };
   
   const handleSave = () => {
     const finalOrder = getFinalOrderData();
@@ -370,7 +370,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
             return y + boxHeight + 8;
         };
-
+        
         const boxWidth = (pageWidth - (margin * 2));
         
         const customer = customers.find(c => c.id === selectedCustomerId);
@@ -738,7 +738,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         });
         break;
     }
-  }
+  };
 
   const handleStatusChange = (value: ServiceOrder['status'] | 'Finalizar') => {
     if (value === 'Finalizar') {
@@ -1062,7 +1062,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         </DialogFooter>
       </DialogContent>
     </Dialog>
-
     <Dialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -1126,6 +1125,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
           <AlertDialogAction onClick={confirmManualAdd}>Adicionar</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }

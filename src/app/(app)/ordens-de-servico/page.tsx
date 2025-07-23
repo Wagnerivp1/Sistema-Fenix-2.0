@@ -85,7 +85,7 @@ const allStatuses: ServiceOrder['status'][] = [
   'Cancelada'
 ];
 
-export default function ServiceOrdersPage() {
+function ServiceOrdersComponent() {
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customerId');
   const { toast } = useToast();
@@ -425,4 +425,10 @@ export default function ServiceOrdersPage() {
   );
 }
 
-    
+export default function ServiceOrdersPage() {
+  return (
+    <React.Suspense fallback={<div>Carregando...</div>}>
+      <ServiceOrdersComponent />
+    </React.Suspense>
+  );
+}

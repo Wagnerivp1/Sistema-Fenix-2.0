@@ -1,5 +1,32 @@
 [
   {
+    "id": "OS-1753209397767",
+    "customerName": "CESTA BASICA SANTA RITA",
+    "equipment": "AS ASS as",
+    "reportedProblem": "as",
+    "status": "Aberta",
+    "date": "2025-07-22",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "paymentMethod": "Dinheiro",
+    "items": [
+      {
+        "description": "teste 7",
+        "quantity": 6,
+        "unitPrice": 20,
+        "type": "part",
+        "id": 1753209389999
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "as",
+    "serialNumber": "AS",
+    "warranty": "90 dias",
+    "attendant": "Master User"
+  },
+  {
     "client": {
       "name": "ADVOCACIA JOÃO FABIO HILARIO (fILHO)",
       "phone": "43996375274",
@@ -234,41 +261,23 @@
     "completionDate": "2025-07-15T20:41:51.692Z"
   },
   {
-    "client": {
-      "name": "CLIENTE AVULSO",
-      "phone": "43996024065",
-      "email": "jl.solucoes@hotmail.com",
-      "address": "RUA MARECHAL FLORIANO PEIXOTO, 80",
-      "document": "",
-      "id": "1752591100370-0.5475282037034886"
-    },
-    "equipment": {
-      "type": "COMPUTADOR",
-      "brand": "HP",
-      "model": "ALL IN ONE ",
-      "serialNumber": "ABC12345",
-      "id": "1752591164026-0.9092236190630624",
-      "clientId": "1752591100370-0.5475282037034886"
-    },
-    "entryDate": "2025-07-15T14:52:44.026Z",
-    "defectReported": "LENTO NAO ENTRA NO WINDOWS",
-    "status": "Aguardando Pagamento",
-    "accessories": "CARREGADOR ",
-    "technicalDiagnosis": "TROCA HD PO SSD CLIENTE TROUXE SSD",
-    "servicesPerformed": [
-      {
-        "id": "id_1752591265855_xj3hsj91y",
-        "description": "FORMATAÇÃO +MONTAGEM ",
-        "value": 150
-      }
-    ],
-    "usedParts": [],
-    "comments": [],
-    "serviceValue": 150,
-    "partsValue": 0,
-    "totalValue": 150,
     "id": "1752591164026-0.16961268312957978",
-    "completionDate": "2025-07-15T14:53:06.829Z"
+    "customerName": "CESTA BASICA SANTA RITA",
+    "equipment": "COMPUTADOR HP ALL IN ONE",
+    "reportedProblem": "",
+    "status": "Finalizado",
+    "date": "2025-07-22",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "paymentMethod": "PIX",
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "CARREGADOR ",
+    "serialNumber": "ABC12345",
+    "warranty": "90 dias",
+    "attendant": "Master User"
   },
   {
     "client": {

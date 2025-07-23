@@ -1,5 +1,25 @@
 [
   {
+    "type": "receita",
+    "description": "Recebimento OS #7767",
+    "amount": 120,
+    "date": "2025-07-22",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1753209397767",
+    "id": "FIN-1753209614115"
+  },
+  {
+    "type": "receita",
+    "description": "Recebimento OS #7767",
+    "amount": 110,
+    "date": "2025-07-22",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1753209397767",
+    "id": "FIN-1753209432397"
+  },
+  {
     "description": "COMPRA DE FONTE UNIVERAL ",
     "amount": 100,
     "date": "2025-07-21",

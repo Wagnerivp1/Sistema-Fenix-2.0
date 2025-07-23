@@ -30,13 +30,13 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
   return (
     <div className={cn('flex items-center gap-3 text-primary', className)}>
       {companyInfo?.logoUrl ? (
-        <Image src={companyInfo.logoUrl} alt="Logo" width={40} height={40} className="h-10 w-10 object-contain" />
+        <Image src={companyInfo.logoUrl} alt="Logo" width={48} height={48} className="h-12 w-12 object-contain" />
       ) : (
-        <Wrench className="h-8 w-8" />
+        <Wrench className="h-12 w-12" />
       )}
       {!iconOnly && companyInfo?.name && (
         <div>
-            <span className="text-xl font-bold tracking-tight">{companyInfo.name}</span>
+            <span className="text-3xl font-bold tracking-tight">{companyInfo.name}</span>
         </div>
       )}
     </div>

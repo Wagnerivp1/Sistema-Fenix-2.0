@@ -88,7 +88,7 @@ export function Logo({ className, iconOnly = false, onLoginPage = false }: LogoP
       )}
       <div className="flex items-baseline gap-4">
         {!iconOnly && companyInfo?.name && (
-            <span className="text-3xl font-bold tracking-tight">{companyInfo.name}</span>
+            <span className="text-3xl font-bold tracking-tight whitespace-nowrap">{companyInfo.name}</span>
         )}
          {verse && !onLoginPage && (
             <div className="text-sm text-muted-foreground italic hidden md:block">

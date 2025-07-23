@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PlusCircle, Search, MoreHorizontal, FileDown, Printer, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +39,7 @@ import { AddStockEntryDialog } from '@/components/stock/add-stock-entry-dialog';
 import { PrintLabelDialog } from '@/components/stock/print-label-dialog';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -47,10 +49,14 @@ declare module 'jspdf' {
 }
 
 
-export default function EstoquePage() {
+function EstoquePageComponent() {
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get('filter');
+
   const [stockItems, setStockItems] = React.useState<StockItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('all');
   const [editingItem, setEditingItem] = React.useState<StockItem | null>(null);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [itemForEntry, setItemForEntry] = React.useState<StockItem | null>(null);
@@ -64,15 +70,34 @@ export default function EstoquePage() {
       setIsLoading(true);
       const data = await getStock();
       setStockItems(data);
+      if (filterParam === 'low_stock') {
+        setStatusFilter('low_stock');
+      }
       setIsLoading(false);
     }
     loadStock();
-  }, []);
+  }, [filterParam]);
 
-  const filteredItems = stockItems.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredItems = React.useMemo(() => {
+    return stockItems.filter((item) => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        if (statusFilter === 'all') {
+            return matchesSearch;
+        }
+
+        const isLowStock = item.minStock !== undefined && item.quantity <= item.minStock;
+        const isOutOfStock = item.quantity <= 0;
+
+        const matchesStatus = statusFilter === 'low_stock' ? isLowStock && !isOutOfStock :
+                              statusFilter === 'out_of_stock' ? isOutOfStock :
+                              true;
+
+        return matchesSearch && matchesStatus;
+    });
+  }, [stockItems, searchTerm, statusFilter]);
+
   
   const handleSaveItem = async (itemToSave: StockItem) => {
     const exists = stockItems.some(item => item.id === itemToSave.id);
@@ -226,17 +251,27 @@ export default function EstoquePage() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
-          <div className="relative">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Procurar por nome ou categoria..."
-              className="w-full rounded-lg bg-background pl-8 md:w-[300px]"
+              className="w-full rounded-lg bg-background pl-8 md:w-full"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrar status..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Status</SelectItem>
+              <SelectItem value="low_stock">Estoque Baixo</SelectItem>
+              <SelectItem value="out_of_stock">Sem Estoque</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="rounded-md border">
         <Table>
@@ -324,9 +359,14 @@ export default function EstoquePage() {
         onOpenChange={setIsPrintOpen}
         item={itemToPrint}
     />
-
     </>
   );
 }
 
-    
+export default function EstoquePage() {
+    return (
+        <React.Suspense fallback={<div>Carregando...</div>}>
+            <EstoquePageComponent />
+        </React.Suspense>
+    )
+}

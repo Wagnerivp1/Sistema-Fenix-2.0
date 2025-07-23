@@ -1,5 +1,45 @@
 [
   {
+    "id": "FIN-1753232333406",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 25,
+    "date": "2025-07-23",
+    "category": "Venda de Produto",
+    "paymentMethod": "pix",
+    "relatedSaleId": "SALE-1753232332627"
+  },
+  {
+    "id": "FIN-1753232331618",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 25,
+    "date": "2025-07-23",
+    "category": "Venda de Produto",
+    "paymentMethod": "pix",
+    "relatedSaleId": "SALE-1753232330792"
+  },
+  {
+    "id": "FIN-1753232287672",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 50,
+    "date": "2025-07-23",
+    "category": "Venda de Produto",
+    "paymentMethod": "pix",
+    "relatedSaleId": "SALE-1753232286692"
+  },
+  {
+    "id": "FIN-1753232248848",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 25,
+    "date": "2025-07-23",
+    "category": "Venda de Produto",
+    "paymentMethod": "dinheiro",
+    "relatedSaleId": "SALE-1753232248093"
+  },
+  {
     "id": "FIN-1753231334304",
     "type": "receita",
     "description": "Venda de Produtos (PDV)",

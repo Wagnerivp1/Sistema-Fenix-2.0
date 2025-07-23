@@ -1,5 +1,15 @@
 [
   {
+    "id": "FIN-1753312415553",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 20,
+    "date": "2025-07-23",
+    "category": "Venda de Produto",
+    "paymentMethod": "pix",
+    "relatedSaleId": "SALE-1753312414806"
+  },
+  {
     "id": "FIN-1753311296723",
     "type": "receita",
     "description": "Venda de Produtos (PDV)",

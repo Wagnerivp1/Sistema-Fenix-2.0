@@ -196,5 +196,30 @@
     "total": 20,
     "paymentMethod": "pix",
     "observations": ""
+  },
+  {
+    "id": "SALE-1753312414806",
+    "date": "2025-07-23",
+    "time": "20:13:34",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "id": "PROD-1753146048116",
+        "barcode": "PROD-1753146048116",
+        "name": "teste 7",
+        "price": 20,
+        "quantity": 1,
+        "category": "peças",
+        "description": "uygjhgjh",
+        "unitOfMeasure": "UN",
+        "costPrice": 15,
+        "minStock": 2
+      }
+    ],
+    "subtotal": 20,
+    "discount": 0,
+    "total": 20,
+    "paymentMethod": "pix",
+    "observations": ""
   }
 ]

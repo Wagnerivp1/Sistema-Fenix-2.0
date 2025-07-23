@@ -50,6 +50,8 @@ export default function VendasPage() {
   const [isPrintReceiptOpen, setIsPrintReceiptOpen] = React.useState(false);
   const [saleToPrint, setSaleToPrint] = React.useState<Sale | null>(null);
   const [isPixDialogOpen, setIsPixDialogOpen] = React.useState(false);
+  const [currentSaleId, setCurrentSaleId] = React.useState('');
+
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -192,6 +194,7 @@ export default function VendasPage() {
     setPaymentMethod('dinheiro');
     setObservations('');
     setBarcode('');
+    setCurrentSaleId('');
     barcodeInputRef.current?.focus();
   }
   
@@ -205,6 +208,8 @@ export default function VendasPage() {
         toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione produtos para finalizar a venda.' });
         return;
     }
+    
+    const saleId = currentSaleId || `SALE-${Date.now()}`;
 
     // 1. Update Stock
     const updatedStock = [...stock];
@@ -219,7 +224,7 @@ export default function VendasPage() {
 
     // 2. Create Sale Record
     const newSale: Sale = {
-        id: `SALE-${Date.now()}`,
+        id: saleId,
         date: new Date().toISOString().split('T')[0],
         time: new Date().toLocaleTimeString('pt-BR'),
         user: currentUser?.name || 'Não identificado',
@@ -268,6 +273,8 @@ export default function VendasPage() {
       return;
     }
 
+    setCurrentSaleId(`SALE-${Date.now()}`);
+
     if (paymentMethod === 'dinheiro') {
         setIsChangeCalcOpen(true);
     } else if (paymentMethod === 'pix') {
@@ -277,6 +284,7 @@ export default function VendasPage() {
                 title: 'Chave PIX não configurada',
                 description: 'Por favor, cadastre uma chave PIX nas configurações da empresa.',
             });
+            setCurrentSaleId(''); // Reset if pix is not configured
             return;
         }
         setIsPixDialogOpen(true);
@@ -453,7 +461,7 @@ export default function VendasPage() {
         isOpen={isPixDialogOpen}
         onOpenChange={setIsPixDialogOpen}
         companyInfo={companyInfo}
-        sale={{ total: finalTotal, id: `SALE-${Date.now()}` }}
+        sale={{ total: finalTotal, id: currentSaleId }}
         onConfirm={() => processSale(true)}
     />
     <PrintSaleReceiptDialog

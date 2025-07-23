@@ -16,7 +16,7 @@ async function fetchData<T>(dataType: string): Promise<T> {
     return fallback;
   }
   try {
-    const response = await fetch(`${API_BASE_URL}/${dataType}`);
+    const response = await fetch(`${API_BASE_URL}/${dataType}`, { cache: 'no-store' });
     if (!response.ok) {
       console.error(`Error fetching ${dataType}:`, response.statusText);
       // Return a default value based on expected type

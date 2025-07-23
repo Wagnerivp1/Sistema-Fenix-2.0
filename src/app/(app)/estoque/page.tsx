@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Search, MoreHorizontal, ArrowUpDown, Inbox, FileDown, Printer } from 'lucide-react';
+import { PlusCircle, Search, MoreHorizontal, FileDown, Printer, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { getStock, saveStock } from '@/lib/storage';
+import { getStock, saveStock, getCompanyInfo } from '@/lib/storage';
 import type { StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +36,16 @@ import { cn } from '@/lib/utils';
 import { EditStockItemDialog } from '@/components/stock/edit-stock-item-dialog';
 import { AddStockEntryDialog } from '@/components/stock/add-stock-entry-dialog';
 import { PrintLabelDialog } from '@/components/stock/print-label-dialog';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+      lastAutoTable: { finalY: number };
+    }
+}
+
 
 export default function EstoquePage() {
   const [stockItems, setStockItems] = React.useState<StockItem[]>([]);
@@ -119,6 +129,55 @@ export default function EstoquePage() {
     }
     return <Badge variant="secondary">Em estoque</Badge>;
   };
+
+  const generatePdf = async (reportType: 'low' | 'full') => {
+    const companyInfo = await getCompanyInfo();
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+
+    const reportTitle = reportType === 'low' ? 'Relatório de Estoque Baixo' : 'Relatório de Estoque Completo';
+    const itemsToPrint = reportType === 'low'
+      ? stockItems.filter(item => item.minStock && item.quantity <= item.minStock)
+      : stockItems;
+
+    if (itemsToPrint.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Nenhum item encontrado',
+        description: `Não há itens para gerar o ${reportTitle.toLowerCase()}.`
+      });
+      return;
+    }
+
+    // Header
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text(companyInfo.name || "Relatório de Estoque", pageWidth / 2, 20, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(reportTitle, pageWidth / 2, 26, { align: 'center' });
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, 32, { align: 'center' });
+
+    // Table
+    doc.autoTable({
+      startY: 40,
+      head: [['Cód.', 'Produto', 'Categoria', 'Qtd.', 'Mín.', 'Preço Venda']],
+      body: itemsToPrint.map(item => [
+        item.barcode.slice(-6),
+        item.name,
+        item.category || '-',
+        item.quantity,
+        item.minStock || 0,
+        `R$ ${item.price.toFixed(2)}`
+      ]),
+      theme: 'striped',
+      headStyles: { fillColor: [30, 41, 59] },
+    });
+
+    doc.save(`Relatorio_Estoque_${reportType}_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
   
   if (isLoading) {
     return <div>Carregando estoque...</div>;
@@ -136,12 +195,26 @@ export default function EstoquePage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-8 gap-1">
-              <FileDown className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Exportar
-              </span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1">
+                  <Printer className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Relatórios</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Imprimir Relatórios</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => generatePdf('low')}>
+                  Relatório de Estoque Baixo
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => generatePdf('full')}>
+                  Relatório de Estoque Completo
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenDialog('edit', null)}>
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -168,7 +241,7 @@ export default function EstoquePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[64px]"></TableHead>
+              <TableHead className="w-[64px] hidden sm:table-cell"></TableHead>
               <TableHead>Produto</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden md:table-cell">Categoria</TableHead>
@@ -183,8 +256,10 @@ export default function EstoquePage() {
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => (
               <TableRow key={item.id}>
-                <TableCell>
-                  <Inbox className="h-6 w-6 text-muted-foreground" />
+                <TableCell className="hidden sm:table-cell">
+                   <div className="bg-muted rounded-md w-12 h-12 flex items-center justify-center">
+                    <FileDown className="h-6 w-6 text-muted-foreground" />
+                  </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{getStockBadge(item)}</TableCell>
@@ -252,3 +327,5 @@ export default function EstoquePage() {
     </>
   );
 }
+
+    

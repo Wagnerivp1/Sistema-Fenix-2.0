@@ -132,4 +132,5 @@ export type CompanyInfo = {
   emailOrSite: string;
   document: string; // CPF or CNPJ
   logoUrl: string;
+  pixKey: string;
 };

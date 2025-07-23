@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -64,7 +64,7 @@ const initialNewUser: Omit<User, 'id' | 'password'> = {
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [settings, setSettings] = React.useState<AppSettings>({ defaultWarrantyDays: 90 });
-  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({ name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '' });
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({ name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '' });
   const [users, setUsers] = React.useState<User[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isClearAlertOpen, setIsClearAlertOpen] = React.useState(false);
@@ -91,7 +91,7 @@ export default function ConfiguracoesPage() {
             getLoggedInUser()
         ]);
         
-        setCompanyInfo(companyInfoData || { name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '' });
+        setCompanyInfo(companyInfoData || { name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '' });
         setUsers(usersData);
         setCurrentUser(loggedInUser);
       } catch (error) {
@@ -378,6 +378,9 @@ export default function ConfiguracoesPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1"><Label htmlFor="phone">Telefone de Contato</Label><Input id="phone" value={companyInfo.phone || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
                 <div className="space-y-1"><Label htmlFor="emailOrSite">E-mail ou Website</Label><Input id="emailOrSite" value={companyInfo.emailOrSite || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1"><Label htmlFor="pixKey">Chave PIX</Label><Input id="pixKey" placeholder="CNPJ, E-mail, Telefone ou Chave Aleatória" value={companyInfo.pixKey || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
             </div>
              <div className="space-y-2">
                 <Label>Logo da Empresa</Label>

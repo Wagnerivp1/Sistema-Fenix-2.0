@@ -16,14 +16,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getStock, getCustomers, saveStock, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser } from '@/lib/storage';
-import type { StockItem, Customer, Sale, FinancialTransaction, User } from '@/types';
+import { getStock, getCustomers, saveStock, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo } from '@/lib/storage';
+import type { StockItem, Customer, Sale, FinancialTransaction, User, CompanyInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ManualSearchDialog } from '@/components/sales/manual-search-dialog';
 import { ChangeCalculatorDialog } from '@/components/sales/change-calculator-dialog';
 import { PrintSaleReceiptDialog } from '@/components/sales/print-sale-receipt-dialog';
+import { PixQrCodeDialog } from '@/components/sales/pix-qr-code-dialog';
 
 
 interface SaleItem extends StockItem {
@@ -44,20 +45,24 @@ export default function VendasPage() {
   const [isChangeCalcOpen, setIsChangeCalcOpen] = React.useState(false);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
   
   const [isPrintReceiptOpen, setIsPrintReceiptOpen] = React.useState(false);
   const [saleToPrint, setSaleToPrint] = React.useState<Sale | null>(null);
+  const [isPixDialogOpen, setIsPixDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     const loadData = async () => {
-      const [stockData, customersData, loggedInUser] = await Promise.all([
+      const [stockData, customersData, loggedInUser, companyData] = await Promise.all([
         getStock(),
         getCustomers(),
-        getLoggedInUser()
+        getLoggedInUser(),
+        getCompanyInfo()
       ]);
       setStock(stockData);
       setCustomers(customersData);
       setCurrentUser(loggedInUser);
+      setCompanyInfo(companyData);
     };
     loadData();
     barcodeInputRef.current?.focus();
@@ -195,7 +200,7 @@ export default function VendasPage() {
     toast({ title: 'Venda Cancelada', description: 'Todos os itens foram removidos do carrinho.' });
   };
   
-  const processSale = async () => {
+  const processSale = async (shouldPrint = false) => {
     if (saleItems.length === 0) {
         toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione produtos para finalizar a venda.' });
         return;
@@ -244,12 +249,17 @@ export default function VendasPage() {
 
     // 4. Notify and Reset
     toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });
-    resetSale();
-    setIsChangeCalcOpen(false);
     
-    // 5. Trigger print dialog
-    setSaleToPrint(newSale);
-    setIsPrintReceiptOpen(true);
+    // 5. Conditional dialogs
+    setIsChangeCalcOpen(false);
+    setIsPixDialogOpen(false);
+    
+    if (shouldPrint) {
+        setSaleToPrint(newSale);
+        setIsPrintReceiptOpen(true);
+    }
+    
+    resetSale();
   }
 
   const handleFinishSale = () => {
@@ -260,8 +270,19 @@ export default function VendasPage() {
 
     if (paymentMethod === 'dinheiro') {
         setIsChangeCalcOpen(true);
-    } else {
-        processSale();
+    } else if (paymentMethod === 'pix') {
+        if (!companyInfo?.pixKey) {
+            toast({
+                variant: 'destructive',
+                title: 'Chave PIX não configurada',
+                description: 'Por favor, cadastre uma chave PIX nas configurações da empresa.',
+            });
+            return;
+        }
+        setIsPixDialogOpen(true);
+    }
+    else {
+        processSale(true); // Process and open print dialog
     }
   }
 
@@ -426,7 +447,14 @@ export default function VendasPage() {
         isOpen={isChangeCalcOpen}
         onOpenChange={setIsChangeCalcOpen}
         total={finalTotal}
-        onConfirm={processSale}
+        onConfirm={() => processSale(true)}
+    />
+    <PixQrCodeDialog
+        isOpen={isPixDialogOpen}
+        onOpenChange={setIsPixDialogOpen}
+        companyInfo={companyInfo}
+        sale={{ total: finalTotal, id: `SALE-${Date.now()}` }}
+        onConfirm={() => processSale(true)}
     />
     <PrintSaleReceiptDialog
       isOpen={isPrintReceiptOpen}

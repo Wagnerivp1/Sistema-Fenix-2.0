@@ -15,6 +15,7 @@ import { Printer } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
 import type { Sale, CompanyInfo } from '@/types';
@@ -32,6 +33,47 @@ const formatDateForDisplay = (dateString: string) => {
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
+const formatValue = (value: number) => {
+    const s = value.toFixed(2);
+    return s.length.toString().padStart(2, '0') + s;
+};
+
+const formatText = (id: string, text: string) => {
+    const s = text.trim();
+    return id + s.length.toString().padStart(2, '0') + s;
+};
+
+const getCrc16 = (payload: string) => {
+    let crc = 0xFFFF;
+    const polynomial = 0x1021;
+    for (const b of payload) {
+        for (let i = 0; i < 8; i++) {
+            const bit = ((b.charCodeAt(0) >> (7 - i) & 1) == 1);
+            const c15 = ((crc >> 15 & 1) == 1);
+            crc <<= 1;
+            if (c15 ^ bit) crc ^= polynomial;
+        }
+    }
+    crc &= 0xFFFF;
+    return '6304' + crc.toString(16).toUpperCase().padStart(4, '0');
+};
+
+const generatePixPayload = (companyInfo: CompanyInfo, sale: { total: number, id: string }) => {
+    const payload = [
+        formatText('00', '01'),
+        formatText('26', formatText('00', 'br.gov.bcb.pix') + formatText('01', companyInfo.pixKey)),
+        formatText('52', '0000'),
+        formatText('53', '986'),
+        formatValue(sale.total),
+        formatText('58', 'BR'),
+        formatText('59', companyInfo.name.substring(0, 25)),
+        formatText('60', '***'),
+        formatText('62', formatText('05', sale.id.slice(-25))),
+    ];
+    const payloadString = payload.join('');
+    return payloadString + getCrc16(payloadString);
+};
+
 export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSaleReceiptDialogProps) {
   const { toast } = useToast();
 
@@ -44,7 +86,7 @@ export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSale
     generateThermalPdf(sale, companyInfo);
   };
 
-  const generateThermalPdf = (saleData: Sale, info: CompanyInfo) => {
+  const generateThermalPdf = async (saleData: Sale, info: CompanyInfo) => {
     try {
         const doc = new jsPDF({ unit: 'mm', format: [80, 200] });
         const pageWidth = 80;
@@ -124,6 +166,17 @@ export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSale
         
         doc.text('-------------------------------------------', pageWidth / 2, y, { align: 'center' });
         y += 6;
+
+        if (saleData.paymentMethod === 'pix' && info.pixKey) {
+            const pixload = generatePixPayload(info, saleData);
+            const qrCodeImage = await QRCode.toDataURL(pixload, { width: 150 });
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Pague com PIX!', pageWidth / 2, y, { align: 'center' });
+            y+= 5;
+            doc.addImage(qrCodeImage, 'PNG', (pageWidth / 2) - 25, y, 50, 50);
+            y += 55;
+        }
 
         const barcodeCanvas = document.createElement('canvas');
         JsBarcode(barcodeCanvas, saleData.id, {

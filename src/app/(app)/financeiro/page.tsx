@@ -217,16 +217,23 @@ export default function FinanceiroPage() {
       const fontColor = '#000000';
 
       // Cabeçalho
+      if (logoImage) {
+        doc.addImage(logoImage, 'PNG', margin, 12, 25, 25);
+      }
+      
+      const titleX = logoImage ? margin + 30 : pageWidth / 2;
+      const titleAlign = logoImage ? 'left' : 'center';
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.text(companyInfo.name || "Relatório Financeiro", pageWidth / 2, 20, { align: 'center' });
+      doc.text(companyInfo.name || "Relatório Financeiro", titleX, 20, { align: titleAlign });
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const period = dateRange?.from ? 
                     `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${dateRange.to ? format(dateRange.to, 'dd/MM/yyyy') : 'hoje'}` :
                     'Período: Todas as Transações';
-      doc.text(period, pageWidth / 2, 26, { align: 'center' });
+      doc.text(period, titleX, 26, { align: titleAlign });
 
       // Resumo
       let currentY = 40;

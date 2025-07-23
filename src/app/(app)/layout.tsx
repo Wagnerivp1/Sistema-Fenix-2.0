@@ -66,30 +66,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex flex-col">
           <header className="flex h-14 items-center justify-between gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="shrink-0 md:hidden">
-                  <Wrench className="h-5 w-5" />
-                  <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="flex flex-col">
-                <nav className="grid gap-2 text-lg font-medium">
-                  <Link
-                    href="#"
-                    className="flex items-center justify-center gap-2 text-lg font-semibold mb-4"
-                  >
-                    <Logo />
-                  </Link>
-                  <MainNav />
-                </nav>
-              </SheetContent>
-            </Sheet>
+             <div className="flex items-center gap-4">
+                 <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+                        <Wrench className="h-5 w-5" />
+                        <span className="sr-only">Toggle navigation menu</span>
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="flex flex-col">
+                      <nav className="grid gap-2 text-lg font-medium">
+                        <Link
+                          href="#"
+                          className="flex items-center justify-center gap-2 text-lg font-semibold mb-4"
+                        >
+                          <Logo />
+                        </Link>
+                        <MainNav />
+                      </nav>
+                    </SheetContent>
+                  </Sheet>
+                  <div className="hidden md:block">
+                    <h1 className="font-semibold text-lg">Sistema Fenix <span className="font-normal text-sm text-muted-foreground">v1.0</span></h1>
+                    <p className="font-code text-xs text-muted-foreground">By Wagner Lopes</p>
+                  </div>
+             </div>
             
-            <div className="flex-1 flex justify-center">
-              <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-                  <Logo />
-              </Link>
+            <div className="absolute left-1/2 -translate-x-1/2">
+                <Logo />
             </div>
 
             <div>

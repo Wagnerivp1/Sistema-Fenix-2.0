@@ -175,8 +175,9 @@ export default function EstoquePage() {
       theme: 'striped',
       headStyles: { fillColor: [30, 41, 59] },
     });
-
-    doc.save(`Relatorio_Estoque_${reportType}_${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    doc.autoPrint();
+    doc.output('dataurlnewwindow');
   };
   
   if (isLoading) {

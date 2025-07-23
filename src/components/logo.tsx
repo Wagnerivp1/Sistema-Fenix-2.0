@@ -7,9 +7,13 @@ import { Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCompanyInfo } from '@/lib/storage';
 import type { CompanyInfo } from '@/types';
+import { getBibleVerse, BibleVerseOutput } from '@/ai/flows/bible-verse-flow';
+
 
 export function Logo({ className, iconOnly = false }: { className?: string; iconOnly?: boolean }) {
   const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
+  const [verse, setVerse] = React.useState<BibleVerseOutput | null>(null);
+  const [isLoadingVerse, setIsLoadingVerse] = React.useState(true);
 
   React.useEffect(() => {
     const fetchCompanyInfo = async () => {
@@ -17,7 +21,21 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
         setCompanyInfo(info);
     };
 
+    const fetchVerse = async () => {
+      setIsLoadingVerse(true);
+      try {
+        const result = await getBibleVerse();
+        setVerse(result);
+      } catch (error) {
+        console.error("Failed to fetch bible verse", error);
+        setVerse(null); // Clear verse on error
+      } finally {
+        setIsLoadingVerse(false);
+      }
+    };
+
     fetchCompanyInfo();
+    fetchVerse();
 
     const handleStorageChange = () => fetchCompanyInfo();
     
@@ -34,11 +52,19 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
       ) : (
         <Wrench className="h-12 w-12" />
       )}
-      {!iconOnly && companyInfo?.name && (
-        <div>
+      <div className="flex items-baseline gap-4">
+        {!iconOnly && companyInfo?.name && (
             <span className="text-3xl font-bold tracking-tight">{companyInfo.name}</span>
-        </div>
-      )}
+        )}
+         {isLoadingVerse ? (
+            <p className="text-sm text-muted-foreground animate-pulse">Carregando versículo...</p>
+        ) : verse && (
+            <div className="text-sm text-muted-foreground italic hidden md:block">
+              <p>"{verse.verseText}"</p>
+              <p className="text-right font-semibold text-xs mt-1">- {verse.verseReference}</p>
+            </div>
+        )}
+      </div>
     </div>
   );
 }

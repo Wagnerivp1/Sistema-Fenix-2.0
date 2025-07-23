@@ -1,3 +1,4 @@
+
 [
   {
     "id": "master",
@@ -17,8 +18,7 @@
       "canDelete": true,
       "canViewPasswords": true,
       "canManageUsers": true
-    },
-    "theme": "dark"
+    }
   },
   {
     "id": "default_user_tech",
@@ -38,8 +38,7 @@
       "canDelete": false,
       "canViewPasswords": false,
       "canManageUsers": false
-    },
-    "theme": "dark"
+    }
   },
   {
     "name": "Wagner Lopes",
@@ -59,14 +58,12 @@
       "canViewPasswords": false,
       "canManageUsers": true
     },
-    "id": "1752520921537-0.9328935433699823",
-    "theme": "dark"
+    "id": "1752520921537-0.9328935433699823"
   },
   {
     "name": "MIRIAM JOCIMARA",
     "login": "miriam123",
     "password": "jl001215",
-    "theme": "dark",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
@@ -86,7 +83,6 @@
   {
     "name": "Ana Leticia Boeno Lopes ",
     "login": "ana123",
-    "theme": "dark",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,

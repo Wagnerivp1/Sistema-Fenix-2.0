@@ -66,17 +66,8 @@ export const saveSales = async (sales: Sale[]): Promise<void> => saveData('sales
 export const getFinancialTransactions = async (): Promise<FinancialTransaction[]> => fetchData<FinancialTransaction[]>('financialTransactions');
 export const saveFinancialTransactions = async (transactions: FinancialTransaction[]): Promise<void> => saveData('financialTransactions', transactions);
 
-export const getUsers = async (): Promise<User[]> => {
-    const serverUsers = await fetchData<User[]>('users');
-    // The master user is for emergency login and should not come from the server
-    const masterUser: User = { id: 'master-0', name: 'Master User', username: 'master', password: 'master', role: 'admin', active: true, phone: '' };
-    return [...serverUsers, masterUser];
-};
-export const saveUsers = async (users: User[]): Promise<void> => {
-    // Ensure the master user is never saved
-    const usersToSave = users.filter(u => u.id !== 'master-0');
-    return saveData('users', usersToSave);
-};
+export const getUsers = async (): Promise<User[]> => fetchData<User[]>('users');
+export const saveUsers = async (users: User[]): Promise<void> => saveData('users', users);
 
 export const getCompanyInfo = async (): Promise<CompanyInfo> => fetchData<CompanyInfo>('companyInfo');
 export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {

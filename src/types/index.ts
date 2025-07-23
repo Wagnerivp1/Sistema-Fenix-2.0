@@ -101,15 +101,29 @@ export type FinancialTransaction = {
     relatedServiceOrderId?: string;
 };
 
+export type UserPermissions = {
+  accessDashboard: boolean;
+  accessClients: boolean;
+  accessServiceOrders: boolean;
+  accessInventory: boolean;
+  accessSales: boolean;
+  accessFinancials: boolean;
+  accessSettings: boolean;
+  accessDangerZone: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canViewPasswords: boolean;
+  canManageUsers: boolean;
+};
+
 export type User = {
   id: string;
   name: string;
-  username: string;
+  login: string;
   password?: string;
-  phone?: string;
-  role: 'admin' | 'technician' | 'sales' | 'normal' | 'receptionist';
-  active: boolean;
+  permissions: UserPermissions;
 };
+
 
 export type CompanyInfo = {
   name: string;

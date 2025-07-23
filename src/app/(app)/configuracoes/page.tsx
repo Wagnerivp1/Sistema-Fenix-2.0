@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -28,36 +28,43 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { getUsers, saveUsers, getLoggedInUser, getCompanyInfo, saveCompanyInfo } from '@/lib/storage';
-import type { User, CompanyInfo } from '@/types';
+import type { User, CompanyInfo, UserPermissions } from '@/types';
 import Image from 'next/image';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 const SETTINGS_KEY = 'app_settings';
-const MASTER_USER_ID = 'master-0';
 
 interface AppSettings {
   defaultWarrantyDays: number;
 }
 
-const initialNewUser: Partial<User> = {
+const initialNewUser: Omit<User, 'id' | 'password'> = {
   name: '',
-  username: '',
-  password: '',
-  phone: '',
-  role: 'normal',
-  active: true,
+  login: '',
+  permissions: {
+    accessDashboard: true,
+    accessClients: false,
+    accessServiceOrders: false,
+    accessInventory: false,
+    accessSales: false,
+    accessFinancials: false,
+    accessSettings: false,
+    accessDangerZone: false,
+    canEdit: false,
+    canDelete: false,
+    canViewPasswords: false,
+    canManageUsers: false,
+  },
 };
 
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
-  const [settings, setSettings] = React.useState<AppSettings>({
-    defaultWarrantyDays: 90,
-  });
-  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({
-      name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: ''
-  });
+  const [settings, setSettings] = React.useState<AppSettings>({ defaultWarrantyDays: 90 });
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({ name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '' });
   const [users, setUsers] = React.useState<User[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isClearAlertOpen, setIsClearAlertOpen] = React.useState(false);
@@ -76,9 +83,7 @@ export default function ConfiguracoesPage() {
       setIsLoading(true);
       try {
         const savedSettings = localStorage.getItem(SETTINGS_KEY);
-        if (savedSettings) {
-          setSettings(JSON.parse(savedSettings));
-        }
+        if (savedSettings) setSettings(JSON.parse(savedSettings));
         
         const [companyInfoData, usersData, loggedInUser] = await Promise.all([
             getCompanyInfo(),
@@ -87,7 +92,7 @@ export default function ConfiguracoesPage() {
         ]);
         
         setCompanyInfo(companyInfoData || { name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '' });
-        setUsers(usersData.filter(u => u.id !== MASTER_USER_ID));
+        setUsers(usersData);
         setCurrentUser(loggedInUser);
       } catch (error) {
         console.error("Failed to load settings", error);
@@ -104,6 +109,16 @@ export default function ConfiguracoesPage() {
     setNewUser(prev => ({ ...prev, [id]: value }));
   };
   
+  const handlePermissionChange = (permission: keyof UserPermissions, checked: boolean) => {
+    setNewUser(prev => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [permission]: checked
+      }
+    }));
+  };
+
   const handleCompanyInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setCompanyInfo(prev => ({ ...prev, [id]: value }));
@@ -138,11 +153,8 @@ export default function ConfiguracoesPage() {
   
   const handleRemoveLogo = () => {
     setCompanyInfo(prev => ({...prev, logoUrl: ''}));
-    if(logoInputRef.current) {
-        logoInputRef.current.value = '';
-    }
+    if(logoInputRef.current) logoInputRef.current.value = '';
   };
-
 
   const handleSaveSettings = () => {
     try {
@@ -172,15 +184,11 @@ export default function ConfiguracoesPage() {
       
       for (const type of dataTypes) {
         const response = await fetch(`/api/data/${type}`);
-        if(response.ok) {
-            backupData[type] = await response.json();
-        }
+        if(response.ok) backupData[type] = await response.json();
       }
       
       const settingsData = localStorage.getItem(SETTINGS_KEY);
-      if(settingsData) {
-        backupData.settings = JSON.parse(settingsData);
-      }
+      if(settingsData) backupData.settings = JSON.parse(settingsData);
 
       const jsonString = JSON.stringify(backupData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
@@ -201,9 +209,7 @@ export default function ConfiguracoesPage() {
     }
   };
 
-  const handleRestoreClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleRestoreClick = () => fileInputRef.current?.click();
 
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -213,9 +219,7 @@ export default function ConfiguracoesPage() {
     } else {
       toast({ variant: 'destructive', title: 'Arquivo Inválido', description: 'Por favor, selecione um arquivo de backup JSON válido.' });
     }
-    if(event.target) {
-      event.target.value = '';
-    }
+    if(event.target) event.target.value = '';
   };
 
   const confirmRestore = () => {
@@ -225,17 +229,13 @@ export default function ConfiguracoesPage() {
     reader.onload = async (e) => {
       try {
         const text = e.target?.result;
-        if (typeof text !== 'string') {
-          throw new Error('Could not read file content.');
-        }
+        if (typeof text !== 'string') throw new Error('Could not read file content.');
         const data = JSON.parse(text);
 
         const dataTypes = ['customers', 'serviceOrders', 'stock', 'sales', 'financialTransactions', 'users', 'companyInfo'];
         const hasKnownKey = dataTypes.some(key => key in data);
 
-        if (!hasKnownKey) {
-          throw new Error('Arquivo de backup inválido ou corrompido.');
-        }
+        if (!hasKnownKey) throw new Error('Arquivo de backup inválido ou corrompido.');
 
         for (const type in data) {
             if(dataTypes.includes(type)) {
@@ -286,36 +286,32 @@ export default function ConfiguracoesPage() {
     if (user) {
       setNewUser(user);
     } else {
-      setNewUser({ ...initialNewUser, role: 'normal', active: true });
+      setNewUser(initialNewUser);
     }
     setIsUserDialogOpen(true);
   }
 
   const handleSaveUser = async () => {
-    if (!newUser.name || !newUser.username || (!newUser.password && !editingUser)) {
+    if (!newUser.name || !newUser.login || (!newUser.password && !editingUser)) {
       toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Nome, Login e Senha são obrigatórios.' });
       return;
     }
 
     let updatedUsers: User[];
     if (editingUser) {
-      // Logic for editing an existing user
-      const userToUpdate: User = { ...editingUser, ...newUser };
+      const userToUpdate: User = { ...editingUser, ...newUser, password: newUser.password || editingUser.password };
       if (newUser.password === '') {
         delete userToUpdate.password;
       }
       updatedUsers = users.map(u => u.id === editingUser.id ? userToUpdate : u);
       toast({ title: 'Usuário Atualizado!', description: `Os dados de ${newUser.name} foram salvos.` });
     } else {
-      // Logic for adding a new user
       const userToAdd: User = {
         id: `USER-${Date.now()}`,
         name: newUser.name!,
-        username: newUser.username!,
+        login: newUser.login!,
         password: newUser.password!,
-        phone: newUser.phone || '',
-        role: newUser.role! as User['role'],
-        active: newUser.active ?? true,
+        permissions: newUser.permissions!,
       };
       updatedUsers = [...users, userToAdd];
       toast({ title: 'Usuário Adicionado!', description: `${newUser.name} foi adicionado ao sistema.` });
@@ -327,172 +323,86 @@ export default function ConfiguracoesPage() {
     setEditingUser(null);
   };
   
-  const handleToggleActive = async (userId: string) => {
-    const updatedUsers = users.map(u => 
-        u.id === userId ? { ...u, active: !u.active } : u
-      );
-    setUsers(updatedUsers);
-    await saveUsers(updatedUsers);
-    const user = updatedUsers.find(u => u.id === userId);
-    toast({
-        title: `Status Alterado!`,
-        description: `Usuário ${user?.name} foi ${user?.active ? 'ativado' : 'desativado'}.`
-    });
-  }
-
-  const handleDeleteUser = async (userId: string) => {
-    const updatedUsers = users.filter(u => u.id !== userId);
-    setUsers(updatedUsers);
-    await saveUsers(updatedUsers);
-    toast({
-      title: 'Usuário Excluído!',
-      description: 'O usuário foi removido permanentemente do sistema.',
-      variant: 'destructive'
-    });
-  };
-
-  const getRoleInPortuguese = (role: User['role']) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrador';
-      case 'technician':
-        return 'Técnico';
-      case 'sales':
-        return 'Vendedor';
-      case 'normal':
-        return 'Normal';
-      case 'receptionist':
-        return 'Recepcionista';
-      default:
-        return role;
-    }
-  };
-  
-  const isCurrentUserAdmin = currentUser?.role === 'admin';
-
+  const isCurrentUserAdmin = currentUser?.permissions.canManageUsers;
 
   if (isLoading) {
     return (
        <Card>
         <CardHeader>
           <CardTitle>Configurações</CardTitle>
-          <CardDescription>
-            Ajuste as configurações gerais do sistema.
-          </CardDescription>
+          <CardDescription>Ajuste as configurações gerais do sistema.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="h-48 flex items-center justify-center">Carregando...</div>
-        </CardContent>
+        <CardContent><div className="h-48 flex items-center justify-center">Carregando...</div></CardContent>
       </Card>
     )
   }
-
+  
+  const renderPermission = (key: keyof UserPermissions, label: string) => (
+    <div key={key} className="flex items-center space-x-2">
+        <Checkbox
+            id={key}
+            checked={newUser.permissions?.[key]}
+            onCheckedChange={(checked) => handlePermissionChange(key, Boolean(checked))}
+        />
+        <label htmlFor={key} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            {label}
+        </label>
+    </div>
+  );
+  
   return (
     <div className="space-y-6">
     <Card>
         <CardHeader>
             <CardTitle>Dados da Empresa</CardTitle>
-            <CardDescription>
-                Informações que aparecerão nos documentos e no sistema.
-            </CardDescription>
+            <CardDescription>Informações que aparecerão nos documentos e no sistema.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                    <Label htmlFor="name">Nome da Empresa</Label>
-                    <Input id="name" value={companyInfo.name} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
-                </div>
-                <div className="space-y-1">
-                    <Label htmlFor="document">CNPJ / CPF</Label>
-                    <Input id="document" value={companyInfo.document} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
-                </div>
+                <div className="space-y-1"><Label htmlFor="name">Nome da Empresa</Label><Input id="name" value={companyInfo.name || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
+                <div className="space-y-1"><Label htmlFor="document">CNPJ / CPF</Label><Input id="document" value={companyInfo.document || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
             </div>
-             <div className="space-y-1">
-                <Label htmlFor="address">Endereço</Label>
-                <Input id="address" value={companyInfo.address} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
-            </div>
+             <div className="space-y-1"><Label htmlFor="address">Endereço</Label><Input id="address" value={companyInfo.address || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                    <Label htmlFor="phone">Telefone de Contato</Label>
-                    <Input id="phone" value={companyInfo.phone} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
-                </div>
-                <div className="space-y-1">
-                    <Label htmlFor="emailOrSite">E-mail ou Website</Label>
-                    <Input id="emailOrSite" value={companyInfo.emailOrSite} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} />
-                </div>
+                <div className="space-y-1"><Label htmlFor="phone">Telefone de Contato</Label><Input id="phone" value={companyInfo.phone || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
+                <div className="space-y-1"><Label htmlFor="emailOrSite">E-mail ou Website</Label><Input id="emailOrSite" value={companyInfo.emailOrSite || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
             </div>
              <div className="space-y-2">
                 <Label>Logo da Empresa</Label>
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-md border flex items-center justify-center bg-muted/30 overflow-hidden">
-                    {companyInfo.logoUrl ? (
-                      <Image src={companyInfo.logoUrl} alt="Logo Preview" width={80} height={80} className="object-contain" />
-                    ) : (
-                      <ImageIcon className="w-10 h-10 text-muted-foreground" />
-                    )}
+                    {companyInfo.logoUrl ? <Image src={companyInfo.logoUrl} alt="Logo Preview" width={80} height={80} className="object-contain" /> : <ImageIcon className="w-10 h-10 text-muted-foreground" />}
                   </div>
                   <div className="flex flex-col gap-2">
-                     <Button variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={!isCurrentUserAdmin}>
-                        Escolher Arquivo
-                    </Button>
-                    <input 
-                      ref={logoInputRef}
-                      type="file"
-                      className="hidden"
-                      accept="image/png, image/jpeg, image/svg+xml"
-                      onChange={handleLogoUpload}
-                    />
-                     {companyInfo.logoUrl && (
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRemoveLogo} disabled={!isCurrentUserAdmin}>
-                            <X className="w-4 h-4 mr-1" />
-                            Remover Logo
-                        </Button>
-                    )}
+                     <Button variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={!isCurrentUserAdmin}>Escolher Arquivo</Button>
+                    <input ref={logoInputRef} type="file" className="hidden" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload}/>
+                     {companyInfo.logoUrl && <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRemoveLogo} disabled={!isCurrentUserAdmin}><X className="w-4 h-4 mr-1" />Remover Logo</Button>}
                     <p className="text-xs text-muted-foreground">Recomendado: PNG ou SVG, até 1MB.</p>
                   </div>
                 </div>
             </div>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
-            <Button onClick={handleSaveCompanyInfo} disabled={!isCurrentUserAdmin}>
-                <Building className="mr-2 h-4 w-4" />
-                Salvar Dados da Empresa
-            </Button>
+            <Button onClick={handleSaveCompanyInfo} disabled={!isCurrentUserAdmin}><Building className="mr-2 h-4 w-4" />Salvar Dados da Empresa</Button>
         </CardFooter>
     </Card>
     
     <Card>
       <CardHeader>
         <CardTitle>Configurações Gerais</CardTitle>
-        <CardDescription>
-          Ajuste as configurações gerais do sistema. As alterações são salvas localmente no seu navegador.
-        </CardDescription>
+        <CardDescription>Ajuste as configurações gerais do sistema. As alterações são salvas localmente no seu navegador.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="p-4 border rounded-lg">
            <h3 className="text-lg font-semibold mb-2">Garantia</h3>
            <div className="space-y-2">
              <Label htmlFor="defaultWarrantyDays">Prazo de Garantia Padrão (em dias)</Label>
-             <Input 
-                id="defaultWarrantyDays" 
-                type="number" 
-                className="max-w-xs" 
-                value={settings.defaultWarrantyDays || ''}
-                onChange={handleSettingsChange}
-                disabled={!isCurrentUserAdmin}
-             />
-             <p className="text-sm text-muted-foreground">
-                Este valor será usado como padrão para os serviços que não tiverem uma garantia específica.
-             </p>
+             <Input id="defaultWarrantyDays" type="number" className="max-w-xs" value={settings.defaultWarrantyDays || ''} onChange={handleSettingsChange} disabled={!isCurrentUserAdmin} />
+             <p className="text-sm text-muted-foreground">Este valor será usado como padrão para os serviços que não tiverem uma garantia específica.</p>
            </div>
         </div>
       </CardContent>
-      <CardFooter className="border-t px-6 py-4">
-        <Button onClick={handleSaveSettings} disabled={!isCurrentUserAdmin}>
-            <Save className="mr-2 h-4 w-4" />
-            Salvar Alterações
-        </Button>
-      </CardFooter>
+      <CardFooter className="border-t px-6 py-4"><Button onClick={handleSaveSettings} disabled={!isCurrentUserAdmin}><Save className="mr-2 h-4 w-4" />Salvar Alterações</Button></CardFooter>
     </Card>
 
     <Card>
@@ -501,45 +411,25 @@ export default function ConfiguracoesPage() {
           <CardTitle>Gerenciamento de Usuários</CardTitle>
           <CardDescription>Adicione, edite ou desative contas de usuário.</CardDescription>
         </div>
-        <Button size="sm" onClick={() => handleOpenUserDialog(null)} disabled={!isCurrentUserAdmin}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Adicionar Usuário
-        </Button>
+        <Button size="sm" onClick={() => handleOpenUserDialog(null)} disabled={!isCurrentUserAdmin}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Usuário</Button>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12"></TableHead>
               <TableHead>Nome</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead className="text-center">Ativar/Desativar</TableHead>
+              <TableHead>Login</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.length > 0 ? users.map(user => (
-              <TableRow key={user.id} className={!user.active ? 'bg-muted/30' : ''}>
-                <TableCell>
-                  <Badge variant={user.active ? 'default' : 'secondary'} className="w-16 justify-center">
-                    {user.active ? 'Ativo' : 'Inativo'}
-                  </Badge>
-                </TableCell>
+              <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{getRoleInPortuguese(user.role)}</TableCell>
-                <TableCell className="text-center">
-                   <Switch
-                    checked={user.active}
-                    onCheckedChange={() => handleToggleActive(user.id)}
-                    aria-label="Ativar ou desativar usuário"
-                    disabled={!isCurrentUserAdmin || user.id === currentUser?.id}
-                  />
-                </TableCell>
+                <TableCell>{user.login}</TableCell>
                 <TableCell className="text-right space-x-2">
-                   <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)} disabled={!isCurrentUserAdmin}>
-                     Editar
-                   </Button>
+                   <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)} disabled={!isCurrentUserAdmin}>Editar</Button>
                    <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm" disabled={!isCurrentUserAdmin || user.id === currentUser?.id}>Excluir</Button>
@@ -547,27 +437,23 @@ export default function ConfiguracoesPage() {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o usuário {user.name}.
-                          </AlertDialogDescription>
+                          <AlertDialogDescription>Esta ação não pode ser desfeita. Isso excluirá permanentemente o usuário {user.name}.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-destructive hover:bg-destructive/90"
-                            onClick={() => handleDeleteUser(user.id)}
-                          >
-                            Excluir
-                          </AlertDialogAction>
+                          <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => {
+                            const updatedUsers = users.filter(u => u.id !== user.id);
+                            setUsers(updatedUsers);
+                            saveUsers(updatedUsers);
+                            toast({ title: 'Usuário Excluído!', description: 'O usuário foi removido.' });
+                          }}>Excluir</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell>
-              </TableRow>
+              <TableRow><TableCell colSpan={3} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -576,24 +462,14 @@ export default function ConfiguracoesPage() {
     </Card>
 
     <Card>
-        <CardHeader>
-            <CardTitle>Ferramentas</CardTitle>
-            <CardDescription>Recursos adicionais para gerenciamento de dados.</CardDescription>
-        </CardHeader>
+        <CardHeader><CardTitle>Ferramentas</CardTitle><CardDescription>Recursos adicionais para gerenciamento de dados.</CardDescription></CardHeader>
         <CardContent>
             <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h4 className="font-semibold">Conversor de Backup</h4>
-                    <p className="text-sm text-muted-foreground">
-                        Converta um arquivo de backup de uma versão anterior do sistema para o formato atual.
-                    </p>
+                    <p className="text-sm text-muted-foreground">Converta um arquivo de backup de uma versão anterior do sistema para o formato atual.</p>
                 </div>
-                <Button variant="secondary" asChild disabled={!isCurrentUserAdmin}>
-                    <Link href="/configuracoes/ferramentas">
-                        <Wrench className="mr-2 h-4 w-4"/>
-                        Abrir Ferramenta
-                    </Link>
-                </Button>
+                <Button variant="secondary" asChild disabled={!isCurrentUserAdmin}><Link href="/configuracoes/ferramentas"><Wrench className="mr-2 h-4 w-4"/>Abrir Ferramenta</Link></Button>
             </div>
         </CardContent>
     </Card>
@@ -601,55 +477,30 @@ export default function ConfiguracoesPage() {
     <Card className="border-2 border-destructive bg-destructive/5">
         <CardHeader>
              <div className="flex items-start gap-4">
-                <div className="p-2 bg-destructive/10 rounded-full">
-                    <AlertTriangle className="h-6 w-6 text-destructive" />
-                </div>
+                <div className="p-2 bg-destructive/10 rounded-full"><AlertTriangle className="h-6 w-6 text-destructive" /></div>
                 <div>
                     <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-                    <CardDescription className="text-destructive/80">
-                        As ações abaixo são irreversíveis e só podem ser executadas por administradores.
-                    </CardDescription>
+                    <CardDescription className="text-destructive/80">As ações abaixo são irreversíveis e só podem ser executadas por administradores com a permissão adequada.</CardDescription>
                 </div>
              </div>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="p-4 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-destructive/10">
-                <div>
-                    <h4 className="font-semibold text-destructive">Backup e Restauração</h4>
-                    <p className="text-sm text-destructive/80">
-                        Salve uma cópia de segurança de todos os seus dados ou restaure a partir de um arquivo.
-                    </p>
-                </div>
+                <div><h4 className="font-semibold text-destructive">Backup e Restauração</h4><p className="text-sm text-destructive/80">Salve uma cópia de segurança de todos os seus dados ou restaure a partir de um arquivo.</p></div>
                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <Button variant="outline" onClick={handleBackup} disabled={!isCurrentUserAdmin}>
-                        <Download className="mr-2 h-4 w-4"/>
-                        Fazer Backup
+                    <Button variant="outline" onClick={handleBackup} disabled={!currentUser?.permissions.accessDangerZone}>
+                        <Download className="mr-2 h-4 w-4"/>Fazer Backup
                     </Button>
-                     <Button variant="outline" onClick={handleRestoreClick} disabled={!isCurrentUserAdmin}>
-                        <Upload className="mr-2 h-4 w-4"/>
-                        Restaurar
+                     <Button variant="outline" onClick={handleRestoreClick} disabled={!currentUser?.permissions.accessDangerZone}>
+                        <Upload className="mr-2 h-4 w-4"/>Restaurar
                     </Button>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileSelected}
-                        className="hidden"
-                        accept=".json"
-                    />
+                    <input type="file" ref={fileInputRef} onChange={handleFileSelected} className="hidden" accept=".json" />
                 </div>
             </div>
              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h4 className="font-semibold text-destructive">Limpar Sistema</h4>
-                    <p className="text-sm text-destructive/80">
-                        Exclui permanentemente todos os clientes, OS, estoque, vendas e finanças.
-                    </p>
-                </div>
+                <div><h4 className="font-semibold text-destructive">Limpar Sistema</h4><p className="text-sm text-destructive/80">Exclui permanentemente todos os clientes, OS, estoque, vendas e finanças.</p></div>
                  <div className="flex-shrink-0">
-                    <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={!isCurrentUserAdmin}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Limpar Todos os Dados
-                    </Button>
+                    <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={!currentUser?.permissions.accessDangerZone}><Trash2 className="mr-2 h-4 w-4" />Limpar Todos os Dados</Button>
                 </div>
             </div>
         </CardContent>
@@ -657,90 +508,69 @@ export default function ConfiguracoesPage() {
 
     <AlertDialog open={isClearAlertOpen} onOpenChange={setIsClearAlertOpen}>
         <AlertDialogContent>
-            <AlertDialogHeader>
-            <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
-            <AlertDialogDescription>
-                Esta ação é irreversível e excluirá permanentemente TODOS os dados do sistema, incluindo clientes, ordens de serviço, estoque e registros financeiros. Não há como desfazer.
-            </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                onClick={handleClearSystem}
-            >
-                Sim, excluir tudo
-            </AlertDialogAction>
-            </AlertDialogFooter>
+            <AlertDialogHeader><AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle><AlertDialogDescription>Esta ação é irreversível e excluirá permanentemente TODOS os dados do sistema, incluindo clientes, ordens de serviço, estoque e registros financeiros. Não há como desfazer.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={handleClearSystem}>Sim, excluir tudo</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
 
     <AlertDialog open={isRestoreAlertOpen} onOpenChange={setIsRestoreAlertOpen}>
         <AlertDialogContent>
-            <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Restauração</AlertDialogTitle>
-            <AlertDialogDescription>
-                Tem certeza que deseja restaurar os dados do arquivo <span className="font-bold">{backupFile?.name}</span>? Esta ação substituirá TODOS os dados atuais do sistema. Faça um backup antes, se necessário.
-            </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setBackupFile(null)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRestore}>
-                Sim, restaurar dados
-            </AlertDialogAction>
-            </AlertDialogFooter>
+            <AlertDialogHeader><AlertDialogTitle>Confirmar Restauração</AlertDialogTitle><AlertDialogDescription>Tem certeza que deseja restaurar os dados do arquivo <span className="font-bold">{backupFile?.name}</span>? Esta ação substituirá TODOS os dados atuais do sistema. Faça um backup antes, se necessário.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter><AlertDialogCancel onClick={() => setBackupFile(null)}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={confirmRestore}>Sim, restaurar dados</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
 
     <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>{editingUser ? 'Editar Usuário' : 'Adicionar Novo Usuário'}</DialogTitle>
-          <DialogDescription>
-            Preencha os dados abaixo para gerenciar a conta de usuário.
-          </DialogDescription>
+          <DialogDescription>Preencha os dados e defina as permissões de acesso do usuário.</DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo</Label>
-              <Input id="name" placeholder="John Doe" value={newUser.name || ''} onChange={handleUserInputChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" placeholder="(99) 99999-9999" value={newUser.phone || ''} onChange={handleUserInputChange} />
-            </div>
+        <ScrollArea className="flex-grow">
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="md:col-span-2 space-y-4">
+                 <h3 className="text-lg font-semibold flex items-center"><UserIcon className="mr-2 h-5 w-5" /> Dados Pessoais e de Acesso</h3>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label htmlFor="name">Nome Completo</Label><Input id="name" placeholder="John Doe" value={newUser.name || ''} onChange={handleUserInputChange} /></div>
+                    <div className="space-y-2"><Label htmlFor="login">Login de Acesso</Label><Input id="login" placeholder="joao.silva" value={newUser.login || ''} onChange={handleUserInputChange} /></div>
+                 </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha forte'} value={newUser.password || ''} onChange={handleUserInputChange} /></div>
+                 </div>
+              </div>
+              <Separator className="md:col-span-2" />
+               <div className="md:col-span-2 space-y-4">
+                <h3 className="text-lg font-semibold flex items-center"><ShieldCheck className="mr-2 h-5 w-5" /> Permissões do Usuário</h3>
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-primary">Acesso a Módulos</h4>
+                    {renderPermission('accessDashboard', 'Dashboard')}
+                    {renderPermission('accessClients', 'Clientes')}
+                    {renderPermission('accessServiceOrders', 'Ordens de Serviço')}
+                    {renderPermission('accessInventory', 'Estoque')}
+                    {renderPermission('accessSales', 'Vendas')}
+                  </div>
+                   <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-primary">Ações Gerais</h4>
+                    {renderPermission('canEdit', 'Pode Editar (OS, Estoque, etc)')}
+                    {renderPermission('canDelete', 'Pode Excluir (OS, Estoque, etc)')}
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-primary">Permissões Avançadas</h4>
+                    {renderPermission('accessFinancials', 'Acesso ao Financeiro')}
+                    {renderPermission('accessSettings', 'Acesso às Configurações')}
+                    {renderPermission('canManageUsers', 'Gerenciar Usuários')}
+                    {renderPermission('canViewPasswords', 'Visualizar Senhas')}
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-destructive">Zona de Perigo</h4>
+                    {renderPermission('accessDangerZone', 'Acesso à Zona de Perigo')}
+                  </div>
+                </div>
+              </div>
           </div>
-           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Login de Acesso</Label>
-              <Input id="username" placeholder="joao.silva" value={newUser.username || ''} onChange={handleUserInputChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha forte'} value={newUser.password || ''} onChange={handleUserInputChange} />
-            </div>
-          </div>
-           <div className="space-y-2">
-            <Label htmlFor="role">Cargo / Função</Label>
-            <Select value={newUser.role || 'normal'} onValueChange={(value) => setNewUser(p => ({...p, role: value as User['role']}))}>
-              <SelectTrigger id="role">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="receptionist">Recepcionista</SelectItem>
-                <SelectItem value="technician">Técnico</SelectItem>
-                <SelectItem value="sales">Vendedor</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setIsUserDialogOpen(false)}>Cancelar</Button>
-          <Button onClick={handleSaveUser}>Salvar</Button>
-        </DialogFooter>
+        </ScrollArea>
+        <DialogFooter className="p-6 border-t"><Button variant="ghost" onClick={() => setIsUserDialogOpen(false)}>Cancelar</Button><Button onClick={handleSaveUser}>Salvar Usuário</Button></DialogFooter>
       </DialogContent>
     </Dialog>
 

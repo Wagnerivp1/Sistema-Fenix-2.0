@@ -24,23 +24,23 @@ import {
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { getLoggedInUser } from '@/lib/storage';
-import type { User } from '@/types';
+import type { User, UserPermissions } from '@/types';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ElementType;
-  roles: User['role'][];
+  permission: keyof UserPermissions;
 }
 
 const allNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'technician', 'sales', 'normal', 'receptionist'] },
-  { href: '/clientes', label: 'Clientes', icon: Users, roles: ['admin', 'technician', 'sales', 'receptionist'] },
-  { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, roles: ['admin', 'technician', 'receptionist'] },
-  { href: '/vendas', label: 'Vendas', icon: ShoppingCart, roles: ['admin', 'sales', 'normal', 'receptionist'] },
-  { href: '/estoque', label: 'Estoque', icon: Archive, roles: ['admin', 'technician', 'sales', 'receptionist'] },
-  { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign, roles: ['admin'] },
-  { href: '/configuracoes', label: 'Configurações', icon: Settings, roles: ['admin'] },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'accessDashboard' },
+  { href: '/clientes', label: 'Clientes', icon: Users, permission: 'accessClients' },
+  { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, permission: 'accessServiceOrders' },
+  { href: '/vendas', label: 'Vendas', icon: ShoppingCart, permission: 'accessSales' },
+  { href: '/estoque', label: 'Estoque', icon: Archive, permission: 'accessInventory' },
+  { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign, permission: 'accessFinancials' },
+  { href: '/configuracoes', label: 'Configurações', icon: Settings, permission: 'accessSettings' },
 ];
 
 export function MainNav() {
@@ -59,8 +59,8 @@ export function MainNav() {
   }, []);
 
   const navItems = React.useMemo(() => {
-    if (!currentUser) return [];
-    return allNavItems.filter(item => item.roles.includes(currentUser.role));
+    if (!currentUser || !currentUser.permissions) return [];
+    return allNavItems.filter(item => currentUser.permissions[item.permission]);
   }, [currentUser]);
 
   if (isLoading) {

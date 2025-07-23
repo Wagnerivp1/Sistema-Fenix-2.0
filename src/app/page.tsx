@@ -15,7 +15,7 @@ import { getUsers, saveLoggedInUser } from '@/lib/storage';
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [username, setUsername] = React.useState('');
+  const [login, setLogin] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -23,28 +23,18 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Fetch users from the server
     const users = await getUsers();
     const authenticatedUser = users.find(
-      (user) => user.username === username && user.password === password
+      (user) => user.login === login && user.password === password
     );
 
     if (authenticatedUser) {
-      if (authenticatedUser.active) {
-          saveLoggedInUser(authenticatedUser); // Save logged in user to localStorage
-          toast({
-              title: 'Login bem-sucedido!',
-              description: 'Redirecionando para o dashboard...',
-          });
-          router.push('/dashboard');
-      } else {
-           toast({
-              variant: 'destructive',
-              title: 'Usuário Inativo',
-              description: 'Este usuário está desativado. Entre em contato com o administrador.',
-          });
-          setIsLoading(false);
-      }
+        saveLoggedInUser(authenticatedUser);
+        toast({
+            title: 'Login bem-sucedido!',
+            description: 'Redirecionando para o dashboard...',
+        });
+        router.push('/dashboard');
     } else {
       toast({
         variant: 'destructive',
@@ -68,14 +58,14 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Usuário</Label>
+              <Label htmlFor="login">Usuário</Label>
               <Input
-                id="username"
+                id="login"
                 type="text"
                 placeholder="Seu usuário"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
                 disabled={isLoading}
               />
             </div>

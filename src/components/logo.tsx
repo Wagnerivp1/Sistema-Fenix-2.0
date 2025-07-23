@@ -9,12 +9,12 @@ import { getCompanyInfo } from '@/lib/storage';
 import type { CompanyInfo } from '@/types';
 
 export function Logo({ className, iconOnly = false }: { className?: string; iconOnly?: boolean }) {
-  const [logoUrl, setLogoUrl] = React.useState<string | null>(null);
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
 
   React.useEffect(() => {
     const fetchCompanyInfo = async () => {
         const info = await getCompanyInfo();
-        setLogoUrl(info.logoUrl);
+        setCompanyInfo(info);
     };
 
     fetchCompanyInfo();
@@ -29,15 +29,14 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
 
   return (
     <div className={cn('flex items-center gap-3 text-primary', className)}>
-      {logoUrl ? (
-        <Image src={logoUrl} alt="Logo" width={40} height={40} className="h-10 w-10 object-contain" />
+      {companyInfo?.logoUrl ? (
+        <Image src={companyInfo.logoUrl} alt="Logo" width={40} height={40} className="h-10 w-10 object-contain" />
       ) : (
         <Wrench className="h-8 w-8" />
       )}
-      {!iconOnly && (
+      {!iconOnly && companyInfo?.name && (
         <div>
-            <span className="text-xl font-bold tracking-tight">Fenix</span>
-            <p className="text-xs text-muted-foreground -mt-1">By Wagner Lopes</p>
+            <span className="text-xl font-bold tracking-tight">{companyInfo.name}</span>
         </div>
       )}
     </div>

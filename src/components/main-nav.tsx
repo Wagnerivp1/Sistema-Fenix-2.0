@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -47,9 +48,14 @@ export function MainNav() {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
 
   React.useEffect(() => {
-    setCurrentUser(getLoggedInUser());
+    // We can read sessionStorage synchronously on the client.
+    const user = getLoggedInUser();
+    setCurrentUser(user);
+    setIsLoading(false);
   }, []);
 
   const navItems = React.useMemo(() => {
@@ -57,12 +63,22 @@ export function MainNav() {
     return allNavItems.filter(item => item.roles.includes(currentUser.role));
   }, [currentUser]);
 
-  if (!currentUser) {
+  if (isLoading) {
     return (
         <nav className="flex flex-col gap-2 px-4 py-4">
-            {/* You can add a skeleton loader here */}
+             {/* You can add a skeleton loader here */}
         </nav>
     );
+  }
+
+  if (!currentUser) {
+    return (
+      <nav className="flex flex-col gap-2 px-4 py-4">
+          <p className="text-xs text-center text-muted-foreground p-4">
+            Faça login para ver o menu.
+          </p>
+      </nav>
+    )
   }
 
   return (

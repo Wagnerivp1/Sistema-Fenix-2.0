@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo } from '@/types';
@@ -115,7 +116,7 @@ export const getLoggedInUser = (): User | null => {
 
 // Settings functions (remains in localStorage for per-user preference)
 const SETTINGS_KEY = 'app_settings';
-export const getSettings = async (): Promise<{ defaultWarrantyDays: number }> => {
+export const getSettings = (): { defaultWarrantyDays: number } => {
     if (typeof window === 'undefined') {
         return { defaultWarrantyDays: 90 };
     }

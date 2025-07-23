@@ -34,11 +34,11 @@ export function Logo({ className, iconOnly = false }: { className?: string; icon
   return (
     <div className={cn('flex items-center gap-3 text-primary', className)}>
       {logoUrl ? (
-        <Image src={logoUrl} alt={`${companyName} Logo`} width={32} height={32} className="h-8 w-8 object-contain" />
+        <Image src={logoUrl} alt={`${companyName} Logo`} width={40} height={40} className="h-10 w-10 object-contain" />
       ) : (
-        <Wrench className="h-8 w-8" />
+        <Wrench className="h-10 w-10" />
       )}
-      {!iconOnly && <span className="text-2xl font-bold">{companyName}</span>}
+      {!iconOnly && <span className="text-3xl font-bold">{companyName}</span>}
     </div>
   );
 }

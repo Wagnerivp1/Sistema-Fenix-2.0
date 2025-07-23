@@ -71,11 +71,11 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
             // Cabeçalho
             if (logoImage) {
                 const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (20 * logoAR / 2), currentY, 20 * logoAR, 20);
-                currentY += 25;
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (25 * logoAR / 2), currentY, 25 * logoAR, 25);
+                currentY += 30;
             }
             if (companyInfo?.name) {
-                doc.setFontSize(20);
+                doc.setFontSize(22);
                 doc.setFont('helvetica', 'bold');
                 doc.text(companyInfo.name, pageWidth / 2, currentY, { align: 'center'});
                 currentY += 7;

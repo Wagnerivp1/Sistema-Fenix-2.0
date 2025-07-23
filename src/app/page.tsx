@@ -49,7 +49,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="mx-auto w-full max-w-sm border-border shadow-2xl">
         <CardHeader className="space-y-4 text-center">
-          <Logo className="justify-center" />
+          <div className="flex justify-center">
+            <Logo />
+          </div>
           <CardTitle className="text-2xl font-bold">Acesse sua conta</CardTitle>
           <CardDescription>
             Bem-vindo de volta! Insira seus dados para continuar.

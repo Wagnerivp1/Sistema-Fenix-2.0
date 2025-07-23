@@ -72,15 +72,15 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         // Header
         if (logoImage) {
             const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (20 * logoAR / 2), currentY, 20 * logoAR, 20);
-            currentY += 25;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (25 * logoAR / 2), currentY, 25 * logoAR, 25);
+            currentY += 30;
         }
         
         doc.setFont('helvetica');
         doc.setTextColor(fontColor);
         
         if (info.name) {
-            doc.setFontSize(20);
+            doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
             doc.text(info.name, pageWidth / 2, currentY, { align: 'center'});
             currentY += 8;
@@ -160,7 +160,7 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     const margin = 5;
     let y = 10;
     
-    doc.setFontSize(10);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.text(info.name || 'Recibo', pageWidth / 2, y, { align: 'center' });
     y += 5;

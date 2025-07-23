@@ -51,7 +51,7 @@ export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSale
         const margin = 5;
         let y = 10;
         
-        doc.setFontSize(10);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text(info.name || 'Sua Empresa', pageWidth / 2, y, { align: 'center' });
         y += 5;

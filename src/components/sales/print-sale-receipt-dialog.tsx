@@ -40,30 +40,43 @@ const generatePixPayload = (
   txid: string,
   amount: number
 ): string => {
+  const formatValue = (fieldId: string, value: string) => {
+    const len = value.length.toString().padStart(2, '0');
+    return `${fieldId}${len}${value}`;
+  };
+
+  const merchantNameSanitized = merchantName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
+  const merchantCitySanitized = merchantCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
+
   const payload = [
-    '000201', // Payload Format Indicator
-    '26' + (('0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey).length).toString().padStart(2, '0') + '0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey,
-    '52040000', // Merchant Category Code
-    '5303986', // Transaction Currency
-    '54' + amount.toFixed(2).length.toString().padStart(2, '0') + amount.toFixed(2),
-    '5802BR', // Country Code
-    '59' + merchantName.substring(0, 25).length.toString().padStart(2, '0') + merchantName.substring(0, 25),
-    '60' + merchantCity.substring(0, 15).length.toString().padStart(2, '0') + merchantCity.substring(0, 15),
-    '62' + (('05' + txid.substring(0, 25).length.toString().padStart(2, '0') + txid.substring(0, 25)).length).toString().padStart(2, '0') + '05' + txid.substring(0, 25).length.toString().padStart(2, '0') + txid.substring(0, 25),
+    formatValue('00', '01'),
+    formatValue('26', `${formatValue('00', 'br.gov.bcb.pix')}${formatValue('01', pixKey)}`),
+    formatValue('52', '0000'),
+    formatValue('53', '986'),
+    formatValue('54', amount.toFixed(2)),
+    formatValue('58', 'BR'),
+    formatValue('59', merchantNameSanitized),
+    formatValue('60', merchantCitySanitized),
+    formatValue('62', formatValue('05', txid.substring(0, 25))),
   ].join('');
 
   const payloadWithCrc = payload + '6304';
-
+  
   let crc = 0xFFFF;
   for (let i = 0; i < payloadWithCrc.length; i++) {
-    crc ^= payloadWithCrc.charCodeAt(i) << 8;
+    crc ^= (payloadWithCrc.charCodeAt(i) << 8);
     for (let j = 0; j < 8; j++) {
-      crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+      if ((crc & 0x8000) !== 0) {
+        crc = (crc << 1) ^ 0x1021;
+      } else {
+        crc <<= 1;
+      }
     }
   }
 
-  const crc16 = crc & 0xFFFF;
-  return payloadWithCrc + crc16.toString(16).toUpperCase().padStart(4, '0');
+  const crc16 = (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+  
+  return `${payloadWithCrc}${crc16}`;
 };
 
 
@@ -165,7 +178,7 @@ export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSale
               info.pixKey,
               info.name || 'Empresa',
               'SAO PAULO',
-              `txid_${saleData.id}`,
+              saleData.id.replace(/-/g, '').slice(0, 25),
               saleData.total
             );
             const qrCodeImage = await QRCode.toDataURL(pixload, { width: 150, errorCorrectionLevel: 'M' });

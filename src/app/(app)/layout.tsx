@@ -54,7 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
         <div className="hidden border-r bg-card md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
-            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <div className="flex h-16 items-center border-b px-4 lg:h-20 lg:px-6">
               <div>
                 <h2 className="font-bold text-lg">Sistema Fenix <span className="text-xs font-mono text-muted-foreground">v1.0</span></h2>
                 <p className="text-xs font-code text-muted-foreground">By Wagner Lopes</p>
@@ -66,7 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="flex flex-col">
-          <header className="flex h-14 items-center justify-between gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
+          <header className="flex h-16 items-center justify-between gap-4 border-b bg-card px-4 lg:h-20 lg:px-6">
              <div className="flex items-center gap-4">
                  <Sheet>
                     <SheetTrigger asChild>
@@ -76,7 +76,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="flex flex-col p-0">
-                      <div className="flex h-14 items-center border-b px-6">
+                      <div className="flex h-16 items-center border-b px-6 lg:h-20">
                          <div>
                             <h2 className="font-bold text-lg">Sistema Fenix <span className="text-xs font-mono text-muted-foreground">v1.0</span></h2>
                             <p className="text-xs font-code text-muted-foreground">By Wagner Lopes</p>

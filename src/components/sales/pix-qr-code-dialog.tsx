@@ -25,48 +25,37 @@ interface PixQrCodeDialogProps {
   onConfirm: (printReceipt: boolean) => void;
 }
 
-const formatText = (id: string, text: string | undefined, maxLength = 99) => {
-    const cleanText = String(text || '').substring(0, maxLength);
-    const length = cleanText.length.toString().padStart(2, '0');
-    return `${id}${length}${cleanText}`;
-};
+const generatePixPayload = (
+  pixKey: string,
+  merchantName: string,
+  merchantCity: string,
+  txid: string,
+  amount: number
+): string => {
+  const payload = [
+    '000201', // Payload Format Indicator
+    '26' + (('0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey).length).toString().padStart(2, '0') + '0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey,
+    '52040000', // Merchant Category Code
+    '5303986', // Transaction Currency
+    '54' + amount.toFixed(2).length.toString().padStart(2, '0') + amount.toFixed(2),
+    '5802BR', // Country Code
+    '59' + merchantName.substring(0, 25).length.toString().padStart(2, '0') + merchantName.substring(0, 25),
+    '60' + merchantCity.substring(0, 15).length.toString().padStart(2, '0') + merchantCity.substring(0, 15),
+    '62' + (('05' + txid.substring(0, 25).length.toString().padStart(2, '0') + txid.substring(0, 25)).length).toString().padStart(2, '0') + '05' + txid.substring(0, 25).length.toString().padStart(2, '0') + txid.substring(0, 25),
+  ].join('');
 
-const getCrc16 = (payload: string): string => {
+  const payloadWithCrc = payload + '6304';
+
   let crc = 0xFFFF;
-  const polynomial = 0x1021;
-  const buffer = Buffer.from(payload, 'utf8');
-
-  for (const b of buffer) {
-    crc ^= (b << 8);
-    for (let i = 0; i < 8; i++) {
-      crc = (crc & 0x8000) ? (crc << 1) ^ polynomial : crc << 1;
+  for (let i = 0; i < payloadWithCrc.length; i++) {
+    crc ^= payloadWithCrc.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
     }
   }
 
-  return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-};
-
-
-const generatePixPayload = (companyInfo: CompanyInfo, sale: { total: number, id: string }) => {
-    const merchantAccountInfo = formatText('00', 'br.gov.bcb.pix') + formatText('01', companyInfo.pixKey);
-
-    const txid = `***${sale.id.slice(-22)}`.substring(0, 25);
-
-    const payloadWithoutCrc = [
-        formatText('00', '01'),
-        formatText('26', merchantAccountInfo),
-        formatText('52', '0000'),
-        formatText('53', '986'),
-        formatText('54', sale.total.toFixed(2)),
-        formatText('58', 'BR'),
-        formatText('59', companyInfo.name.replace(/[^a-zA-Z0-9 ]/g, '').substring(0, 25)),
-        formatText('60', 'SAO PAULO'),
-        formatText('62', formatText('05', txid)),
-    ].join('') + '6304';
-    
-    const crc = getCrc16(payloadWithoutCrc);
-    
-    return payloadWithoutCrc + crc;
+  const crc16 = crc & 0xFFFF;
+  return payloadWithCrc + crc16.toString(16).toUpperCase().padStart(4, '0');
 };
 
 
@@ -83,13 +72,19 @@ export function PixQrCodeDialog({
   const [hasCopied, setHasCopied] = React.useState(false);
 
   React.useEffect(() => {
-    if (isOpen && companyInfo && sale.total > 0 && sale.id) {
+    if (isOpen && companyInfo?.pixKey && sale.total > 0 && sale.id) {
       try {
-        const pixPayload = generatePixPayload(companyInfo, sale);
+        const pixPayload = generatePixPayload(
+          companyInfo.pixKey,
+          companyInfo.name || 'Empresa',
+          'SAO PAULO',
+          `txid_${sale.id}`,
+          sale.total
+        );
 
         setPixCopyPaste(pixPayload);
 
-        QRCode.toDataURL(pixPayload, { width: 256, margin: 1, errorCorrectionLevel: 'H' })
+        QRCode.toDataURL(pixPayload, { width: 256, margin: 1, errorCorrectionLevel: 'M' })
           .then(url => {
             setQrCodeDataUrl(url);
           })
@@ -114,7 +109,7 @@ export function PixQrCodeDialog({
         setPixCopyPaste('');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, sale.id, sale.total]); // Roda apenas quando o diálogo abre ou a venda muda
   
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(pixCopyPaste);

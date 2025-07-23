@@ -33,47 +33,39 @@ const formatDateForDisplay = (dateString: string) => {
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
-const formatText = (id: string, text: string | undefined, maxLength = 99) => {
-    const cleanText = String(text || '').substring(0, maxLength);
-    const length = cleanText.length.toString().padStart(2, '0');
-    return `${id}${length}${cleanText}`;
-};
+const generatePixPayload = (
+  pixKey: string,
+  merchantName: string,
+  merchantCity: string,
+  txid: string,
+  amount: number
+): string => {
+  const payload = [
+    '000201', // Payload Format Indicator
+    '26' + (('0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey).length).toString().padStart(2, '0') + '0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey,
+    '52040000', // Merchant Category Code
+    '5303986', // Transaction Currency
+    '54' + amount.toFixed(2).length.toString().padStart(2, '0') + amount.toFixed(2),
+    '5802BR', // Country Code
+    '59' + merchantName.substring(0, 25).length.toString().padStart(2, '0') + merchantName.substring(0, 25),
+    '60' + merchantCity.substring(0, 15).length.toString().padStart(2, '0') + merchantCity.substring(0, 15),
+    '62' + (('05' + txid.substring(0, 25).length.toString().padStart(2, '0') + txid.substring(0, 25)).length).toString().padStart(2, '0') + '05' + txid.substring(0, 25).length.toString().padStart(2, '0') + txid.substring(0, 25),
+  ].join('');
 
-const getCrc16 = (payload: string): string => {
+  const payloadWithCrc = payload + '6304';
+
   let crc = 0xFFFF;
-  const polynomial = 0x1021;
-  const buffer = Buffer.from(payload, 'utf8');
-
-  for (const b of buffer) {
-    crc ^= (b << 8);
-    for (let i = 0; i < 8; i++) {
-      crc = (crc & 0x8000) ? (crc << 1) ^ polynomial : crc << 1;
+  for (let i = 0; i < payloadWithCrc.length; i++) {
+    crc ^= payloadWithCrc.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
     }
   }
 
-  return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+  const crc16 = crc & 0xFFFF;
+  return payloadWithCrc + crc16.toString(16).toUpperCase().padStart(4, '0');
 };
 
-
-const generatePixPayload = (companyInfo: CompanyInfo, sale: { total: number, id: string }) => {
-    const merchantAccountInfo = formatText('00', 'br.gov.bcb.pix') + formatText('01', companyInfo.pixKey);
-    const txid = `***${sale.id.slice(-22)}`.substring(0, 25);
-    const payloadWithoutCrc = [
-        formatText('00', '01'),
-        formatText('26', merchantAccountInfo),
-        formatText('52', '0000'),
-        formatText('53', '986'),
-        formatText('54', sale.total.toFixed(2)),
-        formatText('58', 'BR'),
-        formatText('59', companyInfo.name.replace(/[^a-zA-Z0-9 ]/g, '').substring(0, 25)),
-        formatText('60', 'SAO PAULO'),
-        formatText('62', formatText('05', txid)),
-    ].join('') + '6304';
-    
-    const crc = getCrc16(payloadWithoutCrc);
-
-    return payloadWithoutCrc + crc;
-};
 
 export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSaleReceiptDialogProps) {
   const { toast } = useToast();
@@ -169,8 +161,14 @@ export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSale
         y += 6;
 
         if (saleData.paymentMethod === 'pix' && info.pixKey) {
-            const pixload = generatePixPayload(info, saleData);
-            const qrCodeImage = await QRCode.toDataURL(pixload, { width: 150, errorCorrectionLevel: 'H' });
+            const pixload = generatePixPayload(
+              info.pixKey,
+              info.name || 'Empresa',
+              'SAO PAULO',
+              `txid_${saleData.id}`,
+              saleData.total
+            );
+            const qrCodeImage = await QRCode.toDataURL(pixload, { width: 150, errorCorrectionLevel: 'M' });
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text('Pague com PIX!', pageWidth / 2, y, { align: 'center' });

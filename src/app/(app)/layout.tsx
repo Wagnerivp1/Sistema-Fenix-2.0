@@ -66,7 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="flex flex-col">
-          <header className="flex h-16 items-center justify-between gap-4 border-b bg-card px-4 lg:h-20 lg:px-6">
+          <header className="flex h-16 items-center justify-between gap-4 border-b bg-card px-4 lg:h-20 lg:px-6 relative">
              <div className="flex items-center gap-4">
                  <Sheet>
                     <SheetTrigger asChild>
@@ -89,11 +89,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </Sheet>
              </div>
             
-            <div className="absolute left-1/2 -translate-x-1/2">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <Logo />
             </div>
 
-            <div>
+            <div className="ml-auto">
               <HeaderActions />
             </div>
           </header>

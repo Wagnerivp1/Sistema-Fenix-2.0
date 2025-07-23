@@ -79,20 +79,19 @@ export function Logo({ className, iconOnly = false, onLoginPage = false }: LogoP
   }
 
   return (
-    <div className={cn('flex items-baseline gap-3 text-primary', className)}>
+    <div className={cn('flex items-center gap-3 text-primary', className)}>
       {companyInfo?.logoUrl ? (
         <Image src={companyInfo.logoUrl} alt="Logo" width={48} height={48} className="h-12 w-12 object-contain" />
       ) : (
         <Wrench className="h-12 w-12" />
       )}
-      <div className="flex items-baseline gap-4">
+      <div className="flex flex-col">
         {!iconOnly && companyInfo?.name && (
             <span className="text-3xl font-bold tracking-tight whitespace-nowrap">{companyInfo.name}</span>
         )}
          {verse && !onLoginPage && (
-            <div className="text-sm text-muted-foreground italic hidden md:block">
-              <p>"{verse.verseText}"</p>
-              <p className="text-right font-semibold text-xs mt-1">- {verse.verseReference}</p>
+            <div className="text-xs text-muted-foreground italic hidden md:block">
+              <p>"{verse.verseText}" - {verse.verseReference}</p>
             </div>
         )}
       </div>

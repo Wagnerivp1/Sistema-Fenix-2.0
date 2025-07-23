@@ -33,14 +33,10 @@ const formatDateForDisplay = (dateString: string) => {
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
-const formatValue = (value: number) => {
-    const s = value.toFixed(2);
-    return s.length.toString().padStart(2, '0') + s;
-};
-
-const formatText = (id: string, text: string) => {
-    const s = text.trim();
-    return id + s.length.toString().padStart(2, '0') + s;
+const formatText = (id: string, text: string | undefined, maxLength = 99) => {
+    const cleanText = (text || '').substring(0, maxLength);
+    const length = cleanText.length.toString().padStart(2, '0');
+    return `${id}${length}${cleanText}`;
 };
 
 const getCrc16 = (payload: string) => {
@@ -59,16 +55,18 @@ const getCrc16 = (payload: string) => {
 };
 
 const generatePixPayload = (companyInfo: CompanyInfo, sale: { total: number, id: string }) => {
+    const merchantAccountInfo = formatText('00', 'br.gov.bcb.pix') + formatText('01', companyInfo.pixKey);
+    const txid = `***${sale.id.slice(-22)}`.substring(0, 25);
     const payload = [
-        formatText('00', '01'),
-        formatText('26', formatText('00', 'br.gov.bcb.pix') + formatText('01', companyInfo.pixKey)),
-        formatText('52', '0000'),
-        formatText('53', '986'),
-        formatValue(sale.total),
-        formatText('58', 'BR'),
-        formatText('59', companyInfo.name.substring(0, 25)),
-        formatText('60', '***'),
-        formatText('62', formatText('05', sale.id.slice(-25))),
+        formatText('00', '01'), // Payload Format Indicator
+        formatText('26', merchantAccountInfo), // Merchant Account Information
+        formatText('52', '0000'), // Merchant Category Code
+        formatText('53', '986'), // Transaction Currency (BRL)
+        formatText('54', sale.total.toFixed(2)), // Transaction Amount
+        formatText('58', 'BR'), // Country Code
+        formatText('59', companyInfo.name.replace(/[^a-zA-Z0-9 ]/g, '').substring(0, 25)), // Merchant Name
+        formatText('60', 'SAO PAULO'), // Merchant City
+        formatText('62', formatText('05', txid)), // Transaction ID
     ];
     const payloadString = payload.join('');
     return payloadString + getCrc16(payloadString);
@@ -169,7 +167,7 @@ export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSale
 
         if (saleData.paymentMethod === 'pix' && info.pixKey) {
             const pixload = generatePixPayload(info, saleData);
-            const qrCodeImage = await QRCode.toDataURL(pixload, { width: 150 });
+            const qrCodeImage = await QRCode.toDataURL(pixload, { width: 150, errorCorrectionLevel: 'H' });
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text('Pague com PIX!', pageWidth / 2, y, { align: 'center' });

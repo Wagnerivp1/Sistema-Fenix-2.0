@@ -1,5 +1,15 @@
 [
   {
+    "id": "FIN-1753231334304",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 25,
+    "date": "2025-07-23",
+    "category": "Venda de Produto",
+    "paymentMethod": "pix",
+    "relatedSaleId": "SALE-1753231333513"
+  },
+  {
     "type": "receita",
     "description": "Recebimento OS #7767",
     "amount": 120,

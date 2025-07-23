@@ -46,5 +46,30 @@
     "id": "1752691972781-0.45823819003991484",
     "time": "15:52:52",
     "user": "Não identificado"
+  },
+  {
+    "id": "SALE-1753231333513",
+    "date": "2025-07-23",
+    "time": "21:42:13",
+    "user": "Master User",
+    "items": [
+      {
+        "id": "PROD-1753065361831",
+        "barcode": "PROD-1753065361831",
+        "name": "TECLADO GENERICO ",
+        "price": 25,
+        "quantity": 1,
+        "category": "Periféricos",
+        "description": "DFSDD",
+        "unitOfMeasure": "UN",
+        "costPrice": 10,
+        "minStock": 1
+      }
+    ],
+    "subtotal": 25,
+    "discount": 0,
+    "total": 25,
+    "paymentMethod": "pix",
+    "observations": "teste "
   }
 ]

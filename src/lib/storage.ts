@@ -45,7 +45,7 @@ async function saveData<T>(dataType: string, data: T): Promise<void> {
 }
 
 
-// These keys are now only for localStorage specific items like logged in user
+// This key is for sessionStorage
 const LOGGED_IN_USER_KEY = 'assistec_logged_in_user';
 
 // --- Data Functions ---
@@ -87,16 +87,16 @@ export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {
 };
 
 
-// --- LocalStorage Specific Functions ---
+// --- SessionStorage Specific Functions ---
 
-// Logged In User functions (remains in localStorage)
+// Logged In User functions (remains in sessionStorage)
 export const saveLoggedInUser = (user: User): void => {
   if (typeof window === 'undefined') return;
   try {
     const userToSave = { ...user };
-    // Do not store password in localStorage
+    // Do not store password in sessionStorage
     delete userToSave.password;
-    window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(userToSave));
+    window.sessionStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(userToSave));
   } catch (error) {
     console.error('Error saving logged in user:', error);
   }
@@ -105,7 +105,7 @@ export const saveLoggedInUser = (user: User): void => {
 export const getLoggedInUser = (): User | null => {
   if (typeof window === 'undefined') return null;
   try {
-    const item = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+    const item = window.sessionStorage.getItem(LOGGED_IN_USER_KEY);
     return item ? JSON.parse(item) : null;
   } catch (error) {
     console.error('Error getting logged in user:', error);

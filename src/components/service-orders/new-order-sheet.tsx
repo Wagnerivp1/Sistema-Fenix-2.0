@@ -304,7 +304,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
-        let currentY = 12;
+        let currentY = 15;
         const fontColor = '#000000';
         const primaryColor = '#e0e7ff';
         const secondaryColor = '#f3f4f6';
@@ -312,36 +312,40 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         // Header
         if (logoImage) {
             const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY, 20 * logoAR, 20);
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (15 * logoAR / 2), currentY, 15 * logoAR, 15);
+            currentY += 18;
         }
         
-        const companyInfoX = margin + (logoImage ? 25 : 0);
         doc.setFont('helvetica');
         doc.setTextColor(fontColor);
         
         if (companyInfo.name) {
-            doc.setFontSize(18);
+            doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name, companyInfoX, currentY + 6);
+            doc.text(companyInfo.name, pageWidth / 2, currentY, { align: 'center'});
+            currentY += 8;
         }
+
         if (companyInfo.address) {
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(companyInfo.address, companyInfoX, currentY + 12);
+            doc.text(companyInfo.address, pageWidth / 2, currentY, { align: 'center'});
+            currentY += 4;
         }
         if (companyInfo.phone || companyInfo.emailOrSite) {
-            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, companyInfoX, currentY + 17);
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, pageWidth/2, currentY, { align: 'center'});
+            currentY += 10;
         }
+
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text("Orçamento de Serviço", pageWidth - margin, currentY + 6, { align: 'right' });
+        doc.text("Orçamento de Serviço", pageWidth / 2, currentY, { align: 'center' });
+        currentY += 6;
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Nº: #${orderData.id.slice(-4)}`, pageWidth - margin, currentY + 12, { align: 'right' });
-        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, currentY + 17, { align: 'right' });
-
-        currentY = 40;
+        doc.text(`Nº: #${orderData.id.slice(-4)} | Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 10;
 
         // Content
         const drawBoxWithTitle = (title: string, x: number, y: number, width: number, minHeight: number, text: string | string[]) => {
@@ -499,26 +503,21 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             // Header
             if (logoImage) {
                 const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY, 15 * logoAR, 15);
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (15 * logoAR / 2), localY, 15 * logoAR, 15);
+                localY += 18;
             }
-            const companyInfoX = margin + (logoImage ? 20 : 0);
-            doc.setFontSize(14);
+            doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name || "Sua Empresa", companyInfoX, localY + 4);
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text(companyInfo.address || "", companyInfoX, localY + 8);
+            doc.text(companyInfo.name || "Sua Empresa", pageWidth / 2, localY, { align: 'center'});
+            localY += 7;
             
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
-            doc.text('Recibo de Entrega', pageWidth - margin, localY + 4, { align: 'right' });
+            doc.text('Recibo de Entrega', pageWidth / 2, localY, { align: 'center' });
+            localY += 6;
+            
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
-            localY += 18;
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
             doc.text(via, pageWidth / 2, localY, { align: 'center' });
             localY += 7;
 
@@ -612,26 +611,34 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             // Header
             if (logoImage) {
                 const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY, 15 * logoAR, 15);
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (15 * logoAR / 2), localY, 15 * logoAR, 15);
+                localY += 18;
             }
-            const companyInfoX = margin + (logoImage ? 20 : 0);
-            doc.setFontSize(14);
+            doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name || "Sua Empresa", companyInfoX, localY + 4);
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text(companyInfo.address || "", companyInfoX, localY + 8);
-            
+            doc.text(companyInfo.name || "Sua Empresa", pageWidth / 2, localY, { align: 'center'});
+            localY += 7;
+
+            if (companyInfo.address) {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(companyInfo.address, pageWidth / 2, localY, { align: 'center'});
+                localY += 4;
+            }
+            if (companyInfo.phone || companyInfo.emailOrSite) {
+                 doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, pageWidth/2, localY, { align: 'center'});
+                localY += 6;
+            }
+
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
-            doc.text('Recibo de Entrada', pageWidth - margin, localY + 4, { align: 'right' });
+            doc.text('Recibo de Entrada', pageWidth / 2, localY, { align: 'center' });
+            localY += 6;
+            
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(`OS: ${osId}`, pageWidth - margin, localY + 9, { align: 'right' });
-            localY += 18;
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
             doc.text(via, pageWidth / 2, localY, { align: 'center' });
             localY += 7;
 
@@ -641,6 +648,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             doc.text('Data Entrada:', margin, localY);
             doc.setFont('helvetica', 'normal');
             doc.text(new Date(orderToPrint.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'}), margin + 25, localY);
+            doc.setFont('helvetica', 'bold');
+            doc.text('OS:', pageWidth - margin - 20, localY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(osId, pageWidth - margin - 12, localY);
             localY += 5;
             
             doc.setFont('helvetica', 'bold');
@@ -1115,7 +1126,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
           <AlertDialogAction onClick={confirmManualAdd}>Adicionar</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>
     </>
   );
 }

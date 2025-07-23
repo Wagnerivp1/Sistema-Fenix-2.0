@@ -477,7 +477,7 @@ export default function ConfiguracoesPage() {
                 id="defaultWarrantyDays" 
                 type="number" 
                 className="max-w-xs" 
-                value={settings.defaultWarrantyDays}
+                value={settings.defaultWarrantyDays || ''}
                 onChange={handleSettingsChange}
                 disabled={!isCurrentUserAdmin}
              />

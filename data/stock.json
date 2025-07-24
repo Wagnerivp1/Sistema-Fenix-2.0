@@ -3,12 +3,12 @@
     "id": "PROD-1753232934190",
     "barcode": "PROD-1753232934190",
     "name": "TECLADO USB MULTILAZER ",
-    "price": 20,
-    "quantity": 2,
+    "price": 2,
+    "quantity": 1,
     "category": "Periféricos",
     "description": "TECLADO USB ",
     "unitOfMeasure": "UN",
-    "costPrice": 15,
+    "costPrice": 1,
     "minStock": 1
   },
   {

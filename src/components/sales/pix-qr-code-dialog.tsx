@@ -26,49 +26,50 @@ interface PixQrCodeDialogProps {
 }
 
 const generatePixPayload = (
-  pixKey: string,
-  merchantName: string,
-  merchantCity: string,
-  txid: string,
-  amount: number
-): string => {
-  const formatValue = (fieldId: string, value: string) => {
-    const len = value.length.toString().padStart(2, '0');
-    return `${fieldId}${len}${value}`;
-  };
+    pixKey: string,
+    merchantName: string,
+    merchantCity: string,
+    txid: string,
+    amount: number
+  ): string => {
+    merchantName = merchantName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
+    merchantCity = merchantCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
+    txid = txid.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, '').substring(0, 25);
 
-  const merchantNameSanitized = merchantName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
-  const merchantCitySanitized = merchantCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
+    const fields = {
+      '00': '01',
+      '26': `0014br.gov.bcb.pix01${pixKey.length.toString().padStart(2, '0')}${pixKey}`,
+      '52': '0000',
+      '53': '986',
+      '54': amount.toFixed(2),
+      '58': 'BR',
+      '59': merchantName,
+      '60': merchantCity,
+      '62': `05${txid.length.toString().padStart(2, '0')}${txid}`
+    };
 
-  const payload = [
-    formatValue('00', '01'),
-    formatValue('26', `${formatValue('00', 'br.gov.bcb.pix')}${formatValue('01', pixKey)}`),
-    formatValue('52', '0000'),
-    formatValue('53', '986'),
-    formatValue('54', amount.toFixed(2)),
-    formatValue('58', 'BR'),
-    formatValue('59', merchantNameSanitized),
-    formatValue('60', merchantCitySanitized),
-    formatValue('62', formatValue('05', txid.substring(0, 25))),
-  ].join('');
-
-  const payloadWithCrc = payload + '6304';
-  
-  let crc = 0xFFFF;
-  for (let i = 0; i < payloadWithCrc.length; i++) {
-    crc ^= (payloadWithCrc.charCodeAt(i) << 8);
-    for (let j = 0; j < 8; j++) {
-      if ((crc & 0x8000) !== 0) {
-        crc = (crc << 1) ^ 0x1021;
-      } else {
-        crc <<= 1;
-      }
+    let payload = '';
+    for (const field of ['00', '26', '52', '53', '54', '58', '59', '60', '62']) {
+      const value = fields[field as keyof typeof fields];
+      payload += `${field}${value.length.toString().padStart(2, '0')}${value}`;
     }
-  }
+    payload += '6304';
 
-  const crc16 = (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-  
-  return `${payloadWithCrc}${crc16}`;
+    let crc = 0xFFFF;
+    for (let i = 0; i < payload.length; i++) {
+        crc ^= (payload.charCodeAt(i) << 8);
+        for (let j = 0; j < 8; j++) {
+            if ((crc & 0x8000) !== 0) {
+                crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+            } else {
+                crc = (crc << 1) & 0xFFFF;
+            }
+        }
+    }
+    
+    const crc16 = crc.toString(16).toUpperCase().padStart(4, '0');
+
+    return `${payload}${crc16}`;
 };
 
 
@@ -91,7 +92,7 @@ export function PixQrCodeDialog({
           companyInfo.pixKey,
           companyInfo.name || 'Empresa',
           'SAO PAULO',
-          sale.id.replace(/-/g, '').slice(0, 25),
+          sale.id.replace(/-/g, ''),
           sale.total
         );
 
@@ -136,19 +137,19 @@ export function PixQrCodeDialog({
             Aponte a câmera do seu celular para o QR Code ou use o Copia e Cola.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-6 text-center">
+        <div className="py-4 space-y-4 text-center">
             {qrCodeDataUrl ? (
                 <div className="flex justify-center">
-                    <Image src={qrCodeDataUrl} alt="PIX QR Code" width={280} height={280} />
+                    <Image src={qrCodeDataUrl} alt="PIX QR Code" width={200} height={200} />
                 </div>
             ) : (
-                 <div className="h-[280px] w-[280px] bg-muted animate-pulse rounded-md mx-auto flex items-center justify-center">
+                 <div className="h-[200px] w-[200px] bg-muted animate-pulse rounded-md mx-auto flex items-center justify-center">
                     <p className="text-muted-foreground">Gerando QR Code...</p>
                 </div>
             )}
             <div className="text-center">
-                <p className="text-lg">Total a Pagar</p>
-                <p className="text-4xl font-bold text-primary">R$ {sale.total.toFixed(2)}</p>
+                <p className="text-base">Total a Pagar</p>
+                <p className="text-3xl font-bold text-primary">R$ {sale.total.toFixed(2)}</p>
             </div>
              <Button variant="outline" onClick={handleCopyToClipboard}>
                 {hasCopied ? <Check className="mr-2 h-4 w-4 text-green-500" /> : <Copy className="mr-2 h-4 w-4" />}

@@ -221,5 +221,30 @@
     "total": 20,
     "paymentMethod": "pix",
     "observations": ""
+  },
+  {
+    "id": "SALE-1753314325052",
+    "date": "2025-07-23",
+    "time": "20:46:41",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "id": "PROD-1753232934190",
+        "barcode": "PROD-1753232934190",
+        "name": "TECLADO USB MULTILAZER ",
+        "price": 2,
+        "quantity": 1,
+        "category": "Periféricos",
+        "description": "TECLADO USB ",
+        "unitOfMeasure": "UN",
+        "costPrice": 1,
+        "minStock": 1
+      }
+    ],
+    "subtotal": 2,
+    "discount": 0,
+    "total": 2,
+    "paymentMethod": "pix",
+    "observations": ""
   }
 ]

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo } from '@/types';

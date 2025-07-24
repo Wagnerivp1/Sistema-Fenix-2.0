@@ -29,14 +29,12 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { getUsers, saveUsers, getLoggedInUser, getCompanyInfo, saveCompanyInfo } from '@/lib/storage';
+import { getUsers, saveUsers, getLoggedInUser, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings } from '@/lib/storage';
 import type { User, CompanyInfo, UserPermissions } from '@/types';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-
-const SETTINGS_KEY = 'app_settings';
 
 interface AppSettings {
   defaultWarrantyDays: number;
@@ -82,8 +80,8 @@ export default function ConfiguracoesPage() {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const savedSettings = localStorage.getItem(SETTINGS_KEY);
-        if (savedSettings) setSettings(JSON.parse(savedSettings));
+        const savedSettings = getSettings();
+        setSettings(savedSettings);
         
         const [companyInfoData, usersData, loggedInUser] = await Promise.all([
             getCompanyInfo(),
@@ -170,7 +168,7 @@ export default function ConfiguracoesPage() {
 
   const handleSaveSettings = () => {
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      saveSettings(settings);
       toast({
         title: "Configurações Salvas!",
         description: "Suas alterações foram salvas com sucesso.",
@@ -199,8 +197,8 @@ export default function ConfiguracoesPage() {
         if(response.ok) backupData[type] = await response.json();
       }
       
-      const settingsData = localStorage.getItem(SETTINGS_KEY);
-      if(settingsData) backupData.settings = JSON.parse(settingsData);
+      const settingsData = getSettings();
+      if(settingsData) backupData.settings = settingsData;
 
       const jsonString = JSON.stringify(backupData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
@@ -257,7 +255,7 @@ export default function ConfiguracoesPage() {
                     body: JSON.stringify(data[type]),
                 });
             } else if (type === 'settings') {
-                localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
+                saveSettings(data.settings);
             }
         }
         
@@ -283,7 +281,7 @@ export default function ConfiguracoesPage() {
             body: JSON.stringify(type === 'companyInfo' ? {} : []),
         });
       }
-      localStorage.removeItem(SETTINGS_KEY);
+      saveSettings({ defaultWarrantyDays: 90 });
       
       toast({ title: 'Sistema Limpo!', description: 'Todos os dados foram removidos. A página será recarregada.' });
       setTimeout(() => window.location.reload(), 2000);

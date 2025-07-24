@@ -193,6 +193,7 @@ export default function VendasPage() {
     setObservations('');
     setBarcode('');
     setCurrentSaleId('');
+    setCompanyInfoForDialog(null);
     barcodeInputRef.current?.focus();
   }
   
@@ -271,9 +272,11 @@ export default function VendasPage() {
       return;
     }
 
-    const companyData = await getCompanyInfo(); // Fetch the latest company info
-    setCompanyInfoForDialog(companyData);
+    setCompanyInfoForDialog(null); // Clear previous info to ensure re-fetch
     setCurrentSaleId(`SALE-${Date.now()}`);
+
+    const companyData = await getCompanyInfo();
+    setCompanyInfoForDialog(companyData);
 
     if (paymentMethod === 'dinheiro') {
         setIsChangeCalcOpen(true);
@@ -285,6 +288,7 @@ export default function VendasPage() {
                 description: 'Por favor, cadastre uma chave PIX nas configurações da empresa.',
             });
             setCurrentSaleId('');
+            setCompanyInfoForDialog(null);
             return;
         }
         setIsPixDialogOpen(true);

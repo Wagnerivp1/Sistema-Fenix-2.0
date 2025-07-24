@@ -32,54 +32,44 @@ const generatePixPayload = (
     amount: number,
     txid: string,
   ): string => {
-      const merchantNameFormatted = (merchantName || 'Empresa').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
-      const merchantCityFormatted = (merchantCity || 'SAO PAULO').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
-      
-      const payloadFields: { [key: string]: string } = {
-          '00': '01',
-          '26': `0014br.gov.bcb.pix01${pixKey.length.toString().padStart(2, '0')}${pixKey}`,
-          '52': '0000',
-          '53': '986',
-          '54': amount.toFixed(2),
-          '58': 'BR',
-          '59': merchantNameFormatted,
-          '60': merchantCityFormatted,
-          '62': `05${txid.length.toString().padStart(2, '0')}${txid}`,
-      };
-  
-      const formatField = (id: string, value: string): string => {
-          return `${id}${value.length.toString().padStart(2, '0')}${value}`;
-      };
-  
-      let payloadString = '';
-      for (const id in payloadFields) {
-        if (id !== '26') {
-            payloadString += formatField(id, payloadFields[id]);
-        } else {
-            payloadString += formatField('26', payloadFields['26']);
+    
+    const formatField = (id: string, value: string): string => {
+        const len = value.length.toString().padStart(2, '0');
+        return `${id}${len}${value}`;
+    };
+
+    const merchantNameFormatted = (merchantName || 'Empresa').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
+    const merchantCityFormatted = (merchantCity || 'SAO PAULO').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
+
+    const payload = [
+        formatField('00', '01'),
+        formatField('26', `${formatField('00', 'br.gov.bcb.pix')}${formatField('01', pixKey)}`),
+        formatField('52', '0000'),
+        formatField('53', '986'),
+        formatField('54', amount.toFixed(2)),
+        formatField('58', 'BR'),
+        formatField('59', merchantNameFormatted),
+        formatField('60', merchantCityFormatted),
+        formatField('62', formatField('05', txid)),
+    ].join('');
+    
+    const payloadWithCrc = `${payload}6304`;
+    
+    let crc = 0xFFFF;
+    for (let i = 0; i < payloadWithCrc.length; i++) {
+        crc ^= (payloadWithCrc.charCodeAt(i) << 8);
+        for (let j = 0; j < 8; j++) {
+            if ((crc & 0x8000) !== 0) {
+                crc = (crc << 1) ^ 0x1021;
+            } else {
+                crc <<= 1;
+            }
         }
-      }
-      payloadString += '6304';
-  
-      const getCrc16 = (payload: string): string => {
-          let crc = 0xFFFF;
-          const bytes = new TextEncoder().encode(payload);
-          for (const byte of bytes) {
-              crc ^= (byte << 8);
-              for (let i = 0; i < 8; i++) {
-                  if ((crc & 0x8000) !== 0) {
-                      crc = (crc << 1) ^ 0x1021;
-                  } else {
-                      crc <<= 1;
-                  }
-              }
-          }
-          return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-      };
-  
-      const crc = getCrc16(payloadString);
-      return `${payloadString}${crc}`;
-  };
+    }
+    const crc16 = (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+
+    return `${payloadWithCrc}${crc16}`;
+};
 
 
 export function PixQrCodeDialog({
@@ -95,6 +85,7 @@ export function PixQrCodeDialog({
   const [hasCopied, setHasCopied] = React.useState(false);
 
   React.useEffect(() => {
+    // Only generate QR code when dialog opens and all data is available
     if (isOpen && companyInfo?.pixKey && sale.total > 0 && sale.id) {
       try {
         const pixPayload = generatePixPayload(
@@ -127,6 +118,10 @@ export function PixQrCodeDialog({
             description: 'Verifique se a chave PIX e nome da empresa estão corretos nas configurações.',
         });
       }
+    } else if (!isOpen) {
+      // Clear data when dialog closes
+      setQrCodeDataUrl('');
+      setPixCopyPaste('');
     }
   }, [isOpen, companyInfo, sale.id, sale.total, toast]);
   

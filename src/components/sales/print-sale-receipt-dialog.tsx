@@ -37,46 +37,41 @@ const generatePixPayload = (
   pixKey: string,
   merchantName: string,
   merchantCity: string,
-  txid: string,
   amount: number
 ): string => {
-  const formatValue = (fieldId: string, value: string) => {
-    const len = value.length.toString().padStart(2, '0');
-    return `${fieldId}${len}${value}`;
+  
+  const merchantNameFormatted = (merchantName || 'Empresa').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
+  const merchantCityFormatted = (merchantCity || 'SAO PAULO').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
+  const txid = '***';
+
+  const payloadFields = {
+    id_payload_format_indicator: '000201',
+    id_merchant_account_information: `26${( '0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey ).length.toString().padStart(2, '0')}${'0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey}`,
+    id_merchant_category_code: '52040000',
+    id_transaction_currency: '5303986',
+    id_transaction_amount: `54${amount.toFixed(2).length.toString().padStart(2, '0')}${amount.toFixed(2)}`,
+    id_country_code: '5802BR',
+    id_merchant_name: `59${merchantNameFormatted.length.toString().padStart(2, '0')}${merchantNameFormatted}`,
+    id_merchant_city: `60${merchantCityFormatted.length.toString().padStart(2, '0')}${merchantCityFormatted}`,
+    id_additional_data_field_template: `62070503${txid}`,
   };
-
-  const merchantNameSanitized = merchantName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
-  const merchantCitySanitized = merchantCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
-
-  const payload = [
-    formatValue('00', '01'),
-    formatValue('26', `${formatValue('00', 'br.gov.bcb.pix')}${formatValue('01', pixKey)}`),
-    formatValue('52', '0000'),
-    formatValue('53', '986'),
-    formatValue('54', amount.toFixed(2)),
-    formatValue('58', 'BR'),
-    formatValue('59', merchantNameSanitized),
-    formatValue('60', merchantCitySanitized),
-    formatValue('62', formatValue('05', txid.substring(0, 25))),
-  ].join('');
-
-  const payloadWithCrc = payload + '6304';
   
+  let payloadString = Object.values(payloadFields).join('');
+  payloadString += '6304';
+
   let crc = 0xFFFF;
-  for (let i = 0; i < payloadWithCrc.length; i++) {
-    crc ^= (payloadWithCrc.charCodeAt(i) << 8);
-    for (let j = 0; j < 8; j++) {
-      if ((crc & 0x8000) !== 0) {
-        crc = (crc << 1) ^ 0x1021;
-      } else {
-        crc <<= 1;
+  for (const c of payloadString) {
+      crc ^= (c.charCodeAt(0) << 8);
+      for (let i = 0; i < 8; i++) {
+          if ((crc & 0x8000) !== 0) {
+              crc = (crc << 1) ^ 0x1021;
+          } else {
+              crc <<= 1;
+          }
       }
-    }
   }
-
-  const crc16 = (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-  
-  return `${payloadWithCrc}${crc16}`;
+  const crc16 = crc & 0xFFFF;
+  return `${payloadString}${crc16.toString(16).toUpperCase().padStart(4, '0')}`;
 };
 
 
@@ -178,7 +173,6 @@ export function PrintSaleReceiptDialog({ isOpen, onOpenChange, sale }: PrintSale
               info.pixKey,
               info.name || 'Empresa',
               'SAO PAULO',
-              saleData.id.replace(/-/g, '').slice(0, 25),
               saleData.total
             );
             const qrCodeImage = await QRCode.toDataURL(pixload, { width: 150, errorCorrectionLevel: 'M' });

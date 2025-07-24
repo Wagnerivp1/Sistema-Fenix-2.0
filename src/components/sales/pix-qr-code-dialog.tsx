@@ -29,42 +29,57 @@ const generatePixPayload = (
     pixKey: string,
     merchantName: string,
     merchantCity: string,
-    amount: number
+    amount: number,
+    txid: string,
   ): string => {
-    
-    const merchantNameFormatted = (merchantName || 'Empresa').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
-    const merchantCityFormatted = (merchantCity || 'SAO PAULO').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
-    const txid = '***';
-
-    const payloadFields = {
-      id_payload_format_indicator: '000201',
-      id_merchant_account_information: `26${( '0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey ).length.toString().padStart(2, '0')}${'0014br.gov.bcb.pix' + '01' + pixKey.length.toString().padStart(2, '0') + pixKey}`,
-      id_merchant_category_code: '52040000',
-      id_transaction_currency: '5303986',
-      id_transaction_amount: `54${amount.toFixed(2).length.toString().padStart(2, '0')}${amount.toFixed(2)}`,
-      id_country_code: '5802BR',
-      id_merchant_name: `59${merchantNameFormatted.length.toString().padStart(2, '0')}${merchantNameFormatted}`,
-      id_merchant_city: `60${merchantCityFormatted.length.toString().padStart(2, '0')}${merchantCityFormatted}`,
-      id_additional_data_field_template: `62070503${txid}`,
-    };
-    
-    let payloadString = Object.values(payloadFields).join('');
-    payloadString += '6304';
-
-    let crc = 0xFFFF;
-    for (const c of payloadString) {
-        crc ^= (c.charCodeAt(0) << 8);
-        for (let i = 0; i < 8; i++) {
-            if ((crc & 0x8000) !== 0) {
-                crc = (crc << 1) ^ 0x1021;
-            } else {
-                crc <<= 1;
-            }
+      const merchantNameFormatted = (merchantName || 'Empresa').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25);
+      const merchantCityFormatted = (merchantCity || 'SAO PAULO').normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15);
+      
+      const payloadFields: { [key: string]: string } = {
+          '00': '01',
+          '26': `0014br.gov.bcb.pix01${pixKey.length.toString().padStart(2, '0')}${pixKey}`,
+          '52': '0000',
+          '53': '986',
+          '54': amount.toFixed(2),
+          '58': 'BR',
+          '59': merchantNameFormatted,
+          '60': merchantCityFormatted,
+          '62': `05${txid.length.toString().padStart(2, '0')}${txid}`,
+      };
+  
+      const formatField = (id: string, value: string): string => {
+          return `${id}${value.length.toString().padStart(2, '0')}${value}`;
+      };
+  
+      let payloadString = '';
+      for (const id in payloadFields) {
+        if (id !== '26') {
+            payloadString += formatField(id, payloadFields[id]);
+        } else {
+            payloadString += formatField('26', payloadFields['26']);
         }
-    }
-    const crc16 = crc & 0xFFFF;
-    return `${payloadString}${crc16.toString(16).toUpperCase().padStart(4, '0')}`;
-};
+      }
+      payloadString += '6304';
+  
+      const getCrc16 = (payload: string): string => {
+          let crc = 0xFFFF;
+          const bytes = new TextEncoder().encode(payload);
+          for (const byte of bytes) {
+              crc ^= (byte << 8);
+              for (let i = 0; i < 8; i++) {
+                  if ((crc & 0x8000) !== 0) {
+                      crc = (crc << 1) ^ 0x1021;
+                  } else {
+                      crc <<= 1;
+                  }
+              }
+          }
+          return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+      };
+  
+      const crc = getCrc16(payloadString);
+      return `${payloadString}${crc}`;
+  };
 
 
 export function PixQrCodeDialog({
@@ -86,7 +101,8 @@ export function PixQrCodeDialog({
           companyInfo.pixKey,
           companyInfo.name,
           'SAO PAULO',
-          sale.total
+          sale.total,
+          '***'
         );
 
         setPixCopyPaste(pixPayload);

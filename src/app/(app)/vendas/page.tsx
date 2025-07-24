@@ -45,7 +45,7 @@ export default function VendasPage() {
   const [isChangeCalcOpen, setIsChangeCalcOpen] = React.useState(false);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
-  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
+  const [companyInfoForDialog, setCompanyInfoForDialog] = React.useState<CompanyInfo | null>(null);
   
   const [isPrintReceiptOpen, setIsPrintReceiptOpen] = React.useState(false);
   const [saleToPrint, setSaleToPrint] = React.useState<Sale | null>(null);
@@ -55,16 +55,14 @@ export default function VendasPage() {
 
   React.useEffect(() => {
     const loadData = async () => {
-      const [stockData, customersData, loggedInUser, companyData] = await Promise.all([
+      const [stockData, customersData, loggedInUser] = await Promise.all([
         getStock(),
         getCustomers(),
-        getLoggedInUser(),
-        getCompanyInfo()
+        getLoggedInUser()
       ]);
       setStock(stockData);
       setCustomers(customersData);
       setCurrentUser(loggedInUser);
-      setCompanyInfo(companyData);
     };
     loadData();
     barcodeInputRef.current?.focus();
@@ -267,30 +265,32 @@ export default function VendasPage() {
     resetSale();
   }
 
-  const handleFinishSale = () => {
+  const handleFinishSale = async () => {
     if (saleItems.length === 0) {
       toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione produtos para finalizar a venda.' });
       return;
     }
 
+    const companyData = await getCompanyInfo(); // Fetch the latest company info
+    setCompanyInfoForDialog(companyData);
     setCurrentSaleId(`SALE-${Date.now()}`);
 
     if (paymentMethod === 'dinheiro') {
         setIsChangeCalcOpen(true);
     } else if (paymentMethod === 'pix') {
-        if (!companyInfo?.pixKey) {
+        if (!companyData?.pixKey) {
             toast({
                 variant: 'destructive',
                 title: 'Chave PIX não configurada',
                 description: 'Por favor, cadastre uma chave PIX nas configurações da empresa.',
             });
-            setCurrentSaleId(''); // Reset if pix is not configured
+            setCurrentSaleId('');
             return;
         }
         setIsPixDialogOpen(true);
     }
     else {
-        processSale(true); // Process and open print dialog
+        processSale(true);
     }
   }
 
@@ -460,7 +460,7 @@ export default function VendasPage() {
     <PixQrCodeDialog
         isOpen={isPixDialogOpen}
         onOpenChange={setIsPixDialogOpen}
-        companyInfo={companyInfo}
+        companyInfo={companyInfoForDialog}
         sale={{ total: finalTotal, id: currentSaleId }}
         onConfirm={() => processSale(true)}
     />

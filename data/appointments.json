@@ -12,5 +12,19 @@
       "serviceType": "buscar computador ",
       "status": "agendado"
     }
+  },
+  {
+    "id": "APT-1753499477747",
+    "title": "ARMAZEM NATUREBA - buscar computador ",
+    "start": "2025-07-26T00:12",
+    "end": "2025-07-26T00:13",
+    "allDay": true,
+    "extendedProps": {
+      "status": "agendado",
+      "customerId": "1752525160400-0.21769594684339721",
+      "serviceType": "buscar computador ",
+      "customerName": "ARMAZEM NATUREBA",
+      "address": "AVENIDA BRASIL"
+    }
   }
 ]

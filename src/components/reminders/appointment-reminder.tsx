@@ -7,34 +7,72 @@ import { getAppointments, getCompanyInfo } from '@/lib/storage';
 import type { Appointment, CompanyInfo } from '@/types';
 import { differenceInMinutes, parseISO } from 'date-fns';
 
-const playNotificationSound = (soundUrl?: string) => {
+let audio: HTMLAudioElement | null = null;
+let audioContext: AudioContext | null = null;
+let oscillator: OscillatorNode | null = null;
+
+const stopSound = () => {
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        audio = null;
+    }
+    if (oscillator) {
+        oscillator.stop();
+        oscillator.disconnect();
+        oscillator = null;
+    }
+    if (audioContext && audioContext.state !== 'closed') {
+        // It's good practice to close the context when done, but since we might reuse it, we can also just stop the source.
+    }
+};
+
+
+const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
   if (typeof window === 'undefined') return;
+  stopSound(); // Stop any previously playing sound
 
   if (soundUrl) {
-    const audio = new Audio(soundUrl);
+    audio = new Audio(soundUrl);
+    audio.loop = loop;
     audio.play().catch(e => console.error("Error playing custom sound:", e));
     return;
   }
   
+  // Fallback to generating a tone
   if (!window.AudioContext) return;
-  const audioContext = new window.AudioContext();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
+  audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  
+  const playTone = () => {
+    oscillator = audioContext!.createOscillator();
+    const gainNode = audioContext!.createGain();
 
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext!.destination);
 
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
-  gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, audioContext!.currentTime); // A5 note
+    gainNode.gain.setValueAtTime(0.5, audioContext!.currentTime);
 
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.2);
+    oscillator.start(audioContext!.currentTime);
+    oscillator.stop(audioContext!.currentTime + 0.2);
+
+    if (loop) {
+        oscillator.onended = () => {
+            // Check if it should still be looping
+            if (oscillator) {
+               setTimeout(playTone, 800); // 1 second pause between beeps
+            }
+        };
+    }
+  };
+  
+  playTone();
 };
 
 
 export function AppointmentReminder() {
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   const notifiedAppointments = React.useRef(new Set<string>());
   const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
 
@@ -44,6 +82,11 @@ export function AppointmentReminder() {
       setCompanyInfo(info);
     };
     fetchCompanyInfo();
+    
+    // Listen for changes in company info to update sound URL
+    const handleInfoChange = () => fetchCompanyInfo();
+    window.addEventListener('companyInfoChanged', handleInfoChange);
+    return () => window.removeEventListener('companyInfoChanged', handleInfoChange);
   }, []);
 
 
@@ -84,14 +127,19 @@ export function AppointmentReminder() {
                     </div>
                   );
                   
+                  playNotificationSound(companyInfo?.notificationSoundUrl, true);
+
                   toast({
                     title: `🔔 ${title}`,
                     description: description,
-                    duration: 20000, 
+                    duration: Infinity, // Stays until dismissed
+                    onOpenChange: (open) => {
+                        if (!open) {
+                            stopSound();
+                        }
+                    }
                   });
-                  
-                  playNotificationSound(companyInfo?.notificationSoundUrl);
-                  
+                                    
                   notifiedAppointments.current.add(notificationId);
                 }
               }
@@ -107,7 +155,7 @@ export function AppointmentReminder() {
     checkAppointments();
 
     return () => clearInterval(intervalId);
-  }, [toast, companyInfo]);
+  }, [toast, companyInfo, dismiss]);
 
   return null;
 }

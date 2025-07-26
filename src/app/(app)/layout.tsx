@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -20,6 +19,7 @@ import { Logo } from '@/components/logo';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getLoggedInUser } from '@/lib/storage';
+import { AppointmentReminder } from '@/components/reminders/appointment-reminder';
 
 const HeaderActions = dynamic(() => import('@/components/layout/header-actions').then(mod => mod.HeaderActions), {
   ssr: false,
@@ -51,6 +51,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   return (
     <SidebarProvider>
+      <AppointmentReminder />
       <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
         <div className="hidden border-r bg-card md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">

@@ -11,6 +11,7 @@ import { ToastAction } from "@/components/ui/toast";
 let audio: HTMLAudioElement | null = null;
 let oscillator: OscillatorNode | null = null;
 let soundTimer: NodeJS.Timeout | null = null;
+let audioContext: AudioContext | null = null;
 
 const stopSound = () => {
   if (audio && !audio.paused) {
@@ -53,7 +54,7 @@ const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
 
   const playTone = () => {
     // Check if sound was stopped
-    if (!loop && oscillator) return;
+    if (!oscillator && loop) return;
     
     // Ensure we are in a state to play
     if (!audioContext) return;
@@ -81,6 +82,9 @@ const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
     }
   };
   
+  if(loop) {
+    oscillator = new AudioContext().createOscillator(); // Prime it
+  }
   playTone();
 };
 

@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { getAppointments, saveAppointments, getCustomers } from '@/lib/storage';
 import type { Appointment, Customer } from '@/types';
 import { EventClickArg, DateSelectArg, EventDropArg, EventInput } from '@fullcalendar/core';
@@ -236,78 +237,80 @@ export default function AgendaPage() {
             <DialogTitle>{selectedEvent?.id ? 'Editar Agendamento' : 'Novo Agendamento'}</DialogTitle>
             <DialogDescription>Preencha os detalhes do compromisso.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="customer">Cliente</Label>
-                <Select
-                  value={selectedEvent?.extendedProps?.customerId}
-                  onValueChange={(value) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, customerId: value}}))}
-                >
-                  <SelectTrigger id="customer">
-                    <SelectValue placeholder="Selecione um cliente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={selectedEvent?.extendedProps?.status || 'agendado'}
-                  onValueChange={(value: 'agendado' | 'concluido' | 'cancelado') => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, status: value}}))}
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="agendado">Agendado</SelectItem>
-                    <SelectItem value="concluido">Concluído</SelectItem>
-                    <SelectItem value="cancelado">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="serviceType">Tipo de Serviço</Label>
-              <Input
-                id="serviceType"
-                placeholder="Ex: Manutenção de impressora"
-                value={selectedEvent?.extendedProps?.serviceType || ''}
-                onChange={(e) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, serviceType: e.target.value}}))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address">Endereço do Atendimento</Label>
-              <Input
-                id="address"
-                placeholder="Preenchido automaticamente pelo cliente ou informe um novo."
-                value={selectedEvent?.extendedProps?.address || customers.find(c=>c.id === selectedEvent?.extendedProps?.customerId)?.address || ''}
-                onChange={(e) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, address: e.target.value}}))}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          <ScrollArea className="max-h-[70vh]">
+            <div className="grid gap-4 py-4 px-6">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>Data de Início</Label>
-                    <Input type="datetime-local" value={selectedEvent?.start?.slice(0,16) || ''} onChange={e => setSelectedEvent(p => ({ ...p, start: e.target.value }))} />
+                  <Label htmlFor="customer">Cliente</Label>
+                  <Select
+                    value={selectedEvent?.extendedProps?.customerId}
+                    onValueChange={(value) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, customerId: value}}))}
+                  >
+                    <SelectTrigger id="customer">
+                      <SelectValue placeholder="Selecione um cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-                 <div className="space-y-2">
-                    <Label>Data de Fim</Label>
-                    <Input type="datetime-local" value={selectedEvent?.end?.slice(0,16) || ''} onChange={e => setSelectedEvent(p => ({ ...p, end: e.target.value }))} />
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={selectedEvent?.extendedProps?.status || 'agendado'}
+                    onValueChange={(value: 'agendado' | 'concluido' | 'cancelado') => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, status: value}}))}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="agendado">Agendado</SelectItem>
+                      <SelectItem value="concluido">Concluído</SelectItem>
+                      <SelectItem value="cancelado">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="serviceType">Tipo de Serviço</Label>
+                <Input
+                  id="serviceType"
+                  placeholder="Ex: Manutenção de impressora"
+                  value={selectedEvent?.extendedProps?.serviceType || ''}
+                  onChange={(e) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, serviceType: e.target.value}}))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Endereço do Atendimento</Label>
+                <Input
+                  id="address"
+                  placeholder="Preenchido automaticamente pelo cliente ou informe um novo."
+                  value={selectedEvent?.extendedProps?.address || customers.find(c=>c.id === selectedEvent?.extendedProps?.customerId)?.address || ''}
+                  onChange={(e) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, address: e.target.value}}))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label>Data de Início</Label>
+                      <Input type="datetime-local" value={selectedEvent?.start?.slice(0,16) || ''} onChange={e => setSelectedEvent(p => ({ ...p, start: e.target.value }))} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label>Data de Fim</Label>
+                      <Input type="datetime-local" value={selectedEvent?.end?.slice(0,16) || ''} onChange={e => setSelectedEvent(p => ({ ...p, end: e.target.value }))} />
+                  </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Anotações Adicionais</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Detalhes importantes, pontos de referência, etc."
+                  value={selectedEvent?.extendedProps?.notes || ''}
+                  onChange={(e) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, notes: e.target.value}}))}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Anotações Adicionais</Label>
-              <Textarea
-                id="notes"
-                placeholder="Detalhes importantes, pontos de referência, etc."
-                value={selectedEvent?.extendedProps?.notes || ''}
-                onChange={(e) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, notes: e.target.value}}))}
-              />
-            </div>
-          </div>
-          <DialogFooter>
+          </ScrollArea>
+          <DialogFooter className="px-6 pb-4 pt-2">
             <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
             <Button onClick={handleSaveAppointment}>Salvar Agendamento</Button>
           </DialogFooter>

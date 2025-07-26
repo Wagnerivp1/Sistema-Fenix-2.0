@@ -26,5 +26,33 @@
       "serviceType": "buscar computador ",
       "status": "cancelado"
     }
+  },
+  {
+    "id": "APT-1753500764596",
+    "title": "CINE FOTO REGINA  - buscar computador ",
+    "start": "2025-07-26",
+    "end": "",
+    "allDay": true,
+    "extendedProps": {
+      "customerId": "1752581309250-0.23832530068551883",
+      "customerName": "CINE FOTO REGINA ",
+      "address": "AVENIDA SOUZA NAVES 945",
+      "serviceType": "buscar computador ",
+      "status": "concluido"
+    }
+  },
+  {
+    "id": "APT-1753500832141",
+    "title": "IVAIPLACAS - buscar computador ",
+    "start": "2025-07-26T04:38",
+    "end": "2025-07-26T05:38",
+    "allDay": true,
+    "extendedProps": {
+      "status": "agendado",
+      "customerId": "1752765902944-0.6165074972827616",
+      "serviceType": "buscar computador ",
+      "customerName": "IVAIPLACAS",
+      "address": "Avenida Minas gerais"
+    }
   }
 ]

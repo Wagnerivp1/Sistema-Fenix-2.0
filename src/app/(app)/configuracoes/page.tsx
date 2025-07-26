@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -64,7 +64,7 @@ const initialNewUser: Omit<User, 'id' | 'password'> = {
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [settings, setSettings] = React.useState<AppSettings>({ defaultWarrantyDays: 90 });
-  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({ name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '' });
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({ name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '', notificationSoundUrl: '' });
   const [users, setUsers] = React.useState<User[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isClearAlertOpen, setIsClearAlertOpen] = React.useState(false);
@@ -72,6 +72,8 @@ export default function ConfiguracoesPage() {
   const [backupFile, setBackupFile] = React.useState<File | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const logoInputRef = React.useRef<HTMLInputElement>(null);
+  const soundInputRef = React.useRef<HTMLInputElement>(null);
+
 
   const [isUserDialogOpen, setIsUserDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -162,11 +164,36 @@ export default function ConfiguracoesPage() {
       reader.readAsDataURL(file);
     }
   };
+
+  const handleSoundUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit
+        toast({
+          variant: 'destructive',
+          title: 'Arquivo de áudio muito grande',
+          description: 'Por favor, selecione um arquivo com menos de 1MB.',
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCompanyInfo(prev => ({...prev, notificationSoundUrl: reader.result as string}));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   
   const handleRemoveLogo = () => {
     setCompanyInfo(prev => ({...prev, logoUrl: ''}));
     if(logoInputRef.current) logoInputRef.current.value = '';
   };
+  
+  const handleRemoveSound = () => {
+    setCompanyInfo(prev => ({...prev, notificationSoundUrl: ''}));
+    if (soundInputRef.current) soundInputRef.current.value = '';
+  };
+
 
   const handleSaveSettings = () => {
     try {
@@ -405,7 +432,7 @@ export default function ConfiguracoesPage() {
     <Card>
       <CardHeader>
         <CardTitle>Configurações Gerais</CardTitle>
-        <CardDescription>Ajuste as configurações gerais do sistema. As alterações são salvas localmente no seu navegador.</CardDescription>
+        <CardDescription>Ajuste as configurações gerais do sistema.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="p-4 border rounded-lg">
@@ -415,6 +442,27 @@ export default function ConfiguracoesPage() {
              <Input id="defaultWarrantyDays" type="number" className="max-w-xs" value={settings.defaultWarrantyDays || ''} onChange={handleSettingsChange} disabled={!isCurrentUserAdmin} />
              <p className="text-sm text-muted-foreground">Este valor será usado como padrão para os serviços que não tiverem uma garantia específica.</p>
            </div>
+        </div>
+        <div className="p-4 border rounded-lg">
+           <h3 className="text-lg font-semibold mb-2">Sons e Notificações</h3>
+            <div className="space-y-2">
+                <Label>Som de Notificação da Agenda</Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-md border flex items-center justify-center bg-muted/30 overflow-hidden">
+                    {companyInfo.notificationSoundUrl ? (
+                      <audio controls src={companyInfo.notificationSoundUrl} className="h-full w-full"></audio>
+                    ) : (
+                      <Music className="w-10 h-10 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                     <Button variant="outline" size="sm" onClick={() => soundInputRef.current?.click()} disabled={!isCurrentUserAdmin}>Escolher Som</Button>
+                    <input ref={soundInputRef} type="file" className="hidden" accept="audio/mpeg, audio/wav, audio/ogg" onChange={handleSoundUpload}/>
+                     {companyInfo.notificationSoundUrl && <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRemoveSound} disabled={!isCurrentUserAdmin}><X className="w-4 h-4 mr-1" />Remover Som</Button>}
+                    <p className="text-xs text-muted-foreground">Recomendado: MP3 ou WAV, até 1MB.</p>
+                  </div>
+                </div>
+            </div>
         </div>
       </CardContent>
       <CardFooter className="border-t px-6 py-4"><Button onClick={handleSaveSettings} disabled={!isCurrentUserAdmin}><Save className="mr-2 h-4 w-4" />Salvar Alterações</Button></CardFooter>

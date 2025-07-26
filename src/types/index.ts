@@ -134,6 +134,7 @@ export type CompanyInfo = {
   document: string; // CPF or CNPJ
   logoUrl: string;
   pixKey: string;
+  notificationSoundUrl?: string;
 };
 
 export type Appointment = {

@@ -3,14 +3,20 @@
 
 import * as React from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getAppointments } from '@/lib/storage';
-import type { Appointment } from '@/types';
+import { getAppointments, getCompanyInfo } from '@/lib/storage';
+import type { Appointment, CompanyInfo } from '@/types';
 import { differenceInMinutes, parseISO } from 'date-fns';
 
-// Function to play a sound using the Web Audio API
-const playNotificationSound = () => {
-  if (typeof window === 'undefined' || !window.AudioContext) return;
+const playNotificationSound = (soundUrl?: string) => {
+  if (typeof window === 'undefined') return;
 
+  if (soundUrl) {
+    const audio = new Audio(soundUrl);
+    audio.play().catch(e => console.error("Error playing custom sound:", e));
+    return;
+  }
+  
+  if (!window.AudioContext) return;
   const audioContext = new window.AudioContext();
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
@@ -20,16 +26,26 @@ const playNotificationSound = () => {
 
   oscillator.type = 'sine';
   oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
-  gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Volume
+  gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
 
   oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.2); // Play for 0.2 seconds
+  oscillator.stop(audioContext.currentTime + 0.2);
 };
 
 
 export function AppointmentReminder() {
   const { toast } = useToast();
   const notifiedAppointments = React.useRef(new Set<string>());
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
+
+  React.useEffect(() => {
+    const fetchCompanyInfo = async () => {
+      const info = await getCompanyInfo();
+      setCompanyInfo(info);
+    };
+    fetchCompanyInfo();
+  }, []);
+
 
   React.useEffect(() => {
     const checkAppointments = async () => {
@@ -74,7 +90,7 @@ export function AppointmentReminder() {
                     duration: 20000, 
                   });
                   
-                  playNotificationSound();
+                  playNotificationSound(companyInfo?.notificationSoundUrl);
                   
                   notifiedAppointments.current.add(notificationId);
                 }
@@ -91,7 +107,7 @@ export function AppointmentReminder() {
     checkAppointments();
 
     return () => clearInterval(intervalId);
-  }, [toast]);
+  }, [toast, companyInfo]);
 
   return null;
 }

@@ -6,15 +6,15 @@ import { useToast } from '@/hooks/use-toast';
 import { getAppointments, getCompanyInfo } from '@/lib/storage';
 import type { Appointment, CompanyInfo } from '@/types';
 import { differenceInMinutes, parseISO } from 'date-fns';
+import { ToastAction } from "@/components/ui/toast";
 
 let audio: HTMLAudioElement | null = null;
-let audioContext: AudioContext | null = null;
 let oscillator: OscillatorNode | null = null;
 let soundTimer: NodeJS.Timeout | null = null;
 
 const stopSound = () => {
   if (audio && !audio.paused) {
-    audio.loop = false; // Disable loop before pausing
+    audio.loop = false;
     audio.pause();
     audio.currentTime = 0;
   }
@@ -46,17 +46,21 @@ const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
   }
   
   if (!window.AudioContext) return;
+  const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
   if (!audioContext || audioContext.state === 'closed') {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContext = new AudioContext();
   }
 
   const playTone = () => {
+    // Check if sound was stopped
+    if (!loop && oscillator) return;
+    
+    // Ensure we are in a state to play
     if (!audioContext) return;
     
-    // Ensure we stop any previous oscillator before creating a new one
-    if (oscillator) {
-        try { oscillator.stop(); } catch(e){}
-        oscillator.disconnect();
+    if(oscillator) {
+      try { oscillator.stop(); } catch(e) {}
+      oscillator.disconnect();
     }
 
     oscillator = audioContext.createOscillator();
@@ -73,9 +77,6 @@ const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
     oscillator.stop(audioContext.currentTime + 0.2);
 
     if (loop) {
-        // If looping, set a timer to play the sound again.
-        // The `oscillator` variable itself is not looped.
-        // The `stopSound` function will clear this timer.
         soundTimer = setTimeout(playTone, 800);
     }
   };
@@ -142,15 +143,23 @@ export function AppointmentReminder() {
                   
                   playNotificationSound(companyInfo?.notificationSoundUrl, true);
 
-                  toast({
+                  const { id } = toast({
                     title: `🔔 ${title}`,
                     description: description,
-                    duration: Infinity, // Stays until dismissed
+                    duration: Infinity,
                     onOpenChange: (open) => {
                         if (!open) {
                             stopSound();
                         }
-                    }
+                    },
+                    action: (
+                      <ToastAction altText="Silenciar" onClick={() => {
+                        stopSound();
+                        dismiss(id);
+                      }}>
+                        Silenciar
+                      </ToastAction>
+                    ),
                   });
                                     
                   notifiedAppointments.current.add(notificationId);

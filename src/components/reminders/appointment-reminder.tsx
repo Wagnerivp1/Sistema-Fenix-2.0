@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -23,7 +24,7 @@ export function AppointmentReminder() {
             if (startTime > now) {
               const minutesUntilStart = differenceInMinutes(startTime, now);
               
-              const reminderIntervals = [30, 20, 10, 0];
+              const reminderIntervals = [30, 15, 5, 0];
 
               for (const interval of reminderIntervals) {
                 const notificationId = `${appt.id}-${interval}`;

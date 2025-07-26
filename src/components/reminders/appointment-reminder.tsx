@@ -10,46 +10,55 @@ import { differenceInMinutes, parseISO } from 'date-fns';
 let audio: HTMLAudioElement | null = null;
 let audioContext: AudioContext | null = null;
 let oscillator: OscillatorNode | null = null;
+let soundTimer: NodeJS.Timeout | null = null;
 
 const stopSound = () => {
-    if (audio && !audio.paused) {
-        audio.pause();
-        audio.currentTime = 0;
-    }
-    if (oscillator) {
-        try {
-            oscillator.stop();
-        } catch (e) {
-            // Oscillator might already be stopped
-        }
-        oscillator.disconnect();
-        // Crucial fix: Nullify the oscillator to break the onended loop.
-        oscillator = null; 
-    }
+  if (audio && !audio.paused) {
+    audio.loop = false; // Disable loop before pausing
+    audio.pause();
+    audio.currentTime = 0;
+  }
+  if (oscillator) {
+    try {
+      oscillator.stop();
+    } catch (e) {}
+    oscillator.disconnect();
+    oscillator = null;
+  }
+  if(soundTimer) {
+      clearTimeout(soundTimer);
+      soundTimer = null;
+  }
 };
-
 
 const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
   if (typeof window === 'undefined') return;
-  stopSound(); // Stop any previously playing sound
+  stopSound(); 
 
   if (soundUrl) {
-    if (!audio || audio.src !== soundUrl) {
-      audio = new Audio(soundUrl);
+    if (!audio) {
+      audio = new Audio();
     }
+    audio.src = soundUrl;
     audio.loop = loop;
     audio.play().catch(e => console.error("Error playing custom sound:", e));
     return;
   }
   
-  // Fallback to generating a tone
   if (!window.AudioContext) return;
   if (!audioContext || audioContext.state === 'closed') {
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
-  
+
   const playTone = () => {
     if (!audioContext) return;
+    
+    // Ensure we stop any previous oscillator before creating a new one
+    if (oscillator) {
+        try { oscillator.stop(); } catch(e){}
+        oscillator.disconnect();
+    }
+
     oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -57,18 +66,17 @@ const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
     gainNode.connect(audioContext.destination);
 
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
-    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.2);
 
     if (loop) {
-        oscillator.onended = () => {
-            if (oscillator) { // This check now works correctly because stopSound() nullifies it.
-               setTimeout(playTone, 800);
-            }
-        };
+        // If looping, set a timer to play the sound again.
+        // The `oscillator` variable itself is not looped.
+        // The `stopSound` function will clear this timer.
+        soundTimer = setTimeout(playTone, 800);
     }
   };
   

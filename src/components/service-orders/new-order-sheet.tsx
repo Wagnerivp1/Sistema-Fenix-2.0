@@ -304,7 +304,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
-        let currentY = 15;
+        let currentY = 20;
         const fontColor = '#000000';
         const primaryColor = '#e0e7ff';
         const secondaryColor = '#f3f4f6';
@@ -312,8 +312,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         // Header
         if (logoImage) {
             const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (15 * logoAR / 2), currentY, 15 * logoAR, 15);
-            currentY += 18;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, 20 * logoAR, 20);
         }
         
         doc.setFont('helvetica');
@@ -322,29 +321,29 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         if (companyInfo.name) {
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name, pageWidth / 2, currentY, { align: 'center'});
-            currentY += 8;
+            doc.text(companyInfo.name, margin, currentY);
+            currentY += 12;
         }
 
         if (companyInfo.address) {
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(companyInfo.address, pageWidth / 2, currentY, { align: 'center'});
+            doc.text(companyInfo.address, margin, currentY);
             currentY += 4;
         }
         if (companyInfo.phone || companyInfo.emailOrSite) {
-            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, pageWidth/2, currentY, { align: 'center'});
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, margin, currentY);
             currentY += 10;
         }
 
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text("Orçamento de Serviço", pageWidth / 2, currentY, { align: 'center' });
+        doc.text("Orçamento de Serviço", margin, currentY);
         currentY += 6;
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Nº: #${orderData.id.slice(-4)} | Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, currentY, { align: 'center' });
+        doc.text(`Nº: #${orderData.id.slice(-4)} | Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, margin, currentY);
         currentY += 10;
 
         // Content
@@ -503,22 +502,21 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             // Header
             if (logoImage) {
                 const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (15 * logoAR / 2), localY, 15 * logoAR, 15);
-                localY += 18;
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY + 2, 20 * logoAR, 20);
             }
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name || "Sua Empresa", pageWidth / 2, localY, { align: 'center'});
-            localY += 7;
+            doc.text(companyInfo.name || "Sua Empresa", margin, localY + 10);
+            localY += 20;
             
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
-            doc.text('Recibo de Entrega', pageWidth / 2, localY, { align: 'center' });
+            doc.text('Recibo de Entrega', margin, localY);
             localY += 6;
             
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(via, pageWidth / 2, localY, { align: 'center' });
+            doc.text(via, margin, localY);
             localY += 7;
 
             // Content
@@ -611,35 +609,34 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             // Header
             if (logoImage) {
                 const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (15 * logoAR / 2), localY, 15 * logoAR, 15);
-                localY += 18;
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY + 2, 20 * logoAR, 20);
             }
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name || "Sua Empresa", pageWidth / 2, localY, { align: 'center'});
-            localY += 7;
+            doc.text(companyInfo.name || "Sua Empresa", margin, localY + 10);
+            localY += 10;
 
             if (companyInfo.address) {
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
-                doc.text(companyInfo.address, pageWidth / 2, localY, { align: 'center'});
+                doc.text(companyInfo.address, margin, localY);
                 localY += 4;
             }
             if (companyInfo.phone || companyInfo.emailOrSite) {
                  doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
-                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, pageWidth/2, localY, { align: 'center'});
+                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, margin, localY);
                 localY += 6;
             }
 
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
-            doc.text('Recibo de Entrada', pageWidth / 2, localY, { align: 'center' });
+            doc.text('Recibo de Entrada', margin, localY);
             localY += 6;
             
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(via, pageWidth / 2, localY, { align: 'center' });
+            doc.text(via, margin, localY);
             localY += 7;
 
             // Content

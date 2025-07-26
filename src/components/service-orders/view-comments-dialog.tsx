@@ -77,11 +77,10 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
-        let currentY = 15;
+        let currentY = 20;
 
         if (logoImage) {
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - 12.5, currentY, 25, 25);
-            currentY += 30;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, 20, 20);
         }
 
         doc.setFont('helvetica');
@@ -90,17 +89,17 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
         if (companyInfo?.name) {
-            doc.text(companyInfo.name, pageWidth/2, currentY, { align: 'center' });
-            currentY += 8;
+            doc.text(companyInfo.name, margin, currentY);
+            currentY += 12;
         }
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Histórico de Comentários`, pageWidth / 2, currentY, { align: 'center' });
+        doc.text(`Histórico de Comentários`, margin, currentY);
         currentY += 6;
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`OS: #${serviceOrder.id.slice(-4)} | Cliente: ${serviceOrder.customerName}`, pageWidth / 2, currentY, { align: 'center'});
+        doc.text(`OS: #${serviceOrder.id.slice(-4)} | Cliente: ${serviceOrder.customerName}`, margin, currentY);
 
         currentY += 10;
 

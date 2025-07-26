@@ -82,12 +82,12 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 15;
-      let currentY = 15;
+      let currentY = 20;
       const fontColor = '#000000';
       const primaryColor = '#e0e7ff';
 
       if (logoImage) {
-        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - 12.5, currentY, 25, 25);
+        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, 25, 25);
         currentY += 30;
       }
       
@@ -97,29 +97,29 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
       if (companyInfo?.name) {
-          doc.text(companyInfo.name, pageWidth / 2, currentY, { align: 'center' });
-          currentY += 7;
+          doc.text(companyInfo.name, margin, currentY);
+          currentY += 8;
       }
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       if (companyInfo?.address) {
-          doc.text(companyInfo.address, pageWidth / 2, currentY, { align: 'center' });
+          doc.text(companyInfo.address, margin, currentY);
           currentY += 4;
       }
       if (companyInfo?.phone || companyInfo?.emailOrSite) {
-        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, pageWidth/2, currentY, { align: 'center'});
+        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, margin, currentY);
         currentY += 10;
       }
 
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Histórico de Atendimentos`, pageWidth / 2, currentY, { align: 'center' });
+      doc.text(`Histórico de Atendimentos`, margin, currentY);
       currentY += 6;
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Cliente: ${customerName}`, pageWidth / 2, currentY, { align: 'center' });
+      doc.text(`Cliente: ${customerName}`, margin, currentY);
       currentY += 4;
-      doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, currentY, { align: 'center' });
+      doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, margin, currentY);
       currentY += 10;
 
 

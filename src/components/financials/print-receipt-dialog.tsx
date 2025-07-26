@@ -65,15 +65,14 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
-        let currentY = 15;
+        let currentY = 20;
         const fontColor = '#000000';
         const titleText = tx.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
 
         // Header
         if (logoImage) {
             const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', pageWidth / 2 - (25 * logoAR / 2), currentY, 25 * logoAR, 25);
-            currentY += 30;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, 20 * logoAR, 20);
         }
         
         doc.setFont('helvetica');
@@ -82,18 +81,18 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         if (info.name) {
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text(info.name, pageWidth / 2, currentY, { align: 'center'});
-            currentY += 8;
+            doc.text(info.name, margin, currentY);
+            currentY += 12;
         }
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(titleText, pageWidth / 2, currentY, { align: 'center' });
+        doc.text(titleText, margin, currentY);
         currentY += 6;
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Transação #${tx.id.slice(-6)} | Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, currentY, { align: 'center' });
+        doc.text(`Transação #${tx.id.slice(-6)} | Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, margin, currentY);
         currentY += 15;
 
 

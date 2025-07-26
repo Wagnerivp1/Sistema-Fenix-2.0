@@ -2,29 +2,29 @@
   {
     "id": "APT-1753496750937",
     "title": "CINE FOTO REGINA  - buscar computador ",
-    "start": "2025-07-26T00:26",
-    "end": "2025-07-26T00:27",
+    "start": "2025-07-26",
+    "end": "",
     "allDay": true,
     "extendedProps": {
       "customerId": "1752581309250-0.23832530068551883",
       "customerName": "CINE FOTO REGINA ",
       "address": "AVENIDA SOUZA NAVES 945",
       "serviceType": "buscar computador ",
-      "status": "agendado"
+      "status": "concluido"
     }
   },
   {
     "id": "APT-1753499477747",
     "title": "ARMAZEM NATUREBA - buscar computador ",
-    "start": "2025-07-26T00:14",
-    "end": "2025-07-26T00:15",
+    "start": "2025-07-26",
+    "end": "",
     "allDay": true,
     "extendedProps": {
       "customerId": "1752525160400-0.21769594684339721",
       "customerName": "ARMAZEM NATUREBA",
       "address": "AVENIDA BRASIL",
       "serviceType": "buscar computador ",
-      "status": "agendado"
+      "status": "cancelado"
     }
   }
 ]

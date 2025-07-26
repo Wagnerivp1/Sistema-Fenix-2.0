@@ -17,9 +17,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getAppointments, saveAppointments, getCustomers } from '@/lib/storage';
 import type { Appointment, Customer } from '@/types';
-import { EventClickArg, DateSelectArg, EventDropArg } from '@fullcalendar/core';
+import { EventClickArg, DateSelectArg, EventDropArg, EventInput } from '@fullcalendar/core';
 
 type StatusFilter = 'agendado' | 'concluido' | 'cancelado' | 'todos';
+
+const getEventColor = (status: Appointment['extendedProps']['status']) => {
+    switch (status) {
+      case 'agendado':
+        return '#3b82f6'; // blue-500
+      case 'concluido':
+        return '#22c55e'; // green-500
+      case 'cancelado':
+        return '#64748b'; // slate-500
+      default:
+        return '#3b82f6';
+    }
+};
 
 export default function AgendaPage() {
   const { toast } = useToast();
@@ -44,11 +57,16 @@ export default function AgendaPage() {
     loadData();
   }, []);
 
-  const filteredAppointments = React.useMemo(() => {
-    if (statusFilter === 'todos') {
-      return allAppointments;
-    }
-    return allAppointments.filter(appt => appt.extendedProps.status === statusFilter);
+  const calendarEvents = React.useMemo(() => {
+    const filtered = statusFilter === 'todos'
+        ? allAppointments
+        : allAppointments.filter(appt => appt.extendedProps.status === statusFilter);
+
+    return filtered.map(appt => ({
+        ...appt,
+        color: getEventColor(appt.extendedProps.status),
+        borderColor: getEventColor(appt.extendedProps.status),
+    }));
   }, [allAppointments, statusFilter]);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
@@ -198,7 +216,7 @@ export default function AgendaPage() {
                 week: 'Semana',
                 day: 'Dia',
               }}
-              events={filteredAppointments}
+              events={calendarEvents}
               selectable={true}
               selectMirror={true}
               dayMaxEvents={true}
@@ -298,4 +316,3 @@ export default function AgendaPage() {
     </>
   );
 }
-

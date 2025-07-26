@@ -230,11 +230,11 @@ export default function AgendaPage() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label>Data de Início</Label>
-                    <Input type="datetime-local" value={selectedEvent?.start?.slice(0,16)} onChange={e => setSelectedEvent(p => ({ ...p, start: e.target.value }))} />
+                    <Input type="datetime-local" value={selectedEvent?.start?.slice(0,16) || ''} onChange={e => setSelectedEvent(p => ({ ...p, start: e.target.value }))} />
                 </div>
                  <div className="space-y-2">
                     <Label>Data de Fim</Label>
-                    <Input type="datetime-local" value={selectedEvent?.end?.slice(0,16)} onChange={e => setSelectedEvent(p => ({ ...p, end: e.target.value }))} />
+                    <Input type="datetime-local" value={selectedEvent?.end?.slice(0,16) || ''} onChange={e => setSelectedEvent(p => ({ ...p, end: e.target.value }))} />
                 </div>
             </div>
             <div className="space-y-2">

@@ -10,6 +10,15 @@ import { differenceInMinutes, parseISO } from 'date-fns';
 export function AppointmentReminder() {
   const { toast } = useToast();
   const notifiedAppointments = React.useRef(new Set<string>());
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  React.useEffect(() => {
+    // Pre-load the audio element to improve reliability
+    if (typeof window !== 'undefined') {
+      audioRef.current = new Audio('/notification.mp3');
+      audioRef.current.playsInline = true;
+    }
+  }, []);
 
   React.useEffect(() => {
     const checkAppointments = async () => {
@@ -54,8 +63,12 @@ export function AppointmentReminder() {
                     duration: 20000, 
                   });
 
-                  const audio = new Audio('/notification.mp3');
-                  audio.play().catch(error => console.error("Audio playback failed:", error));
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = 0; // Rewind to the start
+                    audioRef.current.play().catch(error => {
+                      console.error("Audio playback failed. This may be due to browser autoplay restrictions.", error);
+                    });
+                  }
                   
                   notifiedAppointments.current.add(notificationId);
                 }

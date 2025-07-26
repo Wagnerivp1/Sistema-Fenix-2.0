@@ -305,14 +305,19 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
         let currentY = 20;
+        let textX = margin;
         const fontColor = '#000000';
         const primaryColor = '#e0e7ff';
         const secondaryColor = '#f3f4f6';
+        const logoWidth = 20;
+        const logoHeight = 20;
+        const logoSpacing = 5;
 
         // Header
         if (logoImage) {
             const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, 20 * logoAR, 20);
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, logoWidth * logoAR, logoHeight);
+            textX = margin + (logoWidth * logoAR) + logoSpacing;
         }
         
         doc.setFont('helvetica');
@@ -321,21 +326,22 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         if (companyInfo.name) {
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name, margin, currentY);
+            doc.text(companyInfo.name, textX, currentY);
             currentY += 12;
         }
 
         if (companyInfo.address) {
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(companyInfo.address, margin, currentY);
+            doc.text(companyInfo.address, textX, currentY);
             currentY += 4;
         }
         if (companyInfo.phone || companyInfo.emailOrSite) {
-            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, margin, currentY);
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
             currentY += 10;
         }
 
+        currentY = 50;
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
@@ -439,6 +445,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     if (companyInfo?.logoUrl) {
         const img = new Image();
         img.src = companyInfo.logoUrl;
+        img.crossOrigin = "anonymous";
         img.onload = () => generateContent(img);
         img.onerror = () => {
             console.error("Error loading logo for PDF, proceeding without it.");
@@ -495,6 +502,11 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
         const drawReceiptContent = (yOffset: number, via: string) => {
             let localY = yOffset;
+            let textX = margin;
+            const logoWidth = 20;
+            const logoHeight = 20;
+            const logoSpacing = 5;
+
             const osId = `#${orderToPrint.id.slice(-4)}`;
             const customer = customers.find(c => c.name === orderToPrint.customerName);
             if (!customer) return;
@@ -502,11 +514,12 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             // Header
             if (logoImage) {
                 const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY + 2, 20 * logoAR, 20);
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY + 2, logoWidth * logoAR, logoHeight);
+                textX = margin + (logoWidth * logoAR) + logoSpacing;
             }
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name || "Sua Empresa", margin, localY + 10);
+            doc.text(companyInfo.name || "Sua Empresa", textX, localY + 10);
             localY += 20;
             
             doc.setFontSize(12);
@@ -574,6 +587,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     if (companyInfo?.logoUrl) {
         const img = new Image();
         img.src = companyInfo.logoUrl;
+        img.crossOrigin = "anonymous";
         img.onload = () => performGeneration(img);
         img.onerror = () => {
             console.error("Error loading logo for PDF, proceeding without it.");
@@ -602,6 +616,11 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
         const drawReceiptContent = (yOffset: number, via: string) => {
             let localY = yOffset;
+            let textX = margin;
+            const logoWidth = 20;
+            const logoHeight = 20;
+            const logoSpacing = 5;
+
             const osId = `#${orderToPrint.id.slice(-4)}`;
             const customer = customers.find(c => c.name === orderToPrint.customerName);
             if (!customer) return;
@@ -609,25 +628,25 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             // Header
             if (logoImage) {
                 const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY + 2, 20 * logoAR, 20);
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, localY + 2, logoWidth * logoAR, logoHeight);
+                textX = margin + (logoWidth * logoAR) + logoSpacing;
             }
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.name || "Sua Empresa", margin, localY + 10);
-            localY += 10;
-
+            doc.text(companyInfo.name || "Sua Empresa", textX, localY + 10);
+            
             if (companyInfo.address) {
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
-                doc.text(companyInfo.address, margin, localY);
-                localY += 4;
+                doc.text(companyInfo.address, textX, localY + 14);
             }
             if (companyInfo.phone || companyInfo.emailOrSite) {
                  doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
-                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, margin, localY);
-                localY += 6;
+                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, localY + 18);
             }
+            
+            localY += 25;
 
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
@@ -706,6 +725,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     if (companyInfo?.logoUrl) {
       const img = new Image();
       img.src = companyInfo.logoUrl;
+      img.crossOrigin = "anonymous";
       img.onload = () => performGeneration(img);
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");

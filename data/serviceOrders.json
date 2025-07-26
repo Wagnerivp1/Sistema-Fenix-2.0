@@ -234,42 +234,31 @@
     "completionDate": "2025-07-15T20:41:51.692Z"
   },
   {
-    "client": {
-      "name": "CLIENTE AVULSO",
-      "phone": "43996024065",
-      "email": "jl.solucoes@hotmail.com",
-      "address": "RUA MARECHAL FLORIANO PEIXOTO, 80",
-      "document": "",
-      "id": "1752591100370-0.5475282037034886"
-    },
-    "equipment": {
-      "type": "COMPUTADOR",
-      "brand": "HP",
-      "model": "ALL IN ONE ",
-      "serialNumber": "ABC12345",
-      "id": "1752591164026-0.9092236190630624",
-      "clientId": "1752591100370-0.5475282037034886"
-    },
-    "entryDate": "2025-07-15T14:52:44.026Z",
-    "defectReported": "LENTO NAO ENTRA NO WINDOWS",
+    "id": "1752591164026-0.16961268312957978",
+    "customerName": "CESTA BASICA SANTA RITA",
+    "equipment": "COMPUTADOR HP ALL IN ONE",
+    "reportedProblem": "",
     "status": "Finalizada",
-    "accessories": "CARREGADOR ",
-    "technicalDiagnosis": "TROCA HD PO SSD CLIENTE TROUXE SSD",
-    "servicesPerformed": [
+    "date": "2025-07-26",
+    "totalValue": 20,
+    "discount": 0,
+    "finalValue": 20,
+    "paymentMethod": "Dinheiro",
+    "items": [
       {
-        "id": "id_1752591265855_xj3hsj91y",
-        "description": "FORMATAÇÃO +MONTAGEM ",
-        "value": 150
+        "description": "teste 7",
+        "quantity": 1,
+        "unitPrice": 20,
+        "type": "part",
+        "id": 1753502694943
       }
     ],
-    "usedParts": [],
-    "comments": [],
-    "serviceValue": 150,
-    "partsValue": 0,
-    "totalValue": 150,
-    "id": "1752591164026-0.16961268312957978",
-    "completionDate": "2025-07-15T14:53:06.829Z",
-    "paymentDate": "2025-07-22T13:07:37.808Z"
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "CARREGADOR ",
+    "serialNumber": "ABC12345",
+    "warranty": "90 dias",
+    "attendant": "Wagner Lopes"
   },
   {
     "client": {

@@ -66,25 +66,31 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
             const pageWidth = doc.internal.pageSize.getWidth();
             const margin = 15;
             let currentY = 20;
-            const fontColor = '#000000';
+            let textX = margin;
+            const logoWidth = 20;
+            const logoHeight = 20;
+            const logoSpacing = 5;
             
             // Cabeçalho
             if (logoImage) {
                 const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, 20 * logoAR, 20);
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, logoWidth * logoAR, logoHeight);
+                textX = margin + (logoWidth * logoAR) + logoSpacing;
             }
             if (companyInfo?.name) {
                 doc.setFontSize(22);
                 doc.setFont('helvetica', 'bold');
-                doc.text(companyInfo.name, margin, currentY);
-                currentY += 12;
+                doc.text(companyInfo.name, textX, currentY);
+                currentY += 7;
             }
             if (companyInfo?.address) {
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
-                doc.text(companyInfo.address, margin, currentY);
+                doc.text(companyInfo.address, textX, currentY);
                 currentY += 4;
             }
+
+            currentY += 5;
 
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');

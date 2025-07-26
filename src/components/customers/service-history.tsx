@@ -85,10 +85,15 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       let currentY = 20;
       const fontColor = '#000000';
       const primaryColor = '#e0e7ff';
+      let textX = margin;
+      const logoWidth = 25;
+      const logoHeight = 25;
+      const logoSpacing = 5;
+
 
       if (logoImage) {
-        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, 25, 25);
-        currentY += 30;
+        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
       }
       
       doc.setFont('helvetica');
@@ -97,19 +102,21 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
       if (companyInfo?.name) {
-          doc.text(companyInfo.name, margin, currentY);
+          doc.text(companyInfo.name, textX, currentY);
           currentY += 8;
       }
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       if (companyInfo?.address) {
-          doc.text(companyInfo.address, margin, currentY);
+          doc.text(companyInfo.address, textX, currentY);
           currentY += 4;
       }
       if (companyInfo?.phone || companyInfo?.emailOrSite) {
-        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, margin, currentY);
+        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
         currentY += 10;
       }
+
+      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 50;
 
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
@@ -203,6 +210,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
     if (companyInfo?.logoUrl) {
       const img = new Image();
       img.src = companyInfo.logoUrl;
+      img.crossOrigin = "anonymous";
       img.onload = () => {
         generateContent(img);
       };

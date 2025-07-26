@@ -66,13 +66,18 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
         let currentY = 20;
+        let textX = margin;
         const fontColor = '#000000';
         const titleText = tx.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
+        const logoWidth = 20;
+        const logoHeight = 20;
+        const logoSpacing = 5;
 
         // Header
         if (logoImage) {
             const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, 20 * logoAR, 20);
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth * logoAR, logoHeight);
+            textX = margin + (logoWidth * logoAR) + logoSpacing;
         }
         
         doc.setFont('helvetica');
@@ -81,7 +86,7 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         if (info.name) {
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
-            doc.text(info.name, margin, currentY);
+            doc.text(info.name, textX, currentY);
             currentY += 12;
         }
 
@@ -142,6 +147,7 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     if (info.logoUrl) {
         const img = new Image();
         img.src = info.logoUrl;
+        img.crossOrigin = "anonymous";
         img.onload = () => performGeneration(img);
         img.onerror = () => {
             console.error("Error loading logo for PDF, proceeding without it.");

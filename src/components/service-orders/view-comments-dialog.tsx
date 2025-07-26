@@ -78,9 +78,15 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
         let currentY = 20;
+        let textX = margin;
+        const logoWidth = 20;
+        const logoHeight = 20;
+        const logoSpacing = 5;
 
         if (logoImage) {
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, 20, 20);
+            const logoAR = logoImage.width / logoImage.height;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, logoWidth * logoAR, logoHeight);
+            textX = margin + (logoWidth * logoAR) + logoSpacing;
         }
 
         doc.setFont('helvetica');
@@ -89,7 +95,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
         if (companyInfo?.name) {
-            doc.text(companyInfo.name, margin, currentY);
+            doc.text(companyInfo.name, textX, currentY);
             currentY += 12;
         }
 

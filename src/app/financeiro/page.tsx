@@ -215,27 +215,30 @@ export default function FinanceiroPage() {
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 15;
       let currentY = 20;
+      let textX = margin;
+      const logoWidth = 25;
+      const logoHeight = 25;
+      const logoSpacing = 5;
 
       // Cabeçalho
       if (logoImage) {
-        doc.addImage(logoImage, 'PNG', margin, currentY - 8, 20, 20);
+        doc.addImage(logoImage, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
       }
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.text(companyInfo.name || "Relatório Financeiro", margin, currentY);
-      currentY += 8;
-      
+      doc.text(companyInfo.name || "Relatório Financeiro", textX, currentY);
+
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const period = dateRange?.from ? 
                     `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${dateRange.to ? format(dateRange.to, 'dd/MM/yyyy') : 'hoje'}` :
                     'Período: Todas as Transações';
-      doc.text(period, margin, currentY);
-      currentY += 10;
-      
+      doc.text(period, textX, currentY + 6);
 
       // Resumo
+      currentY = 50;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.text("Resumo do Período", margin, currentY);
@@ -281,6 +284,7 @@ export default function FinanceiroPage() {
     if (companyInfo?.logoUrl) {
       const img = new Image();
       img.src = companyInfo.logoUrl;
+      img.crossOrigin = "anonymous";
       img.onload = () => generateContent(img);
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");

@@ -160,8 +160,7 @@ function EstoquePageComponent() {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
-    let currentY = 20;
-
+    
     const reportTitle = reportType === 'low' ? 'Relatório de Estoque Baixo' : 'Relatório de Estoque Completo';
     const itemsToPrint = reportType === 'low'
       ? stockItems.filter(item => item.minStock && item.quantity <= item.minStock)
@@ -177,50 +176,61 @@ function EstoquePageComponent() {
     }
 
     // Header
-    if (companyInfo.logoUrl) {
-      try {
-        const response = await fetch(companyInfo.logoUrl);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        await new Promise<void>(resolve => {
-          reader.onloadend = () => {
-            doc.addImage(reader.result as string, 'PNG', margin, currentY - 8, 20, 20);
-            resolve();
-          };
-        });
-      } catch (e) { console.error("Could not add logo to PDF", e); }
-    }
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text(companyInfo.name || "Relatório de Estoque", margin, currentY);
-    currentY += 8;
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(reportTitle, margin, currentY);
-    currentY += 6;
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, margin, currentY);
+    const generateContent = (logoImage: HTMLImageElement | null = null) => {
+      let currentY = 20;
+      let textX = margin;
+      const logoWidth = 20;
+      const logoHeight = 20;
+      const logoSpacing = 5;
 
-    // Table
-    doc.autoTable({
-      startY: currentY + 10,
-      head: [['Cód.', 'Produto', 'Categoria', 'Qtd.', 'Mín.', 'Preço Venda']],
-      body: itemsToPrint.map(item => [
-        item.barcode.slice(-6),
-        item.name,
-        item.category || '-',
-        item.quantity,
-        item.minStock || 0,
-        `R$ ${item.price.toFixed(2)}`
-      ]),
-      theme: 'striped',
-      headStyles: { fillColor: [30, 41, 59] },
-    });
-    
-    doc.autoPrint();
-    doc.output('dataurlnewwindow');
+      if (logoImage) {
+        doc.addImage(logoImage, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
+      }
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(companyInfo.name || "Relatório de Estoque", textX, currentY);
+      currentY += 8;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(reportTitle, textX, currentY);
+      currentY += 6;
+      doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, textX, currentY);
+
+      // Table
+      doc.autoTable({
+        startY: currentY + 10,
+        head: [['Cód.', 'Produto', 'Categoria', 'Qtd.', 'Mín.', 'Preço Venda']],
+        body: itemsToPrint.map(item => [
+          item.barcode.slice(-6),
+          item.name,
+          item.category || '-',
+          item.quantity,
+          item.minStock || 0,
+          `R$ ${item.price.toFixed(2)}`
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 41, 59] },
+      });
+      
+      doc.autoPrint();
+      doc.output('dataurlnewwindow');
+    }
+
+    if (companyInfo.logoUrl) {
+        const img = new Image();
+        img.src = companyInfo.logoUrl;
+        img.crossOrigin = "anonymous";
+        img.onload = () => generateContent(img);
+        img.onerror = () => {
+          console.error("Error loading logo for PDF, proceeding without it.");
+          generateContent();
+        };
+    } else {
+        generateContent();
+    }
   };
   
   if (isLoading) {

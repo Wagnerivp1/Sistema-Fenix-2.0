@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -37,6 +38,7 @@ const getEventColor = (status: Appointment['extendedProps']['status']) => {
 
 export default function AgendaPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [allAppointments, setAllAppointments] = React.useState<Appointment[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -115,6 +117,12 @@ export default function AgendaPage() {
     await saveAppointments(updatedAppointments);
     toast({ title: 'Compromisso reagendado!', description: `O compromisso foi movido para a nova data.` });
   }
+  
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedEvent(null);
+    router.push('/dashboard');
+  };
 
   const handleSaveAppointment = async () => {
     if (!selectedEvent || !selectedEvent.extendedProps) return;
@@ -231,7 +239,7 @@ export default function AgendaPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>{selectedEvent?.id ? 'Editar Agendamento' : 'Novo Agendamento'}</DialogTitle>
@@ -311,7 +319,7 @@ export default function AgendaPage() {
             </div>
           </ScrollArea>
           <DialogFooter className="px-6 pb-4 pt-2">
-            <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
+            <Button variant="ghost" onClick={handleCloseDialog}>Cancelar</Button>
             <Button onClick={handleSaveAppointment}>Salvar Agendamento</Button>
           </DialogFooter>
         </DialogContent>

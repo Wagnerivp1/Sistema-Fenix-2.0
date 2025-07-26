@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { StatsCards } from '@/components/dashboard/stats-cards';
-import { RecentOrdersTable } from '@/components/dashboard/recent-orders-table';
+import { TodayAppointments } from '@/components/dashboard/today-appointments';
 import { AlertsAndNotifications } from '@/components/dashboard/alerts-and-notifications';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
@@ -116,7 +116,7 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 md:gap-8">
           <div className="lg:col-span-2">
-            <RecentOrdersTable />
+            <TodayAppointments />
           </div>
           <div className="lg:col-span-1">
             <AlertsAndNotifications />

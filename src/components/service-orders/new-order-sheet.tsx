@@ -327,7 +327,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
             doc.text(companyInfo.name, textX, currentY);
-            currentY += 12;
+            currentY += 8;
         }
 
         if (companyInfo.address) {
@@ -341,7 +341,8 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             currentY += 10;
         }
 
-        currentY = 50;
+        currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 50;
+
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');

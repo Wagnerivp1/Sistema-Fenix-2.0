@@ -19,13 +19,16 @@ import { getAppointments, saveAppointments, getCustomers } from '@/lib/storage';
 import type { Appointment, Customer } from '@/types';
 import { EventClickArg, DateSelectArg, EventDropArg } from '@fullcalendar/core';
 
+type StatusFilter = 'agendado' | 'concluido' | 'cancelado' | 'todos';
+
 export default function AgendaPage() {
   const { toast } = useToast();
-  const [appointments, setAppointments] = React.useState<Appointment[]>([]);
+  const [allAppointments, setAllAppointments] = React.useState<Appointment[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [selectedEvent, setSelectedEvent] = React.useState<Partial<Appointment> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('agendado');
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -34,12 +37,19 @@ export default function AgendaPage() {
         getAppointments(),
         getCustomers(),
       ]);
-      setAppointments(appointmentsData);
+      setAllAppointments(appointmentsData);
       setCustomers(customersData);
       setIsLoading(false);
     };
     loadData();
   }, []);
+
+  const filteredAppointments = React.useMemo(() => {
+    if (statusFilter === 'todos') {
+      return allAppointments;
+    }
+    return allAppointments.filter(appt => appt.extendedProps.status === statusFilter);
+  }, [allAppointments, statusFilter]);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     setSelectedEvent({
@@ -81,8 +91,8 @@ export default function AgendaPage() {
       allDay: event.allDay,
       extendedProps: event.extendedProps as Appointment['extendedProps'],
     };
-    const updatedAppointments = appointments.map(appt => appt.id === updatedAppointment.id ? updatedAppointment : appt);
-    setAppointments(updatedAppointments);
+    const updatedAppointments = allAppointments.map(appt => appt.id === updatedAppointment.id ? updatedAppointment : appt);
+    setAllAppointments(updatedAppointments);
     await saveAppointments(updatedAppointments);
     toast({ title: 'Compromisso reagendado!', description: `O compromisso foi movido para a nova data.` });
   }
@@ -90,7 +100,7 @@ export default function AgendaPage() {
   const handleSaveAppointment = async () => {
     if (!selectedEvent || !selectedEvent.extendedProps) return;
 
-    const { customerId, serviceType } = selectedEvent.extendedProps;
+    const { customerId, serviceType, status } = selectedEvent.extendedProps;
     const customer = customers.find(c => c.id === customerId);
 
     if (!customer || !serviceType) {
@@ -106,6 +116,7 @@ export default function AgendaPage() {
       allDay: selectedEvent.allDay!,
       extendedProps: {
         ...selectedEvent.extendedProps,
+        status: status || 'agendado',
         customerName: customer.name,
         address: selectedEvent.extendedProps.address || customer.address
       },
@@ -113,12 +124,12 @@ export default function AgendaPage() {
 
     let updatedAppointments;
     if (selectedEvent.id) {
-      updatedAppointments = appointments.map(appt => appt.id === newOrUpdatedAppointment.id ? newOrUpdatedAppointment : appt);
+      updatedAppointments = allAppointments.map(appt => appt.id === newOrUpdatedAppointment.id ? newOrUpdatedAppointment : appt);
     } else {
-      updatedAppointments = [...appointments, newOrUpdatedAppointment];
+      updatedAppointments = [...allAppointments, newOrUpdatedAppointment];
     }
     
-    setAppointments(updatedAppointments);
+    setAllAppointments(updatedAppointments);
     await saveAppointments(updatedAppointments);
     
     toast({ title: 'Compromisso salvo!', description: 'O agendamento foi salvo com sucesso.' });
@@ -144,17 +155,30 @@ export default function AgendaPage() {
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle>Agenda Técnica</CardTitle>
               <CardDescription>
                 Gerencie seus compromissos e chamados externos. Clique em uma data para adicionar um evento.
               </CardDescription>
             </div>
-            <Button size="sm" onClick={() => handleDateSelect({ startStr: new Date().toISOString(), endStr: '', allDay: true, view: {} as any })}>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Novo Agendamento
-            </Button>
+            <div className="flex items-center gap-2">
+               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar status..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agendado">Agendados</SelectItem>
+                  <SelectItem value="concluido">Concluídos</SelectItem>
+                  <SelectItem value="cancelado">Cancelados</SelectItem>
+                  <SelectItem value="todos">Todos</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" onClick={() => handleDateSelect({ startStr: new Date().toISOString(), endStr: '', allDay: true, view: {} as any })}>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Novo Agendamento
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -174,7 +198,7 @@ export default function AgendaPage() {
                 week: 'Semana',
                 day: 'Dia',
               }}
-              events={appointments}
+              events={filteredAppointments}
               selectable={true}
               selectMirror={true}
               dayMaxEvents={true}
@@ -195,19 +219,37 @@ export default function AgendaPage() {
             <DialogDescription>Preencha os detalhes do compromisso.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="customer">Cliente</Label>
-              <Select
-                value={selectedEvent?.extendedProps?.customerId}
-                onValueChange={(value) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, customerId: value}}))}
-              >
-                <SelectTrigger id="customer">
-                  <SelectValue placeholder="Selecione um cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="customer">Cliente</Label>
+                <Select
+                  value={selectedEvent?.extendedProps?.customerId}
+                  onValueChange={(value) => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, customerId: value}}))}
+                >
+                  <SelectTrigger id="customer">
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={selectedEvent?.extendedProps?.status || 'agendado'}
+                  onValueChange={(value: 'agendado' | 'concluido' | 'cancelado') => setSelectedEvent(prev => ({...prev, extendedProps: {...prev?.extendedProps, status: value}}))}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="agendado">Agendado</SelectItem>
+                    <SelectItem value="concluido">Concluído</SelectItem>
+                    <SelectItem value="cancelado">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
              <div className="space-y-2">
               <Label htmlFor="serviceType">Tipo de Serviço</Label>
@@ -256,3 +298,4 @@ export default function AgendaPage() {
     </>
   );
 }
+

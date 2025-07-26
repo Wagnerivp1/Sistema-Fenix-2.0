@@ -13,6 +13,7 @@ import {
   Archive,
   CircleDollarSign,
   Settings,
+  Calendar,
 } from 'lucide-react';
 
 import {
@@ -37,6 +38,7 @@ const allNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'accessDashboard' },
   { href: '/clientes', label: 'Clientes', icon: Users, permission: 'accessClients' },
   { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, permission: 'accessServiceOrders' },
+  { href: '/agenda', label: 'Agenda', icon: Calendar, permission: 'accessAgenda' },
   { href: '/vendas', label: 'Vendas', icon: ShoppingCart, permission: 'accessSales' },
   { href: '/estoque', label: 'Estoque', icon: Archive, permission: 'accessInventory' },
   { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign, permission: 'accessFinancials' },

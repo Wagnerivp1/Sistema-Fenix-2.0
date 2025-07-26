@@ -1,32 +1,5 @@
 [
   {
-    "id": "OS-1753209397767",
-    "customerName": "CESTA BASICA SANTA RITA",
-    "equipment": "AS ASS as",
-    "reportedProblem": "as",
-    "status": "Aberta",
-    "date": "2025-07-22",
-    "totalValue": 120,
-    "discount": 0,
-    "finalValue": 120,
-    "paymentMethod": "Dinheiro",
-    "items": [
-      {
-        "description": "teste 7",
-        "quantity": 6,
-        "unitPrice": 20,
-        "type": "part",
-        "id": 1753209389999
-      }
-    ],
-    "internalNotes": [],
-    "technicalReport": "",
-    "accessories": "as",
-    "serialNumber": "AS",
-    "warranty": "90 dias",
-    "attendant": "Master User"
-  },
-  {
     "client": {
       "name": "ADVOCACIA JOÃO FABIO HILARIO (fILHO)",
       "phone": "43996375274",
@@ -261,23 +234,42 @@
     "completionDate": "2025-07-15T20:41:51.692Z"
   },
   {
-    "id": "1752591164026-0.16961268312957978",
-    "customerName": "CESTA BASICA SANTA RITA",
-    "equipment": "COMPUTADOR HP ALL IN ONE",
-    "reportedProblem": "",
-    "status": "Finalizado",
-    "date": "2025-07-22",
-    "totalValue": 0,
-    "discount": 0,
-    "finalValue": 0,
-    "paymentMethod": "PIX",
-    "items": [],
-    "internalNotes": [],
-    "technicalReport": "",
+    "client": {
+      "name": "CLIENTE AVULSO",
+      "phone": "43996024065",
+      "email": "jl.solucoes@hotmail.com",
+      "address": "RUA MARECHAL FLORIANO PEIXOTO, 80",
+      "document": "",
+      "id": "1752591100370-0.5475282037034886"
+    },
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "HP",
+      "model": "ALL IN ONE ",
+      "serialNumber": "ABC12345",
+      "id": "1752591164026-0.9092236190630624",
+      "clientId": "1752591100370-0.5475282037034886"
+    },
+    "entryDate": "2025-07-15T14:52:44.026Z",
+    "defectReported": "LENTO NAO ENTRA NO WINDOWS",
+    "status": "Finalizada",
     "accessories": "CARREGADOR ",
-    "serialNumber": "ABC12345",
-    "warranty": "90 dias",
-    "attendant": "Master User"
+    "technicalDiagnosis": "TROCA HD PO SSD CLIENTE TROUXE SSD",
+    "servicesPerformed": [
+      {
+        "id": "id_1752591265855_xj3hsj91y",
+        "description": "FORMATAÇÃO +MONTAGEM ",
+        "value": 150
+      }
+    ],
+    "usedParts": [],
+    "comments": [],
+    "serviceValue": 150,
+    "partsValue": 0,
+    "totalValue": 150,
+    "id": "1752591164026-0.16961268312957978",
+    "completionDate": "2025-07-15T14:53:06.829Z",
+    "paymentDate": "2025-07-22T13:07:37.808Z"
   },
   {
     "client": {
@@ -505,20 +497,20 @@
       "type": "IMPRESSORA",
       "brand": "EPSON",
       "model": "L395",
-      "serialNumber": "X2P4046193",
+      "serialNumber": "X2NZ374777",
       "id": "1752779410369-0.5975560298355475",
       "clientId": "1752779276427-0.007760477428592205"
     },
     "entryDate": "2025-07-17T19:10:10.367Z",
     "defectReported": "NÃO IMPRIME ",
-    "status": "Aguardando aprovação",
+    "status": "Aguardando Pagamento",
     "accessories": "SEM ACESSORIO",
     "technicalDiagnosis": "EFETUADO DIAGNOSTICO CONSTADO QUE A CABEÇA DE IMPRESSÃO ESTA DANIFICADA SENDO NECESSARIO A TROCA.",
     "servicesPerformed": [
       {
-        "id": "id_1752863017587_p9hc6dct8",
+        "id": "id_1753207459084_c59xlc8te",
         "description": "MANUTENÇAO PREVENTIVA ",
-        "value": 120
+        "value": 70
       }
     ],
     "usedParts": [
@@ -538,9 +530,48 @@
       }
     ],
     "comments": [],
-    "serviceValue": 120,
+    "serviceValue": 70,
     "partsValue": 280,
-    "totalValue": 400,
-    "id": "1752779410369-0.32822606573457314"
+    "totalValue": 350,
+    "id": "1752779410369-0.32822606573457314",
+    "completionDate": "2025-07-22T18:03:00.114Z"
+  },
+  {
+    "client": {
+      "name": "GRASIELLI BARRETO",
+      "phone": "43991855566",
+      "email": "grasibarreto@gmail.com",
+      "address": "RUA VOLTA REDONDA 90",
+      "document": "03182145983",
+      "id": "1753213162582-0.24689435505478108"
+    },
+    "equipment": {
+      "type": "Notebook",
+      "brand": "VAYO",
+      "model": "VVV",
+      "serialNumber": "SM",
+      "id": "1753213215866-0.9418849483530518",
+      "clientId": "1753213162582-0.24689435505478108"
+    },
+    "entryDate": "2025-07-22T19:40:15.866Z",
+    "defectReported": "INSTALAR OFFICE ",
+    "status": "Entregue",
+    "accessories": "COM CRREGADOR ",
+    "technicalDiagnosis": "",
+    "servicesPerformed": [
+      {
+        "id": "id_1753213272675_ixpe7q97z",
+        "description": "INSTALAR PACOTTE OFFICE ",
+        "value": 60
+      }
+    ],
+    "usedParts": [],
+    "comments": [],
+    "serviceValue": 60,
+    "partsValue": 0,
+    "totalValue": 60,
+    "id": "1753213215866-0.27621967001524383",
+    "completionDate": "2025-07-22T19:59:33.180Z",
+    "paymentDate": "2025-07-22T19:59:33.180Z"
   }
 ]

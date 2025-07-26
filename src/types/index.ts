@@ -110,6 +110,7 @@ export type UserPermissions = {
   accessFinancials: boolean;
   accessSettings: boolean;
   accessDangerZone: boolean;
+  accessAgenda: boolean;
   canEdit: boolean;
   canDelete: boolean;
   canViewPasswords: boolean;
@@ -133,4 +134,15 @@ export type CompanyInfo = {
   document: string; // CPF or CNPJ
   logoUrl: string;
   pixKey: string;
+};
+
+export type Appointment = {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  description?: string;
+  customerId?: string;
+  customerName?: string;
+  status: 'agendado' | 'concluido' | 'cancelado';
 };

@@ -14,11 +14,13 @@
       "accessFinancials": true,
       "accessSettings": true,
       "accessDangerZone": true,
+      "accessAgenda": true,
       "canEdit": true,
       "canDelete": true,
       "canViewPasswords": true,
       "canManageUsers": true
-    }
+    },
+    "theme": "dark"
   },
   {
     "id": "default_user_tech",
@@ -34,11 +36,13 @@
       "accessFinancials": false,
       "accessSettings": false,
       "accessDangerZone": false,
+      "accessAgenda": true,
       "canEdit": true,
       "canDelete": false,
       "canViewPasswords": false,
       "canManageUsers": false
-    }
+    },
+    "theme": "dark"
   },
   {
     "name": "Wagner Lopes",
@@ -56,14 +60,17 @@
       "canEdit": true,
       "canDelete": true,
       "canViewPasswords": false,
-      "canManageUsers": true
+      "canManageUsers": true,
+      "accessAgenda": true
     },
-    "id": "1752520921537-0.9328935433699823"
+    "id": "1752520921537-0.9328935433699823",
+    "theme": "dark"
   },
   {
     "name": "MIRIAM JOCIMARA",
     "login": "miriam123",
     "password": "jl001215",
+    "theme": "dark",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
@@ -76,25 +83,29 @@
       "canEdit": true,
       "canDelete": true,
       "canViewPasswords": false,
-      "canManageUsers": false
+      "canManageUsers": false,
+      "accessAgenda": true
     },
     "id": "1752603011529-0.5807504643425918"
   },
   {
     "name": "Ana Leticia Boeno Lopes ",
     "login": "ana123",
+    "theme": "dark",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
       "accessServiceOrders": true,
       "accessInventory": true,
-      "accessFinancials": true,
       "accessSales": true,
+      "accessFinancials": true,
       "accessSettings": true,
       "accessDangerZone": true,
       "canEdit": true,
       "canDelete": true,
-      "canManageUsers": false
+      "canViewPasswords": false,
+      "canManageUsers": false,
+      "accessAgenda": true
     },
     "id": "1753118832504-0.6500854434014606",
     "password": "001215"

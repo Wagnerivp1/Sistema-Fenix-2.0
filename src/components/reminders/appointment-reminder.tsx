@@ -7,18 +7,29 @@ import { getAppointments } from '@/lib/storage';
 import type { Appointment } from '@/types';
 import { differenceInMinutes, parseISO } from 'date-fns';
 
+// Function to play a sound using the Web Audio API
+const playNotificationSound = () => {
+  if (typeof window === 'undefined' || !window.AudioContext) return;
+
+  const audioContext = new window.AudioContext();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
+  gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Volume
+
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.2); // Play for 0.2 seconds
+};
+
+
 export function AppointmentReminder() {
   const { toast } = useToast();
   const notifiedAppointments = React.useRef(new Set<string>());
-  const audioRef = React.useRef<HTMLAudioElement | null>(null);
-
-  React.useEffect(() => {
-    // Pre-load the audio element to improve reliability
-    if (typeof window !== 'undefined') {
-      audioRef.current = new Audio('/notification.mp3');
-      audioRef.current.playsInline = true;
-    }
-  }, []);
 
   React.useEffect(() => {
     const checkAppointments = async () => {
@@ -62,13 +73,8 @@ export function AppointmentReminder() {
                     description: description,
                     duration: 20000, 
                   });
-
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = 0; // Rewind to the start
-                    audioRef.current.play().catch(error => {
-                      console.error("Audio playback failed. This may be due to browser autoplay restrictions.", error);
-                    });
-                  }
+                  
+                  playNotificationSound();
                   
                   notifiedAppointments.current.add(notificationId);
                 }

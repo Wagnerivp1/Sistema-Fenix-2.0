@@ -23,6 +23,7 @@ const dataFiles: { [key: string]: string } = {
     financialTransactions: 'financialTransactions.json',
     users: 'users.json',
     companyInfo: 'companyInfo.json',
+    appointments: 'appointments.json',
 };
 
 // GET handler to retrieve data

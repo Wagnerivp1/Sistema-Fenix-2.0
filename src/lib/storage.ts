@@ -1,30 +1,30 @@
 
 'use client';
 
-import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo } from '@/types';
+import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment } from '@/types';
 
 // Central API endpoint for all data operations
 const API_BASE_URL = '/api/data';
 
 // --- Helper Functions for API communication ---
 
-async function fetchData<T>(dataType: string): Promise<T> {
+async function fetchData<T>(dataType: string, defaultValue: T): Promise<T> {
   if (typeof window === 'undefined') {
-    // This is a sensible default for server-side rendering or build steps.
-    const fallback = (dataType === 'companyInfo' ? {} : []) as T;
-    return fallback;
+    return defaultValue;
   }
   try {
     const response = await fetch(`${API_BASE_URL}/${dataType}`, { cache: 'no-store' });
     if (!response.ok) {
       console.error(`Error fetching ${dataType}:`, response.statusText);
-      // Return a default value based on expected type
-      return (dataType === 'companyInfo' ? {} : []) as T;
+      if (response.status === 404) {
+        return defaultValue;
+      }
+      return defaultValue;
     }
     return await response.json();
   } catch (error) {
     console.error(`Error fetching ${dataType}:`, error);
-    return (dataType === 'companyInfo' ? {} : []) as T;
+    return defaultValue;
   }
 }
 
@@ -50,25 +50,25 @@ const LOGGED_IN_USER_KEY = 'assistec_logged_in_user';
 
 // --- Data Functions ---
 
-export const getCustomers = async (): Promise<Customer[]> => fetchData<Customer[]>('customers');
+export const getCustomers = async (): Promise<Customer[]> => fetchData<Customer[]>('customers', []);
 export const saveCustomers = async (customers: Customer[]): Promise<void> => saveData('customers', customers);
 
-export const getServiceOrders = async (): Promise<ServiceOrder[]> => fetchData<ServiceOrder[]>('serviceOrders');
+export const getServiceOrders = async (): Promise<ServiceOrder[]> => fetchData<ServiceOrder[]>('serviceOrders', []);
 export const saveServiceOrders = async (orders: ServiceOrder[]): Promise<void> => saveData('serviceOrders', orders);
 
-export const getStock = async (): Promise<StockItem[]> => fetchData<StockItem[]>('stock');
+export const getStock = async (): Promise<StockItem[]> => fetchData<StockItem[]>('stock', []);
 export const saveStock = async (stock: StockItem[]): Promise<void> => saveData('stock', stock);
 
-export const getSales = async (): Promise<Sale[]> => fetchData<Sale[]>('sales');
+export const getSales = async (): Promise<Sale[]> => fetchData<Sale[]>('sales', []);
 export const saveSales = async (sales: Sale[]): Promise<void> => saveData('sales', sales);
 
-export const getFinancialTransactions = async (): Promise<FinancialTransaction[]> => fetchData<FinancialTransaction[]>('financialTransactions');
+export const getFinancialTransactions = async (): Promise<FinancialTransaction[]> => fetchData<FinancialTransaction[]>('financialTransactions', []);
 export const saveFinancialTransactions = async (transactions: FinancialTransaction[]): Promise<void> => saveData('financialTransactions', transactions);
 
-export const getUsers = async (): Promise<User[]> => fetchData<User[]>('users');
+export const getUsers = async (): Promise<User[]> => fetchData<User[]>('users', []);
 export const saveUsers = async (users: User[]): Promise<void> => saveData('users', users);
 
-export const getCompanyInfo = async (): Promise<CompanyInfo> => fetchData<CompanyInfo>('companyInfo');
+export const getCompanyInfo = async (): Promise<CompanyInfo> => fetchData<CompanyInfo>('companyInfo', {} as CompanyInfo);
 export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {
     await saveData('companyInfo', info);
     // Dispatch a custom event to notify components (like Logo) of the change
@@ -76,6 +76,9 @@ export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {
         window.dispatchEvent(new Event('companyInfoChanged'));
     }
 };
+
+export const getAppointments = async (): Promise<Appointment[]> => fetchData<Appointment[]>('appointments', []);
+export const saveAppointments = async (appointments: Appointment[]): Promise<void> => saveData('appointments', appointments);
 
 
 // --- SessionStorage Specific Functions ---

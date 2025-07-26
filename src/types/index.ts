@@ -139,10 +139,15 @@ export type CompanyInfo = {
 export type Appointment = {
   id: string;
   title: string;
-  start: Date;
-  end: Date;
-  description?: string;
-  customerId?: string;
-  customerName?: string;
-  status: 'agendado' | 'concluido' | 'cancelado';
+  start: string;
+  end: string;
+  allDay: boolean;
+  extendedProps: {
+    customerId?: string;
+    customerName?: string;
+    address?: string;
+    serviceType?: string;
+    notes?: string;
+    status: 'agendado' | 'concluido' | 'cancelado';
+  };
 };

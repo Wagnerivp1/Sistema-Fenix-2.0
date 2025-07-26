@@ -12,18 +12,18 @@ let audioContext: AudioContext | null = null;
 let oscillator: OscillatorNode | null = null;
 
 const stopSound = () => {
-    if (audio) {
+    if (audio && !audio.paused) {
         audio.pause();
         audio.currentTime = 0;
-        audio = null;
     }
     if (oscillator) {
-        oscillator.stop();
+        try {
+            oscillator.stop();
+        } catch (e) {
+            // Oscillator might already be stopped
+        }
         oscillator.disconnect();
         oscillator = null;
-    }
-    if (audioContext && audioContext.state !== 'closed') {
-        // It's good practice to close the context when done, but since we might reuse it, we can also just stop the source.
     }
 };
 
@@ -33,7 +33,9 @@ const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
   stopSound(); // Stop any previously playing sound
 
   if (soundUrl) {
-    audio = new Audio(soundUrl);
+    if (!audio || audio.src !== soundUrl) {
+      audio = new Audio(soundUrl);
+    }
     audio.loop = loop;
     audio.play().catch(e => console.error("Error playing custom sound:", e));
     return;
@@ -41,27 +43,29 @@ const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
   
   // Fallback to generating a tone
   if (!window.AudioContext) return;
-  audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  if (!audioContext || audioContext.state === 'closed') {
+    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
   
   const playTone = () => {
-    oscillator = audioContext!.createOscillator();
-    const gainNode = audioContext!.createGain();
+    if (!audioContext) return;
+    oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
 
     oscillator.connect(gainNode);
-    gainNode.connect(audioContext!.destination);
+    gainNode.connect(audioContext.destination);
 
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(880, audioContext!.currentTime); // A5 note
-    gainNode.gain.setValueAtTime(0.5, audioContext!.currentTime);
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
 
-    oscillator.start(audioContext!.currentTime);
-    oscillator.stop(audioContext!.currentTime + 0.2);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
 
     if (loop) {
         oscillator.onended = () => {
-            // Check if it should still be looping
             if (oscillator) {
-               setTimeout(playTone, 800); // 1 second pause between beeps
+               setTimeout(playTone, 800);
             }
         };
     }

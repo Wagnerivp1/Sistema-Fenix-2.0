@@ -23,7 +23,8 @@ const stopSound = () => {
             // Oscillator might already be stopped
         }
         oscillator.disconnect();
-        oscillator = null;
+        // Crucial fix: Nullify the oscillator to break the onended loop.
+        oscillator = null; 
     }
 };
 
@@ -64,7 +65,7 @@ const playNotificationSound = (soundUrl?: string, loop: boolean = false) => {
 
     if (loop) {
         oscillator.onended = () => {
-            if (oscillator) {
+            if (oscillator) { // This check now works correctly because stopSound() nullifies it.
                setTimeout(playTone, 800);
             }
         };

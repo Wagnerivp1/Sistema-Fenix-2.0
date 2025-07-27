@@ -47,43 +47,70 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     }
 
     try {
-        JsBarcode(canvasRef.current, item.barcode, {
-            format: "CODE128",
-            width: 2,
-            height: 40,
-            displayValue: true,
-            fontSize: 14
-        });
-        
-        const barcodeDataUrl = canvasRef.current.toDataURL('image/png');
+      JsBarcode(canvasRef.current, item.barcode || item.id, {
+        format: 'CODE128',
+        width: 1.5,
+        height: 25,
+        displayValue: true,
+        fontSize: 10,
+        margin: 0,
+      });
 
-        const doc = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: [40, 60] // Formato aproximado da etiqueta
-        });
-        
-        for (let i = 0; i < quantity; i++) {
-            if (i > 0) doc.addPage();
-            doc.setFontSize(10);
-            doc.text(item.name, 3, 7, { maxWidth: 54 });
-            doc.addImage(barcodeDataUrl, 'PNG', 3, 10, 54, 15);
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`R$ ${item.price.toFixed(2)}`, 3, 33);
+      const barcodeDataUrl = canvasRef.current.toDataURL('image/png');
+      
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const cols = 3;
+      const rows = 10;
+      const labelWidth = 63.5;
+      const labelHeight = 29.6;
+      const marginX = (210 - (cols * labelWidth)) / 2;
+      const marginY = (297 - (rows * labelHeight)) / 2;
+
+      let count = 0;
+      for (let i = 0; i < quantity; i++) {
+        if (count >= cols * rows) {
+          doc.addPage();
+          count = 0;
         }
 
-        doc.autoPrint();
-        doc.output('dataurlnewwindow');
-        onOpenChange(false);
+        const row = Math.floor(count / cols);
+        const col = count % cols;
+
+        const x = marginX + (col * labelWidth);
+        const y = marginY + (row * labelHeight);
+
+        // Nome do produto
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(item.name, x + 2, y + 5, { maxWidth: labelWidth - 4 });
+
+        // Código de barras
+        doc.addImage(barcodeDataUrl, 'PNG', x + 2, y + 8, labelWidth - 4, 10);
+        
+        // Preço
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`R$ ${item.price.toFixed(2)}`, x + 2, y + 25);
+        
+        count++;
+      }
+
+      doc.autoPrint();
+      doc.output('dataurlnewwindow');
+      onOpenChange(false);
 
     } catch (e) {
-        console.error(e);
-        toast({
-            variant: 'destructive',
-            title: 'Erro ao gerar etiqueta',
-            description: 'Verifique se o código de barras é válido.',
-        });
+      console.error(e);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao gerar etiqueta',
+        description: 'Verifique se o código de barras é válido.',
+      });
     }
   };
 

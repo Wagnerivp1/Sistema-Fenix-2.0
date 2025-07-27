@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "name": "HHH",
+    "description": "JKGHIJHGH",
+    "category": "peças",
+    "quantity": 2,
+    "price": 4152554,
+    "costPrice": 100,
+    "minStock": 0,
+    "barcode": "PROD-1753658963068",
+    "unitOfMeasure": "UN",
+    "id": "PROD-1753658963068"
+  }
+]

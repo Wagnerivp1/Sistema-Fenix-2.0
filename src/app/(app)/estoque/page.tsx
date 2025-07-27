@@ -400,3 +400,5 @@ export default function EstoquePage() {
         </React.Suspense>
     )
 }
+
+    

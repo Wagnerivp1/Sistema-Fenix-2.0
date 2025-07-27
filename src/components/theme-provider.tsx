@@ -1,10 +1,11 @@
+
 "use client"
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
 import { type ThemeProviderProps } from "next-themes/dist/types"
 
-const themes = ["dark", "system", "default", "slate", "stone", "rose", "green", "orange"];
+const themes = ["dark", "light", "system", "default", "slate", "stone", "rose", "green", "orange"];
 const themeClasses = ["theme-default", "theme-slate", "theme-stone", "theme-rose", "theme-green", "theme-orange"];
 
 const ThemeWatcher = () => {

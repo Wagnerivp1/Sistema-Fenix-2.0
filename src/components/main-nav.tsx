@@ -36,6 +36,7 @@ interface NavItem {
 
 const allNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'accessDashboard' },
+  { href: '/agenda', label: 'Agenda', icon: Calendar, permission: 'accessAgenda' },
   { href: '/clientes', label: 'Clientes', icon: Users, permission: 'accessClients' },
   { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, permission: 'accessServiceOrders' },
   { href: '/vendas', label: 'Vendas', icon: ShoppingCart, permission: 'accessSales' },

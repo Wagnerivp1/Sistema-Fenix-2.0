@@ -46,34 +46,19 @@ export type ServiceOrder = {
   serialNumber?: string;
 };
 
-export type StockItem = {
-  id: string; // SKU or internal code
+export interface SaleItem {
+  id: string;
   name: string;
+  price: number;
+  quantity: number;
+  barcode?: string;
   category?: string;
   description?: string;
-  unitOfMeasure?: 'UN' | 'KG' | 'L' | 'M' | 'CX';
-  barcode: string;
+  unitOfMeasure?: string;
   costPrice?: number;
-  price: number; // Selling price
-  quantity: number;
   minStock?: number;
-  location?: string;
-};
-
-export type StockMovement = {
-  id: string;
-  itemId: string;
-  type: 'entrada' | 'saida';
-  origin?: 'compra' | 'devolucao' | 'transferencia' | 'venda' | 'ajuste';
-  quantity: number;
-  date: string;
-  user: string;
-  notes?: string;
 }
 
-export interface SaleItem extends Omit<StockItem, 'quantity'> {
-  quantity: number;
-}
 
 export type Sale = {
     id: string;

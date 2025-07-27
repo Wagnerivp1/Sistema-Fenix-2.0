@@ -1,8 +1,5 @@
-
 // This file is intentionally left blank to resolve a routing conflict.
-// The functional inventory page is located at /src/app/(app)/estoque/page.tsx
+// The inventory module has been removed.
 export default function ConflictingStockPage() {
   return null;
 }
-
-    

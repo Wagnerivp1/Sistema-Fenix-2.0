@@ -219,7 +219,7 @@ export default function ConfiguracoesPage() {
   const handleBackup = async () => {
     try {
       const backupData: Record<string, any> = {};
-      const dataTypes = ['customers', 'serviceOrders', 'stock', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo'];
       
       for (const type of dataTypes) {
         const response = await fetch(`/api/data/${type}`);
@@ -271,7 +271,7 @@ export default function ConfiguracoesPage() {
         if (typeof text !== 'string') throw new Error('Could not read file content.');
         const data = JSON.parse(text);
 
-        const dataTypes = ['customers', 'serviceOrders', 'stock', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+        const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo'];
         const hasKnownKey = dataTypes.some(key => key in data);
 
         if (!hasKnownKey) throw new Error('Arquivo de backup inválido ou corrompido.');
@@ -302,7 +302,7 @@ export default function ConfiguracoesPage() {
 
   const handleClearSystem = async () => {
     try {
-      const dataTypes = ['customers', 'serviceOrders', 'stock', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo'];
       for (const type of dataTypes) {
          await fetch(`/api/data/${type}`, {
             method: 'POST',
@@ -561,7 +561,7 @@ export default function ConfiguracoesPage() {
                 </div>
             </div>
              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div><h4 className="font-semibold text-destructive">Limpar Sistema</h4><p className="text-sm text-destructive/80">Exclui permanentemente todos os clientes, OS, estoque, vendas e finanças.</p></div>
+                <div><h4 className="font-semibold text-destructive">Limpar Sistema</h4><p className="text-sm text-destructive/80">Exclui permanentemente todos os clientes, OS, vendas e finanças.</p></div>
                  <div className="flex-shrink-0">
                     <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={!currentUser?.permissions.accessDangerZone}><Trash2 className="mr-2 h-4 w-4" />Limpar Todos os Dados</Button>
                 </div>
@@ -571,7 +571,7 @@ export default function ConfiguracoesPage() {
 
     <AlertDialog open={isClearAlertOpen} onOpenChange={setIsClearAlertOpen}>
         <AlertDialogContent>
-            <AlertDialogHeader><AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle><AlertDialogDescription>Esta ação é irreversível e excluirá permanentemente TODOS os dados do sistema, incluindo clientes, ordens de serviço, estoque e registros financeiros. Não há como desfazer.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogHeader><AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle><AlertDialogDescription>Esta ação é irreversível e excluirá permanentemente TODOS os dados do sistema, incluindo clientes, ordens de serviço e registros financeiros. Não há como desfazer.</AlertDialogDescription></AlertDialogHeader>
             <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={handleClearSystem}>Sim, excluir tudo</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
@@ -613,14 +613,13 @@ export default function ConfiguracoesPage() {
                     {renderPermission('accessDashboard', 'Dashboard')}
                     {renderPermission('accessClients', 'Clientes')}
                     {renderPermission('accessServiceOrders', 'Ordens de Serviço')}
-                    {renderPermission('accessInventory', 'Estoque')}
                     {renderPermission('accessSales', 'Vendas')}
                     {renderPermission('accessAgenda', 'Agenda')}
                   </div>
                    <div className="space-y-3">
                     <h4 className="font-medium text-sm text-primary">Ações Gerais</h4>
-                    {renderPermission('canEdit', 'Pode Editar (OS, Estoque, etc)')}
-                    {renderPermission('canDelete', 'Pode Excluir (OS, Estoque, etc)')}
+                    {renderPermission('canEdit', 'Pode Editar (OS, etc)')}
+                    {renderPermission('canDelete', 'Pode Excluir (OS, etc)')}
                   </div>
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm text-primary">Permissões Avançadas</h4>

@@ -16,20 +16,6 @@ export type Customer = {
   document: string;
 };
 
-export type StockItem = {
-    id: string;
-    barcode: string;
-    name: string;
-    description?: string;
-    category?: string;
-    location?: string;
-    unitOfMeasure?: 'UN' | 'KG' | 'L' | 'M' | 'CX';
-    quantity: number;
-    minStock?: number;
-    costPrice?: number;
-    price: number;
-};
-
 export type ServiceOrderItem = {
   id: number;
   description: string;
@@ -60,17 +46,20 @@ export type ServiceOrder = {
   serialNumber?: string;
 };
 
-export interface SaleItem extends StockItem {
-  saleQuantity: number;
-}
-
+// Represents a line item in a sale, not a stock item.
+export type SaleItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+};
 
 export type Sale = {
     id: string;
     date: string; // YYYY-MM-DD
     time: string; // HH:MM:SS
     user: string; // Nome do usuário que efetuou a venda
-    items: Omit<SaleItem, 'saleQuantity'>[];
+    items: SaleItem[];
     subtotal: number;
     discount: number;
     total: number;

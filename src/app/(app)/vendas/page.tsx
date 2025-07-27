@@ -16,27 +16,26 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getStock, getCustomers, saveStock, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo } from '@/lib/storage';
-import type { StockItem, Customer, Sale, FinancialTransaction, User, CompanyInfo, SaleItem } from '@/types';
+import { saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo } from '@/lib/storage';
+import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ManualSearchDialog } from '@/components/sales/manual-search-dialog';
 import { ChangeCalculatorDialog } from '@/components/sales/change-calculator-dialog';
 import { PrintSaleReceiptDialog } from '@/components/sales/print-sale-receipt-dialog';
 import { PixQrCodeDialog } from '@/components/sales/pix-qr-code-dialog';
 
+// Estoque foi removido, a busca manual é agora uma adição manual de item.
+import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
+
 export default function VendasPage() {
   const { toast } = useToast();
-  const [stock, setStock] = React.useState<StockItem[]>([]);
-  const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [saleItems, setSaleItems] = React.useState<SaleItem[]>([]);
   const [discount, setDiscount] = React.useState(0);
   const [paymentMethod, setPaymentMethod] = React.useState('dinheiro');
   const [observations, setObservations] = React.useState('');
   
-  const [barcode, setBarcode] = React.useState('');
-  const [isManualSearchOpen, setIsManualSearchOpen] = React.useState(false);
+  const [isManualAddOpen, setIsManualAddOpen] = React.useState(false);
   const [isChangeCalcOpen, setIsChangeCalcOpen] = React.useState(false);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
@@ -50,70 +49,28 @@ export default function VendasPage() {
 
   React.useEffect(() => {
     const loadData = async () => {
-      const [stockData, customersData, loggedInUser] = await Promise.all([
-        getStock(),
-        getCustomers(),
-        getLoggedInUser()
-      ]);
-      setStock(stockData);
-      setCustomers(customersData);
+      const loggedInUser = await getLoggedInUser();
       setCurrentUser(loggedInUser);
     };
     loadData();
     barcodeInputRef.current?.focus();
   }, []);
   
- const addProductToSale = (productToAdd: StockItem) => {
+  const addProductToSale = (productToAdd: SaleItem) => {
     setSaleItems(prevItems => {
-        const existingItem = prevItems.find(item => item.id === productToAdd.id);
+        const existingItem = prevItems.find(item => item.name.toLowerCase() === productToAdd.name.toLowerCase());
         if (existingItem) {
             return prevItems.map(item =>
-                item.id === productToAdd.id
-                    ? { ...item, saleQuantity: item.saleQuantity + 1 }
+                item.name.toLowerCase() === productToAdd.name.toLowerCase()
+                    ? { ...item, quantity: item.quantity + productToAdd.quantity }
                     : item
             );
         } else {
-            return [...prevItems, { ...productToAdd, saleQuantity: 1 }];
+            return [...prevItems, { ...productToAdd, id: `ITEM-${Date.now()}` }];
         }
     });
   };
-
-  const handleBarcodeScan = (scannedCode: string) => {
-    const product = stock.find(item => item.barcode === scannedCode);
-
-    if (product) {
-        const stockItem = stock.find(s => s.id === product.id);
-        const saleItem = saleItems.find(i => i.id === product.id);
-        const currentQuantityInCart = saleItem ? saleItem.saleQuantity : 0;
-
-        if (!stockItem || stockItem.quantity <= currentQuantityInCart) {
-            toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Não há mais unidades de "${product.name}" em estoque.` });
-        } else {
-            addProductToSale(product);
-            toast({ title: 'Produto Adicionado!', description: `"${product.name}" foi adicionado à venda.` });
-        }
-    } else {
-      toast({ variant: 'destructive', title: 'Produto Não Encontrado', description: `Nenhum produto encontrado para o código: ${scannedCode}` });
-    }
-    
-    setBarcode('');
-    barcodeInputRef.current?.focus();
-  };
-
-  const handleManualProductSelect = (product: StockItem) => {
-    const stockItem = stock.find(s => s.id === product.id);
-    const saleItem = saleItems.find(i => i.id === product.id);
-    const currentQuantityInCart = saleItem ? saleItem.saleQuantity : 0;
-    
-    if (!stockItem || stockItem.quantity <= currentQuantityInCart) {
-        toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Não há mais unidades de "${product.name}" em estoque.` });
-    } else {
-        addProductToSale(product);
-        toast({ title: 'Produto Adicionado!', description: `"${product.name}" foi adicionado à venda.` });
-    }
-    barcodeInputRef.current?.focus();
-  }
-
+  
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
         const target = event.target as HTMLElement;
@@ -145,37 +102,24 @@ export default function VendasPage() {
   }, [saleItems, discount, paymentMethod, observations]);
 
 
-  const handleRemoveItem = (productId: string) => {
-    setSaleItems(saleItems.filter(item => item.id !== productId));
+  const handleRemoveItem = (itemId: string) => {
+    setSaleItems(saleItems.filter(item => item.id !== itemId));
   };
 
-  const handleUpdateQuantity = (productId: string, quantity: number) => {
-    const productInStock = stock.find(p => p.id === productId);
-    if (!productInStock) return;
-
-    if (quantity > productInStock.quantity) {
-        toast({ variant: 'destructive', title: 'Estoque Insuficiente', description: `Apenas ${productInStock.quantity} unidades de "${productInStock.name}" em estoque.` });
-        setSaleItems(saleItems.map(item => 
-            item.id === productId 
-            ? { ...item, saleQuantity: productInStock.quantity } 
-            : item
-        ));
-        return;
-    }
-
+  const handleUpdateQuantity = (itemId: string, quantity: number) => {
     if (quantity <= 0) {
-        handleRemoveItem(productId);
+        handleRemoveItem(itemId);
         return;
     }
     setSaleItems(saleItems.map(item => 
-        item.id === productId 
-        ? { ...item, saleQuantity: quantity } 
+        item.id === itemId 
+        ? { ...item, quantity: quantity } 
         : item
     ));
   };
   
   const calculateTotal = () => {
-    return saleItems.reduce((total, item) => total + item.price * item.saleQuantity, 0);
+    return saleItems.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   const subtotal = calculateTotal();
@@ -186,7 +130,6 @@ export default function VendasPage() {
     setDiscount(0);
     setPaymentMethod('dinheiro');
     setObservations('');
-    setBarcode('');
     setCurrentSaleId('');
     setCompanyInfoForDialog(null);
     barcodeInputRef.current?.focus();
@@ -205,24 +148,13 @@ export default function VendasPage() {
     
     const saleId = currentSaleId || `SALE-${Date.now()}`;
 
-    // 1. Update Stock
-    const updatedStock = [...stock];
-    saleItems.forEach(saleItem => {
-        const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
-        if (stockIndex !== -1) {
-            updatedStock[stockIndex].quantity -= saleItem.saleQuantity;
-        }
-    });
-    setStock(updatedStock);
-    await saveStock(updatedStock);
-
-    // 2. Create Sale Record
+    // 1. Create Sale Record
     const newSale: Sale = {
         id: saleId,
         date: new Date().toISOString().split('T')[0],
         time: new Date().toLocaleTimeString('pt-BR'),
         user: currentUser?.name || 'Não identificado',
-        items: saleItems.map(({ saleQuantity, ...item }) => ({ ...item, quantity: saleQuantity })),
+        items: saleItems,
         subtotal: subtotal,
         discount: discount,
         total: finalTotal,
@@ -232,7 +164,7 @@ export default function VendasPage() {
     const existingSales = await getSales();
     await saveSales([...existingSales, newSale]);
 
-    // 3. Create Financial Transaction
+    // 2. Create Financial Transaction
     const newTransaction: FinancialTransaction = {
         id: `FIN-${Date.now()}`,
         type: 'receita',
@@ -246,10 +178,10 @@ export default function VendasPage() {
     const existingTransactions = await getFinancialTransactions();
     await saveFinancialTransactions([newTransaction, ...existingTransactions]);
 
-    // 4. Notify and Reset
+    // 3. Notify and Reset
     toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });
     
-    // 5. Conditional dialogs
+    // 4. Conditional dialogs
     setIsChangeCalcOpen(false);
     setIsPixDialogOpen(false);
     
@@ -321,7 +253,7 @@ export default function VendasPage() {
           <Card>
             <CardHeader>
               <CardTitle>Carrinho de Venda</CardTitle>
-              <CardDescription>Adicione produtos via código de barras ou busca manual.</CardDescription>
+              <CardDescription>Adicione produtos ou serviços manualmente.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2">
@@ -329,25 +261,19 @@ export default function VendasPage() {
                       <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input 
                         ref={barcodeInputRef}
-                        placeholder="Ler código de barras..." 
-                        className="pl-10" 
-                        value={barcode}
-                        onChange={(e) => setBarcode(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && barcode.trim()) {
-                                handleBarcodeScan(barcode.trim());
-                            }
-                        }}
+                        placeholder="Leitura de código de barras desativada" 
+                        className="pl-10"
+                        disabled
                       />
                   </div>
-                  <Button variant="outline" onClick={() => setIsManualSearchOpen(true)}>Busca Manual</Button>
+                  <Button variant="outline" onClick={() => setIsManualAddOpen(true)}>Adicionar Item Manual</Button>
               </div>
               
               <div className="border rounded-lg min-h-[300px] flex flex-col">
                   <Table>
                       <TableHeader>
                           <TableRow>
-                              <TableHead className="w-[50%]">Produto</TableHead>
+                              <TableHead className="w-[50%]">Produto/Serviço</TableHead>
                               <TableHead className="w-[15%] text-center">Qtd.</TableHead>
                               <TableHead className="text-right">Preço</TableHead>
                               <TableHead className="text-right">Subtotal</TableHead>
@@ -362,13 +288,13 @@ export default function VendasPage() {
                               <TableCell className="text-center">
                                   <Input 
                                       type="number"
-                                      value={item.saleQuantity}
+                                      value={item.quantity}
                                       onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value))}
                                       className="w-16 h-8 text-center mx-auto"
                                   />
                               </TableCell>
                               <TableCell className="text-right">R$ {item.price.toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-semibold">R$ {(item.price * item.saleQuantity).toFixed(2)}</TableCell>
+                              <TableCell className="text-right font-semibold">R$ {(item.price * item.quantity).toFixed(2)}</TableCell>
                               <TableCell>
                                   <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
                                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -444,11 +370,10 @@ export default function VendasPage() {
         </div>
       </div>
     </div>
-    <ManualSearchDialog
-        isOpen={isManualSearchOpen}
-        onOpenChange={setIsManualSearchOpen}
-        stockItems={stock}
-        onProductSelect={handleManualProductSelect}
+    <ManualAddItemDialog
+        isOpen={isManualAddOpen}
+        onOpenChange={setIsManualAddOpen}
+        onAddItem={addProductToSale}
     />
     <ChangeCalculatorDialog
         isOpen={isChangeCalcOpen}

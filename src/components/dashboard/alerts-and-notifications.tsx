@@ -10,21 +10,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getStock } from '@/lib/storage';
 import * as React from 'react';
-import type { StockItem } from '@/types';
 
 export function AlertsAndNotifications() {
-    const [lowStockCount, setLowStockCount] = React.useState(0);
-
-    React.useEffect(() => {
-        const fetchStockAlerts = async () => {
-            const stock: StockItem[] = await getStock();
-            const lowStockItems = stock.filter(item => item.minStock && item.quantity <= item.minStock);
-            setLowStockCount(lowStockItems.length);
-        };
-        fetchStockAlerts();
-    }, []);
+  // A lógica de verificação de estoque foi removida.
+  const hasAlerts = false; 
 
   return (
     <Card className="h-full flex flex-col">
@@ -33,20 +23,9 @@ export function AlertsAndNotifications() {
         <CardDescription>Avisos importantes do sistema.</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col gap-4">
-        {lowStockCount > 0 ? (
+        {hasAlerts ? (
             <div className="border-l-4 border-destructive bg-destructive/10 p-4 rounded-r-lg">
-               <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
-                  <div>
-                      <p className="font-semibold text-destructive">{lowStockCount} Produto(s) com baixo estoque</p>
-                      <p className="text-sm text-destructive/80">
-                        Verifique seu inventário para evitar falta de peças.
-                      </p>
-                       <Button variant="link" className="p-0 h-auto text-destructive/90 hover:text-destructive" asChild>
-                         <Link href="/estoque?filter=low_stock">Ver estoque</Link>
-                      </Button>
-                  </div>
-                </div>
+               {/* Estrutura de alerta mantida para futuras notificações */}
             </div>
         ) : (
              <div className="flex-grow flex items-center justify-center">

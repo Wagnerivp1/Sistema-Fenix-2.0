@@ -68,5 +68,19 @@
       "serviceType": "buscar computador ",
       "status": "concluido"
     }
+  },
+  {
+    "id": "APT-1753657596677",
+    "title": "CINE FOTO REGINA  - buscar computador ",
+    "start": "2025-07-27",
+    "end": "",
+    "allDay": true,
+    "extendedProps": {
+      "customerId": "1752581309250-0.23832530068551883",
+      "customerName": "CINE FOTO REGINA ",
+      "address": "AVENIDA SOUZA NAVES 945",
+      "serviceType": "buscar computador ",
+      "status": "concluido"
+    }
   }
 ]

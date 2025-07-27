@@ -1,5 +1,0 @@
-// This file was renamed to .BAK to resolve a Next.js routing conflict.
-// It is no longer in use.
-export default function RemovedStockPage() {
-  return null;
-}

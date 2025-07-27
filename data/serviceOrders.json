@@ -1,5 +1,51 @@
 [
   {
+    "id": "OS-1753635469352",
+    "customerName": "Comunidade Evangélica em Ivaiporã",
+    "equipment": "NOTEBOOK ACER ERT",
+    "reportedProblem": "njsdfnjsdf",
+    "status": "Entregue",
+    "date": "2025-07-27",
+    "totalValue": 260,
+    "discount": 20,
+    "finalValue": 240,
+    "paymentMethod": "Dinheiro",
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 120,
+        "type": "service",
+        "id": 1753635553304
+      },
+      {
+        "description": "teste 7",
+        "quantity": 7,
+        "unitPrice": 20,
+        "type": "part",
+        "id": 1753635620544
+      }
+    ],
+    "internalNotes": [
+      {
+        "user": "Wagner Lopes",
+        "date": "2025-07-27T17:00:49.744Z",
+        "comment": "ssdfkldfjsdklfsdfklsd"
+      },
+      {
+        "user": "Wagner Lopes",
+        "date": "2025-07-27T17:01:10.209Z",
+        "comment": "sadasdasdas"
+      }
+    ],
+    "technicalReport": "rkjtgdçrgdçkfgjdfçgjkdf",
+    "accessories": "vcbcvbc",
+    "serialNumber": "NXHFMAL006949B38AA9501",
+    "warranty": "90 dias",
+    "attendant": "Wagner Lopes",
+    "deliveredDate": "2025-07-27"
+  },
+  {
     "client": {
       "name": "ADVOCACIA JOÃO FABIO HILARIO (fILHO)",
       "phone": "43996375274",

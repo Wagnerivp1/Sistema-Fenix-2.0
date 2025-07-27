@@ -70,5 +70,30 @@
     "id": "1753219406554-0.4903733147074246",
     "time": "18:23:26",
     "user": "Não identificado"
+  },
+  {
+    "id": "SALE-1753635103143",
+    "date": "2025-07-27",
+    "time": "13:51:57",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "id": "PROD-1753146048116",
+        "barcode": "PROD-1753146048116",
+        "name": "teste 7",
+        "price": 20,
+        "quantity": 3,
+        "category": "peças",
+        "description": "uygjhgjh",
+        "unitOfMeasure": "UN",
+        "costPrice": 15,
+        "minStock": 2
+      }
+    ],
+    "subtotal": 60,
+    "discount": 0,
+    "total": 60,
+    "paymentMethod": "dinheiro",
+    "observations": ""
   }
 ]

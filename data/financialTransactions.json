@@ -1,5 +1,34 @@
 [
   {
+    "type": "receita",
+    "description": "Recebimento OS #9352",
+    "amount": 240,
+    "date": "2025-07-27",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1753635469352",
+    "id": "FIN-1753635824134"
+  },
+  {
+    "description": "grfdfgdf",
+    "amount": 1212,
+    "date": "2025-07-27",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1753635211353"
+  },
+  {
+    "id": "FIN-1753635117948",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 60,
+    "date": "2025-07-27",
+    "category": "Venda de Produto",
+    "paymentMethod": "dinheiro",
+    "relatedSaleId": "SALE-1753635103143"
+  },
+  {
     "id": "FIN-1753318548673",
     "type": "receita",
     "description": "Venda de Produtos (PDV)",

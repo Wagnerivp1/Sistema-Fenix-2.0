@@ -160,6 +160,10 @@ function EstoquePageComponent() {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
+    let textX = margin;
+    const logoWidth = 20;
+    const logoHeight = 20;
+    const logoSpacing = 5;
 
     const reportTitle = reportType === 'low' ? 'Relatório de Estoque Baixo' : 'Relatório de Estoque Completo';
     const itemsToPrint = reportType === 'low'
@@ -175,34 +179,60 @@ function EstoquePageComponent() {
       return;
     }
 
-    // Header
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text(companyInfo.name || "Relatório de Estoque", pageWidth / 2, 20, { align: 'center' });
+    const performGeneration = (logoImage: HTMLImageElement | null) => {
+        let currentY = 20;
+        if (logoImage) {
+            const logoAR = logoImage.width / logoImage.height;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth * logoAR, logoHeight);
+            textX = margin + (logoWidth * logoAR) + logoSpacing;
+        }
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(reportTitle, pageWidth / 2, 26, { align: 'center' });
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, 32, { align: 'center' });
+        // Header
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text(companyInfo.name || "Relatório de Estoque", textX, currentY);
+        currentY += 6;
 
-    // Table
-    doc.autoTable({
-      startY: 40,
-      head: [['Cód.', 'Produto', 'Categoria', 'Qtd.', 'Mín.', 'Preço Venda']],
-      body: itemsToPrint.map(item => [
-        item.barcode.slice(-6),
-        item.name,
-        item.category || '-',
-        item.quantity,
-        item.minStock || 0,
-        `R$ ${item.price.toFixed(2)}`
-      ]),
-      theme: 'striped',
-      headStyles: { fillColor: [30, 41, 59] },
-    });
-    
-    doc.autoPrint();
-    doc.output('dataurlnewwindow');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(reportTitle, textX, currentY);
+        currentY += 6;
+        doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, textX, currentY);
+        currentY += 10;
+
+
+        // Table
+        doc.autoTable({
+          startY: currentY,
+          head: [['Cód.', 'Produto', 'Categoria', 'Qtd.', 'Mín.', 'Preço Venda']],
+          body: itemsToPrint.map(item => [
+            item.barcode.slice(-6),
+            item.name,
+            item.category || '-',
+            item.quantity,
+            item.minStock || 0,
+            `R$ ${item.price.toFixed(2)}`
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [30, 41, 59] },
+        });
+        
+        doc.autoPrint();
+        doc.output('dataurlnewwindow');
+    };
+
+    if (companyInfo.logoUrl) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = companyInfo.logoUrl;
+      img.onload = () => performGeneration(img);
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
+        performGeneration(null);
+      };
+    } else {
+      performGeneration(null);
+    }
   };
   
   if (isLoading) {

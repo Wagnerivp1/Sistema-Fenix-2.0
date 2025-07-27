@@ -39,6 +39,7 @@ const allNavItems: NavItem[] = [
   { href: '/agenda', label: 'Agenda', icon: Calendar, permission: 'accessAgenda' },
   { href: '/clientes', label: 'Clientes', icon: Users, permission: 'accessClients' },
   { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, permission: 'accessServiceOrders' },
+  { href: '/produtos', label: 'Produtos', icon: Archive, permission: 'accessInventory' },
   { href: '/vendas', label: 'Vendas', icon: ShoppingCart, permission: 'accessSales' },
   { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign, permission: 'accessFinancials' },
   { href: '/configuracoes', label: 'Configurações', icon: Settings, permission: 'accessSettings' },

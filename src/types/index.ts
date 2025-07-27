@@ -46,9 +46,23 @@ export type ServiceOrder = {
   serialNumber?: string;
 };
 
+// Represents an item in our inventory.
+export type StockItem = {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  quantity: number;
+  price: number;
+  costPrice: number;
+  minStock: number;
+  barcode: string;
+  unitOfMeasure: string;
+};
+
 // Represents a line item in a sale, not a stock item.
 export type SaleItem = {
-  id: string;
+  id: string; // Could be the stock item ID or a temporary ID for manual items
   name: string;
   quantity: number;
   price: number;

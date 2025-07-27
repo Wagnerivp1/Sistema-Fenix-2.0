@@ -1,7 +1,7 @@
 
 'use client';
 import Link from 'next/link';
-import { AlertTriangle, Settings } from 'lucide-react';
+import { AlertTriangle, Settings, Archive } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -11,10 +11,22 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import * as React from 'react';
+import type { StockItem } from '@/types';
+import { getStock } from '@/lib/storage';
 
 export function AlertsAndNotifications() {
-  // A lógica de verificação de estoque foi removida.
-  const hasAlerts = false; 
+  const [lowStockItems, setLowStockItems] = React.useState<StockItem[]>([]);
+
+  React.useEffect(() => {
+    const checkStockLevels = async () => {
+      const stock = await getStock();
+      const lowItems = stock.filter(item => item.quantity <= item.minStock && item.minStock > 0);
+      setLowStockItems(lowItems);
+    };
+    checkStockLevels();
+  }, []);
+
+  const hasAlerts = lowStockItems.length > 0; 
 
   return (
     <Card className="h-full flex flex-col">
@@ -24,9 +36,20 @@ export function AlertsAndNotifications() {
       </CardHeader>
       <CardContent className="flex-grow flex flex-col gap-4">
         {hasAlerts ? (
-            <div className="border-l-4 border-destructive bg-destructive/10 p-4 rounded-r-lg">
-               {/* Estrutura de alerta mantida para futuras notificações */}
+          <div className="border-l-4 border-destructive bg-destructive/10 p-4 rounded-r-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <div>
+                <h4 className="font-semibold text-destructive">Estoque Baixo</h4>
+                <p className="text-sm text-destructive/80">
+                  {lowStockItems.length} item(ns) atingiram o estoque mínimo.
+                </p>
+                <Button variant="link" asChild className="p-0 h-auto mt-1 text-destructive">
+                   <Link href="/produtos">Verificar Produtos</Link>
+                </Button>
+              </div>
             </div>
+          </div>
         ) : (
              <div className="flex-grow flex items-center justify-center">
                 <p className="text-sm text-muted-foreground">Nenhum alerta no momento.</p>

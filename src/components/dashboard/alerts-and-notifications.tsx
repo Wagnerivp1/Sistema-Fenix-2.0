@@ -12,13 +12,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { getStock } from '@/lib/storage';
 import * as React from 'react';
+import type { StockItem } from '@/types';
 
 export function AlertsAndNotifications() {
     const [lowStockCount, setLowStockCount] = React.useState(0);
 
     React.useEffect(() => {
         const fetchStockAlerts = async () => {
-            const stock = await getStock();
+            const stock: StockItem[] = await getStock();
             const lowStockItems = stock.filter(item => item.minStock && item.quantity <= item.minStock);
             setLowStockCount(lowStockItems.length);
         };

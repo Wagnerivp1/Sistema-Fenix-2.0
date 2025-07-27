@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getStock, getCustomers, saveStock, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo } from '@/lib/storage';
-import type { StockItem, Customer, Sale, FinancialTransaction, User, CompanyInfo } from '@/types';
+import type { StockItem, Customer, Sale, FinancialTransaction, User, CompanyInfo, SaleItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,11 +25,6 @@ import { ManualSearchDialog } from '@/components/sales/manual-search-dialog';
 import { ChangeCalculatorDialog } from '@/components/sales/change-calculator-dialog';
 import { PrintSaleReceiptDialog } from '@/components/sales/print-sale-receipt-dialog';
 import { PixQrCodeDialog } from '@/components/sales/pix-qr-code-dialog';
-
-
-interface SaleItem extends StockItem {
-  saleQuantity: number;
-}
 
 export default function VendasPage() {
   const { toast } = useToast();

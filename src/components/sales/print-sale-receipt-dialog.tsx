@@ -18,7 +18,7 @@ import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
 import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
-import type { Sale, CompanyInfo } from '@/types';
+import type { Sale, CompanyInfo, SaleItem } from '@/types';
 
 interface PrintSaleReceiptDialogProps {
   isOpen: boolean;

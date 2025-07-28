@@ -52,8 +52,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     try {
       JsBarcode(canvasRef.current, item.barcode || item.id, {
         format: 'CODE128',
-        width: 1, // smaller width
-        height: 15, // smaller height
+        width: 1, 
+        height: 15,
         displayValue: true,
         fontSize: 8,
         margin: 0,
@@ -89,33 +89,37 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
         const x = marginX + (col * labelWidth);
         const y = marginY + (row * labelHeight);
+        const labelCenterX = x + (labelWidth / 2);
 
-        // Adiciona borda
-        doc.setDrawColor(200, 200, 200); // Cor da borda
+        // Borda da etiqueta
+        doc.setDrawColor(200, 200, 200);
         doc.rect(x, y, labelWidth, labelHeight);
 
-        const contentX = x + 5;
         let contentY = y + 5;
         
-        // Nome da empresa
+        // Nome da empresa (Centralizado)
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || '', contentX, contentY);
+        doc.text(companyInfo.name || '', labelCenterX, contentY, { align: 'center' });
         contentY += 5;
         
-        // Nome do produto
+        // Nome do produto (Centralizado)
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(item.name, contentX, contentY, { maxWidth: labelWidth - 15 });
+        doc.text(item.name, labelCenterX, contentY, { maxWidth: labelWidth - 10, align: 'center' });
         contentY += 8;
 
-        // Código de barras
-        doc.addImage(barcodeDataUrl, 'PNG', contentX, contentY, 50, 10);
-        
-        // Preço
+        // Código de barras (Centralizado)
+        const barcodeWidth = 50;
+        const barcodeHeight = 10;
+        const barcodeX = labelCenterX - (barcodeWidth / 2);
+        doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
+        contentY += barcodeHeight + 2;
+
+        // Preço (Centralizado abaixo do código de barras)
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, x + labelWidth - 5, y + labelHeight - 5, { align: 'right' });
+        doc.text(`R$ ${item.price.toFixed(2)}`, labelCenterX, contentY, { align: 'center' });
         
         count++;
       }

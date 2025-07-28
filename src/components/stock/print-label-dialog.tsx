@@ -18,6 +18,7 @@ import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
 import { useToast } from '@/hooks/use-toast';
 import type { StockItem } from '@/types';
+import { getCompanyInfo } from '@/lib/storage';
 
 interface PrintLabelDialogProps {
   item: StockItem | null;
@@ -36,7 +37,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     }
   }, [isOpen]);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!item || !canvasRef.current) {
       toast({
         variant: 'destructive',
@@ -46,13 +47,15 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       return;
     }
 
+    const companyInfo = await getCompanyInfo();
+
     try {
       JsBarcode(canvasRef.current, item.barcode || item.id, {
         format: 'CODE128',
-        width: 1.5,
-        height: 25,
+        width: 1.2,
+        height: 18,
         displayValue: true,
-        fontSize: 10,
+        fontSize: 8,
         margin: 0,
       });
 
@@ -64,7 +67,6 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         format: 'a4',
       });
 
-      // Layout para 2 colunas e 15 linhas (etiqueta 99mm x 19mm)
       const cols = 2;
       const rows = 15;
       const labelWidth = 99;
@@ -88,22 +90,31 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const x = marginX + (col * labelWidth);
         const y = marginY + (row * labelHeight);
 
-        // Alinhamento do conteúdo dentro da etiqueta
-        const contentX = x + 2;
-        const contentY = y + 3;
+        // Adiciona borda
+        doc.rect(x, y, labelWidth, labelHeight);
 
-        // Nome do produto (truncado se necessário)
+        const contentX = x + 3;
+        let contentY = y + 3;
+        
+        // Nome da empresa
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
+        doc.text(companyInfo.name || '', contentX, contentY);
+        contentY += 2;
+        
+        // Nome do produto
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.text(item.name, contentX, contentY, { maxWidth: labelWidth - 10 });
+        contentY += 1;
 
         // Código de barras
-        doc.addImage(barcodeDataUrl, 'PNG', contentX, contentY + 1.5, labelWidth - 10, 8);
+        doc.addImage(barcodeDataUrl, 'PNG', contentX, contentY, labelWidth - 15, 8);
         
         // Preço
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, contentX, contentY + 13);
+        doc.text(`R$ ${item.price.toFixed(2)}`, contentX, contentY + 11);
         
         count++;
       }

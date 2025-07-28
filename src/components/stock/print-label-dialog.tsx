@@ -52,8 +52,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     try {
       JsBarcode(canvasRef.current, item.barcode || item.id, {
         format: 'CODE128',
-        width: 1.2,
-        height: 18,
+        width: 1, // smaller width
+        height: 15, // smaller height
         displayValue: true,
         fontSize: 8,
         margin: 0,
@@ -68,9 +68,9 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       });
 
       const cols = 2;
-      const rows = 15;
-      const labelWidth = 99;
-      const labelHeight = 19;
+      const rows = 8;
+      const labelWidth = 99.1;
+      const labelHeight = 33.9;
       const pageHeight = 297;
       const pageWidth = 210;
       
@@ -91,30 +91,31 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const y = marginY + (row * labelHeight);
 
         // Adiciona borda
+        doc.setDrawColor(200, 200, 200); // Cor da borda
         doc.rect(x, y, labelWidth, labelHeight);
 
-        const contentX = x + 3;
-        let contentY = y + 3;
+        const contentX = x + 5;
+        let contentY = y + 5;
         
         // Nome da empresa
-        doc.setFontSize(6);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.text(companyInfo.name || '', contentX, contentY);
-        contentY += 2;
+        contentY += 5;
         
         // Nome do produto
-        doc.setFontSize(7);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(item.name, contentX, contentY, { maxWidth: labelWidth - 10 });
-        contentY += 1;
+        doc.text(item.name, contentX, contentY, { maxWidth: labelWidth - 15 });
+        contentY += 8;
 
         // Código de barras
-        doc.addImage(barcodeDataUrl, 'PNG', contentX, contentY, labelWidth - 15, 8);
+        doc.addImage(barcodeDataUrl, 'PNG', contentX, contentY, 50, 10);
         
         // Preço
-        doc.setFontSize(10);
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, contentX, contentY + 11);
+        doc.text(`R$ ${item.price.toFixed(2)}`, x + labelWidth - 5, y + labelHeight - 5, { align: 'right' });
         
         count++;
       }

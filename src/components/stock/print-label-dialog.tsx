@@ -95,31 +95,34 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         doc.setDrawColor(200, 200, 200);
         doc.rect(x, y, labelWidth, labelHeight);
 
-        let contentY = y + 5;
+        let contentY = y + 4; // Start position
         
-        // Nome da empresa (Centralizado)
-        doc.setFontSize(8);
+        // 1. Nome da empresa
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
         doc.text(companyInfo.name || '', labelCenterX, contentY, { align: 'center' });
-        contentY += 5;
-        
-        // Nome do produto (Centralizado)
+        contentY += 4;
+
+        // 2. Nome do produto
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(item.name, labelCenterX, contentY, { maxWidth: labelWidth - 10, align: 'center' });
-        contentY += 8;
+        // Split text to handle multiple lines and get its height
+        const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10);
+        doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
+        // Increment Y by the height of the product name text block
+        contentY += (doc.getTextDimensions(productNameLines).h) + 2;
 
-        // Código de barras (Centralizado)
-        const barcodeWidth = 50;
-        const barcodeHeight = 10;
+        // 3. Código de barras
+        const barcodeWidth = 45;
+        const barcodeHeight = 9; // Height includes text from JsBarcode
         const barcodeX = labelCenterX - (barcodeWidth / 2);
         doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
-        contentY += barcodeHeight + 2;
-
-        // Preço (Centralizado abaixo do código de barras)
+        
+        // 4. Preço - Posicionado na base da etiqueta
+        const priceY = y + labelHeight - 5;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, labelCenterX, contentY, { align: 'center' });
+        doc.text(`R$ ${item.price.toFixed(2)}`, labelCenterX, priceY, { align: 'center' });
         
         count++;
       }

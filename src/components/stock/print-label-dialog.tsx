@@ -64,12 +64,16 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         format: 'a4',
       });
 
-      const cols = 3;
-      const rows = 10;
-      const labelWidth = 63.5;
-      const labelHeight = 29.6;
-      const marginX = (210 - (cols * labelWidth)) / 2;
-      const marginY = (297 - (rows * labelHeight)) / 2;
+      // Layout para 2 colunas e 15 linhas (etiqueta 99mm x 19mm)
+      const cols = 2;
+      const rows = 15;
+      const labelWidth = 99;
+      const labelHeight = 19;
+      const pageHeight = 297;
+      const pageWidth = 210;
+      
+      const marginX = (pageWidth - (cols * labelWidth)) / 2;
+      const marginY = (pageHeight - (rows * labelHeight)) / 2;
 
       let count = 0;
       for (let i = 0; i < quantity; i++) {
@@ -84,18 +88,22 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const x = marginX + (col * labelWidth);
         const y = marginY + (row * labelHeight);
 
-        // Nome do produto
-        doc.setFontSize(8);
+        // Alinhamento do conteúdo dentro da etiqueta
+        const contentX = x + 2;
+        const contentY = y + 3;
+
+        // Nome do produto (truncado se necessário)
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
-        doc.text(item.name, x + 2, y + 5, { maxWidth: labelWidth - 4 });
+        doc.text(item.name, contentX, contentY, { maxWidth: labelWidth - 10 });
 
         // Código de barras
-        doc.addImage(barcodeDataUrl, 'PNG', x + 2, y + 8, labelWidth - 4, 10);
+        doc.addImage(barcodeDataUrl, 'PNG', contentX, contentY + 1.5, labelWidth - 10, 8);
         
         // Preço
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, x + 2, y + 25);
+        doc.text(`R$ ${item.price.toFixed(2)}`, contentX, contentY + 13);
         
         count++;
       }

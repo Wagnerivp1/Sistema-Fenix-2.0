@@ -54,9 +54,9 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     try {
       JsBarcode(canvasRef.current, item.barcode || item.id, {
         format: 'CODE128',
-        width: 1, 
+        width: 1,
         height: 20,
-        displayValue: false,
+        displayValue: false, // Remove o texto abaixo do código de barras
         fontSize: 10,
         margin: 0,
       });
@@ -119,10 +119,11 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
         contentY += barcodeHeight + 2;
         
-        // 4. Preço - Posicionado na base da etiqueta
-        const priceY = y + labelHeight - 4;
+        // 4. Preço - Posicionado na base da etiqueta, mas calculado após o código de barras
+        const priceY = y + labelHeight - 4; // Posição fixa na base
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
+        // Garante que o preço não sobreponha o código de barras, desenhando-o em sua posição final
         doc.text(`R$ ${item.price.toFixed(2)}`, labelCenterX, priceY, { align: 'center' });
         
         count++;

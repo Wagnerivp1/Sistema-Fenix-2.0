@@ -95,5 +95,43 @@
     "total": 60,
     "paymentMethod": "dinheiro",
     "observations": ""
+  },
+  {
+    "id": "SALE-1753909134949",
+    "date": "2025-07-30",
+    "time": "17:58:57",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "name": "xerox",
+        "price": 50,
+        "quantity": 1,
+        "id": "manual-1753909129749"
+      }
+    ],
+    "subtotal": 50,
+    "discount": 0,
+    "total": 50,
+    "paymentMethod": "pix",
+    "observations": ""
+  },
+  {
+    "id": "SALE-1753909292876",
+    "date": "2025-07-30",
+    "time": "18:01:59",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "name": "xerox",
+        "price": 10,
+        "quantity": 1,
+        "id": "manual-1753909249061"
+      }
+    ],
+    "subtotal": 10,
+    "discount": 0,
+    "total": 10,
+    "paymentMethod": "pix",
+    "observations": ""
   }
 ]

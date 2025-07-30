@@ -56,7 +56,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         format: 'CODE128',
         width: 1,
         height: 20,
-        displayValue: false, // Remove o texto abaixo do código de barras
+        displayValue: false,
         fontSize: 10,
         margin: 0,
       });
@@ -93,37 +93,33 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const y = marginY + (row * labelHeight);
         const labelCenterX = x + (labelWidth / 2);
 
-        // Borda da etiqueta para visualização e recorte
         doc.setDrawColor(200, 200, 200);
         doc.rect(x, y, labelWidth, labelHeight);
 
         let contentY = y + 5;
         
-        // 1. Nome da empresa
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.text(companyInfo.name || '', labelCenterX, contentY, { align: 'center' });
         contentY += 4;
 
-        // 2. Nome do produto
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10);
         doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
-        contentY += (doc.getTextDimensions(productNameLines).h) + 2;
-
-        // 3. Código de barras
-        const barcodeWidth = 40;
-        const barcodeHeight = 12; 
-        const barcodeX = labelCenterX - (barcodeWidth / 2);
-        doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
-        contentY += barcodeHeight + 2;
+        contentY += (doc.getTextDimensions(productNameLines).h);
         
-        // 4. Preço - Posicionado na base da etiqueta, mas calculado após o código de barras
-        const priceY = y + labelHeight - 4; // Posição fixa na base
+        // Ajuste no posicionamento do código de barras
+        const barcodeWidth = 40;
+        const barcodeHeight = 12;
+        const barcodeX = labelCenterX - (barcodeWidth / 2);
+        const barcodeY = contentY + 1; // Pequeno espaço após o nome do produto
+        doc.addImage(barcodeDataUrl, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
+        
+        // Posicionamento do preço na base da etiqueta
+        const priceY = y + labelHeight - 4;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        // Garante que o preço não sobreponha o código de barras, desenhando-o em sua posição final
         doc.text(`R$ ${item.price.toFixed(2)}`, labelCenterX, priceY, { align: 'center' });
         
         count++;

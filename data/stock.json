@@ -4,11 +4,23 @@
     "description": "JKGHIJHGH",
     "category": "peças",
     "quantity": 2,
-    "price": 4152554,
+    "price": 20,
     "costPrice": 100,
     "minStock": 0,
     "barcode": "PROD-1753658963068",
     "unitOfMeasure": "UN",
     "id": "PROD-1753658963068"
+  },
+  {
+    "name": "SSD PATRIOT 240 GIGAS SATA ",
+    "description": "sandisk ",
+    "category": "peças",
+    "quantity": 1,
+    "price": 120,
+    "costPrice": 380,
+    "minStock": 0,
+    "barcode": "PROD-1753662826873",
+    "unitOfMeasure": "UN",
+    "id": "PROD-1753662826873"
   }
 ]

@@ -29,11 +29,13 @@ interface PrintLabelDialogProps {
 export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialogProps) {
   const { toast } = useToast();
   const [quantity, setQuantity] = React.useState(1);
+  const [startPosition, setStartPosition] = React.useState(1);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   React.useEffect(() => {
     if (isOpen) {
       setQuantity(1);
+      setStartPosition(1);
     }
   }, [isOpen]);
 
@@ -53,9 +55,9 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       JsBarcode(canvasRef.current, item.barcode || item.id, {
         format: 'CODE128',
         width: 1, 
-        height: 15,
+        height: 20,
         displayValue: true,
-        fontSize: 8,
+        fontSize: 10,
         margin: 0,
       });
 
@@ -77,7 +79,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const marginX = (pageWidth - (cols * labelWidth)) / 2;
       const marginY = (pageHeight - (rows * labelHeight)) / 2;
 
-      let count = 0;
+      let count = startPosition - 1;
       for (let i = 0; i < quantity; i++) {
         if (count >= cols * rows) {
           doc.addPage();
@@ -91,14 +93,14 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const y = marginY + (row * labelHeight);
         const labelCenterX = x + (labelWidth / 2);
 
-        // Borda da etiqueta
+        // Borda da etiqueta para visualização e recorte
         doc.setDrawColor(200, 200, 200);
         doc.rect(x, y, labelWidth, labelHeight);
 
-        let contentY = y + 4; // Start position
+        let contentY = y + 5;
         
         // 1. Nome da empresa
-        doc.setFontSize(7);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.text(companyInfo.name || '', labelCenterX, contentY, { align: 'center' });
         contentY += 4;
@@ -106,20 +108,19 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         // 2. Nome do produto
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        // Split text to handle multiple lines and get its height
         const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10);
         doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
-        // Increment Y by the height of the product name text block
         contentY += (doc.getTextDimensions(productNameLines).h) + 2;
 
         // 3. Código de barras
-        const barcodeWidth = 45;
-        const barcodeHeight = 9; // Height includes text from JsBarcode
+        const barcodeWidth = 40;
+        const barcodeHeight = 12; 
         const barcodeX = labelCenterX - (barcodeWidth / 2);
         doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
+        contentY += barcodeHeight + 2;
         
         // 4. Preço - Posicionado na base da etiqueta
-        const priceY = y + labelHeight - 5;
+        const priceY = y + labelHeight - 4;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.text(`R$ ${item.price.toFixed(2)}`, labelCenterX, priceY, { align: 'center' });
@@ -140,6 +141,17 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       });
     }
   };
+  
+  const handleStartPositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (isNaN(value) || value < 1) {
+        setStartPosition(1);
+    } else if (value > 16) {
+        setStartPosition(16);
+    } else {
+        setStartPosition(value);
+    }
+  };
 
   return (
     <>
@@ -149,18 +161,31 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
           <DialogHeader>
             <DialogTitle>Imprimir Etiqueta</DialogTitle>
             <DialogDescription>
-              Quantas etiquetas de <span className="font-semibold">{item?.name}</span> você deseja imprimir?
+              Configure a impressão para o item <span className="font-semibold">{item?.name}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="quantity">Quantidade de Etiquetas</Label>
-            <Input 
-              id="quantity" 
-              type="number" 
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              min="1"
-            />
+          <div className="py-4 grid grid-cols-2 gap-4">
+             <div className="space-y-2">
+                <Label htmlFor="quantity">Quantidade de Etiquetas</Label>
+                <Input 
+                  id="quantity" 
+                  type="number" 
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  min="1"
+                />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="startPosition">Posição Inicial (1-16)</Label>
+                <Input 
+                  id="startPosition" 
+                  type="number" 
+                  value={startPosition}
+                  onChange={handleStartPositionChange}
+                  min="1"
+                  max="16"
+                />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>

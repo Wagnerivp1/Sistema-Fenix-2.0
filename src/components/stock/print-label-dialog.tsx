@@ -56,7 +56,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         format: 'CODE128',
         width: 1, 
         height: 20,
-        displayValue: true,
+        displayValue: false,
         fontSize: 10,
         margin: 0,
       });

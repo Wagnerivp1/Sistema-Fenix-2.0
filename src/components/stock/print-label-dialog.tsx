@@ -54,8 +54,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     try {
       JsBarcode(canvasRef.current, item.barcode || item.id, {
         format: 'CODE128',
-        width: 1,
-        height: 20,
+        width: 1.5,
+        height: 40,
         displayValue: false,
         fontSize: 10,
         margin: 0,
@@ -73,11 +73,14 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const rows = 8;
       const labelWidth = 99.1;
       const labelHeight = 33.9;
+      const verticalSpacing = 4; // 4mm de espaçamento vertical
+
+      const totalContentHeight = (rows * labelHeight) + ((rows - 1) * verticalSpacing);
       const pageHeight = 297;
       const pageWidth = 210;
       
       const marginX = (pageWidth - (cols * labelWidth)) / 2;
-      const marginY = (pageHeight - (rows * labelHeight)) / 2;
+      const marginY = (pageHeight - totalContentHeight) / 2;
 
       let count = startPosition - 1;
       for (let i = 0; i < quantity; i++) {
@@ -90,7 +93,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const col = count % cols;
 
         const x = marginX + (col * labelWidth);
-        const y = marginY + (row * labelHeight);
+        const y = marginY + (row * (labelHeight + verticalSpacing));
         const labelCenterX = x + (labelWidth / 2);
 
         doc.setDrawColor(200, 200, 200);
@@ -109,14 +112,13 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
         contentY += (doc.getTextDimensions(productNameLines).h);
         
-        // Ajuste no posicionamento do código de barras
         const barcodeWidth = 40;
         const barcodeHeight = 12;
         const barcodeX = labelCenterX - (barcodeWidth / 2);
-        const barcodeY = contentY + 1; // Pequeno espaço após o nome do produto
+        // Posição do código de barras um pouco mais para cima
+        const barcodeY = contentY;
         doc.addImage(barcodeDataUrl, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
         
-        // Posicionamento do preço na base da etiqueta
         const priceY = y + labelHeight - 4;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');

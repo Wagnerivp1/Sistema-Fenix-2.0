@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getStock, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo } from '@/lib/storage';
+import { getStock, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo, getSales } from '@/lib/storage';
 import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

@@ -18,7 +18,7 @@ import type { SaleItem } from '@/types';
 interface ManualAddItemDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddItem: (item: SaleItem) => void;
+  onAddItem: (item: Omit<SaleItem, 'id'>) => void;
 }
 
 const initialItemState = { name: '', price: 0, quantity: 1 };
@@ -42,7 +42,7 @@ export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem }: ManualA
 
   const handleAdd = () => {
     if (item.name && item.price > 0 && item.quantity > 0) {
-      onAddItem({ ...item, id: `manual-${Date.now()}` });
+      onAddItem(item);
       onOpenChange(false);
     }
   };

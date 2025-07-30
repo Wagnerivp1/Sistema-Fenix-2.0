@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo } from '@/lib/storage';
-import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem } from '@/types';
+import { getStock, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo } from '@/lib/storage';
+import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,18 +45,23 @@ export default function VendasPage() {
   const [saleToPrint, setSaleToPrint] = React.useState<Sale | null>(null);
   const [isPixDialogOpen, setIsPixDialogOpen] = React.useState(false);
   const [currentSaleId, setCurrentSaleId] = React.useState('');
+  
+  const [stock, setStock] = React.useState<StockItem[]>([]);
+  const [barcode, setBarcode] = React.useState('');
 
 
   React.useEffect(() => {
     const loadData = async () => {
       const loggedInUser = await getLoggedInUser();
       setCurrentUser(loggedInUser);
+      const stockData = await getStock();
+      setStock(stockData);
     };
     loadData();
     barcodeInputRef.current?.focus();
   }, []);
   
-  const addProductToSale = (productToAdd: SaleItem) => {
+  const addProductToSale = (productToAdd: Omit<SaleItem, 'id'> & { id?: string }) => {
     setSaleItems(prevItems => {
         const existingItem = prevItems.find(item => item.name.toLowerCase() === productToAdd.name.toLowerCase());
         if (existingItem) {
@@ -66,11 +71,31 @@ export default function VendasPage() {
                     : item
             );
         } else {
-            return [...prevItems, { ...productToAdd, id: `ITEM-${Date.now()}` }];
+            return [...prevItems, { ...productToAdd, id: productToAdd.id || `ITEM-${Date.now()}` } as SaleItem];
         }
     });
   };
   
+  const handleBarcodeScan = () => {
+    if (!barcode.trim()) return;
+    
+    const product = stock.find(item => item.barcode === barcode.trim());
+    
+    if (product) {
+        addProductToSale({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+        });
+        toast({ title: "Produto Adicionado", description: `${product.name} foi adicionado ao carrinho.` });
+    } else {
+        toast({ variant: "destructive", title: "Produto não encontrado", description: `Nenhum produto encontrado com o código ${barcode}.` });
+    }
+    
+    setBarcode(''); // Clear input for next scan
+  };
+
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
         const target = event.target as HTMLElement;
@@ -261,9 +286,11 @@ export default function VendasPage() {
                       <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input 
                         ref={barcodeInputRef}
-                        placeholder="Leitura de código de barras desativada" 
+                        placeholder="Escanear código de barras..." 
                         className="pl-10"
-                        disabled
+                        value={barcode}
+                        onChange={(e) => setBarcode(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleBarcodeScan()}
                       />
                   </div>
                   <Button variant="outline" onClick={() => setIsManualAddOpen(true)}>Adicionar Item Manual</Button>
@@ -372,8 +399,8 @@ export default function VendasPage() {
     </div>
     <ManualAddItemDialog
         isOpen={isManualAddOpen}
+        onAddItem={(item) => addProductToSale({ ...item, id: `manual-${Date.now()}`})}
         onOpenChange={setIsManualAddOpen}
-        onAddItem={addProductToSale}
     />
     <ChangeCalculatorDialog
         isOpen={isChangeCalcOpen}

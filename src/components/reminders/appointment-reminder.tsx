@@ -177,10 +177,16 @@ export function AppointmentReminder() {
       }
     };
 
-    const intervalId = setInterval(checkAppointments, 60000); // Check every minute
-    checkAppointments();
+    const initialCheckTimeout = setTimeout(() => {
+        checkAppointments(); // Initial check after a short delay
+        const intervalId = setInterval(checkAppointments, 60000); // Subsequent checks every minute
 
-    return () => clearInterval(intervalId);
+        // Cleanup function to clear the interval when the component unmounts
+        return () => clearInterval(intervalId);
+    }, 2000); // 2-second delay
+
+    // Cleanup for the timeout if the component unmounts before it fires
+    return () => clearTimeout(initialCheckTimeout);
   }, [toast, companyInfo, dismiss]);
 
   return null;

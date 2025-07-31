@@ -75,10 +75,9 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const labelHeight = 40;
       
       const pageWidth = 210;
-      const pageHeight = 297;
       
       // Margem superior e inferior fixas
-      const marginY = 130; 
+      const marginY = 13; 
       // Margem lateral centralizada
       const marginX = (pageWidth - (cols * labelWidth)) / 2;
 

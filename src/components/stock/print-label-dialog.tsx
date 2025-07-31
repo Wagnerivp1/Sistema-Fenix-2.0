@@ -56,7 +56,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         format: 'CODE128',
         width: 1.5,
         height: 40,
-        displayValue: false, // Remove o número abaixo do código de barras
+        displayValue: false,
         fontSize: 10,
         margin: 0,
       });
@@ -75,10 +75,12 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const labelHeight = 40;
       
       const pageWidth = 210;
+      const pageHeight = 297;
       
-      // Margens laterais centralizadas, margem superior e inferior fixas em 10mm (1cm)
+      // Margem superior e inferior fixas
+      const marginY = 130; 
+      // Margem lateral centralizada
       const marginX = (pageWidth - (cols * labelWidth)) / 2;
-      const marginY = 10; // Margem superior fixa de 1cm
 
       let count = startPosition - 1;
       for (let i = 0; i < quantity; i++) {
@@ -94,7 +96,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const y = marginY + (row * labelHeight);
         const labelCenterX = x + (labelWidth / 2);
 
-        // Desenha a borda da etiqueta
+        // Desenha a borda da etiqueta para facilitar o recorte
         doc.setDrawColor(200, 200, 200);
         doc.rect(x, y, labelWidth, labelHeight);
         
@@ -111,6 +113,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         doc.setFont('helvetica', 'normal');
         const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10);
         doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
+        // Ajusta a posição Y com base na altura do texto do nome do produto
         contentY += (doc.getTextDimensions(productNameLines).h) + 2;
         
         // 3. Código de Barras
@@ -118,6 +121,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         const barcodeHeight = 10;
         const barcodeX = labelCenterX - (barcodeWidth / 2);
         doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
+        contentY += barcodeHeight + 2; // Move Y para depois do código de barras
         
         // 4. Preço - Posicionado na parte inferior da etiqueta
         const priceY = y + labelHeight - 5;
@@ -144,7 +148,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
   
   const handleStartPositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
-    const maxLabels = 14; // 2 colunas * 7 linhas
+    const maxLabels = 14; 
     if (isNaN(value) || value < 1) {
         setStartPosition(1);
     } else if (value > maxLabels) {

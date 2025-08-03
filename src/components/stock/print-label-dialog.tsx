@@ -13,12 +13,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Printer } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Printer, Sheet, ReceiptText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
 import { useToast } from '@/hooks/use-toast';
-import type { StockItem } from '@/types';
+import type { StockItem, CompanyInfo } from '@/types';
 import { getCompanyInfo } from '@/lib/storage';
+import { cn } from '@/lib/utils';
 
 interface PrintLabelDialogProps {
   item: StockItem | null;
@@ -30,12 +32,14 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
   const { toast } = useToast();
   const [quantity, setQuantity] = React.useState(1);
   const [startPosition, setStartPosition] = React.useState(1);
+  const [printType, setPrintType] = React.useState<'a4' | 'thermal'>('a4');
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   React.useEffect(() => {
     if (isOpen) {
       setQuantity(1);
       setStartPosition(1);
+      setPrintType('a4');
     }
   }, [isOpen]);
 
@@ -49,92 +53,23 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       return;
     }
 
-    const companyInfo = await getCompanyInfo();
-
     try {
       JsBarcode(canvasRef.current, item.barcode || item.id, {
         format: 'CODE128',
         width: 1.5,
         height: 40,
         displayValue: false,
-        fontSize: 10,
         margin: 0,
       });
 
       const barcodeDataUrl = canvasRef.current.toDataURL('image/png');
-      
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
+      const companyInfo = await getCompanyInfo();
 
-      const cols = 2;
-      const rows = 7;
-      const labelWidth = 100;
-      const labelHeight = 40;
-      
-      const pageWidth = 210;
-      
-      // Margem superior e inferior fixas
-      const marginY = 13; 
-      // Margem lateral centralizada
-      const marginX = (pageWidth - (cols * labelWidth)) / 2;
-
-      let count = startPosition - 1;
-      for (let i = 0; i < quantity; i++) {
-        if (count >= cols * rows) {
-          doc.addPage();
-          count = 0;
-        }
-
-        const row = Math.floor(count / cols);
-        const col = count % cols;
-
-        const x = marginX + (col * labelWidth);
-        const y = marginY + (row * labelHeight);
-        const labelCenterX = x + (labelWidth / 2);
-
-        // Desenha a borda da etiqueta para facilitar o recorte
-        doc.setDrawColor(200, 200, 200);
-        doc.rect(x, y, labelWidth, labelHeight);
-        
-        let contentY = y + 7;
-
-        // 1. Nome da Empresa
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || '', labelCenterX, contentY, { align: 'center' });
-        contentY += 6;
-
-        // 2. Nome do Produto
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        const productNameLines = doc.splitTextToSize(item.name, labelWidth - 10);
-        doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
-        // Ajusta a posição Y com base na altura do texto do nome do produto
-        contentY += (doc.getTextDimensions(productNameLines).h) + 2;
-        
-        // 3. Código de Barras
-        const barcodeWidth = 40;
-        const barcodeHeight = 10;
-        const barcodeX = labelCenterX - (barcodeWidth / 2);
-        doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
-        contentY += barcodeHeight + 2; // Move Y para depois do código de barras
-        
-        // 4. Preço - Posicionado na parte inferior da etiqueta
-        const priceY = y + labelHeight - 5;
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item.price.toFixed(2)}`, labelCenterX, priceY, { align: 'center' });
-        
-        count++;
+      if (printType === 'a4') {
+        generateA4Pdf(barcodeDataUrl, companyInfo);
+      } else {
+        generateThermalPdf(barcodeDataUrl, companyInfo);
       }
-
-      doc.autoPrint();
-      doc.output('dataurlnewwindow');
-      onOpenChange(false);
-
     } catch (e) {
       console.error(e);
       toast({
@@ -143,6 +78,107 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         description: 'Verifique se o código de barras é válido.',
       });
     }
+  };
+
+  const generateA4Pdf = (barcodeDataUrl: string, companyInfo: CompanyInfo) => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const cols = 2;
+    const rows = 7;
+    const labelWidth = 100;
+    const labelHeight = 40;
+    
+    const pageWidth = 210;
+    const pageHeight = 297;
+    
+    const marginY = 13;
+    const verticalSpacing = 4;
+    const marginX = (pageWidth - (cols * labelWidth)) / 2;
+
+    let count = startPosition - 1;
+    for (let i = 0; i < quantity; i++) {
+      if (count >= cols * rows) {
+        doc.addPage();
+        count = 0;
+      }
+
+      const row = Math.floor(count / cols);
+      const col = count % cols;
+
+      const x = marginX + (col * labelWidth);
+      const y = marginY + (row * (labelHeight + verticalSpacing));
+      const labelCenterX = x + (labelWidth / 2);
+
+      let contentY = y + 7;
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(companyInfo.name || '', labelCenterX, contentY, { align: 'center' });
+      contentY += 6;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const productNameLines = doc.splitTextToSize(item!.name, labelWidth - 10);
+      doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
+      contentY += (doc.getTextDimensions(productNameLines).h) + 2;
+      
+      const barcodeWidth = 40;
+      const barcodeHeight = 10;
+      const barcodeX = labelCenterX - (barcodeWidth / 2);
+      doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
+      contentY += barcodeHeight + 2; 
+
+      const priceY = y + labelHeight - 5;
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`R$ ${item!.price.toFixed(2)}`, labelCenterX, priceY, { align: 'center' });
+      
+      count++;
+    }
+
+    doc.autoPrint();
+    doc.output('dataurlnewwindow');
+    onOpenChange(false);
+  }
+
+  const generateThermalPdf = (barcodeDataUrl: string, companyInfo: CompanyInfo) => {
+    // Approx 40mm height label
+    const doc = new jsPDF({ unit: 'mm', format: [80, 40 * quantity] });
+    const pageWidth = 80;
+
+    for (let i = 0; i < quantity; i++) {
+      const startY = (i * 40) + 5;
+      let y = startY;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(companyInfo.name || 'Sua Loja', pageWidth / 2, y, { align: 'center' });
+      y += 5;
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      const productNameLines = doc.splitTextToSize(item!.name, pageWidth - 10);
+      doc.text(productNameLines, pageWidth / 2, y, { align: 'center' });
+      y += (doc.getTextDimensions(productNameLines).h) + 2;
+
+      const barcodeWidth = 45;
+      const barcodeHeight = 10;
+      doc.addImage(barcodeDataUrl, 'PNG', (pageWidth - barcodeWidth) / 2, y, barcodeWidth, barcodeHeight);
+      y += barcodeHeight;
+      
+      const priceY = startY + 35;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`R$ ${item!.price.toFixed(2)}`, pageWidth / 2, priceY, { align: 'center' });
+    }
+
+    doc.autoPrint();
+    doc.output('dataurlnewwindow');
+    onOpenChange(false);
   };
   
   const handleStartPositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,34 +199,56 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Imprimir Etiqueta</DialogTitle>
+            <DialogTitle>Imprimir Etiqueta de Produto</DialogTitle>
             <DialogDescription>
               Configure a impressão para o item <span className="font-semibold">{item?.name}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 grid grid-cols-2 gap-4">
-             <div className="space-y-2">
-                <Label htmlFor="quantity">Quantidade de Etiquetas</Label>
-                <Input 
-                  id="quantity" 
-                  type="number" 
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  min="1"
-                />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="startPosition">Posição Inicial (1-14)</Label>
-                <Input 
-                  id="startPosition" 
-                  type="number" 
-                  value={startPosition}
-                  onChange={handleStartPositionChange}
-                  min="1"
-                  max="14"
-                />
+          
+          <div className="py-4 space-y-4">
+            <RadioGroup value={printType} onValueChange={(val) => setPrintType(val as 'a4' | 'thermal')}>
+              <div className="flex items-center space-x-2 p-3 border rounded-md has-[:checked]:bg-muted has-[:checked]:border-primary">
+                <RadioGroupItem value="a4" id="a4"/>
+                <Label htmlFor="a4" className="flex-1 cursor-pointer flex items-center gap-3">
+                  <Sheet className="w-5 h-5 text-primary"/>
+                  Impressora Comum (A4)
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 p-3 border rounded-md has-[:checked]:bg-muted has-[:checked]:border-primary">
+                <RadioGroupItem value="thermal" id="thermal"/>
+                <Label htmlFor="thermal" className="flex-1 cursor-pointer flex items-center gap-3">
+                  <ReceiptText className="w-5 h-5 text-primary"/>
+                  Impressora Térmica (80mm)
+                </Label>
+              </div>
+            </RadioGroup>
+
+            <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                  <Label htmlFor="quantity">Quantidade de Etiquetas</Label>
+                  <Input 
+                    id="quantity" 
+                    type="number" 
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    min="1"
+                  />
+              </div>
+               <div className={cn("space-y-2", printType === 'thermal' && 'opacity-50')}>
+                  <Label htmlFor="startPosition">Posição Inicial (1-14)</Label>
+                  <Input 
+                    id="startPosition" 
+                    type="number" 
+                    value={startPosition}
+                    onChange={handleStartPositionChange}
+                    min="1"
+                    max="14"
+                    disabled={printType === 'thermal'}
+                  />
+              </div>
             </div>
           </div>
+          
           <DialogFooter>
             <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button onClick={handlePrint}>

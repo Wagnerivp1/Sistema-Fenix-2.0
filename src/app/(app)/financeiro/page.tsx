@@ -103,7 +103,11 @@ export default function FinanceiroPage() {
   const [descriptionFilter, setDescriptionFilter] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
   const [categoryFilter, setCategoryFilter] = React.useState('all');
-  const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>(() => {
+    const start = startOfMonth(new Date());
+    const end = endOfMonth(new Date());
+    return { from: start, to: end };
+  });
   const [transactionToPrint, setTransactionToPrint] = React.useState<FinancialTransaction | null>(null);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = React.useState(false);
   const [saleForDetails, setSaleForDetails] = React.useState<Sale | null>(null);
@@ -193,6 +197,7 @@ export default function FinanceiroPage() {
 
     return allTransactions
         .filter(t => {
+            if (!t.date || isNaN(new Date(t.date).getTime())) return false;
             const transactionDate = parseISO(t.date);
             return isWithinInterval(transactionDate, { start: startOfCurrentMonth, end: endOfCurrentMonth });
         })

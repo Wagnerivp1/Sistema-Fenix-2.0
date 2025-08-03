@@ -1,5 +1,14 @@
 [
   {
+    "description": "COMPRA DE FONTE UNIVERAL ",
+    "amount": 20,
+    "date": "2025-08-03",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1754254650712"
+  },
+  {
     "type": "receita",
     "description": "Recebimento OS #7978",
     "amount": 220,

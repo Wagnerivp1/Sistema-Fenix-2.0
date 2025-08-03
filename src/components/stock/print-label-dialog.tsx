@@ -80,23 +80,20 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       format: 'a4',
     });
 
-    // User-defined specifications
     const cols = 2;
     const rows = 7;
-    const labelWidth = 100; // 10 cm
-    const labelHeight = 40;  // 4 cm
-    const marginTop = 13;   // 1.3 cm
-    const marginBottom = 13;// 1.3 cm
+    const labelWidth = 100;
+    const labelHeight = 40;
+    const marginTop = 13;
+    const marginBottom = 13;
     
-    // A4 page dimensions
     const pageWidth = 210;
     const pageHeight = 297;
 
     const totalLabelsPerPage = cols * rows;
 
-    // Calculate spacing and margins
     const printableHeight = pageHeight - marginTop - marginBottom;
-    const verticalSpacing = (printableHeight - (rows * labelHeight)) / (rows > 1 ? rows - 1 : 1);
+    const verticalSpacing = rows > 1 ? (printableHeight - (rows * labelHeight)) / (rows - 1) : 0;
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
     let count = startPosition - 1;
@@ -137,7 +134,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const barcodeHeight = 8;
       const barcodeX = labelCenterX - barcodeWidth / 2;
       doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
-      contentY += barcodeHeight + 2;
+      contentY += barcodeHeight + 4; // Aumentado o espaçamento
 
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');

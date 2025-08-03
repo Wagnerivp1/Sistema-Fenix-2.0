@@ -95,17 +95,17 @@ export default function DashboardPage() {
                 F2
               </kbd>
             </Button>
-            <Button variant="outline" onClick={() => setIsIncomeDialogOpen(true)}>
+            <Button variant="outline" className="bg-green-600 hover:bg-green-700 text-white border-green-700" onClick={() => setIsIncomeDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Adicionar Receita
-              <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-green-500 px-1.5 font-mono text-[10px] font-medium text-white opacity-100">
                 Shift+R
               </kbd>
             </Button>
-            <Button variant="outline" onClick={() => setIsExpenseDialogOpen(true)}>
+            <Button variant="destructive" onClick={() => setIsExpenseDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Adicionar Despesa
-              <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              <kbd className="ml-4 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-red-700 px-1.5 font-mono text-[10px] font-medium text-white opacity-100">
                 Shift+D
               </kbd>
             </Button>

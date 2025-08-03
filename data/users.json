@@ -22,28 +22,6 @@
     "theme": "dark"
   },
   {
-    "id": "default_user_tech",
-    "name": "Técnico Padrão",
-    "login": "tech",
-    "password": "tech",
-    "permissions": {
-      "accessDashboard": true,
-      "accessClients": true,
-      "accessServiceOrders": true,
-      "accessInventory": true,
-      "accessSales": true,
-      "accessFinancials": false,
-      "accessSettings": false,
-      "accessDangerZone": false,
-      "accessAgenda": true,
-      "canEdit": true,
-      "canDelete": false,
-      "canViewPasswords": false,
-      "canManageUsers": false
-    },
-    "theme": "dark"
-  },
-  {
     "name": "Wagner Lopes",
     "login": "wagner123",
     "password": "jl001215",

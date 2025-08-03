@@ -92,11 +92,12 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     const labelWidth = 100;
     const labelHeight = 40;
     
-    const pageWidth = 210;
     const pageHeight = 297;
+    const pageWidth = 210;
     
-    const marginY = 13;
-    const verticalSpacing = 4;
+    // Using fixed top margin as requested
+    const marginY = 13; 
+    const verticalSpacing = 0; // No extra spacing as labels are contiguous
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
     let count = startPosition - 1;
@@ -124,14 +125,15 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       doc.setFont('helvetica', 'normal');
       const productNameLines = doc.splitTextToSize(item!.name, labelWidth - 10);
       doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
-      contentY += (doc.getTextDimensions(productNameLines).h) + 2;
+      contentY += (doc.getTextDimensions(productNameLines).h);
       
       const barcodeWidth = 40;
       const barcodeHeight = 10;
       const barcodeX = labelCenterX - (barcodeWidth / 2);
-      doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
-      contentY += barcodeHeight + 2; 
-
+      // Ensure barcode doesn't overlap with price
+      const barcodeY = y + labelHeight - 5 - barcodeHeight - 2;
+      doc.addImage(barcodeDataUrl, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
+      
       const priceY = y + labelHeight - 5;
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
@@ -146,12 +148,17 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
   }
 
   const generateThermalPdf = (barcodeDataUrl: string, companyInfo: CompanyInfo) => {
-    // Approx 40mm height label
-    const doc = new jsPDF({ unit: 'mm', format: [80, 40 * quantity] });
+    // Define a fixed height for each label to generate separate pages if needed
+    const labelHeight = 40;
+    const doc = new jsPDF({ unit: 'mm', format: [80, labelHeight] });
     const pageWidth = 80;
 
     for (let i = 0; i < quantity; i++) {
-      const startY = (i * 40) + 5;
+      if (i > 0) {
+        doc.addPage();
+      }
+      
+      const startY = 5;
       let y = startY;
 
       doc.setFontSize(11);
@@ -168,12 +175,12 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const barcodeWidth = 45;
       const barcodeHeight = 10;
       doc.addImage(barcodeDataUrl, 'PNG', (pageWidth - barcodeWidth) / 2, y, barcodeWidth, barcodeHeight);
-      y += barcodeHeight;
+      y += barcodeHeight + 2;
       
-      const priceY = startY + 35;
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`R$ ${item!.price.toFixed(2)}`, pageWidth / 2, priceY, { align: 'center' });
+      // Position price dynamically below barcode
+      doc.text(`R$ ${item!.price.toFixed(2)}`, pageWidth / 2, y, { align: 'center' });
     }
 
     doc.autoPrint();

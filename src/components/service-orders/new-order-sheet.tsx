@@ -810,339 +810,340 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      {onOpenChange && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      {!onOpenChange && trigger}
-      <DialogContent className="sm:max-w-4xl w-full h-[95vh] flex flex-col p-0">
-        <DialogHeader className="p-4 flex-shrink-0 border-b">
-          <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
-          <DialogDescription>
-            {isEditing ? `Altere os dados do atendimento, adicione serviços e peças.` : 'Preencha os dados para registrar um novo atendimento.'}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="flex-grow min-h-0">
-            <Tabs defaultValue="general" className="h-full flex flex-col">
-                <div className="px-4 pt-4">
-                  <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="general">Dados Gerais</TabsTrigger>
-                      <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
-                      <TabsTrigger value="notes">Comentários</TabsTrigger>
-                  </TabsList>
-                </div>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        {onOpenChange && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+        {!onOpenChange && trigger}
+        <DialogContent className="sm:max-w-4xl w-full h-[95vh] flex flex-col p-0">
+          <DialogHeader className="p-4 flex-shrink-0 border-b">
+            <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? `Altere os dados do atendimento, adicione serviços e peças.` : 'Preencha os dados para registrar um novo atendimento.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-grow min-h-0">
+              <Tabs defaultValue="general" className="h-full flex flex-col">
+                  <div className="px-4 pt-4">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="general">Dados Gerais</TabsTrigger>
+                        <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
+                        <TabsTrigger value="notes">Comentários</TabsTrigger>
+                    </TabsList>
+                  </div>
 
-                <div className="flex-grow min-h-0">
-                  <ScrollArea className="h-full">
-                    <div className="p-4 pt-2 space-y-3">
-                      <TabsContent value="general" className="mt-0 space-y-3">
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="col-span-2">
-                                <Label htmlFor="customer">Cliente</Label>
-                                <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                  <div className="flex-grow min-h-0">
+                    <ScrollArea className="h-full">
+                      <div className="p-4 pt-2 space-y-3">
+                        <TabsContent value="general" className="mt-0 space-y-3">
+                            <div className="grid grid-cols-3 gap-3">
+                              <div className="col-span-2">
+                                  <Label htmlFor="customer">Cliente</Label>
+                                  <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione um cliente" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {customers.map((c) => (
+                                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="status">Status</Label>
+                                <Select value={status} onValueChange={handleStatusChange}>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Selecione um cliente" />
+                                    <SelectValue placeholder="Status" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {customers.map((c) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
+                                    <SelectItem value="Aberta">Aberta</SelectItem>
+                                    <SelectItem value="Em análise">Em análise</SelectItem>
+                                    <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
+                                    <SelectItem value="Aprovado">Aprovado</SelectItem>
+                                    <SelectItem value="Em conserto">Em conserto</SelectItem>
+                                    <SelectItem value="Finalizar">Finalizar...</SelectItem>
+                                    <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
+                                    <SelectItem value="Finalizado">Finalizado</SelectItem>
+                                    <SelectItem value="Entregue">Entregue</SelectItem>
                                   </SelectContent>
                                 </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="status">Status</Label>
-                              <Select value={status} onValueChange={handleStatusChange}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Aberta">Aberta</SelectItem>
-                                  <SelectItem value="Em análise">Em análise</SelectItem>
-                                  <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
-                                  <SelectItem value="Aprovado">Aprovado</SelectItem>
-                                  <SelectItem value="Em conserto">Em conserto</SelectItem>
-                                  <SelectItem value="Finalizar">Finalizar...</SelectItem>
-                                  <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
-                                  <SelectItem value="Finalizado">Finalizado</SelectItem>
-                                  <SelectItem value="Entregue">Entregue</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-4 gap-3">
-                            <div>
-                              <Label htmlFor="type">Tipo</Label>
-                              <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={(e) => setEquipmentType(e.target.value)} />
-                            </div>
-                            <div>
-                              <Label htmlFor="brand">Marca</Label>
-                              <Input id="brand" placeholder="Ex: Dell" value={equipment.brand} onChange={handleEquipmentChange} />
-                            </div>
-                            <div>
-                              <Label htmlFor="model">Modelo</Label>
-                              <Input id="model" placeholder="Ex: Inspiron 15" value={equipment.model} onChange={handleEquipmentChange} />
-                            </div>
-                            <div>
-                              <Label htmlFor="serial">Nº de Série</Label>
-                              <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
-                            </div>
-                          </div>
-                           <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-1.5">
-                                <Label htmlFor="reported_problem">Defeito Reclamado</Label>
-                                <Textarea
-                                  id="reported_problem"
-                                  placeholder="Descrição do problema relatado pelo cliente."
-                                  value={reportedProblem}
-                                  onChange={(e) => setReportedProblem(e.target.value)}
-                                  rows={3}
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <Label htmlFor="accessories">Acessórios Entregues</Label>
-                                <Textarea
-                                  id="accessories"
-                                  placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
-                                  value={accessories}
-                                  onChange={(e) => setAccessories(e.target.value)}
-                                  rows={3}
-                                />
                               </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 items-end">
+                            <div className="grid grid-cols-4 gap-3">
+                              <div>
+                                <Label htmlFor="type">Tipo</Label>
+                                <Input id="type" placeholder="Ex: Notebook" value={equipmentType} onChange={(e) => setEquipmentType(e.target.value)} />
+                              </div>
+                              <div>
+                                <Label htmlFor="brand">Marca</Label>
+                                <Input id="brand" placeholder="Ex: Dell" value={equipment.brand} onChange={handleEquipmentChange} />
+                              </div>
+                              <div>
+                                <Label htmlFor="model">Modelo</Label>
+                                <Input id="model" placeholder="Ex: Inspiron 15" value={equipment.model} onChange={handleEquipmentChange} />
+                              </div>
+                              <div>
+                                <Label htmlFor="serial">Nº de Série</Label>
+                                <Input id="serial" placeholder="Serial" value={equipment.serial} onChange={handleEquipmentChange} />
+                              </div>
+                            </div>
+                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="warranty">Garantia Aplicada</Label>
-                                    <Input 
-                                        id="warranty" 
-                                        placeholder="Ex: 90 dias"
-                                        value={warranty}
-                                        onChange={(e) => setWarranty(e.target.value)}
-                                    />
-                                    <p className="text-xs text-muted-foreground">Exemplos: 90 dias, 6 meses, 1 ano, Sem garantia</p>
+                                  <Label htmlFor="reported_problem">Defeito Reclamado</Label>
+                                  <Textarea
+                                    id="reported_problem"
+                                    placeholder="Descrição do problema relatado pelo cliente."
+                                    value={reportedProblem}
+                                    onChange={(e) => setReportedProblem(e.target.value)}
+                                    rows={3}
+                                  />
                                 </div>
-                            </div>
-                      </TabsContent>
-                      <TabsContent value="items" className="mt-0 space-y-3">
-                        <div className="grid grid-cols-1 gap-1.5">
-                          <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
-                          <Textarea
-                            id="technical_report"
-                            placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
-                            value={technicalReport}
-                            onChange={(e) => setTechnicalReport(e.target.value)}
-                            rows={4}
-                          />
-                        </div>
-                        <div>
-                          <div className="space-y-2">
-                            {items.map((item) => (
-                              <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
-                                <div className="flex-grow grid grid-cols-12 gap-2 items-center">
-                                    <span className="col-span-5 truncate">{item.description}</span>
-                                    <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
-                                    <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
-                                    <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
-                                    <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                                <div className="space-y-1.5">
+                                  <Label htmlFor="accessories">Acessórios Entregues</Label>
+                                  <Textarea
+                                    id="accessories"
+                                    placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
+                                    value={accessories}
+                                    onChange={(e) => setAccessories(e.target.value)}
+                                    rows={3}
+                                  />
                                 </div>
-                                <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
                               </div>
-                            ))}
+                              <div className="grid grid-cols-2 gap-3 items-end">
+                                  <div className="space-y-1.5">
+                                      <Label htmlFor="warranty">Garantia Aplicada</Label>
+                                      <Input 
+                                          id="warranty" 
+                                          placeholder="Ex: 90 dias"
+                                          value={warranty}
+                                          onChange={(e) => setWarranty(e.target.value)}
+                                      />
+                                      <p className="text-xs text-muted-foreground">Exemplos: 90 dias, 6 meses, 1 ano, Sem garantia</p>
+                                  </div>
+                              </div>
+                        </TabsContent>
+                        <TabsContent value="items" className="mt-0 space-y-3">
+                          <div className="grid grid-cols-1 gap-1.5">
+                            <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
+                            <Textarea
+                              id="technical_report"
+                              placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
+                              value={technicalReport}
+                              onChange={(e) => setTechnicalReport(e.target.value)}
+                              rows={4}
+                            />
                           </div>
-                          <div className="mt-2 flex items-end gap-2 p-2 rounded-md border border-dashed">
-                             <div className="flex-grow">
-                                <Label htmlFor="newItemDescription" className="text-xs">Descrição</Label>
-                                {newItem.type === 'part' ? (
-                                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                                                {newItem.description || "Selecione uma peça..."}
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                            <Command>
-                                                <CommandInput 
-                                                    placeholder="Procurar peça..."
-                                                    value={newItem.description}
-                                                    onValueChange={(search) => setNewItem({...newItem, description: search })}
-                                                />
-                                                <CommandList>
-                                                    <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
-                                                    <CommandGroup>
-                                                        {stock.map((stockItem) => (
-                                                            <CommandItem
-                                                                key={stockItem.id}
-                                                                value={stockItem.name}
-                                                                onSelect={(currentValue) => {
-                                                                    const selected = stock.find(s => s.name.toLowerCase() === currentValue.toLowerCase());
-                                                                    if (selected) {
-                                                                        setNewItem({ ...newItem, description: selected.name, unitPrice: selected.price });
-                                                                    }
-                                                                    setOpenCombobox(false);
-                                                                }}
-                                                            >
-                                                                <Check className={cn("mr-2 h-4 w-4", newItem.description.toLowerCase() === stockItem.name.toLowerCase() ? "opacity-100" : "opacity-0")} />
-                                                                {stockItem.name}
-                                                            </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
-                                                </CommandList>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-                                ) : (
-                                    <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
-                                )}
-                            </div>
-
-                            <div className="w-28">
-                              <Label className="text-xs">Tipo</Label>
-                              <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value, description: '', unitPrice: 0 })}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="service">Serviço</SelectItem>
-                                  <SelectItem value="part">Peça</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="w-16">
-                              <Label htmlFor="newItemQty" className="text-xs">Qtd</Label>
-                              <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
-                            </div>
-                            <div className="w-24">
-                              <Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label>
-                              <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} disabled={newItem.type === 'part'} />
-                            </div>
-                            <Button onClick={handleAddItem} size="sm">Adicionar</Button>
-                          </div>
-                          <div className="mt-4 text-right">
-                            <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
-                          </div>
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="notes" className="mt-0">
-                         <div className="space-y-4">
+                          <div>
                             <div className="space-y-2">
-                                <Label>Histórico de Comentários</Label>
-                                <div className="border rounded-md p-2 bg-muted/30 max-h-60 overflow-y-auto space-y-3">
-                                    {internalNotes.length > 0 ? (
-                                        internalNotes.map((note, index) => (
-                                            <div key={index} className="text-sm p-2 bg-background rounded-md shadow-sm">
-                                                <p className="font-semibold">{note.comment}</p>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    - {note.user} em {new Date(note.date).toLocaleString('pt-BR')}
-                                                </p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground p-4 text-center">Nenhum comentário interno ainda.</p>
-                                    )}
+                              {items.map((item) => (
+                                <div key={item.id} className="flex items-center gap-2 p-2 rounded-md border">
+                                  <div className="flex-grow grid grid-cols-12 gap-2 items-center">
+                                      <span className="col-span-5 truncate">{item.description}</span>
+                                      <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
+                                      <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
+                                      <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
+                                      <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                                  </div>
+                                  <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
                                 </div>
+                              ))}
                             </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="new_comment">Adicionar Novo Comentário</Label>
-                                <div className="flex items-start gap-2">
-                                    <Textarea
-                                        id="new_comment"
-                                        placeholder="Adicione observações para a equipe..."
-                                        value={newComment}
-                                        onChange={(e) => setNewComment(e.target.value)}
-                                        rows={3}
-                                    />
-                                    <Button onClick={handleAddComment} className="mt-auto">Adicionar</Button>
-                                </div>
-                                <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
+                            <div className="mt-2 flex items-end gap-2 p-2 rounded-md border border-dashed">
+                               <div className="flex-grow">
+                                  <Label htmlFor="newItemDescription" className="text-xs">Descrição</Label>
+                                  {newItem.type === 'part' ? (
+                                      <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                          <PopoverTrigger asChild>
+                                              <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                                                  {newItem.description || "Selecione uma peça..."}
+                                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                              </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                              <Command>
+                                                  <CommandInput 
+                                                      placeholder="Procurar peça..."
+                                                      value={newItem.description}
+                                                      onValueChange={(search) => setNewItem({...newItem, description: search })}
+                                                  />
+                                                  <CommandList>
+                                                      <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
+                                                      <CommandGroup>
+                                                          {stock.map((stockItem) => (
+                                                              <CommandItem
+                                                                  key={stockItem.id}
+                                                                  value={stockItem.name}
+                                                                  onSelect={(currentValue) => {
+                                                                      const selected = stock.find(s => s.name.toLowerCase() === currentValue.toLowerCase());
+                                                                      if (selected) {
+                                                                          setNewItem({ ...newItem, description: selected.name, unitPrice: selected.price });
+                                                                      }
+                                                                      setOpenCombobox(false);
+                                                                  }}
+                                                              >
+                                                                  <Check className={cn("mr-2 h-4 w-4", newItem.description.toLowerCase() === stockItem.name.toLowerCase() ? "opacity-100" : "opacity-0")} />
+                                                                  {stockItem.name}
+                                                              </CommandItem>
+                                                          ))}
+                                                      </CommandGroup>
+                                                  </CommandList>
+                                              </Command>
+                                          </PopoverContent>
+                                      </Popover>
+                                  ) : (
+                                      <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                                  )}
+                              </div>
+
+                              <div className="w-28">
+                                <Label className="text-xs">Tipo</Label>
+                                <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value, description: '', unitPrice: 0 })}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="service">Serviço</SelectItem>
+                                    <SelectItem value="part">Peça</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="w-16">
+                                <Label htmlFor="newItemQty" className="text-xs">Qtd</Label>
+                                <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
+                              </div>
+                              <div className="w-24">
+                                <Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label>
+                                <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} disabled={newItem.type === 'part'} />
+                              </div>
+                              <Button onClick={handleAddItem} size="sm">Adicionar</Button>
                             </div>
-                        </div>
-                      </TabsContent>
-                    </div>
-                  </ScrollArea>
-                </div>
-            </Tabs>
-        </div>
-        
-        <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-between">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                 <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrada')}><Printer className="mr-2 h-4 w-4" />Recibo Entrada</Button>
-                 <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Gerar Orçamento</Button>
-                 <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrega')}><Printer className="mr-2 h-4 w-4" />Recibo Entrega</Button>
-            </div>
-            <div className="flex justify-end gap-2 mt-4 sm:mt-0">
-                <DialogClose asChild>
-                    <Button variant="ghost">Cancelar</Button>
-                </DialogClose>
-                <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
-            </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-    <Dialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>Finalizar e Cobrar Ordem de Serviço</DialogTitle>
-                <DialogDescription>
-                    Confirme o valor final e a forma de pagamento.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <div className="flex justify-between items-center text-lg">
-                    <span>Subtotal</span>
-                    <span className="font-semibold">R$ {calculateTotal().toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                    <Label htmlFor="discount">Desconto (R$)</Label>
-                    <Input
-                        id="discount"
-                        type="number"
-                        className="w-28 h-9 text-right font-medium"
-                        value={paymentDetails.discount || ''}
-                        onChange={(e) => setPaymentDetails(p => ({...p, discount: parseFloat(e.target.value) || 0}))}
-                    />
-                </div>
-                <div className="flex justify-between items-center text-xl font-bold text-primary border-t pt-2">
-                    <span>Total a Pagar</span>
-                    <span>R$ {(calculateTotal() - paymentDetails.discount).toFixed(2)}</span>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
-                     <Select value={paymentDetails.paymentMethod} onValueChange={(v) => setPaymentDetails(p => ({ ...p, paymentMethod: v }))}>
-                        <SelectTrigger id="paymentMethod">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                            <SelectItem value="PIX">PIX</SelectItem>
-                            <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                            <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-            <DialogFooter>
-                <Button variant="ghost" onClick={() => handleFinalize(false)}>Salvar como Pendente</Button>
-                <Button onClick={() => handleFinalize(true)}>Confirmar Pagamento</Button>
-            </DialogFooter>
+                            <div className="mt-4 text-right">
+                              <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
+                            </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="notes" className="mt-0">
+                           <div className="space-y-4">
+                              <div className="space-y-2">
+                                  <Label>Histórico de Comentários</Label>
+                                  <div className="border rounded-md p-2 bg-muted/30 max-h-60 overflow-y-auto space-y-3">
+                                      {internalNotes.length > 0 ? (
+                                          internalNotes.map((note, index) => (
+                                              <div key={index} className="text-sm p-2 bg-background rounded-md shadow-sm">
+                                                  <p className="font-semibold">{note.comment}</p>
+                                                  <p className="text-xs text-muted-foreground mt-1">
+                                                      - {note.user} em {new Date(note.date).toLocaleString('pt-BR')}
+                                                  </p>
+                                              </div>
+                                          ))
+                                      ) : (
+                                          <p className="text-sm text-muted-foreground p-4 text-center">Nenhum comentário interno ainda.</p>
+                                      )}
+                                  </div>
+                              </div>
+                               <div className="space-y-2">
+                                  <Label htmlFor="new_comment">Adicionar Novo Comentário</Label>
+                                  <div className="flex items-start gap-2">
+                                      <Textarea
+                                          id="new_comment"
+                                          placeholder="Adicione observações para a equipe..."
+                                          value={newComment}
+                                          onChange={(e) => setNewComment(e.target.value)}
+                                          rows={3}
+                                      />
+                                      <Button onClick={handleAddComment} className="mt-auto">Adicionar</Button>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
+                              </div>
+                          </div>
+                        </TabsContent>
+                      </div>
+                    </ScrollArea>
+                  </div>
+              </Tabs>
+          </div>
+          
+          <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-between">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                   <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrada')}><Printer className="mr-2 h-4 w-4" />Recibo Entrada</Button>
+                   <Button variant="outline" size="sm" onClick={() => handlePrint('Orçamento')}><Printer className="mr-2 h-4 w-4" />Gerar Orçamento</Button>
+                   <Button variant="outline" size="sm" onClick={() => handlePrint('Recibo de Entrega')}><Printer className="mr-2 h-4 w-4" />Recibo Entrega</Button>
+              </div>
+              <div className="flex justify-end gap-2 mt-4 sm:mt-0">
+                  <DialogClose asChild>
+                      <Button variant="ghost">Cancelar</Button>
+                  </DialogClose>
+                  <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
+              </div>
+          </DialogFooter>
         </DialogContent>
-    </Dialog>
+      </Dialog>
+      <Dialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                  <DialogTitle>Finalizar e Cobrar Ordem de Serviço</DialogTitle>
+                  <DialogDescription>
+                      Confirme o valor final e a forma de pagamento.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                  <div className="flex justify-between items-center text-lg">
+                      <span>Subtotal</span>
+                      <span className="font-semibold">R$ {calculateTotal().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                      <Label htmlFor="discount">Desconto (R$)</Label>
+                      <Input
+                          id="discount"
+                          type="number"
+                          className="w-28 h-9 text-right font-medium"
+                          value={paymentDetails.discount || ''}
+                          onChange={(e) => setPaymentDetails(p => ({...p, discount: parseFloat(e.target.value) || 0}))}
+                      />
+                  </div>
+                  <div className="flex justify-between items-center text-xl font-bold text-primary border-t pt-2">
+                      <span>Total a Pagar</span>
+                      <span>R$ {(calculateTotal() - paymentDetails.discount).toFixed(2)}</span>
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
+                       <Select value={paymentDetails.paymentMethod} onValueChange={(v) => setPaymentDetails(p => ({ ...p, paymentMethod: v }))}>
+                          <SelectTrigger id="paymentMethod">
+                              <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                              <SelectItem value="PIX">PIX</SelectItem>
+                              <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                              <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                          </SelectContent>
+                      </Select>
+                  </div>
+              </div>
+              <DialogFooter>
+                  <Button variant="ghost" onClick={() => handleFinalize(false)}>Salvar como Pendente</Button>
+                  <Button onClick={() => handleFinalize(true)}>Confirmar Pagamento</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
 
 
-    <AlertDialog open={isManualAddDialogOpen} onOpenChange={setIsManualAddDialogOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Peça fora do estoque</AlertDialogTitle>
-          <AlertDialogDescription>
-            A peça <span className="font-bold">"{manualAddItem?.description}"</span> não consta no estoque. Deseja adicioná-la mesmo assim?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setManualAddItem(null)}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={confirmManualAdd}>Adicionar</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+      <AlertDialog open={isManualAddDialogOpen} onOpenChange={setIsManualAddDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Peça fora do estoque</AlertDialogTitle>
+            <AlertDialogDescription>
+              A peça <span className="font-bold">"{manualAddItem?.description}"</span> não consta no estoque. Deseja adicioná-la mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setManualAddItem(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmManualAdd}>Adicionar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

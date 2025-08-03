@@ -97,7 +97,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     
     // Using fixed top margin as requested
     const marginY = 13; 
-    const verticalSpacing = 0; // No extra spacing as labels are contiguous
+    const verticalSpacing = 4; // 4mm spacing
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
     let count = startPosition - 1;
@@ -148,39 +148,52 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
   }
 
   const generateThermalPdf = (barcodeDataUrl: string, companyInfo: CompanyInfo) => {
-    // Define a fixed height for each label to generate separate pages if needed
-    const labelHeight = 40;
-    const doc = new jsPDF({ unit: 'mm', format: [80, labelHeight] });
     const pageWidth = 80;
+    const margin = 5;
+    
+    // Calculate total height needed
+    let totalHeight = 0;
+    const tempDoc = new jsPDF(); // Use a temporary doc for measurements
+    
+    totalHeight += 5; // top margin
+    totalHeight += tempDoc.getTextDimensions(companyInfo.name || 'Sua Loja', { fontSize: 11, fontStyle: 'bold' }).h;
+    totalHeight += 5;
+    const productNameLines = tempDoc.splitTextToSize(item!.name, pageWidth - 10);
+    totalHeight += tempDoc.getTextDimensions(productNameLines, { fontSize: 9 }).h;
+    totalHeight += 2;
+    totalHeight += 10; // barcode height
+    totalHeight += 2;
+    totalHeight += tempDoc.getTextDimensions(`R$ ${item!.price.toFixed(2)}`, { fontSize: 14, fontStyle: 'bold' }).h;
+    totalHeight += 5; // bottom margin
+
+    const doc = new jsPDF({ unit: 'mm', format: [pageWidth, totalHeight] });
 
     for (let i = 0; i < quantity; i++) {
-      if (i > 0) {
-        doc.addPage();
-      }
-      
-      const startY = 5;
-      let y = startY;
+        if (i > 0) {
+            doc.addPage([pageWidth, totalHeight]);
+        }
+        
+        const startY = 5;
+        let y = startY;
 
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text(companyInfo.name || 'Sua Loja', pageWidth / 2, y, { align: 'center' });
-      y += 5;
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      const productNameLines = doc.splitTextToSize(item!.name, pageWidth - 10);
-      doc.text(productNameLines, pageWidth / 2, y, { align: 'center' });
-      y += (doc.getTextDimensions(productNameLines).h) + 2;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(companyInfo.name || 'Sua Loja', pageWidth / 2, y, { align: 'center' });
+        y += 5;
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(productNameLines, pageWidth / 2, y, { align: 'center' });
+        y += (tempDoc.getTextDimensions(productNameLines, { fontSize: 9 }).h) + 2;
 
-      const barcodeWidth = 45;
-      const barcodeHeight = 10;
-      doc.addImage(barcodeDataUrl, 'PNG', (pageWidth - barcodeWidth) / 2, y, barcodeWidth, barcodeHeight);
-      y += barcodeHeight + 2;
-      
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      // Position price dynamically below barcode
-      doc.text(`R$ ${item!.price.toFixed(2)}`, pageWidth / 2, y, { align: 'center' });
+        const barcodeWidth = 45;
+        const barcodeHeight = 10;
+        doc.addImage(barcodeDataUrl, 'PNG', (pageWidth - barcodeWidth) / 2, y, barcodeWidth, barcodeHeight);
+        y += barcodeHeight + 2;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`R$ ${item!.price.toFixed(2)}`, pageWidth / 2, y, { align: 'center' });
     }
 
     doc.autoPrint();

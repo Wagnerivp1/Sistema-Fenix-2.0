@@ -133,5 +133,24 @@
     "total": 10,
     "paymentMethod": "pix",
     "observations": ""
+  },
+  {
+    "id": "SALE-1754250804462",
+    "date": "2025-08-03",
+    "time": "16:53:24",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "name": "teste",
+        "price": 10,
+        "quantity": 1,
+        "id": "manual-1754250789276"
+      }
+    ],
+    "subtotal": 10,
+    "discount": 0,
+    "total": 10,
+    "paymentMethod": "credito",
+    "observations": "teste "
   }
 ]

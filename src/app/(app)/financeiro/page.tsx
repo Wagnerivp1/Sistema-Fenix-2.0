@@ -102,6 +102,7 @@ export default function FinanceiroPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [descriptionFilter, setDescriptionFilter] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
+  const [categoryFilter, setCategoryFilter] = React.useState('all');
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
   const [transactionToPrint, setTransactionToPrint] = React.useState<FinancialTransaction | null>(null);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = React.useState(false);
@@ -167,13 +168,14 @@ export default function FinanceiroPage() {
       const transactionDate = t.date ? parseISO(`${t.date}T00:00:00Z`) : null;
       const matchesDescription = t.description.toLowerCase().includes(descriptionFilter.toLowerCase());
       const matchesType = typeFilter === 'all' || t.type === typeFilter;
+      const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
       const matchesDate = !dateRange || 
                           !dateRange.from || 
                           (transactionDate && transactionDate >= dateRange.from && (!dateRange.to || transactionDate <= dateRange.to));
 
-      return matchesDescription && matchesType && matchesDate;
+      return matchesDescription && matchesType && matchesDate && matchesCategory;
     });
-  }, [allTransactions, descriptionFilter, typeFilter, dateRange]);
+  }, [allTransactions, descriptionFilter, typeFilter, categoryFilter, dateRange]);
 
 
   const totalReceitas = filteredTransactions
@@ -325,7 +327,6 @@ export default function FinanceiroPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Input
                     placeholder="Filtrar por descrição..."
-                    className="lg:col-span-2"
                     value={descriptionFilter}
                     onChange={(e) => setDescriptionFilter(e.target.value)}
                 />
@@ -338,6 +339,21 @@ export default function FinanceiroPage() {
                         <SelectItem value="receita">Receitas</SelectItem>
                         <SelectItem value="despesa">Despesas</SelectItem>
                     </SelectContent>
+                </Select>
+                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as Categorias</SelectItem>
+                    <SelectItem value="Venda de Produto">Receita por Venda</SelectItem>
+                    <SelectItem value="Venda de Serviço">Receita por OS</SelectItem>
+                    <SelectItem value="Outra Receita">Outras Receitas</SelectItem>
+                    <SelectItem value="Compra de Peça">Compra de Peça</SelectItem>
+                    <SelectItem value="Salário">Salário</SelectItem>
+                    <SelectItem value="Aluguel">Aluguel</SelectItem>
+                    <SelectItem value="Outra Despesa">Outras Despesas</SelectItem>
+                  </SelectContent>
                 </Select>
                  <Popover>
                   <PopoverTrigger asChild>

@@ -80,27 +80,43 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       format: 'a4',
     });
 
+    // User-defined specifications
     const cols = 2;
-    const rows = 10; // Ajustado para a nova altura
     const labelWidth = 100;
-    const labelHeight = 28; // Altura reduzida para ser mais retangular
+    const labelHeight = 40;
+    const marginTop = 13; // 1.3 cm
+    const marginBottom = 13; // 1.3 cm
     
+    // A4 page dimensions
     const pageHeight = 297;
     const pageWidth = 210;
-    
-    const marginTop = 13;
-    const verticalSpacing = 1.7; // Espaçamento ajustado
+
+    // Calculate how many rows can fit
+    const printableHeight = pageHeight - marginTop - marginBottom;
+    const rows = Math.floor(printableHeight / labelHeight); // Now calculates rows based on height
+
+    const totalLabelsPerPage = cols * rows;
+
+    // Calculate spacing and margins
+    const verticalSpacing = (printableHeight - (rows * labelHeight)) / (rows > 1 ? rows - 1 : 1);
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
     let count = startPosition - 1;
     for (let i = 0; i < quantity; i++) {
-      if (count >= cols * rows) {
+      if (count >= totalLabelsPerPage * (doc.internal.getNumberOfPages())) {
         doc.addPage();
-        count = 0;
+        count = (doc.internal.getNumberOfPages() - 1) * totalLabelsPerPage;
       }
 
-      const row = Math.floor(count / cols);
-      const col = count % cols;
+      const currentPage = Math.floor(count / totalLabelsPerPage) + 1;
+      if (currentPage > doc.internal.getNumberOfPages()) {
+        doc.addPage();
+      }
+      doc.setPage(currentPage);
+
+      const pageCount = count % totalLabelsPerPage;
+      const row = Math.floor(pageCount / cols);
+      const col = pageCount % cols;
 
       const x = marginX + (col * labelWidth);
       const y = marginTop + (row * (labelHeight + verticalSpacing));
@@ -117,17 +133,17 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       doc.setFont('helvetica', 'normal');
       const productNameLines = doc.splitTextToSize(item!.name, labelWidth - 10);
       doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
-      contentY += (doc.getTextDimensions(productNameLines).h) + 1;
+      contentY += (doc.getTextDimensions(productNameLines).h) + 2;
       
       const barcodeWidth = 35;
       const barcodeHeight = 8;
       const barcodeX = labelCenterX - barcodeWidth / 2;
       doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
-      
-      const priceY = y + labelHeight - 4;
+      contentY += barcodeHeight + 2;
+
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`R$ ${item!.price.toFixed(2)}`, labelCenterX, priceY, { align: 'center' });
+      doc.text(`R$ ${item!.price.toFixed(2)}`, labelCenterX, contentY, { align: 'center' });
       
       count++;
     }
@@ -139,7 +155,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
   const handleStartPositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
-    const maxLabels = 20; 
+    const maxLabels = 12; // 2 cols * 6 rows
     if (isNaN(value) || value < 1) {
         setStartPosition(1);
     } else if (value > maxLabels) {
@@ -174,14 +190,14 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
                   />
               </div>
                <div className="space-y-2">
-                  <Label htmlFor="startPosition">Posição Inicial (1-20)</Label>
+                  <Label htmlFor="startPosition">Posição Inicial (1-12)</Label>
                   <Input 
                     id="startPosition" 
                     type="number" 
                     value={startPosition}
                     onChange={handleStartPositionChange}
                     min="1"
-                    max="20"
+                    max="12"
                   />
               </div>
             </div>

@@ -81,15 +81,15 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     });
 
     const cols = 2;
-    const rows = 7;
+    const rows = 10; // Ajustado para a nova altura
     const labelWidth = 100;
-    const labelHeight = 40;
+    const labelHeight = 28; // Altura reduzida para ser mais retangular
     
     const pageHeight = 297;
     const pageWidth = 210;
     
     const marginTop = 13;
-    const verticalSpacing = 4;
+    const verticalSpacing = 1.7; // Espaçamento ajustado
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
     let count = startPosition - 1;
@@ -106,27 +106,26 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const y = marginTop + (row * (labelHeight + verticalSpacing));
       const labelCenterX = x + (labelWidth / 2);
 
-      let contentY = y + 7;
+      let contentY = y + 5;
 
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
       doc.text(companyInfo.name || '', labelCenterX, contentY, { align: 'center' });
-      contentY += 6;
+      contentY += 4;
 
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       const productNameLines = doc.splitTextToSize(item!.name, labelWidth - 10);
       doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
-      contentY += (doc.getTextDimensions(productNameLines).h) + 2;
+      contentY += (doc.getTextDimensions(productNameLines).h) + 1;
       
-      const barcodeWidth = 40;
-      const barcodeHeight = 10;
+      const barcodeWidth = 35;
+      const barcodeHeight = 8;
       const barcodeX = labelCenterX - barcodeWidth / 2;
       doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
-      contentY += barcodeHeight + 2;
       
-      const priceY = y + labelHeight - 5;
-      doc.setFontSize(16);
+      const priceY = y + labelHeight - 4;
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.text(`R$ ${item!.price.toFixed(2)}`, labelCenterX, priceY, { align: 'center' });
       
@@ -140,7 +139,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
   const handleStartPositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
-    const maxLabels = 14; 
+    const maxLabels = 20; 
     if (isNaN(value) || value < 1) {
         setStartPosition(1);
     } else if (value > maxLabels) {
@@ -175,14 +174,14 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
                   />
               </div>
                <div className="space-y-2">
-                  <Label htmlFor="startPosition">Posição Inicial (1-14)</Label>
+                  <Label htmlFor="startPosition">Posição Inicial (1-20)</Label>
                   <Input 
                     id="startPosition" 
                     type="number" 
                     value={startPosition}
                     onChange={handleStartPositionChange}
                     min="1"
-                    max="14"
+                    max="20"
                   />
               </div>
             </div>

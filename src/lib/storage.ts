@@ -46,7 +46,7 @@ async function saveData<T>(dataType: string, data: T): Promise<void> {
 
 
 // This key is for sessionStorage
-const LOGGED_IN_USER_KEY = 'assistec_logged_in_user';
+const LOGGED_IN_USER_KEY = 'fenix_logged_in_user';
 
 // --- Data Functions ---
 
@@ -108,7 +108,7 @@ export const getLoggedInUser = (): User | null => {
 }
 
 // Settings functions (remains in localStorage for per-user preference)
-const SETTINGS_KEY = 'app_settings';
+const SETTINGS_KEY = 'fenix_app_settings';
 export const getSettings = (): { defaultWarrantyDays: number } => {
     if (typeof window === 'undefined') {
         return { defaultWarrantyDays: 90 };
@@ -129,3 +129,4 @@ export const saveSettings = (settings: { defaultWarrantyDays: number }) => {
         window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     }
 };
+

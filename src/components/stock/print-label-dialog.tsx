@@ -13,14 +13,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Printer, Sheet, ReceiptText } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
 import { useToast } from '@/hooks/use-toast';
 import type { StockItem, CompanyInfo } from '@/types';
 import { getCompanyInfo } from '@/lib/storage';
-import { cn } from '@/lib/utils';
 
 interface PrintLabelDialogProps {
   item: StockItem | null;
@@ -32,14 +30,12 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
   const { toast } = useToast();
   const [quantity, setQuantity] = React.useState(1);
   const [startPosition, setStartPosition] = React.useState(1);
-  const [printType, setPrintType] = React.useState<'a4' | 'thermal'>('a4');
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   React.useEffect(() => {
     if (isOpen) {
       setQuantity(1);
       setStartPosition(1);
-      setPrintType('a4');
     }
   }, [isOpen]);
 
@@ -65,11 +61,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const barcodeDataUrl = canvasRef.current.toDataURL('image/png');
       const companyInfo = await getCompanyInfo();
 
-      if (printType === 'a4') {
-        generateA4Pdf(barcodeDataUrl, companyInfo);
-      } else {
-        generateThermalPdf(barcodeDataUrl, companyInfo);
-      }
+      generateA4Pdf(barcodeDataUrl, companyInfo);
+
     } catch (e) {
       console.error(e);
       toast({
@@ -95,8 +88,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     const pageHeight = 297;
     const pageWidth = 210;
     
-    const marginY = 13; 
-    const verticalSpacing = 0;
+    const marginTop = 13;
+    const verticalSpacing = 4;
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
     let count = startPosition - 1;
@@ -110,7 +103,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const col = count % cols;
 
       const x = marginX + (col * labelWidth);
-      const y = marginY + (row * (labelHeight + verticalSpacing));
+      const y = marginTop + (row * (labelHeight + verticalSpacing));
       const labelCenterX = x + (labelWidth / 2);
 
       let contentY = y + 7;
@@ -124,12 +117,13 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       doc.setFont('helvetica', 'normal');
       const productNameLines = doc.splitTextToSize(item!.name, labelWidth - 10);
       doc.text(productNameLines, labelCenterX, contentY, { align: 'center' });
-      contentY += (doc.getTextDimensions(productNameLines).h);
+      contentY += (doc.getTextDimensions(productNameLines).h) + 2;
       
       const barcodeWidth = 40;
       const barcodeHeight = 10;
-      const barcodeY = y + labelHeight - 5 - barcodeHeight - 4;
-      doc.addImage(barcodeDataUrl, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
+      const barcodeX = labelCenterX - barcodeWidth / 2;
+      doc.addImage(barcodeDataUrl, 'PNG', barcodeX, contentY, barcodeWidth, barcodeHeight);
+      contentY += barcodeHeight + 2;
       
       const priceY = y + labelHeight - 5;
       doc.setFontSize(16);
@@ -144,60 +138,6 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     onOpenChange(false);
   }
 
-  const generateThermalPdf = (barcodeDataUrl: string, companyInfo: CompanyInfo) => {
-    const pageWidth = 80;
-    const margin = 5;
-    
-    // Use a temporary document to calculate heights
-    const tempDoc = new jsPDF(); 
-    
-    let totalHeight = 0;
-    totalHeight += 5; // top margin
-    totalHeight += tempDoc.getTextDimensions(companyInfo.name || 'Sua Loja', { fontSize: 11, fontStyle: 'bold' }).h;
-    totalHeight += 5;
-    const productNameLines = tempDoc.splitTextToSize(item!.name, pageWidth - 10);
-    totalHeight += tempDoc.getTextDimensions(productNameLines, { fontSize: 9 }).h;
-    totalHeight += 2; // space
-    totalHeight += 12; // barcode height + space
-    totalHeight += 2; // space
-    totalHeight += tempDoc.getTextDimensions(`R$ ${item!.price.toFixed(2)}`, { fontSize: 14, fontStyle: 'bold' }).h;
-    totalHeight += 5; // bottom margin
-
-    const doc = new jsPDF({ unit: 'mm', format: [pageWidth, totalHeight] });
-
-    for (let i = 0; i < quantity; i++) {
-        if (i > 0) {
-            doc.addPage([pageWidth, totalHeight]);
-        }
-        
-        const startY = 5;
-        let y = startY;
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.name || 'Sua Loja', pageWidth / 2, y, { align: 'center' });
-        y += 5;
-        
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(productNameLines, pageWidth / 2, y, { align: 'center' });
-        y += (tempDoc.getTextDimensions(productNameLines, { fontSize: 9 }).h) + 2;
-
-        const barcodeWidth = 45;
-        const barcodeHeight = 10;
-        doc.addImage(barcodeDataUrl, 'PNG', (pageWidth - barcodeWidth) / 2, y, barcodeWidth, barcodeHeight);
-        y += barcodeHeight + 2;
-        
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${item!.price.toFixed(2)}`, pageWidth / 2, y, { align: 'center' });
-    }
-    
-    doc.autoPrint();
-    doc.output('dataurlnewwindow');
-    onOpenChange(false);
-  };
-  
   const handleStartPositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     const maxLabels = 14; 
@@ -223,23 +163,6 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
           </DialogHeader>
           
           <div className="py-4 space-y-4">
-            <RadioGroup value={printType} onValueChange={(val) => setPrintType(val as 'a4' | 'thermal')}>
-              <div className="flex items-center space-x-2 p-3 border rounded-md has-[:checked]:bg-muted has-[:checked]:border-primary">
-                <RadioGroupItem value="a4" id="a4"/>
-                <Label htmlFor="a4" className="flex-1 cursor-pointer flex items-center gap-3">
-                  <Sheet className="w-5 h-5 text-primary"/>
-                  Impressora Comum (A4)
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-md has-[:checked]:bg-muted has-[:checked]:border-primary">
-                <RadioGroupItem value="thermal" id="thermal"/>
-                <Label htmlFor="thermal" className="flex-1 cursor-pointer flex items-center gap-3">
-                  <ReceiptText className="w-5 h-5 text-primary"/>
-                  Impressora Térmica (80mm)
-                </Label>
-              </div>
-            </RadioGroup>
-
             <div className="grid grid-cols-2 gap-4">
                <div className="space-y-2">
                   <Label htmlFor="quantity">Quantidade de Etiquetas</Label>
@@ -251,7 +174,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
                     min="1"
                   />
               </div>
-               <div className={cn("space-y-2", printType === 'thermal' && 'opacity-50')}>
+               <div className="space-y-2">
                   <Label htmlFor="startPosition">Posição Inicial (1-14)</Label>
                   <Input 
                     id="startPosition" 
@@ -260,7 +183,6 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
                     onChange={handleStartPositionChange}
                     min="1"
                     max="14"
-                    disabled={printType === 'thermal'}
                   />
               </div>
             </div>

@@ -152,5 +152,24 @@
     "total": 10,
     "paymentMethod": "credito",
     "observations": "teste "
+  },
+  {
+    "id": "SALE-1754251939525",
+    "date": "2025-08-03",
+    "time": "17:12:30",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "name": "sdsds",
+        "price": 212,
+        "quantity": 1,
+        "id": "manual-1754251933829"
+      }
+    ],
+    "subtotal": 212,
+    "discount": 0,
+    "total": 212,
+    "paymentMethod": "pix",
+    "observations": ""
   }
 ]

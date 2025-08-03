@@ -82,5 +82,33 @@
       "serviceType": "buscar computador ",
       "status": "concluido"
     }
+  },
+  {
+    "id": "APT-1754251737149",
+    "title": "ARMAZEM NATUREBA - buscar computador ",
+    "start": "2025-08-03",
+    "end": "",
+    "allDay": true,
+    "extendedProps": {
+      "customerId": "1752525160400-0.21769594684339721",
+      "customerName": "ARMAZEM NATUREBA",
+      "address": "AVENIDA BRASIL",
+      "serviceType": "buscar computador ",
+      "status": "concluido"
+    }
+  },
+  {
+    "id": "APT-1754251779925",
+    "title": "CESTA BASICA SANTA RITA - buscar computador ",
+    "start": "2025-08-03T17:10",
+    "end": "2025-08-03T17:11",
+    "allDay": true,
+    "extendedProps": {
+      "status": "agendado",
+      "customerId": "1752524196787-0.21135363759111103",
+      "serviceType": "buscar computador ",
+      "customerName": "CESTA BASICA SANTA RITA",
+      "address": "Avenida Minas gerais"
+    }
   }
 ]

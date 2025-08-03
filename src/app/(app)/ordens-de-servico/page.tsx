@@ -259,7 +259,7 @@ function ServiceOrdersComponent() {
     let result = [...orders];
 
     if (statusFilter === 'ativas') {
-      result = result.filter(o => o.status !== 'Finalizado' && o.status !== 'Entregue');
+      result = result.filter(o => o.status !== 'Finalizado' && o.status !== 'Entregue' && o.status !== 'Cancelada');
     } else if (statusFilter === 'finalizadas') {
       result = result.filter(o => o.status === 'Finalizado' || o.status === 'Entregue');
     } else if (statusFilter !== 'todas') {
@@ -387,7 +387,7 @@ function ServiceOrdersComponent() {
                             Exibir Comentários
                           </DropdownMenuItem>
                           <DropdownMenuItem>Imprimir</DropdownMenuItem>
-                          {(order.status === 'Finalizado' || order.status === 'Entregue') && (
+                          {(order.status === 'Finalizado' || order.status === 'Entregue' || order.status === 'Aguardando Pagamento') && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>

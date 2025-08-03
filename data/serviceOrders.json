@@ -520,56 +520,31 @@
     "paymentDate": "2025-07-18T17:30:53.343Z"
   },
   {
-    "client": {
-      "name": "CIAMÁQUINAS OFFCE",
-      "phone": "43999341490",
-      "email": "TESTE@TESTE.COM",
-      "address": "AVENIDA PRANÁ",
-      "document": "",
-      "id": "1752779276427-0.007760477428592205"
-    },
-    "equipment": {
-      "type": "IMPRESSORA",
-      "brand": "EPSON",
-      "model": "L395",
-      "serialNumber": "X2NZ374777",
-      "id": "1752779410369-0.5975560298355475",
-      "clientId": "1752779276427-0.007760477428592205"
-    },
-    "entryDate": "2025-07-17T19:10:10.367Z",
-    "defectReported": "NÃO IMPRIME ",
-    "status": "Aguardando Pagamento",
-    "accessories": "SEM ACESSORIO",
-    "technicalDiagnosis": "EFETUADO DIAGNOSTICO CONSTADO QUE A CABEÇA DE IMPRESSÃO ESTA DANIFICADA SENDO NECESSARIO A TROCA.",
-    "servicesPerformed": [
-      {
-        "id": "id_1753207459084_c59xlc8te",
-        "description": "MANUTENÇAO PREVENTIVA ",
-        "value": 70
-      }
-    ],
-    "usedParts": [
-      {
-        "id": "id_1752862983852_1p9v4c2bq",
-        "part": {
-          "name": "CABEÇA DE IMPRESSÃO EPSON",
-          "quantity": 0,
-          "costPrice": 10,
-          "sellPrice": 280,
-          "minStock": 0,
-          "barcode": "P-555747",
-          "id": "1752862961623-0.439644185555747"
-        },
-        "quantity": 1,
-        "unitPrice": 280
-      }
-    ],
-    "comments": [],
-    "serviceValue": 70,
-    "partsValue": 280,
-    "totalValue": 350,
     "id": "1752779410369-0.32822606573457314",
-    "completionDate": "2025-07-22T18:03:00.114Z"
+    "customerName": "ARMAZEM NATUREBA",
+    "equipment": "IMPRESSORA EPSON L395",
+    "reportedProblem": "",
+    "status": "Finalizado",
+    "date": "2025-08-03",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "paymentMethod": "Dinheiro",
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 120,
+        "type": "service",
+        "id": 1754252186326
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "SEM ACESSORIO",
+    "serialNumber": "X2NZ374777",
+    "warranty": "90 dias",
+    "attendant": "Wagner Lopes"
   },
   {
     "client": {

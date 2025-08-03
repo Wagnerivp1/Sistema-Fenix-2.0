@@ -11,7 +11,7 @@ import {
   X,
   FileText,
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import jsPDF from 'jspdf';
@@ -186,10 +186,19 @@ export default function FinanceiroPage() {
     .reduce((acc, t) => acc + t.amount, 0);
   const saldoPeriodo = totalReceitas - totalDespesas;
   
-  const calculateBalance = () => {
-    return allTransactions.reduce((acc, t) => {
-        return t.type === 'receita' ? acc + t.amount : acc - t.amount;
-    }, 0);
+  const calculateCurrentMonthBalance = () => {
+    const today = new Date();
+    const startOfCurrentMonth = startOfMonth(today);
+    const endOfCurrentMonth = endOfMonth(today);
+
+    return allTransactions
+        .filter(t => {
+            const transactionDate = parseISO(t.date);
+            return isWithinInterval(transactionDate, { start: startOfCurrentMonth, end: endOfCurrentMonth });
+        })
+        .reduce((acc, t) => {
+            return t.type === 'receita' ? acc + t.amount : acc - t.amount;
+        }, 0);
   };
   
   const handlePrintClick = (transaction: FinancialTransaction) => {
@@ -216,29 +225,32 @@ export default function FinanceiroPage() {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 15;
+      let currentY = 40;
       const fontColor = '#000000';
+      const primaryColor = '#e0e7ff';
+      let textX = margin;
+      const logoWidth = 25;
+      const logoHeight = 25;
+      const logoSpacing = 5;
 
-      // Cabeçalho
+      // Header
       if (logoImage) {
-        doc.addImage(logoImage, 'PNG', margin, 12, 25, 25);
+        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, 12, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
       }
       
-      const titleX = logoImage ? margin + 30 : pageWidth / 2;
-      const titleAlign = logoImage ? 'left' : 'center';
-
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.text(companyInfo.name || "Relatório Financeiro", titleX, 20, { align: titleAlign });
+      doc.text(companyInfo.name || "Relatório Financeiro", textX, 20);
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const period = dateRange?.from ? 
                     `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${dateRange.to ? format(dateRange.to, 'dd/MM/yyyy') : 'hoje'}` :
                     'Período: Todas as Transações';
-      doc.text(period, titleX, 26, { align: titleAlign });
+      doc.text(period, textX, 26);
 
-      // Resumo
-      let currentY = 40;
+      // Summary
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.text("Resumo do Período", margin, currentY);
@@ -257,7 +269,7 @@ export default function FinanceiroPage() {
       });
       currentY = doc.lastAutoTable.finalY + 10;
       
-      // Tabela de Transações
+      // Transactions Table
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.text("Transações Detalhadas", margin, currentY);
@@ -287,7 +299,7 @@ export default function FinanceiroPage() {
       img.onload = () => generateContent(img);
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");
-        generateContent();
+        generateContent(null);
       };
     } else {
       generateContent();
@@ -310,14 +322,14 @@ export default function FinanceiroPage() {
             </CardDescription>
           </div>
           <div className="text-right">
-            <p className="text-sm text-muted-foreground">Saldo Geral</p>
+            <p className="text-sm text-muted-foreground">Saldo do Mês</p>
             <p
               className={cn(
                 'text-2xl font-bold',
-                calculateBalance() >= 0 ? 'text-green-500' : 'text-destructive'
+                calculateCurrentMonthBalance() >= 0 ? 'text-green-500' : 'text-destructive'
               )}
             >
-              R$ {calculateBalance().toFixed(2)}
+              R$ {calculateCurrentMonthBalance().toFixed(2)}
             </p>
           </div>
         </div>

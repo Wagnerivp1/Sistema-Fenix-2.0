@@ -284,11 +284,11 @@
     "customerName": "CESTA BASICA SANTA RITA",
     "equipment": "COMPUTADOR HP ALL IN ONE",
     "reportedProblem": "",
-    "status": "Finalizada",
+    "status": "Aberta",
     "date": "2025-07-26",
-    "totalValue": 20,
+    "totalValue": 140,
     "discount": 0,
-    "finalValue": 20,
+    "finalValue": 140,
     "paymentMethod": "Dinheiro",
     "items": [
       {
@@ -297,6 +297,13 @@
         "unitPrice": 20,
         "type": "part",
         "id": 1753502694943
+      },
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 120,
+        "type": "service",
+        "id": 1754252690950
       }
     ],
     "internalNotes": [],

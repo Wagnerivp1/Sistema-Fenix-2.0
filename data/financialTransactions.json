@@ -1,5 +1,15 @@
 [
   {
+    "type": "receita",
+    "description": "Recebimento OS #7978",
+    "amount": 140,
+    "date": "2025-08-03",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "relatedServiceOrderId": "1752591164026-0.16961268312957978",
+    "id": "FIN-1754252717635"
+  },
+  {
     "id": "FIN-1754251950939",
     "type": "receita",
     "description": "Venda de Produtos (PDV)",

@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MoreHorizontal, Undo2, MessageSquare } from 'lucide-react';
+import { MoreHorizontal, Undo2, MessageSquare, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +28,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
@@ -39,8 +45,8 @@ import {
   SelectGroup,
   SelectLabel,
 } from '@/components/ui/select';
-import { getServiceOrders, saveServiceOrders, getCustomers, getLoggedInUser } from '@/lib/storage';
-import type { Customer, ServiceOrder, User, InternalNote } from '@/types';
+import { getServiceOrders, saveServiceOrders, getCustomers, getLoggedInUser, getFinancialTransactions, saveFinancialTransactions } from '@/lib/storage';
+import type { Customer, ServiceOrder, User, InternalNote, FinancialTransaction } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { ViewCommentsDialog } from '@/components/service-orders/view-comments-dialog';
 import { cn } from '@/lib/utils';
@@ -62,9 +68,9 @@ const allStatuses: ServiceOrder['status'][] = [
   'Em análise', 
   'Aguardando',
   'Aguardando peça',
-  'Aguardando Pagamento',
   'Aprovado',
   'Em conserto',
+  'Aguardando Pagamento',
   'Finalizado', 
   'Entregue', 
   'Cancelada'
@@ -255,6 +261,55 @@ function ServiceOrdersComponent() {
     });
   };
 
+  const handleQuickStatusChange = async (orderId: string, newStatus: ServiceOrder['status']) => {
+    let updatedOrders = orders.map(o => 
+      o.id === orderId ? { ...o, status: newStatus } : o
+    );
+
+    if (newStatus === 'Entregue') {
+        updatedOrders = updatedOrders.map(o => o.id === orderId && !o.deliveredDate ? { ...o, deliveredDate: new Date().toISOString().split('T')[0] } : o);
+    }
+
+    await saveServiceOrders(updatedOrders);
+    setOrders(updatedOrders);
+    toast({
+      title: 'Status Alterado!',
+      description: `A OS #${orderId.slice(-4)} foi atualizada para "${newStatus}".`,
+    });
+  };
+
+  const handleAddPayment = async (order: ServiceOrder) => {
+    const finalValue = order.finalValue ?? order.totalValue;
+
+    if (!finalValue || finalValue <= 0) {
+      // If no value, just finalize
+      await handleQuickStatusChange(order.id, 'Finalizado');
+      return;
+    }
+
+    // Create financial transaction
+    const transaction: Omit<FinancialTransaction, 'id'> = {
+      type: 'receita',
+      description: `Recebimento OS #${order.id.slice(-4)}`,
+      amount: finalValue,
+      date: new Date().toISOString().split('T')[0],
+      category: 'Venda de Serviço',
+      paymentMethod: order.paymentMethod || 'Dinheiro',
+      relatedServiceOrderId: order.id,
+    };
+    
+    const existingTransactions = await getFinancialTransactions();
+    await saveFinancialTransactions([{ ...transaction, id: `FIN-${Date.now()}` }, ...existingTransactions]);
+    
+    // Update OS status
+    await handleQuickStatusChange(order.id, 'Finalizado');
+
+    toast({
+      title: 'Pagamento Registrado!',
+      description: `Receita de R$ ${finalValue.toFixed(2)} registrada e OS finalizada.`,
+    });
+  };
+
   const filteredOrders = React.useMemo(() => {
     let result = [...orders];
 
@@ -359,7 +414,7 @@ function ServiceOrdersComponent() {
                 return (
                   <TableRow key={order.id}>
                     <TableCell className="hidden sm:table-cell">
-                       <Link href="#" className="font-medium text-primary hover:underline">
+                       <Link href="#" className="font-medium text-primary hover:underline" onClick={(e) => { e.preventDefault(); handleEditClick(order); }}>
                         #{order.id.slice(-4)}
                       </Link>
                     </TableCell>
@@ -382,19 +437,38 @@ function ServiceOrdersComponent() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
+                           <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>Mudar Status</DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                                <DropdownMenuSubContent>
+                                    <DropdownMenuRadioGroup 
+                                        value={order.status} 
+                                        onValueChange={(value) => handleQuickStatusChange(order.id, value as ServiceOrder['status'])}
+                                    >
+                                        {allStatuses.map(s => (
+                                            <DropdownMenuRadioItem key={s} value={s}>{s}</DropdownMenuRadioItem>
+                                        ))}
+                                    </DropdownMenuRadioGroup>
+                                </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                          </DropdownMenuSub>
                           <DropdownMenuItem onSelect={() => handleViewCommentsClick(order)}>
                             <MessageSquare className="mr-2 h-4 w-4" />
                             Exibir Comentários
                           </DropdownMenuItem>
                           <DropdownMenuItem>Imprimir</DropdownMenuItem>
-                          {(order.status === 'Finalizado' || order.status === 'Entregue' || order.status === 'Aguardando Pagamento') && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
-                                <Undo2 className="mr-2 h-4 w-4" />
-                                Reabrir OS
-                              </DropdownMenuItem>
-                            </>
+                          <DropdownMenuSeparator />
+                          {order.status === 'Aguardando Pagamento' && (
+                            <DropdownMenuItem onSelect={() => handleAddPayment(order)}>
+                              <DollarSign className="mr-2 h-4 w-4 text-green-500"/>
+                              Adicionar Pagamento
+                            </DropdownMenuItem>
+                          )}
+                          {(order.status === 'Finalizado' || order.status === 'Entregue' || order.status === 'Cancelada') && (
+                            <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
+                              <Undo2 className="mr-2 h-4 w-4" />
+                              Reabrir OS
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

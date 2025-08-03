@@ -95,9 +95,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     const pageHeight = 297;
     const pageWidth = 210;
     
-    // Using fixed top margin as requested
     const marginY = 13; 
-    const verticalSpacing = 4; // 4mm spacing
+    const verticalSpacing = 4;
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
     let count = startPosition - 1;
@@ -130,7 +129,6 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       const barcodeWidth = 40;
       const barcodeHeight = 10;
       const barcodeX = labelCenterX - (barcodeWidth / 2);
-      // Ensure barcode doesn't overlap with price
       const barcodeY = y + labelHeight - 5 - barcodeHeight - 2;
       doc.addImage(barcodeDataUrl, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
       
@@ -151,20 +149,19 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     const pageWidth = 80;
     const margin = 5;
     
-    // Calculate total height needed
     let totalHeight = 0;
-    const tempDoc = new jsPDF(); // Use a temporary doc for measurements
+    const tempDoc = new jsPDF(); 
     
-    totalHeight += 5; // top margin
+    totalHeight += 5; 
     totalHeight += tempDoc.getTextDimensions(companyInfo.name || 'Sua Loja', { fontSize: 11, fontStyle: 'bold' }).h;
     totalHeight += 5;
     const productNameLines = tempDoc.splitTextToSize(item!.name, pageWidth - 10);
     totalHeight += tempDoc.getTextDimensions(productNameLines, { fontSize: 9 }).h;
     totalHeight += 2;
-    totalHeight += 10; // barcode height
+    totalHeight += 10; 
     totalHeight += 2;
     totalHeight += tempDoc.getTextDimensions(`R$ ${item!.price.toFixed(2)}`, { fontSize: 14, fontStyle: 'bold' }).h;
-    totalHeight += 5; // bottom margin
+    totalHeight += 5; 
 
     const doc = new jsPDF({ unit: 'mm', format: [pageWidth, totalHeight] });
 
@@ -195,9 +192,33 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         doc.setFont('helvetica', 'bold');
         doc.text(`R$ ${item!.price.toFixed(2)}`, pageWidth / 2, y, { align: 'center' });
     }
-
-    doc.autoPrint();
-    doc.output('dataurlnewwindow');
+    
+    const css = `@page { size: ${pageWidth}mm ${totalHeight}mm; }`;
+    const style = document.createElement('style');
+    style.innerHTML = css;
+    style.id = 'print-style';
+    
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    
+    const iframeDoc = iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.open();
+      iframeDoc.write(doc.output('bloburl').toString());
+      iframeDoc.head.appendChild(style);
+      iframeDoc.close();
+      iframe.contentWindow?.print();
+    }
+    
+    setTimeout(() => {
+        document.body.removeChild(iframe);
+        const existingStyle = document.getElementById('print-style');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+    }, 1000);
+    
     onOpenChange(false);
   };
   

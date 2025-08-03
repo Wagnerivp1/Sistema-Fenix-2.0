@@ -96,7 +96,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     const pageWidth = 210;
     
     const marginY = 13; 
-    const verticalSpacing = 4;
+    const verticalSpacing = 0;
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
     let count = startPosition - 1;
@@ -128,8 +128,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
       
       const barcodeWidth = 40;
       const barcodeHeight = 10;
-      const barcodeX = labelCenterX - (barcodeWidth / 2);
-      const barcodeY = y + labelHeight - 5 - barcodeHeight - 2;
+      const barcodeY = y + labelHeight - 5 - barcodeHeight - 4;
       doc.addImage(barcodeDataUrl, 'PNG', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
       
       const priceY = y + labelHeight - 5;
@@ -149,19 +148,20 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     const pageWidth = 80;
     const margin = 5;
     
-    let totalHeight = 0;
+    // Use a temporary document to calculate heights
     const tempDoc = new jsPDF(); 
     
-    totalHeight += 5; 
+    let totalHeight = 0;
+    totalHeight += 5; // top margin
     totalHeight += tempDoc.getTextDimensions(companyInfo.name || 'Sua Loja', { fontSize: 11, fontStyle: 'bold' }).h;
     totalHeight += 5;
     const productNameLines = tempDoc.splitTextToSize(item!.name, pageWidth - 10);
     totalHeight += tempDoc.getTextDimensions(productNameLines, { fontSize: 9 }).h;
-    totalHeight += 2;
-    totalHeight += 10; 
-    totalHeight += 2;
+    totalHeight += 2; // space
+    totalHeight += 12; // barcode height + space
+    totalHeight += 2; // space
     totalHeight += tempDoc.getTextDimensions(`R$ ${item!.price.toFixed(2)}`, { fontSize: 14, fontStyle: 'bold' }).h;
-    totalHeight += 5; 
+    totalHeight += 5; // bottom margin
 
     const doc = new jsPDF({ unit: 'mm', format: [pageWidth, totalHeight] });
 
@@ -193,32 +193,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
         doc.text(`R$ ${item!.price.toFixed(2)}`, pageWidth / 2, y, { align: 'center' });
     }
     
-    const css = `@page { size: ${pageWidth}mm ${totalHeight}mm; }`;
-    const style = document.createElement('style');
-    style.innerHTML = css;
-    style.id = 'print-style';
-    
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-    
-    const iframeDoc = iframe.contentWindow?.document;
-    if (iframeDoc) {
-      iframeDoc.open();
-      iframeDoc.write(doc.output('bloburl').toString());
-      iframeDoc.head.appendChild(style);
-      iframeDoc.close();
-      iframe.contentWindow?.print();
-    }
-    
-    setTimeout(() => {
-        document.body.removeChild(iframe);
-        const existingStyle = document.getElementById('print-style');
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-    }, 1000);
-    
+    doc.autoPrint();
+    doc.output('dataurlnewwindow');
     onOpenChange(false);
   };
   

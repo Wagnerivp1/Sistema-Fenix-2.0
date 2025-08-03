@@ -82,22 +82,20 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
     // User-defined specifications
     const cols = 2;
-    const labelWidth = 100;
-    const labelHeight = 40;
-    const marginTop = 13; // 1.3 cm
-    const marginBottom = 13; // 1.3 cm
+    const rows = 7;
+    const labelWidth = 100; // 10 cm
+    const labelHeight = 40;  // 4 cm
+    const marginTop = 13;   // 1.3 cm
+    const marginBottom = 13;// 1.3 cm
     
     // A4 page dimensions
-    const pageHeight = 297;
     const pageWidth = 210;
-
-    // Calculate how many rows can fit
-    const printableHeight = pageHeight - marginTop - marginBottom;
-    const rows = Math.floor(printableHeight / labelHeight); // Now calculates rows based on height
+    const pageHeight = 297;
 
     const totalLabelsPerPage = cols * rows;
 
     // Calculate spacing and margins
+    const printableHeight = pageHeight - marginTop - marginBottom;
     const verticalSpacing = (printableHeight - (rows * labelHeight)) / (rows > 1 ? rows - 1 : 1);
     const marginX = (pageWidth - (cols * labelWidth)) / 2;
 
@@ -155,7 +153,7 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
 
   const handleStartPositionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
-    const maxLabels = 12; // 2 cols * 6 rows
+    const maxLabels = 14;
     if (isNaN(value) || value < 1) {
         setStartPosition(1);
     } else if (value > maxLabels) {
@@ -190,14 +188,14 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
                   />
               </div>
                <div className="space-y-2">
-                  <Label htmlFor="startPosition">Posição Inicial (1-12)</Label>
+                  <Label htmlFor="startPosition">Posição Inicial (1-14)</Label>
                   <Input 
                     id="startPosition" 
                     type="number" 
                     value={startPosition}
                     onChange={handleStartPositionChange}
                     min="1"
-                    max="12"
+                    max="14"
                   />
               </div>
             </div>

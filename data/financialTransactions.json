@@ -2,6 +2,16 @@
   {
     "type": "receita",
     "description": "Recebimento OS #7978",
+    "amount": 220,
+    "date": "2025-08-03",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "1752591164026-0.16961268312957978",
+    "id": "FIN-1754252934897"
+  },
+  {
+    "type": "receita",
+    "description": "Recebimento OS #7978",
     "amount": 140,
     "date": "2025-08-03",
     "category": "Venda de Serviço",

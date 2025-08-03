@@ -66,7 +66,6 @@ const formatDate = (dateString: string | undefined) => {
 const allStatuses: ServiceOrder['status'][] = [
   'Aberta', 
   'Em análise', 
-  'Aguardando',
   'Aguardando peça',
   'Aprovado',
   'Em conserto',

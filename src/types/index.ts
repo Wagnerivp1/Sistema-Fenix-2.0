@@ -30,7 +30,7 @@ export type ServiceOrder = {
   client?: Customer; // For backwards compatibility
   equipment: any;
   reportedProblem: string;
-  status: 'Recebido' | 'Em análise' | 'Aprovado' | 'Em conserto' | 'Finalizado' | 'Entregue' | 'Aberta' | 'Aguardando Pagamento' | 'Aguardando peça' | 'Aguardando' | 'Cancelada';
+  status: 'Recebido' | 'Em análise' | 'Aprovado' | 'Em conserto' | 'Finalizado' | 'Entregue' | 'Aberta' | 'Aguardando Pagamento' | 'Aguardando peça' | 'Cancelada';
   date: string; // YYYY-MM-DD
   deliveredDate?: string; // YYYY-MM-DD
   attendant: string; // Nome do atendente

@@ -1143,7 +1143,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
           <AlertDialogAction onClick={confirmManualAdd}>Adicionar</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>
     </>
   );
 }

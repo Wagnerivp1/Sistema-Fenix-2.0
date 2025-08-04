@@ -80,7 +80,24 @@ export type Sale = {
     paymentMethod: string;
     observations?: string;
     customerId?: string;
+    relatedQuoteId?: string;
 };
+
+export type Quote = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM:SS
+  user: string;
+  items: SaleItem[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  observations?: string;
+  customerId?: string;
+  customerName?: string;
+  status: 'Pendente' | 'Aprovado' | 'Cancelado' | 'Vendido';
+  validUntil: string; // ISO Date String
+}
 
 export type FinancialTransaction = {
     id: string;
@@ -104,6 +121,7 @@ export type UserPermissions = {
   accessSettings: boolean;
   accessDangerZone: boolean;
   accessAgenda: boolean;
+  accessQuotes: boolean;
   canEdit: boolean;
   canDelete: boolean;
   canViewPasswords: boolean;

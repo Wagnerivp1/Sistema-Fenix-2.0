@@ -14,6 +14,7 @@ import {
   CircleDollarSign,
   Settings,
   Calendar,
+  FileQuote,
 } from 'lucide-react';
 
 import {
@@ -41,6 +42,7 @@ const allNavItems: NavItem[] = [
   { href: '/ordens-de-servico', label: 'Ordens de Serviço', icon: Wrench, permission: 'accessServiceOrders' },
   { href: '/produtos', label: 'Produtos', icon: Archive, permission: 'accessInventory' },
   { href: '/vendas', label: 'Vendas', icon: ShoppingCart, permission: 'accessSales' },
+  { href: '/orcamentos', label: 'Orçamentos', icon: FileQuote, permission: 'accessQuotes' },
   { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign, permission: 'accessFinancials' },
   { href: '/configuracoes', label: 'Configurações', icon: Settings, permission: 'accessSettings' },
 ];

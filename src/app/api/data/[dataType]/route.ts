@@ -24,6 +24,7 @@ const dataFiles: { [key: string]: string } = {
     users: 'users.json',
     companyInfo: 'companyInfo.json',
     appointments: 'appointments.json',
+    quotes: 'quotes.json',
 };
 
 // GET handler to retrieve data

@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment } from '@/types';
+import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote } from '@/types';
 
 // Central API endpoint for all data operations
 const API_BASE_URL = '/api/data';
@@ -80,6 +80,9 @@ export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {
 export const getAppointments = async (): Promise<Appointment[]> => fetchData<Appointment[]>('appointments', []);
 export const saveAppointments = async (appointments: Appointment[]): Promise<void> => saveData('appointments', appointments);
 
+export const getQuotes = async (): Promise<Quote[]> => fetchData<Quote[]>('quotes', []);
+export const saveQuotes = async (quotes: Quote[]): Promise<void> => saveData('quotes', quotes);
+
 
 // --- SessionStorage Specific Functions ---
 
@@ -129,4 +132,3 @@ export const saveSettings = (settings: { defaultWarrantyDays: number }) => {
         window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     }
 };
-

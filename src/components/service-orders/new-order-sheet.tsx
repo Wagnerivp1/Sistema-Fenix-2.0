@@ -577,8 +577,8 @@ const generateDeliveryReceiptPdf = async () => {
           'Nº Série:': equipment.serial || 'Não informado'
       }
 
-      const clientBoxHeight = drawInfoBox('Dados do Cliente', margin, currentY, boxWidth, clientData);
-      const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', margin + boxWidth + 5, currentY, boxWidth, equipmentData);
+      const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
+      const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
       
       currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
   
@@ -913,6 +913,7 @@ const generateDeliveryReceiptPdf = async () => {
                                     <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
                                     <SelectItem value="Finalizado">Finalizado</SelectItem>
                                     <SelectItem value="Entregue">Entregue</SelectItem>
+                                    <SelectItem value="Cancelada">Cancelada</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>

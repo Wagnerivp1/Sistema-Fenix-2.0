@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -12,6 +13,9 @@ import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { MainNav } from '@/components/main-nav';
@@ -77,6 +81,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="flex flex-col p-0">
+                      <SheetHeader className="sr-only">
+                        <SheetTitle>Menu</SheetTitle>
+                        <SheetDescription>Navegação principal do sistema.</SheetDescription>
+                      </SheetHeader>
                       <div className="flex h-16 items-center border-b px-6 lg:h-20">
                          <div>
                             <h2 className="font-bold text-lg">Sistema Fenix <span className="text-xs font-mono text-muted-foreground">v1.0</span></h2>

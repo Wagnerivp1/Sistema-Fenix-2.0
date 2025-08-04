@@ -2,7 +2,8 @@
 'use client';
 
 import * as React from 'react';
-import { ShoppingCart, Trash2, ScanLine } from 'lucide-react';
+import { ShoppingCart, Trash2, ScanLine, FileText } from 'lucide-react';
+import { addDays } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -16,8 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getStock, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo, getSales } from '@/lib/storage';
-import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem } from '@/types';
+import { getStock, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo, saveQuotes, getQuotes } from '@/lib/storage';
+import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem, Quote } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -164,6 +165,37 @@ export default function VendasPage() {
     resetSale();
     toast({ title: 'Venda Cancelada', description: 'Todos os itens foram removidos do carrinho.' });
   };
+
+  const handleGenerateQuote = async () => {
+      if (saleItems.length === 0) {
+        toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione itens para gerar um orçamento.' });
+        return;
+    }
+
+    const newQuote: Quote = {
+        id: `QUOTE-${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString('pt-BR'),
+        user: currentUser?.name || 'Não identificado',
+        items: saleItems,
+        subtotal: subtotal,
+        discount: discount,
+        total: finalTotal,
+        status: 'Pendente',
+        validUntil: addDays(new Date(), 3).toISOString(),
+        observations: observations,
+    };
+    
+    const existingQuotes = await getQuotes();
+    await saveQuotes([newQuote, ...existingQuotes]);
+
+    toast({
+        title: "Orçamento Gerado!",
+        description: `Orçamento #${newQuote.id.slice(-6)} foi salvo com sucesso.`,
+    });
+    // Maybe print quote pdf here
+    resetSale();
+  };
   
   const processSale = async (shouldPrint = false) => {
     if (saleItems.length === 0) {
@@ -259,6 +291,10 @@ export default function VendasPage() {
               <p className="text-muted-foreground">Registre uma nova venda de produtos ou serviços avulsos.</p>
           </div>
           <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleGenerateQuote}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Gerar Orçamento
+              </Button>
               <Button variant="destructive" onClick={handleCancelSale}>
                   Cancelar Venda
                   <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-destructive-foreground opacity-100">

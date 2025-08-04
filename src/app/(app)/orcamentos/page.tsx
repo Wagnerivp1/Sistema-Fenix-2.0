@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, FileText, CheckCircle, XCircle, ShoppingCart } from 'lucide-react';
+import { MoreHorizontal, FileText, ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

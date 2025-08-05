@@ -1,5 +1,25 @@
 [
   {
+    "id": "QUOTE-1754357037986",
+    "date": "2025-08-05",
+    "time": "22:23:57",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "name": "sdfsdfsdf",
+        "price": 1320,
+        "quantity": 13,
+        "id": "manual-1754357035850"
+      }
+    ],
+    "subtotal": 17160,
+    "discount": 0,
+    "total": 17160,
+    "status": "Pendente",
+    "validUntil": "2025-08-08",
+    "observations": ""
+  },
+  {
     "id": "QUOTE-1754356688082",
     "date": "2025-08-05",
     "time": "22:18:08",

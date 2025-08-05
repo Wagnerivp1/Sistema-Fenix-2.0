@@ -14,6 +14,7 @@
       "accessSettings": true,
       "accessDangerZone": true,
       "accessAgenda": true,
+      "accessQuotes": true,
       "canEdit": true,
       "canDelete": true,
       "canViewPasswords": true,
@@ -38,7 +39,8 @@
       "canDelete": true,
       "canViewPasswords": false,
       "canManageUsers": true,
-      "accessAgenda": true
+      "accessAgenda": true,
+      "accessQuotes": true
     },
     "id": "1752520921537-0.9328935433699823",
     "theme": "dark"
@@ -61,7 +63,8 @@
       "canDelete": true,
       "canViewPasswords": false,
       "canManageUsers": false,
-      "accessAgenda": true
+      "accessAgenda": true,
+      "accessQuotes": true
     },
     "id": "1752603011529-0.5807504643425918"
   },
@@ -82,7 +85,8 @@
       "canDelete": true,
       "canViewPasswords": false,
       "canManageUsers": false,
-      "accessAgenda": true
+      "accessAgenda": true,
+      "accessQuotes": true
     },
     "id": "1753118832504-0.6500854434014606",
     "password": "001215"

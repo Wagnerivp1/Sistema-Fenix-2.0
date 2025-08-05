@@ -1,2 +1,28 @@
-
-[]
+[
+  {
+    "id": "QUOTE-1754356688082",
+    "date": "2025-08-05",
+    "time": "22:18:08",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "name": "Placa mae ",
+        "price": 120,
+        "quantity": 1,
+        "id": "manual-1754356673210"
+      },
+      {
+        "name": "SSD PATRIOT 240 GIGAS SATA ",
+        "price": 30,
+        "quantity": 10,
+        "id": "manual-1754356685505"
+      }
+    ],
+    "subtotal": 420,
+    "discount": 0,
+    "total": 420,
+    "status": "Pendente",
+    "validUntil": "2025-08-08",
+    "observations": ""
+  }
+]

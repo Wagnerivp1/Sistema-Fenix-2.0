@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music, FileQuote } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -54,6 +54,7 @@ const initialNewUser: Omit<User, 'id' | 'password'> = {
     accessSettings: false,
     accessDangerZone: false,
     accessAgenda: false,
+    accessQuotes: false,
     canEdit: false,
     canDelete: false,
     canViewPasswords: false,
@@ -615,6 +616,7 @@ export default function ConfiguracoesPage() {
                     {renderPermission('accessServiceOrders', 'Ordens de Serviço')}
                     {renderPermission('accessSales', 'Vendas')}
                     {renderPermission('accessAgenda', 'Agenda')}
+                    {renderPermission('accessQuotes', 'Orçamentos')}
                   </div>
                    <div className="space-y-3">
                     <h4 className="font-medium text-sm text-primary">Ações Gerais</h4>

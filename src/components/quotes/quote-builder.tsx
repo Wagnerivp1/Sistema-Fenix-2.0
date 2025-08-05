@@ -49,6 +49,8 @@ import { addDays } from 'date-fns';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { Quote, Customer, StockItem, SaleItem, User, CompanyInfo } from '@/types';
+import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
+
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -81,6 +83,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
   const [barcode, setBarcode] = React.useState('');
 
   const [isAddCustomerOpen, setIsAddCustomerOpen] = React.useState(false);
+  const [isManualAddOpen, setIsManualAddOpen] = React.useState(false);
   const [newCustomer, setNewCustomer] = React.useState(initialNewCustomerState);
 
   React.useEffect(() => {
@@ -117,13 +120,23 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     }
   }, [isOpen, quote]);
   
-  const handleAddItem = (item: StockItem) => {
+  const handleAddItem = (item: Omit<SaleItem, 'id'>) => {
     setItems(prev => {
-        const existing = prev.find(i => i.id === item.id);
+        const existing = prev.find(i => i.name.toLowerCase() === item.name.toLowerCase());
         if (existing) {
-            return prev.map(i => i.id === item.id ? {...i, quantity: i.quantity + 1} : i);
+            return prev.map(i => i.name.toLowerCase() === item.name.toLowerCase() ? {...i, quantity: i.quantity + item.quantity} : i);
         }
-        return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1 }];
+        return [...prev, { ...item, id: `manual-${Date.now()}` }];
+    });
+  };
+
+  const addStockItemToSale = (stockItem: StockItem) => {
+    setItems(prev => {
+        const existing = prev.find(i => i.id === stockItem.id);
+        if (existing) {
+            return prev.map(i => i.id === stockItem.id ? {...i, quantity: i.quantity + 1} : i);
+        }
+        return [...prev, { id: stockItem.id, name: stockItem.name, price: stockItem.price, quantity: 1 }];
     });
   };
   
@@ -131,7 +144,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     if (!barcode.trim()) return;
     const product = stock.find(p => p.barcode === barcode.trim());
     if (product) {
-        handleAddItem(product);
+        addStockItemToSale(product);
         setBarcode('');
     } else {
         toast({ variant: "destructive", title: "Produto não encontrado" });
@@ -250,6 +263,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-4 border-b">
@@ -266,6 +280,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
                             <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input placeholder="Escanear código de barras..." className="pl-10" value={barcode} onChange={(e) => setBarcode(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleBarcodeScan()} />
                         </div>
+                        <Button variant="outline" onClick={() => setIsManualAddOpen(true)}>Adicionar Item Manual</Button>
                     </div>
                     <div className="border rounded-lg min-h-[300px] flex-grow">
                         <ScrollArea className="h-[calc(100%-2rem)]">
@@ -354,5 +369,11 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
         </Dialog>
       </DialogContent>
     </Dialog>
+     <ManualAddItemDialog
+        isOpen={isManualAddOpen}
+        onAddItem={handleAddItem}
+        onOpenChange={setIsManualAddOpen}
+    />
+    </>
   );
 }

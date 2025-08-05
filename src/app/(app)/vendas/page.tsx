@@ -182,7 +182,7 @@ export default function VendasPage() {
         discount: discount,
         total: finalTotal,
         status: 'Pendente',
-        validUntil: addDays(new Date(), 3).toISOString(),
+        validUntil: addDays(new Date(), 3).toISOString().split('T')[0],
         observations: observations,
     };
     
@@ -193,7 +193,6 @@ export default function VendasPage() {
         title: "Orçamento Gerado!",
         description: `Orçamento #${newQuote.id.slice(-6)} foi salvo com sucesso.`,
     });
-    // Maybe print quote pdf here
     resetSale();
   };
   

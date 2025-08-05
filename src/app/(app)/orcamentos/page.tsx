@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, FileText, ShoppingCart } from 'lucide-react';
+import { MoreHorizontal, FileText, ShoppingCart, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,11 +46,21 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getQuotes, saveQuotes, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions } from '@/lib/storage';
-import type { Quote, Sale, FinancialTransaction } from '@/types';
+import { getQuotes, saveQuotes, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo } from '@/lib/storage';
+import type { Quote, Sale, FinancialTransaction, CompanyInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { SaleDetailsDialog } from '@/components/financials/sale-details-dialog'; // Reusing this for viewing items
+import { SaleDetailsDialog } from '@/components/financials/sale-details-dialog';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+      lastAutoTable: { finalY: number };
+    }
+}
+
 
 const formatDate = (dateString: string) => {
     if (!dateString) return 'Data inválida';
@@ -149,6 +159,82 @@ export default function OrcamentosPage() {
         });
     };
 
+    const handlePrintQuote = async (quoteData: Quote) => {
+        const companyInfo = await getCompanyInfo();
+
+        const generateContent = (logoImage: HTMLImageElement | null) => {
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 15;
+            let currentY = 20;
+            let textX = margin;
+            
+            // Header
+            if (logoImage) {
+                const logoAR = logoImage.width / logoImage.height;
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, 20 * logoAR, 20);
+                textX = margin + (20 * logoAR) + 5;
+            }
+            if (companyInfo.name) {
+                doc.setFontSize(20);
+                doc.setFont('helvetica', 'bold');
+                doc.text(companyInfo.name, textX, currentY);
+                currentY += 7;
+            }
+            if (companyInfo.address) {
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(companyInfo.address, textX, currentY);
+                currentY += 4;
+            }
+
+            currentY += 5;
+            
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Orçamento #${quoteData.id.slice(-6)}`, margin, currentY);
+            currentY += 6;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Data: ${formatDate(quoteData.date)} | Validade: ${formatDate(quoteData.validUntil)}`, margin, currentY);
+
+            currentY += 10;
+            
+            // Tabela de Itens
+            doc.autoTable({
+                startY: currentY,
+                head: [['Produto/Serviço', 'Qtd.', 'Preço Unit.', 'Subtotal']],
+                body: quoteData.items.map(item => [
+                    item.name,
+                    item.quantity,
+                    `R$ ${item.price.toFixed(2)}`,
+                    `R$ ${(item.price * item.quantity).toFixed(2)}`
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [30, 41, 59], textColor: '#FFFFFF' },
+                footStyles: { fillColor: [241, 245, 249], textColor: '#000000', fontStyle: 'bold' },
+                foot: [
+                    [{ content: 'Subtotal:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${quoteData.subtotal.toFixed(2)}`],
+                    [{ content: 'Desconto:', colSpan: 3, styles: { halign: 'right' } }, `- R$ ${quoteData.discount.toFixed(2)}`],
+                    [{ content: 'Total Final:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${quoteData.total.toFixed(2)}`],
+                ]
+            });
+            
+            doc.output('dataurlnewwindow');
+        };
+
+        if (companyInfo?.logoUrl) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = companyInfo.logoUrl;
+            img.onload = () => generateContent(img);
+            img.onerror = () => generateContent(null);
+        } else {
+            generateContent(null);
+        }
+    }
+
+
     const filteredQuotes = React.useMemo(() => {
         let result = [...quotes];
         if (statusFilter !== 'todos') {
@@ -240,6 +326,9 @@ export default function OrcamentosPage() {
                                                     setSelectedQuoteForDetails(quote);
                                                     setIsDetailsOpen(true);
                                                 }}><FileText className="mr-2"/>Ver Detalhes</DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => handlePrintQuote(quote)}>
+                                                    <Printer className="mr-2"/>Imprimir
+                                                </DropdownMenuItem>
                                                  {quote.status === 'Aprovado' && (
                                                     <DropdownMenuItem onSelect={() => handleConvertToSale(quote)} className="text-green-500 focus:text-green-500">
                                                         <ShoppingCart className="mr-2"/>Converter em Venda

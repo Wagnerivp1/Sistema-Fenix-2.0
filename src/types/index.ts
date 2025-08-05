@@ -96,7 +96,7 @@ export type Quote = {
   customerId?: string;
   customerName?: string;
   status: 'Pendente' | 'Aprovado' | 'Cancelado' | 'Vendido';
-  validUntil: string; // ISO Date String
+  validUntil: string; // YYYY-MM-DD
 }
 
 export type FinancialTransaction = {

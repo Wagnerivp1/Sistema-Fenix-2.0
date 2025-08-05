@@ -67,46 +67,52 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
             const margin = 15;
             let currentY = 20;
             let textX = margin;
-            const logoWidth = 20;
-            const logoHeight = 20;
+            const logoWidth = 30;
+            const logoHeight = 30;
             const logoSpacing = 5;
             
             // Cabeçalho
-            if (logoImage) {
-                const logoAR = logoImage.width / logoImage.height;
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, logoWidth * logoAR, logoHeight);
-                textX = margin + (logoWidth * logoAR) + logoSpacing;
+             if (logoImage) {
+                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
+                textX = margin + logoWidth + logoSpacing;
             }
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(20);
             if (companyInfo?.name) {
-                doc.setFontSize(22);
-                doc.setFont('helvetica', 'bold');
                 doc.text(companyInfo.name, textX, currentY);
-                currentY += 7;
+                currentY += 8;
             }
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
             if (companyInfo?.address) {
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'normal');
                 doc.text(companyInfo.address, textX, currentY);
                 currentY += 4;
             }
+            if (companyInfo?.phone || companyInfo?.emailOrSite) {
+                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
+            }
 
-            currentY += 5;
-
+            const rightHeaderX = pageWidth - margin;
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text(`Comprovante de Venda`, margin, currentY);
-            currentY += 6;
+            doc.text(`Comprovante de Venda`, rightHeaderX, currentY - 8, { align: 'right' });
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            doc.text(`Venda #${sale.id.slice(-6)} | Data: ${formatDate(sale.date)} ${sale.time}`, margin, currentY);
+            doc.text(`Venda #${sale.id.slice(-6)}`, rightHeaderX, currentY - 2, { align: 'right' });
+            doc.text(`Data: ${formatDate(sale.date)} ${sale.time}`, rightHeaderX, currentY + 4, { align: 'right' });
             
-            currentY += 10;
+            currentY = 50;
             
             // Detalhes da Venda
-            doc.setFontSize(9);
-            doc.text(`Vendedor: ${sale.user}`, margin, currentY);
-            doc.text(`Forma de Pagamento: ${sale.paymentMethod}`, pageWidth - margin, currentY, { align: 'right' });
-            currentY += 8;
+            doc.autoTable({
+                startY: currentY,
+                head: [['Vendedor', 'Forma de Pagamento']],
+                body: [[sale.user, sale.paymentMethod]],
+                theme: 'grid',
+                styles: { fontSize: 9, cellPadding: 2, lineColor: [220,220,220] }
+            });
+            currentY = doc.lastAutoTable.finalY + 8;
 
             // Tabela de Itens
             doc.autoTable({
@@ -119,8 +125,8 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
                     `R$ ${(item.price * item.quantity).toFixed(2)}`
                 ]),
                 theme: 'striped',
-                headStyles: { fillColor: [30, 41, 59], textColor: '#FFFFFF' },
-                footStyles: { fillColor: [241, 245, 249], textColor: '#000000', fontStyle: 'bold' },
+                headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold' },
+                footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
                 foot: [
                     [{ content: 'Subtotal:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${sale.subtotal.toFixed(2)}`],
                     [{ content: 'Desconto:', colSpan: 3, styles: { halign: 'right' } }, `- R$ ${sale.discount.toFixed(2)}`],
@@ -155,7 +161,7 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
                 generateContent(null);
             };
         } else {
-            generateContent();
+            generateContent(null);
         }
     }
 
@@ -251,3 +257,5 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
         </Dialog>
     );
 }
+
+    

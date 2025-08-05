@@ -212,54 +212,117 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     if (!customer) { toast({variant: 'destructive', title: 'Selecione um cliente'}); return; }
 
     const companyInfo = await getCompanyInfo();
-
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    let currentY = 20;
     
-    // Header
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text(companyInfo.name || "Orçamento", margin, currentY);
-    currentY += 8;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(companyInfo.address || "", margin, currentY);
-    currentY += 4;
-    doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, margin, currentY);
-    currentY += 10;
-    
-    // Customer
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Para:', margin, currentY);
-    currentY += 5;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(customer.name, margin, currentY);
-    currentY += 4;
-    doc.text(customer.address || '', margin, currentY);
-    currentY += 10;
-    
-    // Items
-    doc.autoTable({
-        startY: currentY,
-        head: [['Produto/Serviço', 'Qtd.', 'Preço Unit.', 'Subtotal']],
-        body: items.map(item => [item.name, item.quantity, `R$ ${item.price.toFixed(2)}`, `R$ ${(item.price * item.quantity).toFixed(2)}`]),
-        foot: [
-            ['', '', 'Subtotal', `R$ ${subtotal.toFixed(2)}`],
-            ['', '', 'Desconto', `- R$ ${discount.toFixed(2)}`],
-            ['', '', 'Total Final', `R$ ${total.toFixed(2)}`],
-        ]
-    });
-    currentY = doc.lastAutoTable.finalY + 10;
-    
-    // Footer terms
-    doc.setFontSize(8);
-    doc.text("Validade deste orçamento: 3 dias. A empresa não se responsabiliza por dados após formatação. Garantia de 90 dias para serviços e peças.", margin, currentY);
-    
-    doc.output('dataurlnewwindow');
+    const performGeneration = (logoImage: HTMLImageElement | null) => {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let currentY = 20;
+        let textX = margin;
+        const fontColor = '#000000';
+        const logoWidth = 30;
+        const logoHeight = 30;
+        const logoSpacing = 5;
+
+        // Header
+        if (logoImage) {
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
+            textX = margin + logoWidth + logoSpacing;
+        }
+        
+        doc.setFont('helvetica');
+        doc.setTextColor(fontColor);
+        
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        if (companyInfo?.name) {
+            doc.text(companyInfo.name, textX, currentY);
+            currentY += 8;
+        }
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        if (companyInfo?.address) {
+            doc.text(companyInfo.address, textX, currentY);
+            currentY += 4;
+        }
+        if (companyInfo?.phone || companyInfo?.emailOrSite) {
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
+        }
+
+        const rightHeaderX = pageWidth - margin;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Orçamento`, rightHeaderX, currentY - 8, { align: 'right' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Nº: #${(quote?.id || 'NOVO').slice(-6)}`, rightHeaderX, currentY - 2, { align: 'right' });
+        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
+        
+        currentY = 50;
+        
+        // Customer
+        const boxWidth = (pageWidth - margin * 2);
+        doc.setFillColor(243, 244, 246);
+        doc.rect(margin, currentY, boxWidth, 7, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Dados do Cliente', margin + 3, currentY + 5);
+        currentY += 7;
+
+        const customerInfo = {
+            'Nome:': customer.name,
+            'Telefone:': customer.phone,
+            'Documento:': customer.document || "Não informado"
+        }
+        doc.autoTable({
+            body: Object.entries(customerInfo),
+            startY: currentY,
+            theme: 'grid',
+            tableWidth: boxWidth,
+            margin: { left: margin },
+            styles: { fontSize: 9, cellPadding: 2, lineColor: [200,200,200], lineWidth: 0.1 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
+        });
+        currentY = doc.lastAutoTable.finalY + 8;
+        
+        // Items
+        doc.autoTable({
+            startY: currentY,
+            head: [['Descrição', 'Qtd.', 'Vlr. Unit.', 'Subtotal']],
+            body: items.map(item => [item.name, item.quantity, `R$ ${item.price.toFixed(2)}`, `R$ ${(item.price * item.quantity).toFixed(2)}`]),
+            foot: [
+                ['Total Serviços: R$ 0.00', 'Total Peças: R$ 0.00', { content: 'Valor Total Estimado:', styles: { halign: 'right' } }, { content: `R$ ${total.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold' },
+            footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' }
+        });
+        currentY = doc.lastAutoTable.finalY + 10;
+        
+        // Footer terms
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Validade e Condições:", margin, currentY);
+        currentY += 5;
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text("Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente.", margin, currentY);
+        
+        doc.output('dataurlnewwindow');
+    };
+
+    if (companyInfo?.logoUrl) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = companyInfo.logoUrl;
+      img.onload = () => performGeneration(img);
+      img.onerror = () => {
+        console.error("Error loading logo for PDF, proceeding without it.");
+        performGeneration(null);
+      };
+    } else {
+      performGeneration(null);
+    }
   };
 
   return (
@@ -377,3 +440,5 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     </>
   );
 }
+
+    

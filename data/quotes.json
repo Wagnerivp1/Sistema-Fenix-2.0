@@ -1,5 +1,27 @@
 [
   {
+    "id": "QUOTE-1754358161235",
+    "date": "2025-08-05",
+    "time": "22:42:41",
+    "user": "Wagner Lopes",
+    "items": [
+      {
+        "name": "SSD PATRIOT 240 GIGAS SATA ",
+        "price": 130,
+        "quantity": 10,
+        "id": "manual-1754358126460"
+      }
+    ],
+    "subtotal": 1300,
+    "discount": 0,
+    "total": 1300,
+    "status": "Pendente",
+    "validUntil": "2025-08-08",
+    "observations": "",
+    "customerId": "1752611147131-0.8346904741613428",
+    "customerName": "VALDECIR ALVARINO"
+  },
+  {
     "id": "QUOTE-1754357514715",
     "date": "2025-08-05",
     "time": "22:31:54",

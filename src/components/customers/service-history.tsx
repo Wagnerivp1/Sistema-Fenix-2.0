@@ -86,13 +86,13 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       const fontColor = '#000000';
       const primaryColor = '#e0e7ff';
       let textX = margin;
-      const logoWidth = 25;
-      const logoHeight = 25;
+      const logoWidth = 30;
+      const logoHeight = 30;
       const logoSpacing = 5;
 
 
       if (logoImage) {
-        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, logoWidth, logoHeight);
+        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
       }
       
@@ -113,22 +113,18 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       }
       if (companyInfo?.phone || companyInfo?.emailOrSite) {
         doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
-        currentY += 10;
       }
 
-      currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 50;
-
+      const rightHeaderX = pageWidth - margin;
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Histórico de Atendimentos`, margin, currentY);
-      currentY += 6;
+      doc.text(`Histórico de Atendimentos`, rightHeaderX, currentY - 8, { align: 'right' });
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Cliente: ${customerName}`, margin, currentY);
-      currentY += 4;
-      doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, margin, currentY);
-      currentY += 10;
+      doc.text(`Cliente: ${customerName}`, rightHeaderX, currentY - 2, { align: 'right' });
+      doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
 
+      currentY = 50;
 
       const checkPageBreak = (yPosition: number, requiredSpace: number = 20) => {
         if (yPosition > doc.internal.pageSize.getHeight() - requiredSpace) {
@@ -138,70 +134,77 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
         return yPosition;
       };
 
-      filteredHistory.forEach((order) => {
+      filteredHistory.forEach((order, index) => {
+        if (index > 0) {
+          currentY += 5;
+          doc.setLineDashPattern([1, 2], 0);
+          doc.line(margin, currentY, pageWidth - margin, currentY);
+          doc.setLineDashPattern([], 0);
+          currentY += 10;
+        }
+
         currentY = checkPageBreak(currentY, 60);
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 8;
-        doc.setFontSize(12);
+
+        doc.setFillColor(243, 244, 246);
+        doc.rect(margin, currentY, pageWidth - (margin * 2), 7, 'F');
+
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text(`OS #${order.id.slice(-4)} | Data: ${formatDate(order.date)} | Status: ${order.status}`, margin, currentY);
-        currentY += 6;
-
-        const drawInfoBox = (title: string, content: string, startY: number) => {
-          const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 4);
-          const boxHeight = doc.getTextDimensions(textLines).h + 8;
-          let finalY = startY;
-
-          if (finalY + boxHeight + 5 > doc.internal.pageSize.getHeight() - 20) {
-            doc.addPage();
-            finalY = 20;
-          }
-
-          doc.setFillColor(primaryColor);
-          doc.rect(margin, finalY, pageWidth - margin * 2, 6, 'F');
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.setTextColor(fontColor);
-          doc.text(title, margin + 2, finalY + 4.5);
-          doc.setDrawColor(primaryColor);
-          doc.rect(margin, finalY + 6, pageWidth - margin * 2, boxHeight, 'S');
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          doc.text(textLines, margin + 2, finalY + 11);
-
-          return finalY + boxHeight + 8;
-        };
+        doc.text(`Ordem de Serviço #${order.id.slice(-4)}`, margin + 2, currentY + 5);
         
-        const equipmentName = getEquipmentName(order.equipment);
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Equipamento: `, margin, currentY);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${equipmentName}${order.serialNumber ? ` (S/N: ${order.serialNumber})` : ''}`, margin + 28, currentY);
-        currentY += 6;
-
-        currentY = drawInfoBox('Problema Relatado', order.reportedProblem || 'Não informado', currentY);
-        currentY = drawInfoBox('Diagnóstico / Laudo Técnico', order.technicalReport || 'Não informado', currentY);
+        doc.text(`Status: ${order.status}`, pageWidth - margin - 2, currentY + 5, { align: 'right' });
+        currentY += 12;
         
-        currentY = checkPageBreak(currentY, 30);
+        const boxWidth = (pageWidth - margin * 2 - 5) / 2;
+
+        const clientData = {
+          'Data de Entrada:': formatDate(order.date),
+          'Atendente:': order.attendant || "Não informado",
+        };
+
+        const equipmentName = getEquipmentName(order.equipment);
+        const equipmentData = {
+            'Equipamento:': equipmentName,
+            'Nº Série:': order.serialNumber || 'Não informado',
+            'Acessórios:': order.accessories || 'Nenhum'
+        }
+        
+        const drawInfoBox = (data: { [key: string]: string }, x: number, y: number, width: number) => {
+            const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
+            doc.autoTable({
+                body: tableBody,
+                startY: y,
+                theme: 'grid',
+                tableWidth: width,
+                margin: { left: x },
+                styles: { fontSize: 8.5, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
+                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
+            });
+            return doc.lastAutoTable.finalY;
+        }
+
+        const clientBoxHeight = drawInfoBox(clientData, margin, currentY, boxWidth);
+        const equipmentBoxHeight = drawInfoBox(equipmentData, margin + boxWidth + 5, currentY, boxWidth);
+        currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 5;
+
+
         if (order.items && order.items.length > 0) {
           doc.autoTable({
             startY: currentY,
             head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
             body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
-            theme: 'grid',
-            headStyles: { fillColor: primaryColor, textColor: fontColor, fontStyle: 'bold', fontSize: 9 },
-            bodyStyles: { fontSize: 8 },
+            theme: 'striped',
+            headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
+            bodyStyles: { fontSize: 8, cellPadding: 1.5 },
+            footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
+            foot: [
+                ['Total', '', '', '', `R$ ${order.totalValue.toFixed(2)}`]
+            ],
             margin: { left: margin, right: margin }
           });
           currentY = doc.lastAutoTable.finalY + 5;
         }
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Valor Total da OS: R$ ${order.totalValue.toFixed(2)}`, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 10;
       });
 
       doc.save(`Historico_${customerName.replace(/\s+/g, '_')}.pdf`);
@@ -216,10 +219,10 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
       };
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");
-        generateContent();
+        generateContent(null);
       };
     } else {
-      generateContent();
+      generateContent(null);
     }
   };
 
@@ -402,3 +405,5 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   return <InfoItem icon={warrantyIcon} label="Período de Garantia" value={warrantyInfoText} />
 };
+
+    

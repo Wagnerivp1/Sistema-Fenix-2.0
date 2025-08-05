@@ -69,15 +69,15 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         let textX = margin;
         const fontColor = '#000000';
         const titleText = tx.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
-        const logoWidth = 20;
-        const logoHeight = 20;
+        const logoWidth = 30;
+        const logoHeight = 30;
         const logoSpacing = 5;
 
         // Header
         if (logoImage) {
             const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth * logoAR, logoHeight);
-            textX = margin + (logoWidth * logoAR) + logoSpacing;
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
+            textX = margin + logoWidth + logoSpacing;
         }
         
         doc.setFont('helvetica');
@@ -87,48 +87,59 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
             doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
             doc.text(info.name, textX, currentY);
-            currentY += 12;
+            currentY += 8;
+        }
+        if (info.address) {
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(info.address, textX, currentY);
+            currentY += 4;
+        }
+        if (info.phone || info.emailOrSite) {
+            doc.text(`Telefone: ${info.phone || ''} | E-mail: ${info.emailOrSite || ''}`, textX, currentY);
         }
 
+        const rightHeaderX = pageWidth - margin;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(titleText, margin, currentY);
-        currentY += 6;
-
+        doc.text(titleText, rightHeaderX, currentY - 8, { align: 'right' });
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Transação #${tx.id.slice(-6)} | Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, margin, currentY);
-        currentY += 15;
+        doc.text(`Transação #${tx.id.slice(-6)}`, rightHeaderX, currentY - 2, { align: 'right' });
+        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
+
+        currentY = 50;
 
 
         // Body Text
-        doc.setFontSize(11);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
         const mainText = `Pelo presente, declaramos para os devidos fins que ${tx.type === 'receita' ? 'recebemos' : 'pagamos'} a quantia de:`;
-        doc.text(mainText, margin, currentY);
+        doc.text(mainText, margin, currentY, { maxWidth: pageWidth - (margin * 2)});
         currentY += 10;
         
-        doc.setFontSize(22);
+        doc.setFontSize(26);
         doc.setFont('helvetica', 'bold');
         doc.text(`R$ ${tx.amount.toFixed(2)}`, margin, currentY);
         currentY += 15;
         
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(11);
+        doc.setFontSize(12);
         doc.text(`Referente a: ${tx.description}`, margin, currentY);
         currentY += 15;
 
         // Details Table
         doc.autoTable({
             startY: currentY,
-            theme: 'plain',
-            styles: { fontSize: 10, cellPadding: 2 },
+            theme: 'grid',
+            styles: { fontSize: 10, cellPadding: 3, lineColor: [200,200,200] },
+            headStyles: { fillColor: '#F1F5F9', textColor: '#000000' },
             body: [
-                [{content: 'Data do Lançamento:', styles: {fontStyle: 'bold'}}, formatDateForDisplay(tx.date)],
-                [{content: 'Forma de Pagamento:', styles: {fontStyle: 'bold'}}, tx.paymentMethod],
-                [{content: 'Categoria:', styles: {fontStyle: 'bold'}}, tx.category],
+                ['Data do Lançamento', formatDateForDisplay(tx.date)],
+                ['Forma de Pagamento', tx.paymentMethod],
+                ['Categoria', tx.category],
             ],
-            columnStyles: { 0: { cellWidth: 45 } },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50 } },
         });
         currentY = doc.lastAutoTable.finalY + 40;
         
@@ -268,3 +279,5 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     </Dialog>
   );
 }
+
+    

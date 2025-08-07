@@ -97,6 +97,14 @@ export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {
     }
 };
 
+export const getSettings = async (): Promise<{ defaultWarrantyDays: number }> => {
+    return fetchData<{ defaultWarrantyDays: number }>('settings', { defaultWarrantyDays: 90 });
+};
+
+export const saveSettings = async (settings: { defaultWarrantyDays: number }): Promise<void> => {
+    await saveData('settings', settings);
+};
+
 // --- SessionStorage Specific Functions (Client-side only) ---
 
 const LOGGED_IN_USER_KEY = 'fenix_logged_in_user';
@@ -122,25 +130,3 @@ export const getLoggedInUser = (): User | null => {
     return null;
   }
 }
-
-// --- LocalStorage Specific Functions (Client-side only) ---
-const SETTINGS_KEY = 'fenix_app_settings';
-
-export const getSettings = (): { defaultWarrantyDays: number } => {
-    if (typeof window === 'undefined') {
-        return { defaultWarrantyDays: 90 };
-    }
-    try {
-        const item = window.localStorage.getItem(SETTINGS_KEY);
-        return item ? JSON.parse(item) : { defaultWarrantyDays: 90 };
-    } catch (error) {
-        console.error("Failed to parse settings from localStorage", error);
-        return { defaultWarrantyDays: 90 };
-    }
-};
-
-export const saveSettings = (settings: { defaultWarrantyDays: number }) => {
-    if (typeof window !== 'undefined') {
-        window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    }
-};

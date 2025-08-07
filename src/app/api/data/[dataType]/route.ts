@@ -24,6 +24,7 @@ const allowedDataTypes: Record<string, { isArray: boolean }> = {
   companyInfo: { isArray: false },
   appointments: { isArray: true },
   quotes: { isArray: true },
+  settings: { isArray: false },
 };
 
 export async function GET(

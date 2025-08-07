@@ -85,15 +85,14 @@ export default function ConfiguracoesPage() {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const savedSettings = getSettings();
-        setSettings(savedSettings);
-        
-        const [companyInfoData, usersData, loggedInUser] = await Promise.all([
+        const [savedSettings, companyInfoData, usersData, loggedInUser] = await Promise.all([
+            getSettings(),
             getCompanyInfo(),
             getUsers(),
             getLoggedInUser()
         ]);
         
+        setSettings(savedSettings);
         setCompanyInfo(companyInfoData || { name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '' });
         setUsers(usersData);
         setCurrentUser(loggedInUser);
@@ -196,9 +195,9 @@ export default function ConfiguracoesPage() {
   };
 
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     try {
-      saveSettings(settings);
+      await saveSettings(settings);
       toast({
         title: "Configurações Salvas!",
         description: "Suas alterações foram salvas com sucesso.",
@@ -220,15 +219,12 @@ export default function ConfiguracoesPage() {
   const handleBackup = async () => {
     try {
       const backupData: Record<string, any> = {};
-      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'quotes', 'appointments'];
       
       for (const type of dataTypes) {
         const response = await fetch(`/api/data/${type}`);
         if(response.ok) backupData[type] = await response.json();
       }
-      
-      const settingsData = getSettings();
-      if(settingsData) backupData.settings = settingsData;
 
       const jsonString = JSON.stringify(backupData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
@@ -270,22 +266,20 @@ export default function ConfiguracoesPage() {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') throw new Error('Could not read file content.');
-        const data = JSON.parse(text);
+        const data = await JSON.parse(text);
 
-        const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+        const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'appointments', 'quotes'];
         const hasKnownKey = dataTypes.some(key => key in data);
 
         if (!hasKnownKey) throw new Error('Arquivo de backup inválido ou corrompido.');
 
-        for (const type in data) {
-            if(dataTypes.includes(type)) {
+        for (const type of dataTypes) {
+            if(data[type]) {
                  await fetch(`/api/data/${type}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data[type]),
                 });
-            } else if (type === 'settings') {
-                saveSettings(data.settings);
             }
         }
         
@@ -303,15 +297,14 @@ export default function ConfiguracoesPage() {
 
   const handleClearSystem = async () => {
     try {
-      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo'];
+      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'appointments', 'quotes'];
       for (const type of dataTypes) {
          await fetch(`/api/data/${type}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(type === 'companyInfo' ? {} : []),
+            body: JSON.stringify(['companyInfo', 'settings'].includes(type) ? {} : []),
         });
       }
-      saveSettings({ defaultWarrantyDays: 90 });
       
       toast({ title: 'Sistema Limpo!', description: 'Todos os dados foram removidos. A página será recarregada.' });
       setTimeout(() => window.location.reload(), 2000);

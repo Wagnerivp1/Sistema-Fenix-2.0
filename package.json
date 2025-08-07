@@ -12,7 +12,7 @@
     "expose": "ngrok http 3000"
   },
   "engines": {
-    "node": "16"
+    "node": "20"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.15",

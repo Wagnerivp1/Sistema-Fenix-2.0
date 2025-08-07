@@ -4,12 +4,12 @@
     "customerName": "CESTA BASICA SANTA RITA",
     "equipment": "NOTEBOOK TRYHDER ERT",
     "reportedProblem": "jhjkh",
-    "status": "Em conserto",
+    "status": "Entregue",
     "date": "2025-08-06",
     "totalValue": 0,
     "discount": 0,
     "finalValue": 0,
-    "paymentMethod": "Dinheiro",
+    "paymentMethod": "PIX",
     "items": [],
     "internalNotes": [
       {
@@ -32,7 +32,8 @@
     "accessories": "ghfghfh",
     "serialNumber": "NXHFMAL006949B38AA9501",
     "warranty": "90 dias",
-    "attendant": "Wagner Lopes"
+    "attendant": "Wagner Lopes",
+    "deliveredDate": "2025-08-07"
   },
   {
     "id": "OS-1754252974887",

@@ -1,97 +1,107 @@
 
 'use client';
 
+import { collection, doc, getDocs, setDoc, writeBatch, deleteDoc, getDoc } from 'firebase/firestore';
+import { db } from './firebase';
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote } from '@/types';
 
-// Central API endpoint for all data operations
-const API_BASE_URL = '/api/data';
+// --- Helper Functions for Firestore communication ---
 
-// --- Helper Functions for API communication ---
-
-async function fetchData<T>(dataType: string, defaultValue: T): Promise<T> {
-  if (typeof window === 'undefined') {
-    return defaultValue;
-  }
+async function fetchData<T>(collectionName: string): Promise<T[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/${dataType}`, { cache: 'no-store' });
-    if (!response.ok) {
-      console.error(`Error fetching ${dataType}:`, response.statusText);
-      if (response.status === 404) {
-        return defaultValue;
-      }
-      return defaultValue;
-    }
-    return await response.json();
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
   } catch (error) {
-    console.error(`Error fetching ${dataType}:`, error);
-    return defaultValue;
+    console.error(`Error fetching ${collectionName}:`, error);
+    return [];
   }
 }
 
-
-async function saveData<T>(dataType: string, data: T): Promise<void> {
-    if (typeof window === 'undefined') {
-        return;
-    }
+async function fetchSingleData<T>(collectionName: string, docId: string, defaultValue: T): Promise<T> {
     try {
-        await fetch(`${API_BASE_URL}/${dataType}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-    } catch (error) {
-        console.error(`Error saving ${dataType}:`, error);
+        const docRef = doc(db, collectionName, docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return { ...defaultValue, ...docSnap.data() };
+        }
+        return defaultValue;
+    } catch(error) {
+        console.error(`Error fetching single doc ${docId} from ${collectionName}:`, error);
+        return defaultValue;
     }
 }
 
 
-// This key is for sessionStorage
-const LOGGED_IN_USER_KEY = 'fenix_logged_in_user';
+async function saveData<T extends { id: string }>(collectionName: string, data: T[]): Promise<void> {
+  try {
+    const batch = writeBatch(db);
+    data.forEach(item => {
+      const { id, ...rest } = item;
+      const docRef = doc(db, collectionName, id);
+      batch.set(docRef, rest);
+    });
+    await batch.commit();
+  } catch (error) {
+    console.error(`Error saving ${collectionName}:`, error);
+  }
+}
+
+async function saveSingleData<T>(collectionName: string, docId: string, data: T): Promise<void> {
+    try {
+        await setDoc(doc(db, collectionName, docId), data);
+    } catch(error) {
+        console.error(`Error saving single doc ${docId} in ${collectionName}:`, error);
+    }
+}
+
 
 // --- Data Functions ---
 
-export const getCustomers = async (): Promise<Customer[]> => fetchData<Customer[]>('customers', []);
-export const saveCustomers = async (customers: Customer[]): Promise<void> => saveData('customers', customers);
+export const getCustomers = (): Promise<Customer[]> => fetchData<Customer>('customers');
+export const saveCustomers = (customers: Customer[]): Promise<void> => saveData('customers', customers);
 
-export const getServiceOrders = async (): Promise<ServiceOrder[]> => fetchData<ServiceOrder[]>('serviceOrders', []);
-export const saveServiceOrders = async (orders: ServiceOrder[]): Promise<void> => saveData('serviceOrders', orders);
+export const getServiceOrders = (): Promise<ServiceOrder[]> => fetchData<ServiceOrder>('serviceOrders');
+export const saveServiceOrders = (orders: ServiceOrder[]): Promise<void> => saveData('serviceOrders', orders);
 
-export const getStock = async (): Promise<StockItem[]> => fetchData<StockItem[]>('stock', []);
-export const saveStock = async (stock: StockItem[]): Promise<void> => saveData('stock', stock);
+export const getStock = (): Promise<StockItem[]> => fetchData<StockItem>('stock');
+export const saveStock = (stock: StockItem[]): Promise<void> => saveData('stock', stock);
 
-export const getSales = async (): Promise<Sale[]> => fetchData<Sale[]>('sales', []);
-export const saveSales = async (sales: Sale[]): Promise<void> => saveData('sales', sales);
+export const getSales = (): Promise<Sale[]> => fetchData<Sale>('sales');
+export const saveSales = (sales: Sale[]): Promise<void> => saveData('sales', sales);
 
-export const getFinancialTransactions = async (): Promise<FinancialTransaction[]> => fetchData<FinancialTransaction[]>('financialTransactions', []);
-export const saveFinancialTransactions = async (transactions: FinancialTransaction[]): Promise<void> => saveData('financialTransactions', transactions);
+export const getFinancialTransactions = (): Promise<FinancialTransaction[]> => fetchData<FinancialTransaction>('financialTransactions');
+export const saveFinancialTransactions = (transactions: FinancialTransaction[]): Promise<void> => saveData('financialTransactions', transactions);
 
-export const getUsers = async (): Promise<User[]> => fetchData<User[]>('users', []);
-export const saveUsers = async (users: User[]): Promise<void> => saveData('users', users);
+export const getUsers = (): Promise<User[]> => fetchData<User>('users');
+export const saveUsers = (users: User[]): Promise<void> => saveData('users', users);
 
-export const getCompanyInfo = async (): Promise<CompanyInfo> => fetchData<CompanyInfo>('companyInfo', {} as CompanyInfo);
+export const getAppointments = (): Promise<Appointment[]> => fetchData<Appointment>('appointments');
+export const saveAppointments = (appointments: Appointment[]): Promise<void> => saveData('appointments', appointments);
+
+export const getQuotes = (): Promise<Quote[]> => fetchData<Quote>('quotes');
+export const saveQuotes = (quotes: Quote[]): Promise<void> => saveData('quotes', quotes);
+
+
+// --- Singleton Data (Stored in a single document) ---
+
+const COMPANY_INFO_DOC_ID = 'main';
+export const getCompanyInfo = (): Promise<CompanyInfo> => fetchSingleData<CompanyInfo>('companyInfo', COMPANY_INFO_DOC_ID, {} as CompanyInfo);
 export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {
-    await saveData('companyInfo', info);
-    // Dispatch a custom event to notify components (like Logo) of the change
+    await saveSingleData('companyInfo', COMPANY_INFO_DOC_ID, info);
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('companyInfoChanged'));
     }
 };
 
-export const getAppointments = async (): Promise<Appointment[]> => fetchData<Appointment[]>('appointments', []);
-export const saveAppointments = async (appointments: Appointment[]): Promise<void> => saveData('appointments', appointments);
 
-export const getQuotes = async (): Promise<Quote[]> => fetchData<Quote[]>('quotes', []);
-export const saveQuotes = async (quotes: Quote[]): Promise<void> => saveData('quotes', quotes);
+// --- SessionStorage Specific Functions (No change needed) ---
 
+const LOGGED_IN_USER_KEY = 'fenix_logged_in_user';
 
-// --- SessionStorage Specific Functions ---
-
-// Logged In User functions (remains in sessionStorage)
 export const saveLoggedInUser = (user: User): void => {
   if (typeof window === 'undefined') return;
   try {
     const userToSave = { ...user };
-    // Do not store password in sessionStorage
     delete userToSave.password;
     window.sessionStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(userToSave));
   } catch (error) {
@@ -110,7 +120,7 @@ export const getLoggedInUser = (): User | null => {
   }
 }
 
-// Settings functions (remains in localStorage for per-user preference)
+// --- LocalStorage Specific Functions (No change needed) ---
 const SETTINGS_KEY = 'fenix_app_settings';
 export const getSettings = (): { defaultWarrantyDays: number } => {
     if (typeof window === 'undefined') {
@@ -118,14 +128,12 @@ export const getSettings = (): { defaultWarrantyDays: number } => {
     }
     try {
         const item = window.localStorage.getItem(SETTINGS_KEY);
-        // Ensure you return a default object if nothing is found
         return item ? JSON.parse(item) : { defaultWarrantyDays: 90 };
     } catch (error) {
         console.error("Failed to parse settings from localStorage", error);
         return { defaultWarrantyDays: 90 };
     }
 };
-
 
 export const saveSettings = (settings: { defaultWarrantyDays: number }) => {
     if (typeof window !== 'undefined') {

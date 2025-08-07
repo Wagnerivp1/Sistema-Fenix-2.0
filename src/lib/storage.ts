@@ -1,57 +1,55 @@
 
+
 'use client';
 
-import { collection, doc, getDocs, setDoc, writeBatch, deleteDoc, getDoc } from 'firebase/firestore';
-import { db } from './firebase';
+// This file now acts as a client-side data fetching layer.
+// It communicates with a server-side API route to handle file system operations.
+// This is the correct approach for Next.js to avoid calling server-side modules (like 'fs') on the client.
+
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote } from '@/types';
 
-// --- Helper Functions for Firestore communication ---
+// Helper function to get the base URL for the API
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: use the current origin
+    return window.location.origin;
+  }
+  // Server-side: assume localhost during build or server-side rendering
+  return `http://localhost:${process.env.PORT || 3000}`;
+};
 
-async function fetchData<T>(collectionName: string): Promise<T[]> {
+// Generic function to fetch data from the API
+async function fetchData<T>(dataType: string, defaultValue: T[] = []): Promise<T[]> {
   try {
-    const querySnapshot = await getDocs(collection(db, collectionName));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+    const res = await fetch(`${getBaseUrl()}/api/data/${dataType}`, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error(`Failed to fetch ${dataType}: ${res.statusText}`);
+      return defaultValue;
+    }
+    return await res.json();
   } catch (error) {
-    console.error(`Error fetching ${collectionName}:`, error);
-    return [];
+    console.error(`Error fetching ${dataType}:`, error);
+    return defaultValue;
   }
 }
 
-async function fetchSingleData<T>(collectionName: string, docId: string, defaultValue: T): Promise<T> {
-    try {
-        const docRef = doc(db, collectionName, docId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return { ...defaultValue, ...docSnap.data() };
-        }
-        return defaultValue;
-    } catch(error) {
-        console.error(`Error fetching single doc ${docId} from ${collectionName}:`, error);
-        return defaultValue;
-    }
-}
-
-
-async function saveData<T extends { id: string }>(collectionName: string, data: T[]): Promise<void> {
+// Generic function to save data via the API
+async function saveData<T>(dataType: string, data: T[] | T): Promise<void> {
   try {
-    const batch = writeBatch(db);
-    data.forEach(item => {
-      const { id, ...rest } = item;
-      const docRef = doc(db, collectionName, id);
-      batch.set(docRef, rest);
+    const res = await fetch(`${getBaseUrl()}/api/data/${dataType}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
-    await batch.commit();
-  } catch (error) {
-    console.error(`Error saving ${collectionName}:`, error);
-  }
-}
-
-async function saveSingleData<T>(collectionName: string, docId: string, data: T): Promise<void> {
-    try {
-        await setDoc(doc(db, collectionName, docId), data);
-    } catch(error) {
-        console.error(`Error saving single doc ${docId} in ${collectionName}:`, error);
+    if (!res.ok) {
+      throw new Error(`Failed to save ${dataType}`);
     }
+  } catch (error) {
+    console.error(`Error saving ${dataType}:`, error);
+    throw error;
+  }
 }
 
 
@@ -82,17 +80,19 @@ export const getQuotes = (): Promise<Quote[]> => fetchData<Quote>('quotes');
 export const saveQuotes = (quotes: Quote[]): Promise<void> => saveData('quotes', quotes);
 
 
-// --- Singleton Data (Stored in a single document) ---
+// --- Singleton Data (Stored in a single object in a file) ---
 
-const COMPANY_INFO_DOC_ID = 'main';
-export const getCompanyInfo = (): Promise<CompanyInfo> => fetchSingleData<CompanyInfo>('companyInfo', COMPANY_INFO_DOC_ID, {} as CompanyInfo);
+export const getCompanyInfo = async (): Promise<CompanyInfo> => {
+    const data = await fetchData<CompanyInfo>('companyInfo', []);
+    return (data[0] as CompanyInfo) || ({} as CompanyInfo);
+};
+
 export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {
-    await saveSingleData('companyInfo', COMPANY_INFO_DOC_ID, info);
-    if (typeof window !== 'undefined') {
+    await saveData('companyInfo', [info]);
+     if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('companyInfoChanged'));
     }
 };
-
 
 // --- SessionStorage Specific Functions (No change needed) ---
 

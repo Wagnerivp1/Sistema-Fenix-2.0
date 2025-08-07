@@ -65,10 +65,11 @@ function ProductsComponent() {
   }, [searchParams]);
 
   const filteredStock = React.useMemo(() => {
+    if (!stock) return [];
     return stock.filter(item => 
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.barcode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.barcode && item.barcode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [stock, searchTerm]);
 

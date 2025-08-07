@@ -22,7 +22,7 @@ import { MainNav } from '@/components/main-nav';
 import { Logo } from '@/components/logo';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getLoggedInUser } from '@/lib/storage';
+import { useAuth } from '@/hooks/use-auth';
 import { AppointmentReminder } from '@/components/reminders/appointment-reminder';
 
 const HeaderActions = dynamic(() => import('@/components/layout/header-actions').then(mod => mod.HeaderActions), {
@@ -32,16 +32,16 @@ const HeaderActions = dynamic(() => import('@/components/layout/header-actions')
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { user } = useAuth();
   const [isVerified, setIsVerified] = React.useState(false);
 
   React.useEffect(() => {
-    const user = getLoggedInUser();
     if (!user) {
       router.replace('/');
     } else {
       setIsVerified(true);
     }
-  }, [router]);
+  }, [user, router]);
 
   if (!isVerified) {
     // Render a skeleton or loading state while verifying authentication

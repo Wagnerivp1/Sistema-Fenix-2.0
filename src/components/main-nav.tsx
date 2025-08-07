@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
-import { getLoggedInUser } from '@/lib/storage';
+import { useAuth } from '@/hooks/use-auth';
 import type { User, UserPermissions } from '@/types';
 
 interface NavItem {
@@ -50,30 +50,13 @@ const allNavItems: NavItem[] = [
 export function MainNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
+  const { user: currentUser } = useAuth();
   const isCollapsed = state === 'collapsed';
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-
-
-  React.useEffect(() => {
-    // We can read sessionStorage synchronously on the client.
-    const user = getLoggedInUser();
-    setCurrentUser(user);
-    setIsLoading(false);
-  }, []);
 
   const navItems = React.useMemo(() => {
     if (!currentUser || !currentUser.permissions) return [];
     return allNavItems.filter(item => currentUser.permissions[item.permission]);
   }, [currentUser]);
-
-  if (isLoading) {
-    return (
-        <nav className="flex flex-col gap-2 px-4 py-4">
-             {/* You can add a skeleton loader here */}
-        </nav>
-    );
-  }
 
   if (!currentUser) {
     return (

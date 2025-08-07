@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -30,7 +29,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { getUsers, saveUsers, getLoggedInUser, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings } from '@/lib/storage';
+import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings } from '@/lib/storage';
+import { useAuth } from '@/hooks/use-auth';
 import type { User, CompanyInfo, UserPermissions } from '@/types';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -64,6 +64,7 @@ const initialNewUser: Omit<User, 'id' | 'password'> = {
 
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [settings, setSettings] = React.useState<AppSettings>({ defaultWarrantyDays: 90 });
   const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({ name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '', notificationSoundUrl: '' });
   const [users, setUsers] = React.useState<User[]>([]);
@@ -79,23 +80,20 @@ export default function ConfiguracoesPage() {
   const [isUserDialogOpen, setIsUserDialogOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
   const [newUser, setNewUser] = React.useState<Partial<User>>(initialNewUser);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [savedSettings, companyInfoData, usersData, loggedInUser] = await Promise.all([
+        const [savedSettings, companyInfoData, usersData] = await Promise.all([
             getSettings(),
             getCompanyInfo(),
             getUsers(),
-            getLoggedInUser()
         ]);
         
         setSettings(savedSettings);
         setCompanyInfo(companyInfoData || { name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '' });
         setUsers(usersData);
-        setCurrentUser(loggedInUser);
       } catch (error) {
         console.error("Failed to load settings", error);
         toast({ variant: 'destructive', title: 'Erro ao carregar dados', description: 'Não foi possível buscar as informações do servidor.' });
@@ -221,10 +219,27 @@ export default function ConfiguracoesPage() {
       const backupData: Record<string, any> = {};
       const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'quotes', 'appointments'];
       
-      for (const type of dataTypes) {
-        const response = await fetch(`/api/data/${type}`);
-        if(response.ok) backupData[type] = await response.json();
-      }
+      const dataPromises = dataTypes.map(async (type) => {
+        switch(type) {
+            case 'customers': return { key: type, data: await getCustomers() };
+            case 'serviceOrders': return { key: type, data: await getServiceOrders() };
+            case 'sales': return { key: type, data: await getSales() };
+            case 'financialTransactions': return { key: type, data: await getFinancialTransactions() };
+            case 'users': return { key: type, data: await getUsers() };
+            case 'companyInfo': return { key: type, data: await getCompanyInfo() };
+            case 'settings': return { key: type, data: await getSettings() };
+            case 'quotes': return { key: type, data: await getQuotes() };
+            case 'appointments': return { key: type, data: await getAppointments() };
+            default: return null;
+        }
+      });
+      
+      const resolvedData = await Promise.all(dataPromises);
+      resolvedData.forEach(item => {
+        if(item) {
+            backupData[item.key] = item.data;
+        }
+      });
 
       const jsonString = JSON.stringify(backupData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
@@ -268,18 +283,24 @@ export default function ConfiguracoesPage() {
         if (typeof text !== 'string') throw new Error('Could not read file content.');
         const data = await JSON.parse(text);
 
-        const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'appointments', 'quotes'];
-        const hasKnownKey = dataTypes.some(key => key in data);
+        const dataTypes = [
+            { key: 'customers', saveFunc: saveCustomers },
+            { key: 'serviceOrders', saveFunc: saveServiceOrders },
+            { key: 'sales', saveFunc: saveSales },
+            { key: 'financialTransactions', saveFunc: saveFinancialTransactions },
+            { key: 'users', saveFunc: saveUsers },
+            { key: 'companyInfo', saveFunc: saveCompanyInfo },
+            { key: 'settings', saveFunc: saveSettings },
+            { key: 'appointments', saveFunc: saveAppointments },
+            { key: 'quotes', saveFunc: saveQuotes },
+        ];
 
+        const hasKnownKey = dataTypes.some(dt => dt.key in data);
         if (!hasKnownKey) throw new Error('Arquivo de backup inválido ou corrompido.');
 
-        for (const type of dataTypes) {
-            if(data[type]) {
-                 await fetch(`/api/data/${type}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data[type]),
-                });
+        for (const dt of dataTypes) {
+            if(data[dt.key]) {
+                await dt.saveFunc(data[dt.key]);
             }
         }
         
@@ -297,14 +318,18 @@ export default function ConfiguracoesPage() {
 
   const handleClearSystem = async () => {
     try {
-      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'appointments', 'quotes'];
-      for (const type of dataTypes) {
-         await fetch(`/api/data/${type}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(['companyInfo', 'settings'].includes(type) ? {} : []),
-        });
-      }
+      const savePromises = [
+        saveCustomers([]),
+        saveServiceOrders([]),
+        saveSales([]),
+        saveFinancialTransactions([]),
+        saveUsers([]),
+        saveAppointments([]),
+        saveQuotes([]),
+        saveCompanyInfo({} as CompanyInfo),
+        saveSettings({ defaultWarrantyDays: 90 })
+      ];
+      await Promise.all(savePromises);
       
       toast({ title: 'Sistema Limpo!', description: 'Todos os dados foram removidos. A página será recarregada.' });
       setTimeout(() => window.location.reload(), 2000);

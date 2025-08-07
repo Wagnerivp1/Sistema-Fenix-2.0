@@ -10,11 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { getUsers, saveLoggedInUser } from '@/lib/storage';
+import { getUsers } from '@/lib/storage';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { login: authLogin } = useAuth();
   const [login, setLogin] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
@@ -23,25 +25,34 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const users = await getUsers();
-    const authenticatedUser = users.find(
-      (user) => user.login === login && user.password === password
-    );
+    try {
+        const users = await getUsers();
+        const authenticatedUser = users.find(
+          (user) => user.login === login && user.password === password
+        );
 
-    if (authenticatedUser) {
-        saveLoggedInUser(authenticatedUser);
+        if (authenticatedUser) {
+            authLogin(authenticatedUser);
+            toast({
+                title: 'Login bem-sucedido!',
+                description: 'Redirecionando para o dashboard...',
+            });
+            router.push('/dashboard');
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Credenciais inválidas',
+            description: 'Por favor, verifique seu usuário e senha.',
+          });
+          setIsLoading(false);
+        }
+    } catch (error) {
         toast({
-            title: 'Login bem-sucedido!',
-            description: 'Redirecionando para o dashboard...',
+            variant: 'destructive',
+            title: 'Erro ao fazer login',
+            description: 'Não foi possível conectar ao servidor. Tente novamente.',
         });
-        router.push('/dashboard');
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Credenciais inválidas',
-        description: 'Por favor, verifique seu usuário e senha.',
-      });
-      setIsLoading(false);
+        setIsLoading(false);
     }
   };
 

@@ -30,21 +30,11 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { getLoggedInUser } from '@/lib/storage';
-import { User } from '@/types';
+import { useAuth } from '@/hooks/use-auth';
 
 export function HeaderActions() {
     const { setTheme, theme } = useTheme();
-    const [user, setUser] = React.useState<User | null>(null);
-
-    React.useEffect(() => {
-        setUser(getLoggedInUser());
-    }, []);
-
-    const handleLogout = () => {
-        sessionStorage.removeItem('assistec_logged_in_user');
-        window.location.href = '/';
-    }
+    const { user, logout } = useAuth();
 
     return (
         <DropdownMenu>
@@ -55,7 +45,7 @@ export function HeaderActions() {
             </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+            <DropdownMenuLabel>{user?.name || 'Minha Conta'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
                 <Link href="/configuracoes">
@@ -80,7 +70,7 @@ export function HeaderActions() {
                 </DropdownMenuPortal>
             </DropdownMenuSub>
             <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={logout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sair</span>
                 </DropdownMenuItem>

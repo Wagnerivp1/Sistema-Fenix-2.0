@@ -45,7 +45,8 @@ import {
   SelectGroup,
   SelectLabel,
 } from '@/components/ui/select';
-import { getServiceOrders, saveServiceOrders, getCustomers, getLoggedInUser, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, getSettings } from '@/lib/storage';
+import { getServiceOrders, saveServiceOrders, getCustomers, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, getSettings } from '@/lib/storage';
+import { useAuth } from '@/hooks/use-auth';
 import type { Customer, ServiceOrder, User, InternalNote, FinancialTransaction, CompanyInfo } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { ViewCommentsDialog } from '@/components/service-orders/view-comments-dialog';
@@ -82,6 +83,7 @@ function ServiceOrdersComponent() {
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customerId');
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   
   const [orders, setOrders] = React.useState<ServiceOrder[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
@@ -93,7 +95,6 @@ function ServiceOrdersComponent() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState('ativas');
   const [searchFilter, setSearchFilter] = React.useState('');
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -118,11 +119,9 @@ function ServiceOrdersComponent() {
             getServiceOrders(),
             getCustomers()
         ]);
-        const loggedInUser = await getLoggedInUser();
 
         setOrders(loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setCustomers(loadedCustomers);
-        setCurrentUser(loggedInUser);
         setIsLoading(false);
 
         if (customerId) {
@@ -184,11 +183,10 @@ function ServiceOrdersComponent() {
   }
   
   const handleCommentAdded = async (orderId: string, commentText: string) => {
-    const loggedInUser = await getLoggedInUser();
-    if (!loggedInUser) return;
+    if (!currentUser) return;
     
     const commentToAdd: InternalNote = {
-      user: loggedInUser.name,
+      user: currentUser.name,
       date: new Date().toISOString(),
       comment: commentText,
     };

@@ -2,19 +2,22 @@
 
 'use client';
 
-// This file now acts as a client-side data fetching layer.
-// It communicates with a server-side API route to handle file system operations.
-// This is the correct approach for Next.js to avoid calling server-side modules (like 'fs') on the client.
-
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote } from '@/types';
 
-// Helper function to get the base URL for the API
+// Helper function to determine the base URL for the API
 const getBaseUrl = () => {
+  // If an ngrok URL is provided in environment variables, use it.
+  // This is useful for when the frontend is hosted on Firebase but needs to talk to a local backend.
+  if (process.env.NEXT_PUBLIC_NGROK_URL) {
+    return process.env.NEXT_PUBLIC_NGROK_URL;
+  }
+  
+  // In a browser environment, use the current window's origin.
   if (typeof window !== 'undefined') {
-    // Client-side: use the current origin
     return window.location.origin;
   }
-  // Server-side: assume localhost during build or server-side rendering
+  
+  // On the server-side (e.g., during build), default to localhost.
   return `http://localhost:${process.env.PORT || 3000}`;
 };
 
@@ -24,7 +27,6 @@ async function fetchData<T>(dataType: string, defaultValue: T[] | T | null = [])
     const res = await fetch(`${getBaseUrl()}/api/data/${dataType}`, { cache: 'no-store' });
     if (!res.ok) {
       console.error(`Failed to fetch ${dataType}: ${res.statusText}`);
-      // For single objects that might not exist, return null or empty object
       if (!Array.isArray(defaultValue)) return defaultValue;
       return [];
     }
@@ -91,7 +93,6 @@ export const getCompanyInfo = async (): Promise<CompanyInfo> => {
 export const saveCompanyInfo = async (info: CompanyInfo): Promise<void> => {
     await saveData('companyInfo', info);
      if (typeof window !== 'undefined') {
-        // Notify components that company info has changed
         window.dispatchEvent(new Event('companyInfoChanged'));
     }
 };
@@ -104,7 +105,6 @@ export const saveLoggedInUser = (user: User): void => {
   if (typeof window === 'undefined') return;
   try {
     const userToSave = { ...user };
-    // Never store the password in session storage
     delete userToSave.password;
     window.sessionStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(userToSave));
   } catch (error) {

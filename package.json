@@ -11,6 +11,9 @@
     "typecheck": "tsc --noEmit",
     "expose": "ngrok http 3000"
   },
+  "engines": {
+    "node": "16"
+  },
   "dependencies": {
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",

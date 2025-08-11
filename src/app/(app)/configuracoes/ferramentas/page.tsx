@@ -2,18 +2,30 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, FileCog, Download } from 'lucide-react';
+import { UploadCloud, FileCog, FileUp, DatabaseZap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Sale } from '@/types';
+import type { Customer, FinancialTransaction, ServiceOrder } from '@/types';
+import { saveCustomers, saveFinancialTransactions, saveServiceOrders } from '@/lib/storage';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function FerramentasPage() {
   const { toast } = useToast();
   const [isDragOver, setIsDragOver] = React.useState(false);
-  const [oldBackup, setOldBackup] = React.useState<any>(null);
-  const [convertedBackup, setConvertedBackup] = React.useState<any>(null);
+  const [backupFile, setBackupFile] = React.useState<File | null>(null);
+  const [convertedData, setConvertedData] = React.useState<{ customers: Customer[], serviceOrders: ServiceOrder[], financialTransactions: FinancialTransaction[] } | null>(null);
+  const [isConfirmImportOpen, setIsConfirmImportOpen] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (file: File | null) => {
@@ -27,30 +39,12 @@ export default function FerramentasPage() {
       });
       return;
     }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target?.result;
-        if (typeof text !== 'string') {
-          throw new Error('Não foi possível ler o conteúdo do arquivo.');
-        }
-        const data = JSON.parse(text);
-        setOldBackup(data);
-        setConvertedBackup(null); // Reseta a conversão anterior
-        toast({
-          title: 'Arquivo Carregado!',
-          description: 'Seu arquivo de backup antigo está pronto para ser convertido.',
-        });
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao Processar',
-          description: error.message || 'Ocorreu um erro ao ler o arquivo JSON.',
-        });
-      }
-    };
-    reader.readAsText(file);
+    setBackupFile(file);
+    setConvertedData(null);
+    toast({
+      title: 'Arquivo Carregado!',
+      description: `O arquivo ${file.name} está pronto para ser convertido.`,
+    });
   };
 
   const handleDragEvents = (e: React.DragEvent<HTMLDivElement>) => {
@@ -67,122 +61,201 @@ export default function FerramentasPage() {
   };
 
   const convertData = () => {
-    if (!oldBackup) {
-      toast({
-        variant: 'destructive',
-        title: 'Nenhum Arquivo',
-        description: 'Carregue um arquivo de backup primeiro.',
-      });
+    if (!backupFile) {
+      toast({ variant: 'destructive', title: 'Nenhum Arquivo', description: 'Carregue um arquivo de backup primeiro.' });
       return;
     }
 
-    let converted = { ...oldBackup };
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result;
+        if (typeof text !== 'string') throw new Error('Não foi possível ler o conteúdo do arquivo.');
+        const oldData = JSON.parse(text);
 
-    // Regra 1: Renomear 'clients' para 'customers'
-    if (converted.clients && !converted.customers) {
-      converted.customers = converted.clients;
-      delete converted.clients;
-    }
-    
-    // Regra 2: Mapear campos dentro de 'customers'
-    if (converted.customers) {
-      converted.customers = converted.customers.map((c: any) => ({
-        ...c,
-        name: c.name || c.fullName,
-        phone: c.phone || c.telephone,
-      }));
-    }
+        // --- Conversão de Clientes ---
+        const oldClients = oldData.clients || oldData.customers || [];
+        const newCustomers: Customer[] = oldClients.map((c: any) => ({
+          id: c.id || `CUST-${Date.now()}-${Math.random()}`,
+          name: c.name || c.fullName || 'Nome não encontrado',
+          phone: c.phone || c.telephone || '',
+          email: c.email || '',
+          address: c.address || '',
+          document: c.document || '',
+        }));
+        
+        // --- Conversão de Ordens de Serviço ---
+        const oldServiceOrders = oldData.serviceOrders || [];
+        const newServiceOrders: ServiceOrder[] = oldServiceOrders.map((os: any) => ({
+          id: os.id || `OS-${Date.now()}-${Math.random()}`,
+          customerName: os.customerName || os.client?.name || 'Cliente não encontrado',
+          equipment: os.equipment || { type: 'N/A', brand: 'N/A', model: 'N/A' },
+          reportedProblem: os.reportedProblem || os.defectReported || '',
+          status: os.status || 'Finalizado',
+          date: os.date || os.entryDate || new Date().toISOString().split('T')[0],
+          deliveredDate: os.deliveredDate || os.completionDate,
+          attendant: os.attendant || 'Sistema',
+          paymentMethod: os.paymentMethod,
+          warranty: os.warranty || '90 dias',
+          totalValue: os.totalValue || 0,
+          discount: os.discount || 0,
+          finalValue: os.finalValue || os.totalValue || 0,
+          items: os.items || os.servicesPerformed?.map((s:any) => ({...s, type: 'service'})) || [],
+          internalNotes: os.internalNotes || os.comments || [],
+          technicalReport: os.technicalReport || os.technicalDiagnosis,
+          accessories: os.accessories,
+          serialNumber: os.serialNumber || os.equipment?.serialNumber,
+        }));
 
-    // Regra 3: Adicionar campos 'time' e 'user' em 'sales' se não existirem
-    if (converted.sales) {
-        converted.sales = converted.sales.map((s: any): Sale => ({
-            ...s,
-            time: s.time || new Date(s.date).toLocaleTimeString('pt-BR'),
-            user: s.user || 'Não identificado'
-        }))
-    }
+        // --- Conversão Financeira ---
+        const oldFinancials = oldData.financialTransactions || [];
+        const newFinancials: FinancialTransaction[] = oldFinancials.map((ft: any) => ({
+          id: ft.id || `FIN-${Date.now()}-${Math.random()}`,
+          type: ft.type || (ft.amount > 0 ? 'receita' : 'despesa'),
+          description: ft.description,
+          amount: Math.abs(ft.amount),
+          date: ft.date,
+          category: ft.category || 'Outra Receita',
+          paymentMethod: ft.paymentMethod || 'Dinheiro',
+          relatedSaleId: ft.relatedSaleId,
+          relatedServiceOrderId: ft.relatedServiceOrderId,
+        }));
 
-    // Adicione mais regras de conversão aqui conforme necessário
+        setConvertedData({
+          customers: newCustomers,
+          serviceOrders: newServiceOrders,
+          financialTransactions: newFinancials
+        });
 
-    setConvertedBackup(converted);
-    toast({
-      title: 'Conversão Concluída!',
-      description: 'Seu arquivo de backup foi convertido para o novo formato.',
-    });
+        toast({
+          title: 'Conversão Concluída!',
+          description: `Foram encontrados ${newCustomers.length} clientes, ${newServiceOrders.length} OS e ${newFinancials.length} transações.`,
+        });
+
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao Processar',
+          description: error.message || 'Ocorreu um erro ao ler o arquivo JSON.',
+        });
+      }
+    };
+    reader.readAsText(backupFile);
   };
+  
+  const handleImport = async () => {
+    if (!convertedData) return;
 
-  const downloadConvertedFile = () => {
-    if (!convertedBackup) return;
+    try {
+        await saveCustomers(convertedData.customers);
+        await saveServiceOrders(convertedData.serviceOrders);
+        await saveFinancialTransactions(convertedData.financialTransactions);
+        
+        toast({
+            title: 'Importação Concluída com Sucesso!',
+            description: 'Os dados foram salvos no sistema. Recomenda-se recarregar a página.',
+        });
+    } catch(err) {
+        toast({
+            variant: 'destructive',
+            title: 'Erro ao Salvar Dados',
+            description: 'Não foi possível salvar os dados importados no sistema.',
+        });
+    } finally {
+        setIsConfirmImportOpen(false);
+    }
+  }
 
-    const jsonString = JSON.stringify(convertedBackup, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `backup-convertido-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Ferramenta de Conversão de Backup</CardTitle>
-          <CardDescription>
-            Converta um arquivo de backup de uma versão anterior do sistema para o formato atual.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          
-          <div className="p-6 border-2 border-dashed rounded-lg text-center space-y-3"
-            onDragEnter={() => setIsDragOver(true)}
-            onDragLeave={() => setIsDragOver(false)}
-            onDragOver={handleDragEvents}
-            onDrop={handleDrop}
-            style={{ backgroundColor: isDragOver ? 'var(--accent)' : 'transparent' }}
-          >
-            <div className="mx-auto bg-muted p-4 rounded-full w-fit">
-              <UploadCloud className="h-8 w-8 text-muted-foreground" />
+    <>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ferramenta de Importação de Dados</CardTitle>
+            <CardDescription>
+              Importe clientes, ordens de serviço e dados financeiros de um backup de sistema antigo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            
+            <div className="p-6 border-2 border-dashed rounded-lg text-center space-y-3"
+              onDragEnter={() => setIsDragOver(true)}
+              onDragLeave={() => setIsDragOver(false)}
+              onDragOver={handleDragEvents}
+              onDrop={handleDrop}
+              style={{ backgroundColor: isDragOver ? 'var(--accent)' : 'transparent' }}
+            >
+              <div className="mx-auto bg-muted p-4 rounded-full w-fit">
+                <FileUp className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold">
+                {backupFile ? `Arquivo Carregado: ${backupFile.name}` : "Arraste e solte o arquivo de backup aqui"}
+              </h3>
+              <p className="text-muted-foreground">ou</p>
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                Selecione um arquivo
+              </Button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept=".json"
+                onChange={(e) => handleFileSelect(e.target.files ? e.target.files[0] : null)}
+              />
             </div>
-            <h3 className="text-lg font-semibold">
-              {oldBackup ? `Arquivo Carregado: ${oldBackup.name || 'backup.json'}` : "Arraste e solte o arquivo de backup aqui"}
-            </h3>
-            <p className="text-muted-foreground">ou</p>
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              Selecione um arquivo
-            </Button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept=".json"
-              onChange={(e) => handleFileSelect(e.target.files ? e.target.files[0] : null)}
-            />
-          </div>
 
-          <div className="flex justify-center">
-             <Button onClick={convertData} disabled={!oldBackup}>
-                <FileCog className="mr-2 h-4 w-4" />
-                Converter Arquivo
-             </Button>
-          </div>
-          
-          {convertedBackup && (
-            <div className="p-4 border rounded-lg bg-green-500/10 text-center space-y-3">
-              <h3 className="text-lg font-semibold text-green-700">Conversão Pronta!</h3>
-              <p className="text-green-600">Seu arquivo foi convertido com sucesso. Clique abaixo para fazer o download.</p>
-              <Button onClick={downloadConvertedFile} className="bg-green-600 hover:bg-green-700">
-                <Download className="mr-2 h-4 w-4" />
-                Baixar Arquivo Convertido
+            <div className="flex justify-center">
+              <Button onClick={convertData} disabled={!backupFile}>
+                  <FileCog className="mr-2 h-4 w-4" />
+                  Analisar e Converter Arquivo
               </Button>
             </div>
-          )}
+            
+            {convertedData && (
+              <div className="p-4 border rounded-lg bg-green-500/10 text-green-700 space-y-4">
+                <h3 className="text-lg font-semibold">Dados Prontos para Importação</h3>
+                <ul className="list-disc list-inside text-sm text-green-800">
+                    <li>{convertedData.customers.length} clientes encontrados.</li>
+                    <li>{convertedData.serviceOrders.length} ordens de serviço encontradas.</li>
+                    <li>{convertedData.financialTransactions.length} transações financeiras encontradas.</li>
+                </ul>
+                <p className="text-xs text-green-600">
+                    Atenção: A importação substituirá TODOS os dados existentes das categorias mencionadas. 
+                    Recomenda-se fazer um backup do sistema atual antes de prosseguir.
+                </p>
+              </div>
+            )}
 
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+          {convertedData && (
+            <CardFooter className="border-t px-6 py-4 justify-end">
+                <Button onClick={() => setIsConfirmImportOpen(true)}>
+                    <DatabaseZap className="mr-2 h-4 w-4"/>
+                    Importar Dados para o Sistema
+                </Button>
+            </CardFooter>
+          )}
+        </Card>
+      </div>
+
+       <AlertDialog open={isConfirmImportOpen} onOpenChange={setIsConfirmImportOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Importação?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação é irreversível e substituirá permanentemente todos os clientes, ordens de serviço e dados financeiros do sistema atual. 
+                Você tem certeza que deseja continuar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleImport}>
+                Sim, Importar e Substituir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+    </>
   );
 }

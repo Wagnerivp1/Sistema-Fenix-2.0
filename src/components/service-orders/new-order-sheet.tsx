@@ -38,7 +38,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getCustomers, getStock, getCompanyInfo, getLoggedInUser, getSettings, saveFinancialTransactions, getFinancialTransactions } from '@/lib/storage';
+import { getCustomers, getStock, getCompanyInfo, getSettings, saveFinancialTransactions, getFinancialTransactions } from '@/lib/storage';
+import { useAuth } from '@/hooks/use-auth';
 import type { Customer, ServiceOrder, StockItem, CompanyInfo, User, InternalNote, FinancialTransaction } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -64,6 +65,7 @@ interface QuoteItem {
 
 export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [stock, setStock] = React.useState<StockItem[]>([]);
@@ -81,7 +83,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = React.useState(false);
   const [isManualAddDialogOpen, setIsManualAddDialogOpen] = React.useState(false);
   const [manualAddItem, setManualAddItem] = React.useState<QuoteItem | null>(null);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   
   const [paymentDetails, setPaymentDetails] = React.useState({
     discount: 0,
@@ -96,14 +97,12 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   React.useEffect(() => {
     // Carrega clientes, estoque e usuário logado
     const loadData = async () => {
-      const [customersData, stockData, loggedInUser] = await Promise.all([
+      const [customersData, stockData] = await Promise.all([
         getCustomers(),
         getStock(),
-        getLoggedInUser()
       ]);
       setCustomers(customersData);
       setStock(stockData);
-      setCurrentUser(loggedInUser);
     };
     loadData();
   }, []);

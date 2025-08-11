@@ -25,7 +25,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { getCustomers, getStock, getLoggedInUser, getCompanyInfo, saveCustomers } from '@/lib/storage';
+import { getCustomers, getStock, getCompanyInfo, saveCustomers } from '@/lib/storage';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Select,
   SelectContent,
@@ -71,10 +72,10 @@ interface QuoteBuilderProps {
 
 export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuilderProps) {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [stock, setStock] = React.useState<StockItem[]>([]);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | undefined>(undefined);
   const [items, setItems] = React.useState<SaleItem[]>([]);
@@ -88,14 +89,12 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
 
   React.useEffect(() => {
     const loadPrerequisites = async () => {
-      const [customersData, stockData, userData] = await Promise.all([
+      const [customersData, stockData] = await Promise.all([
         getCustomers(),
         getStock(),
-        getLoggedInUser(),
       ]);
       setCustomers(customersData);
       setStock(stockData);
-      setCurrentUser(userData);
     };
     if (isOpen) {
       loadPrerequisites();

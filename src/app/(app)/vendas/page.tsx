@@ -17,7 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getStock, saveSales, getFinancialTransactions, saveFinancialTransactions, getLoggedInUser, getCompanyInfo } from '@/lib/storage';
+import { getStock, saveSales, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo } from '@/lib/storage';
+import { useAuth } from '@/hooks/use-auth';
 import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,6 +32,7 @@ import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
 
 export default function VendasPage() {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [saleItems, setSaleItems] = React.useState<SaleItem[]>([]);
   const [discount, setDiscount] = React.useState(0);
   const [paymentMethod, setPaymentMethod] = React.useState('dinheiro');
@@ -39,7 +41,6 @@ export default function VendasPage() {
   const [isManualAddOpen, setIsManualAddOpen] = React.useState(false);
   const [isChangeCalcOpen, setIsChangeCalcOpen] = React.useState(false);
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [companyInfoForDialog, setCompanyInfoForDialog] = React.useState<CompanyInfo | null>(null);
   
   const [isPrintReceiptOpen, setIsPrintReceiptOpen] = React.useState(false);
@@ -53,8 +54,6 @@ export default function VendasPage() {
 
   React.useEffect(() => {
     const loadData = async () => {
-      const loggedInUser = await getLoggedInUser();
-      setCurrentUser(loggedInUser);
       const stockData = await getStock();
       setStock(stockData);
     };

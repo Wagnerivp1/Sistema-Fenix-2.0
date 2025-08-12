@@ -13,18 +13,31 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { SaleItem } from '@/types';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import type { SaleItem, StockItem } from '@/types';
+import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown } from 'lucide-react';
 
 interface ManualAddItemDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddItem: (item: Omit<SaleItem, 'id'>) => void;
+  onAddItem: (item: Omit<SaleItem, 'id'> & { id?: string }) => void;
+  stockItems: StockItem[];
 }
 
 const initialItemState = { name: '', price: 0, quantity: 1 };
 
-export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem }: ManualAddItemDialogProps) {
-  const [item, setItem] = React.useState(initialItemState);
+export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem, stockItems }: ManualAddItemDialogProps) {
+  const [item, setItem] = React.useState<Omit<SaleItem, 'id'> & { id?: string }>(initialItemState);
+  const [openCombobox, setOpenCombobox] = React.useState(false);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -46,19 +59,61 @@ export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem }: ManualA
       onOpenChange(false);
     }
   };
+  
+  const handleSelectProduct = (stockItem: StockItem) => {
+    setItem({
+        id: stockItem.id,
+        name: stockItem.name,
+        price: stockItem.price,
+        quantity: 1
+    });
+    setOpenCombobox(false);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Adicionar Item Manualmente</DialogTitle>
+          <DialogTitle>Adicionar Item</DialogTitle>
           <DialogDescription>
-            Insira os dados do produto ou serviço que não está no catálogo.
+            Busque um item no estoque ou insira os dados de um novo produto/serviço.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Descrição do Item</Label>
+            <Label htmlFor="search">Buscar Produto no Estoque</Label>
+             <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                        {item.name || "Selecione um produto..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                        <CommandInput placeholder="Buscar produto..." />
+                        <CommandList>
+                            <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                            <CommandGroup>
+                                {stockItems.map((stockItem) => (
+                                    <CommandItem
+                                        key={stockItem.id}
+                                        value={stockItem.name}
+                                        onSelect={() => handleSelectProduct(stockItem)}
+                                    >
+                                        <Check className={cn("mr-2 h-4 w-4", item.id === stockItem.id ? "opacity-100" : "opacity-0")} />
+                                        {stockItem.name}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Descrição do Item (ou novo item)</Label>
             <Input id="name" placeholder="Ex: Formatação de PC" value={item.name} onChange={handleChange} />
           </div>
           <div className="grid grid-cols-2 gap-4">

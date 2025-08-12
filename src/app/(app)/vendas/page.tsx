@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getStock, getSales, saveSales, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo } from '@/lib/storage';
+import { getStock, getSales, saveStock, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
 import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -26,8 +26,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { ChangeCalculatorDialog } from '@/components/sales/change-calculator-dialog';
 import { PrintSaleReceiptDialog } from '@/components/sales/print-sale-receipt-dialog';
 import { PixQrCodeDialog } from '@/components/sales/pix-qr-code-dialog';
-
-// Estoque foi removido, a busca manual é agora uma adição manual de item.
 import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
 
 export default function VendasPage() {
@@ -63,10 +61,10 @@ export default function VendasPage() {
   
   const addProductToSale = (productToAdd: Omit<SaleItem, 'id'> & { id?: string }) => {
     setSaleItems(prevItems => {
-        const existingItem = prevItems.find(item => item.name.toLowerCase() === productToAdd.name.toLowerCase());
+        const existingItem = prevItems.find(item => item.id && item.id === productToAdd.id);
         if (existingItem) {
             return prevItems.map(item =>
-                item.name.toLowerCase() === productToAdd.name.toLowerCase()
+                item.id === productToAdd.id
                     ? { ...item, quantity: item.quantity + productToAdd.quantity }
                     : item
             );
@@ -188,8 +186,27 @@ export default function VendasPage() {
     };
     const existingSales = await getSales();
     await saveSales([...existingSales, newSale]);
+    
+    // 2. Update stock
+    const currentStock = await getStock();
+    const updatedStock = [...currentStock];
+    let stockWasUpdated = false;
 
-    // 2. Create Financial Transaction
+    saleItems.forEach(saleItem => {
+        const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
+        if (stockIndex !== -1) {
+            updatedStock[stockIndex].quantity -= saleItem.quantity;
+            stockWasUpdated = true;
+        }
+    });
+
+    if (stockWasUpdated) {
+        await saveStock(updatedStock);
+        setStock(updatedStock); // Update local state
+    }
+
+
+    // 3. Create Financial Transaction
     const newTransaction: FinancialTransaction = {
         id: `FIN-${Date.now()}`,
         type: 'receita',
@@ -203,10 +220,10 @@ export default function VendasPage() {
     const existingTransactions = await getFinancialTransactions();
     await saveFinancialTransactions([newTransaction, ...existingTransactions]);
 
-    // 3. Notify and Reset
+    // 4. Notify and Reset
     toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });
     
-    // 4. Conditional dialogs
+    // 5. Conditional dialogs
     setIsChangeCalcOpen(false);
     setIsPixDialogOpen(false);
     
@@ -399,7 +416,8 @@ export default function VendasPage() {
     </div>
     <ManualAddItemDialog
         isOpen={isManualAddOpen}
-        onAddItem={(item) => addProductToSale({ ...item, id: `manual-${Date.now()}`})}
+        stockItems={stock}
+        onAddItem={(item) => addProductToSale({ ...item })}
         onOpenChange={setIsManualAddOpen}
     />
     <ChangeCalculatorDialog

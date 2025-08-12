@@ -25,7 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { getCustomers, getStock, getCompanyInfo, saveCustomers } from '@/lib/storage';
+import { getCustomers, getStock, getCompanyInfo, saveCustomers, getKits } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
 import {
   Select,
@@ -49,7 +49,7 @@ import {
 import { addDays } from 'date-fns';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import type { Quote, Customer, StockItem, SaleItem, User, CompanyInfo } from '@/types';
+import type { Quote, Customer, StockItem, SaleItem, User, CompanyInfo, Kit } from '@/types';
 import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
 
 
@@ -76,6 +76,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
   
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [stock, setStock] = React.useState<StockItem[]>([]);
+  const [kits, setKits] = React.useState<Kit[]>([]);
 
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | undefined>(undefined);
   const [items, setItems] = React.useState<SaleItem[]>([]);
@@ -89,12 +90,14 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
 
   React.useEffect(() => {
     const loadPrerequisites = async () => {
-      const [customersData, stockData] = await Promise.all([
+      const [customersData, stockData, kitsData] = await Promise.all([
         getCustomers(),
         getStock(),
+        getKits(),
       ]);
       setCustomers(customersData);
       setStock(stockData);
+      setKits(kitsData);
     };
     if (isOpen) {
       loadPrerequisites();
@@ -129,13 +132,13 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     });
   };
 
-  const addStockItemToSale = (stockItem: StockItem) => {
+  const addStockItemToSale = (stockItem: StockItem, quantity = 1) => {
     setItems(prev => {
         const existing = prev.find(i => i.id === stockItem.id);
         if (existing) {
-            return prev.map(i => i.id === stockItem.id ? {...i, quantity: i.quantity + 1} : i);
+            return prev.map(i => i.id === stockItem.id ? {...i, quantity: i.quantity + quantity} : i);
         }
-        return [...prev, { id: stockItem.id, name: stockItem.name, price: stockItem.price, quantity: 1 }];
+        return [...prev, { id: stockItem.id, name: stockItem.name, price: stockItem.price, quantity }];
     });
   };
   
@@ -148,6 +151,40 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     } else {
         toast({ variant: "destructive", title: "Produto não encontrado" });
     }
+  };
+
+  const handleAddKit = (kitId: string) => {
+    const selectedKit = kits.find(k => k.id === kitId);
+    if (!selectedKit) return;
+
+    let itemsToAdd: SaleItem[] = [];
+
+    selectedKit.items.forEach(kitItem => {
+        const stockItem = stock.find(s => s.id === kitItem.productId);
+        if (stockItem) {
+            itemsToAdd.push({
+                id: stockItem.id,
+                name: stockItem.name,
+                price: stockItem.price,
+                quantity: kitItem.quantity,
+            });
+        }
+    });
+
+    setItems(prevItems => {
+        const newItems = [...prevItems];
+        itemsToAdd.forEach(itemToAdd => {
+            const existingIndex = newItems.findIndex(i => i.id === itemToAdd.id);
+            if (existingIndex > -1) {
+                newItems[existingIndex].quantity += itemToAdd.quantity;
+            } else {
+                newItems.push(itemToAdd);
+            }
+        });
+        return newItems;
+    });
+
+    toast({ title: "Kit Adicionado!", description: `Os itens do kit "${selectedKit.name}" foram adicionados ao orçamento.` });
   };
   
   const handleRemoveItem = (itemId: string) => {
@@ -387,6 +424,19 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
                             </Select>
                             <Button variant="outline" size="icon" onClick={() => setIsAddCustomerOpen(true)}><UserPlus /></Button>
                         </div>
+                    </div>
+                     <div className="space-y-2">
+                      <Label htmlFor="kit">Adicionar Kit ao Orçamento</Label>
+                      <Select onValueChange={handleAddKit}>
+                          <SelectTrigger id="kit">
+                              <SelectValue placeholder="Selecione um kit..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {kits.map(k => (
+                                  <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
                     </div>
                      <div className="space-y-2 text-base mt-auto">
                         <div className="flex justify-between items-center"><span className="text-muted-foreground">Subtotal</span><span>R$ {subtotal.toFixed(2)}</span></div>

@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings, getSales, getQuotes, getAppointments, getFinancialTransactions, saveSales, saveQuotes, saveAppointments, saveFinancialTransactions, getCustomers, saveCustomers, getServiceOrders, saveServiceOrders, getKits } from '@/lib/storage';
+import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings, getSales, getQuotes, getAppointments, getFinancialTransactions, saveSales, saveQuotes, saveAppointments, saveFinancialTransactions, getCustomers, saveCustomers, getServiceOrders, saveServiceOrders, getKits, saveKits } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
 import type { User, CompanyInfo, UserPermissions } from '@/types';
 import Image from 'next/image';
@@ -230,7 +230,7 @@ export default function ConfiguracoesPage() {
             case 'settings': return { key: type, data: await getSettings() };
             case 'quotes': return { key: type, data: await getQuotes() };
             case 'appointments': return { key: type, data: await getAppointments() };
-            case 'kits': return { key: 'kits', data: await getKits() };
+            case 'kits': return { key: type, data: await getKits() };
             default: return null;
         }
       });
@@ -254,6 +254,9 @@ export default function ConfiguracoesPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
+      localStorage.setItem('lastBackupTime', new Date().toISOString());
+      window.dispatchEvent(new Event('storage-change-lastBackupTime'));
+
       toast({ title: 'Backup Realizado!', description: 'O download do arquivo de backup foi iniciado.' });
     } catch (error) {
       console.error("Backup error:", error);

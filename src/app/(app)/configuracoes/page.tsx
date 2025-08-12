@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings, getSales, getQuotes, getAppointments, getFinancialTransactions, saveSales, saveQuotes, saveAppointments, saveFinancialTransactions, getCustomers, saveCustomers, getServiceOrders, saveServiceOrders } from '@/lib/storage';
+import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings, getSales, getQuotes, getAppointments, getFinancialTransactions, saveSales, saveQuotes, saveAppointments, saveFinancialTransactions, getCustomers, saveCustomers, getServiceOrders, saveServiceOrders, getKits } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
 import type { User, CompanyInfo, UserPermissions } from '@/types';
 import Image from 'next/image';

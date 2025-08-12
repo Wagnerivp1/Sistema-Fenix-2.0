@@ -11,7 +11,7 @@ import { Badge } from '../ui/badge';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
-import { add } from 'date-fns';
+import { add, isValid } from 'date-fns';
 import { Input } from '../ui/input';
 import { getCompanyInfo, getSettings } from '@/lib/storage';
 
@@ -331,7 +331,6 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4 mt-2 border-t border-dashed">
                     <InfoItem icon={DollarSign} label="Valor Total da OS" value={`R$ ${(order.totalValue || 0).toFixed(2)}`} />
                     <InfoItem icon={Tag} label="Forma de Pagamento" value={order.paymentMethod || 'Não informado'} />
-                    <InfoItem icon={ShieldCheck} label="Garantia Aplicada" value={order.warranty || 'Não informado'} />
                     <WarrantyInfo order={order} />
                     <InfoItem icon={MessageSquare} label="Observações Internas" value={Array.isArray(order.internalNotes) ? `${order.internalNotes.length} anotação(ões)` : (order.internalNotes || 'Nenhuma')} />
                   </div>
@@ -375,7 +374,8 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   React.useEffect(() => {
     const fetchSettings = async () => {
-      if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
+      const deliveredDate = new Date(order.deliveredDate || '');
+      if (order.status !== 'Entregue' || !order.deliveredDate || !isValid(deliveredDate) || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
         setWarrantyInfoText("Garantia pendente de entrega do equipamento.");
         return;
       }

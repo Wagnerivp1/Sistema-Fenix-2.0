@@ -912,6 +912,7 @@ function ServiceOrdersComponent() {
                 const equipmentName = typeof order.equipment === 'string'
                   ? order.equipment
                   : `${order.equipment.type || ''} ${order.equipment.brand || ''} ${order.equipment.model || ''}`.trim();
+                const isFinished = ['Finalizado', 'Entregue', 'Cancelada'].includes(order.status);
                 return (
                   <TableRow key={order.id}>
                     <TableCell className="hidden sm:table-cell">
@@ -978,13 +979,13 @@ function ServiceOrdersComponent() {
                             Exibir Comentários
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {order.status === 'Aguardando Pagamento' && (
+                          {!isFinished && (
                             <DropdownMenuItem onSelect={() => handleAddPayment(order)}>
                               <DollarSign className="mr-2 h-4 w-4 text-green-500"/>
                               Adicionar Pagamento
                             </DropdownMenuItem>
                           )}
-                          {(order.status === 'Finalizado' || order.status === 'Entregue' || order.status === 'Cancelada') && (
+                          {isFinished && (
                             <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
                               <Undo2 className="mr-2 h-4 w-4" />
                               Reabrir OS

@@ -115,6 +115,8 @@ function ServiceOrdersComponent() {
 
   const calculateUnreadCounts = React.useCallback((ordersToCheck: ServiceOrder[]) => {
     const counts: Record<string, number> = {};
+    if (typeof window === 'undefined') return;
+
     for (const order of ordersToCheck) {
       const notes = Array.isArray(order.internalNotes) ? order.internalNotes : [];
       if (notes.length === 0) continue;
@@ -152,6 +154,17 @@ function ServiceOrdersComponent() {
         }
     }
     loadData();
+
+    // Listener to re-calculate notifications if data changes in another tab/component
+    const handleStorageChange = () => {
+      loadData();
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+
   }, [customerId, calculateUnreadCounts]);
 
   React.useEffect(() => {
@@ -205,8 +218,6 @@ function ServiceOrdersComponent() {
   const handleCommentsDialogClose = (orderId?: string) => {
     setIsCommentsDialogOpen(false);
     if (orderId) {
-      localStorage.setItem(`os-last-viewed-${orderId}`, new Date().toISOString());
-      // Recalculate counts to remove the notification immediately
       calculateUnreadCounts(orders);
     }
   }
@@ -236,11 +247,9 @@ function ServiceOrdersComponent() {
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
 
-    // Immediately update the last-viewed timestamp for the current user
-    // This prevents showing a notification for a comment they just made.
-    localStorage.setItem(`os-last-viewed-${orderId}`, commentToAdd.date);
-    calculateUnreadCounts(updatedOrders);
-    
+    // This ensures other tabs/components can react to the data change
+    window.dispatchEvent(new Event('storage'));
+
     // Ensure the dialog gets the fresh data
     const freshOrderData = updatedOrders.find(o => o.id === orderId);
     if (freshOrderData) {
@@ -282,6 +291,8 @@ function ServiceOrdersComponent() {
     const sortedOrders = updatedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     await saveServiceOrders(sortedOrders);
     setOrders(sortedOrders); 
+    // Dispatch storage event to notify other components (like the notification calculator)
+    window.dispatchEvent(new Event('storage'));
     handleSheetOpenChange(false);
   }
 
@@ -291,6 +302,7 @@ function ServiceOrdersComponent() {
     );
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
+    window.dispatchEvent(new Event('storage'));
     toast({
       title: 'Ordem de Serviço Reaberta!',
       description: `A OS #${orderId.slice(-4)} foi movida para o status "Aberta".`,
@@ -308,6 +320,7 @@ function ServiceOrdersComponent() {
 
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
+    window.dispatchEvent(new Event('storage'));
     toast({
       title: 'Status Alterado!',
       description: `A OS #${orderId.slice(-4)} foi atualizada para "${newStatus}".`,
@@ -986,13 +999,7 @@ function ServiceOrdersComponent() {
 
     <ViewCommentsDialog 
       isOpen={isCommentsDialogOpen}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          handleCommentsDialogClose(commentsOrder?.id);
-        } else {
-          setIsCommentsDialogOpen(true);
-        }
-      }}
+      onOpenChange={handleCommentsDialogClose}
       serviceOrder={commentsOrder}
       onCommentAdd={handleCommentAdded}
     />

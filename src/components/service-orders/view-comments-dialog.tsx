@@ -31,7 +31,7 @@ declare module 'jspdf' {
 
 interface ViewCommentsDialogProps {
   isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
+  onOpenChange: (isOpen: boolean, orderId?: string) => void;
   serviceOrder: ServiceOrder | null;
   onCommentAdd: (orderId: string, commentText: string) => void;
 }
@@ -50,6 +50,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
 
   React.useEffect(() => {
     if (isOpen && serviceOrder) {
+      localStorage.setItem(`os-last-viewed-${serviceOrder.id}`, new Date().toISOString());
       setNewComment('');
     }
   }, [isOpen, serviceOrder]);
@@ -162,7 +163,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
   const sortedNotes = sortNotesChronologically(serviceOrder.internalNotes);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => onOpenChange(open, serviceOrder.id)}>
       <DialogContent className="sm:max-w-xl flex flex-col h-[70vh]">
         <DialogHeader>
           <DialogTitle>Comentários da OS #{serviceOrder.id.slice(-4)}</DialogTitle>
@@ -208,7 +209,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
             Imprimir
           </Button>
           <div className="flex gap-2">
-             <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
+             <Button variant="ghost" onClick={() => onOpenChange(false, serviceOrder.id)}>Fechar</Button>
              <Button onClick={handleAddComment}>Adicionar Comentário</Button>
           </div>
         </DialogFooter>

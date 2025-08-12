@@ -122,10 +122,15 @@ export default function CustomersPage() {
     if (customer) {
       const history = serviceOrders.filter(
         (order: any) => {
+          // Backward compatibility for old and new data structures
           const orderCustomerName = order.customerName || order.client?.name;
           return orderCustomerName && orderCustomerName.toLowerCase() === customer.name.toLowerCase();
         }
-      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      ).sort((a, b) => {
+        const dateA = new Date(a.date || a.entryDate).getTime();
+        const dateB = new Date(b.date || b.entryDate).getTime();
+        return dateB - dateA;
+      });
       setCustomerServiceHistory(history);
     } else {
       setCustomerServiceHistory([]);
@@ -384,7 +389,7 @@ export default function CustomersPage() {
                   </div>
               </CardContent>
               <CardFooter className="text-sm text-muted-foreground">
-                  Último atendimento em: {customerServiceHistory.length > 0 ? new Date(customerServiceHistory[0].date).toLocaleDateString('pt-BR') : 'Nenhum'}
+                  Último atendimento em: {customerServiceHistory.length > 0 ? new Date(customerServiceHistory[0].date || customerServiceHistory[0].entryDate).toLocaleDateString('pt-BR') : 'Nenhum'}
               </CardFooter>
             </Card>
           </div>

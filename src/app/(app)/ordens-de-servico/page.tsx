@@ -35,6 +35,12 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -221,9 +227,8 @@ function ServiceOrdersComponent() {
   const handleViewCommentsClick = (order: ServiceOrder) => {
     const currentOrder = orders.find(o => o.id === order.id);
     setCommentsOrder(currentOrder || order);
-    setIsCommentsDialogOpen(true);
-    // Recalculate immediately on open
     calculateUnreadCounts(orders);
+    setIsCommentsDialogOpen(true);
   }
 
   const handleCommentsDialogClose = (orderId?: string) => {
@@ -913,6 +918,8 @@ function ServiceOrdersComponent() {
                   ? order.equipment
                   : `${order.equipment.type || ''} ${order.equipment.brand || ''} ${order.equipment.model || ''}`.trim();
                 const isFinished = ['Finalizado', 'Entregue', 'Cancelada'].includes(order.status);
+                const finalValue = order.finalValue ?? order.totalValue;
+
                 return (
                   <TableRow key={order.id}>
                     <TableCell className="hidden sm:table-cell">
@@ -936,63 +943,80 @@ function ServiceOrdersComponent() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
-                           <DropdownMenuSub>
-                            <DropdownMenuSubTrigger>Mudar Status</DropdownMenuSubTrigger>
-                            <DropdownMenuPortal>
-                                <DropdownMenuSubContent>
-                                    <DropdownMenuRadioGroup 
-                                        value={order.status} 
-                                        onValueChange={(value) => handleQuickStatusChange(order.id, value as ServiceOrder['status'])}
-                                    >
-                                        {allStatuses.map(s => (
-                                            <DropdownMenuRadioItem key={s} value={s}>{s}</DropdownMenuRadioItem>
-                                        ))}
-                                    </DropdownMenuRadioGroup>
-                                </DropdownMenuSubContent>
-                            </DropdownMenuPortal>
-                          </DropdownMenuSub>
-                           <DropdownMenuSub>
-                            <DropdownMenuSubTrigger>
-                               <Printer className="mr-2 h-4 w-4" />
-                               Imprimir
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuPortal>
-                                <DropdownMenuSubContent>
-                                    <DropdownMenuItem onSelect={() => handlePrint('entry', order)}>Recibo de Entrada</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => handlePrint('quote', order)}>Orçamento de Serviço</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => handlePrint('delivery', order)}>Recibo de Entrega</DropdownMenuItem>
-                                </DropdownMenuSubContent>
-                            </DropdownMenuPortal>
-                          </DropdownMenuSub>
-                          <DropdownMenuItem onSelect={() => handleViewCommentsClick(order)}>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Exibir Comentários
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {!isFinished && (
-                            <DropdownMenuItem onSelect={() => handleAddPayment(order)}>
-                              <DollarSign className="mr-2 h-4 w-4 text-green-500"/>
-                              Adicionar Pagamento
+                       <TooltipProvider>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
+                             <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>Mudar Status</DropdownMenuSubTrigger>
+                              <DropdownMenuPortal>
+                                  <DropdownMenuSubContent>
+                                      <DropdownMenuRadioGroup 
+                                          value={order.status} 
+                                          onValueChange={(value) => handleQuickStatusChange(order.id, value as ServiceOrder['status'])}
+                                      >
+                                          {allStatuses.map(s => (
+                                              <DropdownMenuRadioItem key={s} value={s}>{s}</DropdownMenuRadioItem>
+                                          ))}
+                                      </DropdownMenuRadioGroup>
+                                  </DropdownMenuSubContent>
+                              </DropdownMenuPortal>
+                            </DropdownMenuSub>
+                             <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                 <Printer className="mr-2 h-4 w-4" />
+                                 Imprimir
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuPortal>
+                                  <DropdownMenuSubContent>
+                                      <DropdownMenuItem onSelect={() => handlePrint('entry', order)}>Recibo de Entrada</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => handlePrint('quote', order)}>Orçamento de Serviço</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => handlePrint('delivery', order)}>Recibo de Entrega</DropdownMenuItem>
+                                  </DropdownMenuSubContent>
+                              </DropdownMenuPortal>
+                            </DropdownMenuSub>
+                            <DropdownMenuItem onSelect={() => handleViewCommentsClick(order)}>
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Exibir Comentários
                             </DropdownMenuItem>
-                          )}
-                          {isFinished && (
-                            <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
-                              <Undo2 className="mr-2 h-4 w-4" />
-                              Reabrir OS
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuSeparator />
+                            {!isFinished && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <DropdownMenuItem onSelect={() => handleAddPayment(order)}>
+                                    <DollarSign className="mr-2 h-4 w-4 text-green-500"/>
+                                    Adicionar Pagamento
+                                  </DropdownMenuItem>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                   <div className="p-2 text-sm">
+                                      <p className="font-bold mb-2">Resumo Financeiro:</p>
+                                      <p>Valor Total: R$ {finalValue.toFixed(2)}</p>
+                                      <ul className="list-disc pl-4 mt-1 text-xs text-muted-foreground">
+                                          {(order.items || []).map(item => (
+                                              <li key={item.id}>{item.description} - R$ {item.unitPrice.toFixed(2)}</li>
+                                          ))}
+                                      </ul>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                            {isFinished && (
+                              <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
+                                <Undo2 className="mr-2 h-4 w-4" />
+                                Reabrir OS
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TooltipProvider>
                     </TableCell>
                   </TableRow>
                 )

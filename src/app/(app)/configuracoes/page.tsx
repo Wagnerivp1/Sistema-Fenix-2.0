@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music, FileQuote } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music, FileQuote, Package, PackagePlus } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings } from '@/lib/storage';
+import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings, getSales, getQuotes, getAppointments, getFinancialTransactions, saveSales, saveQuotes, saveAppointments, saveFinancialTransactions, getCustomers, saveCustomers, getServiceOrders, saveServiceOrders } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
 import type { User, CompanyInfo, UserPermissions } from '@/types';
 import Image from 'next/image';
@@ -217,7 +217,7 @@ export default function ConfiguracoesPage() {
   const handleBackup = async () => {
     try {
       const backupData: Record<string, any> = {};
-      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'quotes', 'appointments'];
+      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'quotes', 'appointments', 'kits'];
       
       const dataPromises = dataTypes.map(async (type) => {
         switch(type) {
@@ -230,6 +230,7 @@ export default function ConfiguracoesPage() {
             case 'settings': return { key: type, data: await getSettings() };
             case 'quotes': return { key: type, data: await getQuotes() };
             case 'appointments': return { key: type, data: await getAppointments() };
+            case 'kits': return { key: 'kits', data: await getKits() };
             default: return null;
         }
       });
@@ -293,6 +294,7 @@ export default function ConfiguracoesPage() {
             { key: 'settings', saveFunc: saveSettings },
             { key: 'appointments', saveFunc: saveAppointments },
             { key: 'quotes', saveFunc: saveQuotes },
+            { key: 'kits', saveFunc: saveKits },
         ];
 
         const hasKnownKey = dataTypes.some(dt => dt.key in data);
@@ -326,6 +328,7 @@ export default function ConfiguracoesPage() {
         saveUsers([]),
         saveAppointments([]),
         saveQuotes([]),
+        saveKits([]),
         saveCompanyInfo({} as CompanyInfo),
         saveSettings({ defaultWarrantyDays: 90 })
       ];
@@ -545,8 +548,15 @@ export default function ConfiguracoesPage() {
 
     <Card>
         <CardHeader><CardTitle>Ferramentas</CardTitle><CardDescription>Recursos adicionais para gerenciamento de dados.</CardDescription></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
             <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h4 className="font-semibold">Gerenciador de Kits</h4>
+                    <p className="text-sm text-muted-foreground">Crie e edite kits de produtos para agilizar a criação de orçamentos.</p>
+                </div>
+                <Button variant="secondary" asChild disabled={!isCurrentUserAdmin}><Link href="/configuracoes/kits"><PackagePlus className="mr-2 h-4 w-4"/>Gerenciar Kits</Link></Button>
+            </div>
+             <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h4 className="font-semibold">Conversor de Backup</h4>
                     <p className="text-sm text-muted-foreground">Converta um arquivo de backup de uma versão anterior do sistema para o formato atual.</p>

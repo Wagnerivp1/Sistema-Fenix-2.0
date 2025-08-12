@@ -163,3 +163,15 @@ export type Appointment = {
     status: 'agendado' | 'concluido' | 'cancelado';
   };
 };
+
+export type KitItem = {
+  productId: string;
+  name: string;
+  quantity: number;
+};
+
+export type Kit = {
+  id: string;
+  name: string;
+  items: KitItem[];
+};

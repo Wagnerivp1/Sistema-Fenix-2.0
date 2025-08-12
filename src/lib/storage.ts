@@ -1,6 +1,7 @@
+
 'use server';
 
-import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote } from '@/types';
+import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote, Kit } from '@/types';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -23,6 +24,8 @@ async function readData<T>(dataType: string, defaultValue: T[] | T): Promise<any
   } catch (error: any) {
     // If the file doesn't exist (ENOENT), return a sensible default.
     if (error.code === 'ENOENT') {
+      // If file doesn't exist, create it with default value
+      await writeData(dataType, defaultValue);
       return defaultValue;
     }
     // For other errors, log them and return the default to prevent crashes.
@@ -70,6 +73,9 @@ export async function saveAppointments(appointments: Appointment[]): Promise<voi
 
 export async function getQuotes(): Promise<Quote[]> { return readData<Quote>('quotes.json', []); }
 export async function saveQuotes(quotes: Quote[]): Promise<void> { return writeData('quotes.json', quotes); }
+
+export async function getKits(): Promise<Kit[]> { return readData<Kit>('kits.json', []); }
+export async function saveKits(kits: Kit[]): Promise<void> { return writeData('kits.json', kits); }
 
 
 // --- Singleton Data (Stored as an object, not array) ---

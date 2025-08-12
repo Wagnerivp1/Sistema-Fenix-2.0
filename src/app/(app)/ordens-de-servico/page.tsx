@@ -235,6 +235,10 @@ function ServiceOrdersComponent() {
     
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
+
+    // Immediately update the last-viewed timestamp for the current user
+    // This prevents showing a notification for a comment they just made.
+    localStorage.setItem(`os-last-viewed-${orderId}`, commentToAdd.date);
     calculateUnreadCounts(updatedOrders);
     
     // Ensure the dialog gets the fresh data

@@ -3,7 +3,8 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PlusCircle, Search, MoreHorizontal, FileDown, Printer, ChevronDown } from 'lucide-react';
+import { PlusCircle, Search, MoreHorizontal, FileDown, Printer, ChevronDown, PackagePlus } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -129,15 +130,23 @@ function ProductsComponent() {
         <CardHeader>
            <div className="flex items-center justify-between gap-4">
               <div>
-                <CardTitle>Produtos</CardTitle>
+                <CardTitle>Produtos e Estoque</CardTitle>
                 <CardDescription>
-                  Gerencie o catálogo de produtos e peças da sua loja.
+                  Gerencie o catálogo de produtos, peças e kits da sua loja.
                 </CardDescription>
               </div>
-              <Button size="sm" onClick={() => handleEdit(null)}>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Adicionar Produto
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/produtos/kits">
+                    <PackagePlus className="h-4 w-4 mr-2" />
+                    Gerenciar Kits
+                  </Link>
+                </Button>
+                <Button size="sm" onClick={() => handleEdit(null)}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Adicionar Produto
+                </Button>
+              </div>
            </div>
         </CardHeader>
         <CardContent>

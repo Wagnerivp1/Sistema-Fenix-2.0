@@ -549,13 +549,6 @@ export default function ConfiguracoesPage() {
     <Card>
         <CardHeader><CardTitle>Ferramentas</CardTitle><CardDescription>Recursos adicionais para gerenciamento de dados.</CardDescription></CardHeader>
         <CardContent className="space-y-4">
-            <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h4 className="font-semibold">Gerenciador de Kits</h4>
-                    <p className="text-sm text-muted-foreground">Crie e edite kits de produtos para agilizar a criação de orçamentos.</p>
-                </div>
-                <Button variant="secondary" asChild disabled={!isCurrentUserAdmin}><Link href="/configuracoes/kits"><PackagePlus className="mr-2 h-4 w-4"/>Gerenciar Kits</Link></Button>
-            </div>
              <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h4 className="font-semibold">Conversor de Backup</h4>
@@ -590,7 +583,7 @@ export default function ConfiguracoesPage() {
                 </div>
             </div>
              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div><h4 className="font-semibold text-destructive">Limpar Sistema</h4><p className="text-sm text-destructive/80">Exclui permanentemente todos os clientes, OS, vendas e finanças.</p></div>
+                <div><h4 className="font-semibold text-destructive">Limpar Sistema</h4><p className="text-sm text-muted-foreground">Exclui permanentemente todos os clientes, OS, vendas e finanças.</p></div>
                  <div className="flex-shrink-0">
                     <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={!currentUser?.permissions.accessDangerZone}><Trash2 className="mr-2 h-4 w-4" />Limpar Todos os Dados</Button>
                 </div>

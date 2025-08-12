@@ -222,13 +222,12 @@ function ServiceOrdersComponent() {
     const currentOrder = orders.find(o => o.id === order.id);
     setCommentsOrder(currentOrder || order);
     setIsCommentsDialogOpen(true);
+    // Recalculate immediately on open
+    calculateUnreadCounts(orders);
   }
 
   const handleCommentsDialogClose = (orderId?: string) => {
     setIsCommentsDialogOpen(false);
-    if (orderId) {
-      calculateUnreadCounts(orders);
-    }
   }
   
   const handleCommentAdded = async (orderId: string, commentText: string) => {

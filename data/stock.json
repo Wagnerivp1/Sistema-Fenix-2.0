@@ -291,7 +291,7 @@
   {
     "id": "PROD-025",
     "barcode": "PROD-025",
-    "name": "SSD 960GB SATA III",
+    "name": "SSD 1TB SATA III",
     "description": "Grande capacidade com velocidade.",
     "category": "Armazenamento",
     "costPrice": 320,
@@ -543,7 +543,7 @@
   {
     "id": "PROD-046",
     "barcode": "PROD-046",
-    "name": "Mouse Gamer 7200 DPI RGB",
+    "name": "Mouse Gamer RGB 7200 DPI",
     "description": "Alta precisão, botões programáveis.",
     "category": "Periférico",
     "costPrice": 100,
@@ -577,3 +577,5 @@
     "unitOfMeasure": "UN"
   }
 ]
+
+    

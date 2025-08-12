@@ -254,9 +254,6 @@ export default function ConfiguracoesPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      localStorage.setItem('lastBackupTime', new Date().toISOString());
-      window.dispatchEvent(new Event('storage-change-lastBackupTime'));
-
       toast({ title: 'Backup Realizado!', description: 'O download do arquivo de backup foi iniciado.' });
     } catch (error) {
       console.error("Backup error:", error);

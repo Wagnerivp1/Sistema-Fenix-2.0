@@ -227,7 +227,11 @@ function ServiceOrdersComponent() {
   const handleViewCommentsClick = (order: ServiceOrder) => {
     const currentOrder = orders.find(o => o.id === order.id);
     setCommentsOrder(currentOrder || order);
+    
+    // Clear unread count for this order immediately on open
+    localStorage.setItem(`os-last-viewed-${order.id}`, new Date().toISOString());
     calculateUnreadCounts(orders);
+
     setIsCommentsDialogOpen(true);
   }
 
@@ -1000,8 +1004,8 @@ function ServiceOrdersComponent() {
                                       <p className="font-bold mb-2">Resumo Financeiro:</p>
                                       <p>Valor Total: R$ {finalValue.toFixed(2)}</p>
                                       <ul className="list-disc pl-4 mt-1 text-xs text-muted-foreground">
-                                          {(order.items || []).map(item => (
-                                              <li key={item.id}>{item.description} - R$ {item.unitPrice.toFixed(2)}</li>
+                                          {(order.items || []).map((item, index) => (
+                                              <li key={item.id + '-' + index}>{item.description} - R$ {item.unitPrice.toFixed(2)}</li>
                                           ))}
                                       </ul>
                                   </div>

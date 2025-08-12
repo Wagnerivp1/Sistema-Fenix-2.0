@@ -199,13 +199,13 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
           doc.autoTable({
             startY: currentY,
             head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-            body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+            body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${(item.unitPrice || 0).toFixed(2)}`, `R$ ${((item.unitPrice || 0) * item.quantity).toFixed(2)}`]),
             theme: 'striped',
             headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
             bodyStyles: { fontSize: 8, cellPadding: 1.5 },
             footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
             foot: [
-                ['Total', '', '', '', `R$ ${order.totalValue.toFixed(2)}`]
+                ['Total', '', '', '', `R$ ${(order.totalValue || 0).toFixed(2)}`]
             ],
             margin: { left: margin, right: margin }
           });
@@ -318,18 +318,18 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                            <div key={item.id} className="flex justify-between items-center p-2 border-b last:border-b-0 text-xs">
                              <span className="flex-1">{item.description} ({item.type === 'part' ? 'Peça' : 'Serviço'})</span>
                              <span className="w-20 text-right">Qtd: {item.quantity}</span>
-                             <span className="w-24 font-medium text-right">R$ {item.unitPrice.toFixed(2)}</span>
+                             <span className="w-24 font-medium text-right">R$ {(item.unitPrice || 0).toFixed(2)}</span>
                            </div>
                          ))}
                          <div className="flex justify-end items-center p-2 font-bold text-sm bg-muted/50 rounded-b-md">
-                            Total de Itens: R$ {order.items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0).toFixed(2)}
+                            Total de Itens: R$ {order.items.reduce((acc, item) => acc + (item.unitPrice || 0) * item.quantity, 0).toFixed(2)}
                          </div>
                        </div>
                      </div>
                   )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-4 mt-2 border-t border-dashed">
-                    <InfoItem icon={DollarSign} label="Valor Total da OS" value={`R$ ${order.totalValue.toFixed(2)}`} />
+                    <InfoItem icon={DollarSign} label="Valor Total da OS" value={`R$ ${(order.totalValue || 0).toFixed(2)}`} />
                     <InfoItem icon={Tag} label="Forma de Pagamento" value={order.paymentMethod || 'Não informado'} />
                     <InfoItem icon={ShieldCheck} label="Garantia Aplicada" value={order.warranty || 'Não informado'} />
                     <WarrantyInfo order={order} />

@@ -132,40 +132,49 @@ function ServiceOrdersComponent() {
     setUnreadCounts(counts);
   }, []);
 
-  React.useEffect(() => {
-    const loadData = async () => {
-        setIsLoading(true);
+  const loadData = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
         const [loadedOrders, loadedCustomers] = await Promise.all([
             getServiceOrders(),
             getCustomers()
         ]);
 
-        const sortedOrders = loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        const sortedOrders = loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setOrders(sortedOrders);
         setCustomers(loadedCustomers);
         calculateUnreadCounts(sortedOrders);
-        setIsLoading(false);
 
-        if (customerId) {
-          const customer = loadedCustomers.find(c => c.id === customerId);
-          if (customer) {
-            handleNewOrderClick(customer);
-          }
+        if (customerId && loadedCustomers.length > 0) {
+            const customer = loadedCustomers.find(c => c.id === customerId);
+            if (customer) {
+                handleNewOrderClick(customer);
+            }
         }
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Erro ao carregar dados",
+            description: "Não foi possível buscar os dados do Firestore. Verifique sua conexão e as regras de segurança do Firebase.",
+        });
+    } finally {
+        setIsLoading(false);
     }
-    loadData();
+  }, [customerId, calculateUnreadCounts, toast]);
 
-    // Listener to re-calculate notifications if data changes in another tab/component
-    const handleStorageChange = () => {
+  React.useEffect(() => {
       loadData();
-    };
-    window.addEventListener('storage', handleStorageChange);
+      
+      const handleStorageChange = () => loadData();
+      window.addEventListener('storage-change-serviceOrders', handleStorageChange);
+      window.addEventListener('storage-change-customers', handleStorageChange);
+      
+      return () => {
+          window.removeEventListener('storage-change-serviceOrders', handleStorageChange);
+          window.removeEventListener('storage-change-customers', handleStorageChange);
+      };
+  }, [loadData]);
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-
-  }, [customerId, calculateUnreadCounts]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -246,6 +255,9 @@ function ServiceOrdersComponent() {
     
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
+    
+    localStorage.setItem(`os-last-viewed-${orderId}`, new Date().toISOString());
+    calculateUnreadCounts(updatedOrders);
 
     // This ensures other tabs/components can react to the data change
     window.dispatchEvent(new Event('storage'));
@@ -292,7 +304,7 @@ function ServiceOrdersComponent() {
     await saveServiceOrders(sortedOrders);
     setOrders(sortedOrders); 
     // Dispatch storage event to notify other components (like the notification calculator)
-    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('storage-change-serviceOrders'));
     handleSheetOpenChange(false);
   }
 
@@ -302,7 +314,7 @@ function ServiceOrdersComponent() {
     );
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
-    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('storage-change-serviceOrders'));
     toast({
       title: 'Ordem de Serviço Reaberta!',
       description: `A OS #${orderId.slice(-4)} foi movida para o status "Aberta".`,
@@ -320,7 +332,7 @@ function ServiceOrdersComponent() {
 
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
-    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('storage-change-serviceOrders'));
     toast({
       title: 'Status Alterado!',
       description: `A OS #${orderId.slice(-4)} foi atualizada para "${newStatus}".`,

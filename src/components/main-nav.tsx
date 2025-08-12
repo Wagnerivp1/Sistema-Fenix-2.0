@@ -72,7 +72,7 @@ export function MainNav() {
     <nav className="flex flex-col gap-2 px-4 py-4">
       <TooltipProvider>
       {navItems.map((item) => {
-        const isActive = pathname.startsWith(item.href);
+        const isActive = pathname.startsWith(item.href) && (item.href !== '/produtos' || pathname === '/produtos' || pathname.startsWith('/produtos/kits'));
         return (
           <Tooltip key={item.href} delayDuration={0}>
             <TooltipTrigger asChild>

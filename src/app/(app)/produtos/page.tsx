@@ -132,7 +132,7 @@ function ProductsComponent() {
               <div>
                 <CardTitle>Produtos e Estoque</CardTitle>
                 <CardDescription>
-                  Gerencie o catálogo de produtos, peças e kits da sua loja.
+                  Gerencie o catálogo de produtos e peças da sua loja.
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">

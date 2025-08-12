@@ -1,13 +1,9 @@
 
-// This file is intentionally left blank.
-// The application has been configured to run offline,
-// so Firebase connectivity is no longer required.
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+'use client';
 
-// Your web app's Firebase configuration
-// IMPORTANT: This is a public configuration and is safe to be exposed.
-// Security is handled by Firestore Security Rules.
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore, enableIndexedDbPersistence, initializeFirestore } from "firebase/firestore";
+
 const firebaseConfig = {
   apiKey: "API_KEY",
   authDomain: "assistec-now.firebaseapp.com",
@@ -18,7 +14,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Get a Firestore instance
-export const db = getFirestore(app);
+// Initialize Firestore with offline persistence
+const db = initializeFirestore(app, {
+  localCache: { kind: 'persistent' }
+});
+
+export { db };

@@ -11,7 +11,7 @@ import { Badge } from '../ui/badge';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
-import { add, isValid } from 'date-fns';
+import { add, isValid, parseISO } from 'date-fns';
 import { Input } from '../ui/input';
 import { getCompanyInfo, getSettings } from '@/lib/storage';
 
@@ -374,12 +374,17 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   React.useEffect(() => {
     const fetchSettings = async () => {
-      const deliveredDate = new Date(order.deliveredDate || '');
-      if (order.status !== 'Entregue' || !order.deliveredDate || !isValid(deliveredDate) || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
-        setWarrantyInfoText("Garantia pendente de entrega do equipamento.");
+      if (order.status !== 'Entregue' || !order.deliveredDate || !order.warranty || order.warranty.toLowerCase().includes('sem garantia')) {
+        setWarrantyInfoText("Garantia pendente ou não aplicável.");
         return;
       }
       
+      const startDate = parseISO(order.deliveredDate);
+      if (!isValid(startDate)) {
+          setWarrantyInfoText("Data de entrega inválida.");
+          return;
+      }
+
       const settings = await getSettings();
       let defaultWarrantyDays = settings?.defaultWarrantyDays || 90;
       
@@ -395,8 +400,6 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
         else if (unit.startsWith('ano')) duration = { years: value };
       }
 
-      const [year, month, day] = order.deliveredDate.split('-').map(Number);
-      const startDate = new Date(Date.UTC(year, month - 1, day));
       const endDate = add(startDate, duration);
       
       const text = `Início: ${formatDate(order.deliveredDate)} | Fim: ${formatDate(endDate.toISOString().split('T')[0])}`;
@@ -410,7 +413,3 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   return <InfoItem icon={warrantyIcon} label="Período de Garantia" value={warrantyInfoText} />
 };
-
-    
-
-    

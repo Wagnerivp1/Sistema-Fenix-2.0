@@ -25,11 +25,17 @@ declare module 'jspdf' {
 
 
 const formatDate = (dateString: string | undefined) => {
-    if (!dateString || isNaN(new Date(dateString).getTime())) {
+    if (!dateString) return 'Data inválida';
+    
+    // Create a date object. This is more robust than assuming a format.
+    const date = new Date(dateString);
+
+    // Check if the date is valid.
+    if (isNaN(date.getTime())) {
       return 'Data inválida';
     }
-    // Adiciona o fuso UTC para evitar problemas de timezone na conversão
-    const date = new Date(`${dateString}T00:00:00Z`);
+
+    // Format the valid date, ensuring UTC to prevent timezone shifts.
     return new Intl.DateTimeFormat('pt-BR', {
         day: '2-digit',
         month: '2-digit',
@@ -212,7 +218,6 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
     if (companyInfo?.logoUrl) {
       const img = new Image();
-      img.src = companyInfo.logoUrl;
       img.crossOrigin = "anonymous";
       img.onload = () => {
         generateContent(img);
@@ -283,7 +288,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                           {equipmentName}
                         </p>
                         <p className="text-sm text-muted-foreground text-left">
-                          OS #{order.id.slice(-4)} - {formatDate(order.date)}
+                          OS #{order.id.slice(-4)} - {formatDate(order.date || (order as any).entryDate)}
                         </p>
                       </div>
                     </div>
@@ -405,5 +410,7 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   return <InfoItem icon={warrantyIcon} label="Período de Garantia" value={warrantyInfoText} />
 };
+
+    
 
     

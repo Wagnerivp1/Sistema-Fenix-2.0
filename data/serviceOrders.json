@@ -1,5 +1,45 @@
 [
   {
+    "id": "OS-1754960159649",
+    "customerName": "VALDECIR ALVARINO",
+    "equipment": "NOTEBOOK Advocacia Arruda  A315-53-348W",
+    "reportedProblem": "sadasd",
+    "status": "Aberta",
+    "date": "2025-08-12",
+    "totalValue": 159,
+    "discount": 0,
+    "finalValue": 159,
+    "paymentMethod": "Dinheiro",
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 120,
+        "type": "service",
+        "id": 1754960107065
+      },
+      {
+        "description": "Teclado USB Padrão ABNT2",
+        "quantity": 1,
+        "unitPrice": 39,
+        "type": "part",
+        "id": 1754960132641
+      }
+    ],
+    "internalNotes": [
+      {
+        "user": "Wagner Lopes",
+        "date": "2025-08-12T00:56:55.641Z",
+        "comment": "Dona cleiza veio naloja e pediu para entregar amanha as 10 horas"
+      }
+    ],
+    "technicalReport": "",
+    "accessories": "asdas",
+    "serialNumber": "ERT",
+    "warranty": "90 dias",
+    "attendant": "Wagner Lopes"
+  },
+  {
     "id": "OS-1754439050572",
     "customerName": "CESTA BASICA SANTA RITA",
     "equipment": "NOTEBOOK TRYHDER ERT",

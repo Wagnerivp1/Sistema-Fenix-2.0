@@ -49,10 +49,10 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
   const { toast } = useToast();
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && serviceOrder) {
       setNewComment('');
     }
-  }, [isOpen]);
+  }, [isOpen, serviceOrder]);
 
   const handleAddComment = () => {
     if (!newComment.trim() || !serviceOrder) return;

@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MoreHorizontal, Undo2, MessageSquare, DollarSign, Printer } from 'lucide-react';
+import { MoreHorizontal, Undo2, MessageSquare, DollarSign, Printer, MessageCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -95,6 +95,8 @@ function ServiceOrdersComponent() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState('ativas');
   const [searchFilter, setSearchFilter] = React.useState('');
+  const [unreadCounts, setUnreadCounts] = React.useState<Record<string, number>>({});
+
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -111,8 +113,24 @@ function ServiceOrdersComponent() {
     }
   }
 
+  const calculateUnreadCounts = React.useCallback((ordersToCheck: ServiceOrder[]) => {
+    const counts: Record<string, number> = {};
+    for (const order of ordersToCheck) {
+      const notes = Array.isArray(order.internalNotes) ? order.internalNotes : [];
+      if (notes.length === 0) continue;
+
+      const lastViewedTimestamp = localStorage.getItem(`os-last-viewed-${order.id}`);
+      const lastViewedDate = lastViewedTimestamp ? new Date(lastViewedTimestamp) : new Date(0);
+      
+      const unread = notes.filter(note => new Date(note.date) > lastViewedDate).length;
+      if (unread > 0) {
+        counts[order.id] = unread;
+      }
+    }
+    setUnreadCounts(counts);
+  }, []);
+
   React.useEffect(() => {
-    // Load data from localStorage on mount
     const loadData = async () => {
         setIsLoading(true);
         const [loadedOrders, loadedCustomers] = await Promise.all([
@@ -120,8 +138,10 @@ function ServiceOrdersComponent() {
             getCustomers()
         ]);
 
-        setOrders(loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        const sortedOrders = loadedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        setOrders(sortedOrders);
         setCustomers(loadedCustomers);
+        calculateUnreadCounts(sortedOrders);
         setIsLoading(false);
 
         if (customerId) {
@@ -132,7 +152,7 @@ function ServiceOrdersComponent() {
         }
     }
     loadData();
-  }, [customerId]);
+  }, [customerId, calculateUnreadCounts]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -181,6 +201,15 @@ function ServiceOrdersComponent() {
     setCommentsOrder(currentOrder || order);
     setIsCommentsDialogOpen(true);
   }
+
+  const handleCommentsDialogClose = (orderId?: string) => {
+    setIsCommentsDialogOpen(false);
+    if (orderId) {
+      localStorage.setItem(`os-last-viewed-${orderId}`, new Date().toISOString());
+      // Recalculate counts to remove the notification immediately
+      calculateUnreadCounts(orders);
+    }
+  }
   
   const handleCommentAdded = async (orderId: string, commentText: string) => {
     if (!currentUser) return;
@@ -191,7 +220,7 @@ function ServiceOrdersComponent() {
       comment: commentText,
     };
     
-    const updatedOrders = orders.map(o => {
+    let updatedOrders = orders.map(o => {
       if (o.id === orderId) {
         const existingNotes = Array.isArray(o.internalNotes) ? o.internalNotes : [];
         return {
@@ -201,9 +230,12 @@ function ServiceOrdersComponent() {
       }
       return o;
     });
+
+    updatedOrders = updatedOrders.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     await saveServiceOrders(updatedOrders);
     setOrders(updatedOrders);
+    calculateUnreadCounts(updatedOrders);
     
     // Ensure the dialog gets the fresh data
     const freshOrderData = updatedOrders.find(o => o.id === orderId);
@@ -863,9 +895,16 @@ function ServiceOrdersComponent() {
                     <TableCell>{equipmentName}</TableCell>
                     <TableCell className="hidden md:table-cell">{formatDate(order.date)}</TableCell>
                     <TableCell>
-                       <Badge className={cn('font-semibold', getStatusVariant(order.status))} variant="outline">
-                        {order.status}
-                      </Badge>
+                      <div className="relative inline-flex items-center">
+                        <Badge className={cn('font-semibold', getStatusVariant(order.status))} variant="outline">
+                          {order.status}
+                        </Badge>
+                        {unreadCounts[order.id] > 0 && (
+                          <div className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                            {unreadCounts[order.id]}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -943,7 +982,13 @@ function ServiceOrdersComponent() {
 
     <ViewCommentsDialog 
       isOpen={isCommentsDialogOpen}
-      onOpenChange={setIsCommentsDialogOpen}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          handleCommentsDialogClose(commentsOrder?.id);
+        } else {
+          setIsCommentsDialogOpen(true);
+        }
+      }}
       serviceOrder={commentsOrder}
       onCommentAdd={handleCommentAdded}
     />

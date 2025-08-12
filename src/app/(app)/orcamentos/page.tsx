@@ -138,7 +138,7 @@ export default function OrcamentosPage() {
         const newTransaction: FinancialTransaction = {
             id: `FIN-${Date.now()}`,
             type: 'receita',
-            description: `Venda do Orçamento #${quote.id.slice(-6)}`,
+            description: `Recebimento da Venda #${newSale.id.slice(-6)}`,
             amount: newSale.total,
             date: newSale.date,
             category: 'Venda de Produto',

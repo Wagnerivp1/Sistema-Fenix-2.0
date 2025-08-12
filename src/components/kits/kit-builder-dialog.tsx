@@ -100,15 +100,15 @@ export function KitBuilderDialog({ isOpen, onOpenChange, kit, stockItems, onSave
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl h-[80vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-3xl h-[80vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>{kit ? 'Editar Kit' : 'Criar Novo Kit'}</DialogTitle>
           <DialogDescription>
             Defina o nome do kit e adicione os produtos que fazem parte dele.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 flex-grow min-h-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 px-6 py-4 flex-grow min-h-0">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="kitName">Nome do Kit</Label>
@@ -160,49 +160,51 @@ export function KitBuilderDialog({ isOpen, onOpenChange, kit, stockItems, onSave
               </Popover>
             </div>
           </div>
-          <div className="flex flex-col">
-            <Label>Peças no Kit</Label>
-            <ScrollArea className="flex-grow border rounded-md mt-2">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Produto</TableHead>
-                    <TableHead className="w-24">Qtd.</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {kitItems.length > 0 ? kitItems.map(item => (
-                    <TableRow key={item.productId}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => handleQuantityChange(item.productId, parseInt(e.target.value))}
-                          className="h-8 w-16 text-center"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.productId)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
+          <div className="flex flex-col min-h-0">
+            <Label className="mb-2">Peças no Kit</Label>
+            <div className="border rounded-md flex-grow relative">
+                <ScrollArea className="absolute inset-0">
+                <Table>
+                    <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center h-24">
-                        Adicione peças ao kit.
-                      </TableCell>
+                        <TableHead>Produto</TableHead>
+                        <TableHead className="w-24">Qtd.</TableHead>
+                        <TableHead className="w-12"></TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </ScrollArea>
+                    </TableHeader>
+                    <TableBody>
+                    {kitItems.length > 0 ? kitItems.map(item => (
+                        <TableRow key={item.productId}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>
+                            <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleQuantityChange(item.productId, parseInt(e.target.value))}
+                            className="h-8 w-16 text-center"
+                            />
+                        </TableCell>
+                        <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.productId)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </TableCell>
+                        </TableRow>
+                    )) : (
+                        <TableRow>
+                        <TableCell colSpan={3} className="text-center h-24">
+                            Adicione peças ao kit.
+                        </TableCell>
+                        </TableRow>
+                    )}
+                    </TableBody>
+                </Table>
+                </ScrollArea>
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 border-t">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSave}>Salvar Kit</Button>
         </DialogFooter>

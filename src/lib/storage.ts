@@ -2,6 +2,11 @@
 'use client';
 
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote, Kit } from '@/types';
+import * as d from '@/data/stock.json';
+
+// --- Default Data ---
+const defaultStock: StockItem[] = (d as any).default || d;
+
 
 // Helper to safely get data from localStorage
 function getFromStorage<T>(key: string, defaultValue: T): T {
@@ -10,6 +15,7 @@ function getFromStorage<T>(key: string, defaultValue: T): T {
   }
   try {
     const item = window.localStorage.getItem(key);
+    // If the item exists in storage, use it. Otherwise, use the default value.
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
     console.error(`Error reading ${key} from localStorage`, error);
@@ -52,7 +58,8 @@ export async function saveServiceOrders(orders: ServiceOrder[]): Promise<void> {
 
 // Stock Items
 export async function getStock(): Promise<StockItem[]> {
-    return getFromStorage<StockItem[]>('stock', []);
+    // On first load, it will use defaultStock if 'stock' is not in localStorage
+    return getFromStorage<StockItem[]>('stock', defaultStock);
 }
 export async function saveStock(stock: StockItem[]): Promise<void> {
     saveToStorage('stock', stock);

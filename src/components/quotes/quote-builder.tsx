@@ -210,7 +210,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     toast({ title: 'Cliente adicionado!', description: `${customerToAdd.name} foi salvo.` });
   };
   
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = items.reduce((acc, item) => acc + (item.price || 0) * (item.quantity || 0), 0);
   const total = subtotal - discount;
 
   const handleSaveQuote = () => {
@@ -398,8 +398,8 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
                                         <TableRow key={item.id}>
                                             <TableCell className="font-medium">{item.name}</TableCell>
                                             <TableCell><Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value))} className="w-16 h-8 text-center mx-auto" /></TableCell>
-                                            <TableCell className="text-right">R$ {item.price.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right">R$ {(item.price * item.quantity).toFixed(2)}</TableCell>
+                                            <TableCell className="text-right">R$ {(item.price || 0).toFixed(2)}</TableCell>
+                                            <TableCell className="text-right">R$ {((item.price || 0) * (item.quantity || 0)).toFixed(2)}</TableCell>
                                             <TableCell><Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
                                         </TableRow>
                                     )) : (

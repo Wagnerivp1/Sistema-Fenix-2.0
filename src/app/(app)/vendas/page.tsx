@@ -142,7 +142,7 @@ export default function VendasPage() {
   };
   
   const calculateTotal = () => {
-    return saleItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    return saleItems.reduce((total, item) => total + (item.price || 0) * (item.quantity || 0), 0);
   };
 
   const subtotal = calculateTotal();
@@ -337,8 +337,8 @@ export default function VendasPage() {
                                       className="w-16 h-8 text-center mx-auto"
                                   />
                               </TableCell>
-                              <TableCell className="text-right">R$ {item.price.toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-semibold">R$ {(item.price * item.quantity).toFixed(2)}</TableCell>
+                              <TableCell className="text-right">R$ {(item.price || 0).toFixed(2)}</TableCell>
+                              <TableCell className="text-right font-semibold">R$ {((item.price || 0) * (item.quantity || 0)).toFixed(2)}</TableCell>
                               <TableCell>
                                   <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
                                       <Trash2 className="h-4 w-4 text-destructive" />

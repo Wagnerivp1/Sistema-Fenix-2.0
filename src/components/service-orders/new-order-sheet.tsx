@@ -211,7 +211,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   
   const calculateTotal = (type?: 'service' | 'part') => {
     const filteredItems = type ? items.filter(item => item.type === type) : items;
-    return filteredItems.reduce((total, item) => total + item.quantity * item.unitPrice, 0);
+    return filteredItems.reduce((total, item) => total + (item.quantity || 0) * (item.unitPrice || 0), 0);
   };
 
   const handleAddComment = () => {
@@ -464,8 +464,8 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                                       <span className="col-span-5 truncate">{item.description}</span>
                                       <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
                                       <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
-                                      <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toFixed(2)}</span>
-                                      <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                                      <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {(item.unitPrice || 0).toFixed(2)}</span>
+                                      <span className="col-span-2 font-medium text-right">R$ {((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2)}</span>
                                   </div>
                                   <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
                                     <Trash2 className="h-4 w-4 text-destructive" />

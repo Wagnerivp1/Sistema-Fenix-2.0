@@ -30,12 +30,12 @@ interface ManualAddItemDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onAddItem: (item: Omit<SaleItem, 'id'> & { id?: string }) => void;
-  stockItems: StockItem[];
+  stockItems?: StockItem[];
 }
 
 const initialItemState = { name: '', price: 0, quantity: 1 };
 
-export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem, stockItems }: ManualAddItemDialogProps) {
+export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem, stockItems = [] }: ManualAddItemDialogProps) {
   const [item, setItem] = React.useState<Omit<SaleItem, 'id'> & { id?: string }>(initialItemState);
   const [openCombobox, setOpenCombobox] = React.useState(false);
 

@@ -126,7 +126,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     setItems(prev => {
         const existing = prev.find(i => i.name.toLowerCase() === item.name.toLowerCase());
         if (existing) {
-            return prev.map(i => i.name.toLowerCase() === item.name.toLowerCase() ? {...i, quantity: i.quantity + item.quantity} : i);
+            return prev.map(i => i.name.toLowerCase() === item.name.toLowerCase() ? {...i, quantity: (i.quantity || 1) + (item.quantity || 1)} : i);
         }
         return [...prev, { ...item, id: `manual-${Date.now()}` }];
     });
@@ -136,7 +136,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     setItems(prev => {
         const existing = prev.find(i => i.id === stockItem.id);
         if (existing) {
-            return prev.map(i => i.id === stockItem.id ? {...i, quantity: i.quantity + quantity} : i);
+            return prev.map(i => i.id === stockItem.id ? {...i, quantity: (i.quantity || 1) + quantity} : i);
         }
         return [...prev, { id: stockItem.id, name: stockItem.name, price: stockItem.price, quantity }];
     });
@@ -325,7 +325,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
         doc.autoTable({
             startY: currentY,
             head: [['Descrição', 'Qtd.', 'Vlr. Unit.', 'Subtotal']],
-            body: items.map(item => [item.name, item.quantity, `R$ ${item.price.toFixed(2)}`, `R$ ${(item.price * item.quantity).toFixed(2)}`]),
+            body: items.map(item => [item.name, item.quantity, `R$ ${(item.price || 0).toFixed(2)}`, `R$ ${((item.price || 0) * (item.quantity || 0)).toFixed(2)}`]),
             foot: [
                 ['Total Serviços: R$ 0.00', 'Total Peças: R$ 0.00', { content: 'Valor Total Estimado:', styles: { halign: 'right' } }, { content: `R$ ${total.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
             ],
@@ -483,11 +483,10 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     </Dialog>
      <ManualAddItemDialog
         isOpen={isManualAddOpen}
+        stockItems={stock}
         onAddItem={handleAddItem}
         onOpenChange={setIsManualAddOpen}
     />
     </>
   );
 }
-
-    

@@ -1000,12 +1000,12 @@ function ServiceOrdersComponent() {
                                   </DropdownMenuItem>
                                 </TooltipTrigger>
                                 <TooltipContent side="left">
-                                   <div className="p-2 text-sm">
+                                   <div className="p-2 text-sm max-w-xs">
                                       <p className="font-bold mb-2">Resumo Financeiro:</p>
-                                      <p>Valor Total: R$ {finalValue.toFixed(2)}</p>
+                                      <p>Valor Total: R$ {finalValue?.toFixed(2) || '0.00'}</p>
                                       <ul className="list-disc pl-4 mt-1 text-xs text-muted-foreground">
                                           {(order.items || []).map((item, index) => (
-                                              <li key={item.id + '-' + index}>{item.description} - R$ {item.unitPrice.toFixed(2)}</li>
+                                              <li key={`${item.id}-${index}`}>{item.description} - R$ {(item.unitPrice || 0).toFixed(2)}</li>
                                           ))}
                                       </ul>
                                   </div>

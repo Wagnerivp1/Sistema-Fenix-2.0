@@ -27,10 +27,26 @@ import {
   DropdownMenuRadioItem
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
+import { getUsers, saveUsers } from '@/lib/storage';
+import type { User } from '@/types';
 
 export function HeaderActions() {
-    const { setTheme, theme } = useTheme();
-    const { user, logout } = useAuth();
+    const { theme, setTheme } = useTheme();
+    const { user, login } = useAuth();
+
+    const handleThemeChange = async (newTheme: string) => {
+      setTheme(newTheme);
+      if (user) {
+        const updatedUser = { ...user, theme: newTheme };
+        // Optimistically update the user in the auth context
+        login(updatedUser); 
+        
+        // Persist the change to storage
+        const users = await getUsers();
+        const updatedUsers = users.map(u => u.id === user.id ? updatedUser : u);
+        await saveUsers(updatedUsers);
+      }
+    };
 
     return (
         <DropdownMenu>
@@ -58,7 +74,7 @@ export function HeaderActions() {
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                         <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                         <DropdownMenuRadioGroup value={theme} onValueChange={handleThemeChange}>
                             <DropdownMenuRadioItem value="dark">Escuro (Padrão)</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="light">Claro</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="slate">Slate</DropdownMenuRadioItem>
@@ -71,7 +87,10 @@ export function HeaderActions() {
                 </DropdownMenuPortal>
             </DropdownMenuSub>
             <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onClick={() => {
+                  const { logout } = useAuth();
+                  logout();
+                }}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sair</span>
                 </DropdownMenuItem>

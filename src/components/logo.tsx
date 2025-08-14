@@ -14,7 +14,7 @@ interface LogoProps {
     onLoginPage?: boolean;
 }
 
-export function Logo({ className, onLoginPage = false }: LogoProps) {
+function LogoInternal({ className, onLoginPage }: LogoProps) {
   const { state } = useSidebar();
   const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
 
@@ -34,21 +34,6 @@ export function Logo({ className, onLoginPage = false }: LogoProps) {
     };
   }, []);
 
-  if (onLoginPage) {
-    return (
-        <div className={cn('flex flex-col items-center justify-center gap-4 text-primary', className)}>
-            {companyInfo?.logoUrl ? (
-                <Image src={companyInfo.logoUrl} alt="Logo" width={64} height={64} className="h-16 w-16 object-contain" />
-            ) : (
-                <Wrench className="h-16 w-16" />
-            )}
-             {companyInfo?.name && (
-                <span className="text-3xl font-bold tracking-tight">{companyInfo.name}</span>
-            )}
-        </div>
-    );
-  }
-
   return (
     <div className={cn('flex items-center gap-3 text-primary transition-all duration-200 group-data-[collapsible=icon]/sidebar-wrapper:justify-center', className)}>
       {companyInfo?.logoUrl ? (
@@ -64,3 +49,43 @@ export function Logo({ className, onLoginPage = false }: LogoProps) {
     </div>
   );
 }
+
+
+export function Logo({ className, onLoginPage = false }: LogoProps) {
+  const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
+
+  React.useEffect(() => {
+    const fetchCompanyInfo = async () => {
+        const info = await getCompanyInfo();
+        setCompanyInfo(info);
+    };
+
+    fetchCompanyInfo();
+
+    const handleStorageChange = () => fetchCompanyInfo();
+    
+    window.addEventListener('companyInfoChanged', handleStorageChange);
+    return () => {
+        window.removeEventListener('companyInfoChanged', handleStorageChange);
+    };
+  }, []);
+  
+  if (onLoginPage) {
+    return (
+        <div className={cn('flex flex-col items-center justify-center gap-4 text-primary', className)}>
+            {companyInfo?.logoUrl ? (
+                <Image src={companyInfo.logoUrl} alt="Logo" width={64} height={64} className="h-16 w-16 object-contain" />
+            ) : (
+                <Wrench className="h-16 w-16" />
+            )}
+             {companyInfo?.name && (
+                <span className="text-3xl font-bold tracking-tight">{companyInfo.name}</span>
+            )}
+        </div>
+    );
+  }
+
+  // Only call useSidebar when not on login page
+  return <LogoInternal className={className} onLoginPage={onLoginPage} />;
+}
+

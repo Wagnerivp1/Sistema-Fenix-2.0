@@ -68,33 +68,37 @@ export function AddPaymentDialog({ isOpen, onOpenChange, serviceOrder, onSave }:
             return;
         }
         
+        // Registra a entrada se houver
         if (entry > 0) {
             newPayments.push({ id: `PAY-${Date.now()}-entry`, amount: entry, date: new Date().toISOString().split('T')[0], method: paymentMethod });
             newTransactions.push({ id: `FIN-${Date.now()}-entry`, type: 'receita', description: `Entrada OS #${serviceOrder.id.slice(-4)}`, amount: entry, date: new Date().toISOString().split('T')[0], category: 'Venda de Serviço', paymentMethod, relatedServiceOrderId: serviceOrder.id, status: 'pago' });
         }
         
         const remainingBalance = balanceDue - entry;
-        const installmentAmount = remainingBalance / installments;
+        const installmentAmount = installments > 0 ? remainingBalance / installments : 0;
 
         for (let i = 0; i < installments; i++) {
             const dueDate = addMonths(firstDueDate || new Date(), i);
-            const isFirstInstallmentPaid = i === 0 && entry === 0;
+            const isFirstInstallmentWithNoEntry = i === 0 && entry === 0;
 
-            if (isFirstInstallmentPaid) {
+            // Registra o pagamento da primeira parcela APENAS se não houver entrada
+            if (isFirstInstallmentWithNoEntry) {
                 newPayments.push({ id: `PAY-${Date.now()}-${i}`, amount: installmentAmount, date: new Date().toISOString().split('T')[0], method: paymentMethod });
             }
 
+            // Cria a transação financeira para CADA parcela
             newTransactions.push({
                 id: `FIN-${Date.now()}-${i}`,
                 type: 'receita',
                 description: `Parcela ${i+1}/${installments} OS #${serviceOrder.id.slice(-4)}`,
                 amount: installmentAmount,
-                date: new Date().toISOString().split('T')[0],
-                dueDate: format(dueDate, 'yyyy-MM-dd'),
+                date: new Date().toISOString().split('T')[0], // Data de criação da transação
+                dueDate: format(dueDate, 'yyyy-MM-dd'), // Data de vencimento da parcela
                 category: 'Venda de Serviço',
                 paymentMethod,
                 relatedServiceOrderId: serviceOrder.id,
-                status: isFirstInstallmentPaid ? 'pago' : 'pendente',
+                // A parcela só é paga se for a primeira e não houver entrada
+                status: isFirstInstallmentWithNoEntry ? 'pago' : 'pendente', 
             });
         }
     }

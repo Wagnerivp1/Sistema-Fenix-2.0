@@ -31,6 +31,7 @@ export default function RootLayout({
             attribute="class"
             defaultTheme="dark"
             enableSystem={false}
+            themes={["light", "dark", "slate", "stone", "rose", "green", "orange"]}
           >
             {children}
             <Toaster />

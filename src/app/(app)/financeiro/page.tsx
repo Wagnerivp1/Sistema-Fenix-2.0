@@ -470,58 +470,63 @@ export default function FinanceiroPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredTransactions.map((transaction) => (
-              <TableRow key={transaction.id} className={transaction.status === 'pendente' ? 'bg-red-500/10' : ''}>
-                <TableCell>
-                  {transaction.type === 'receita' ? (<ArrowUpCircle className="h-5 w-5 text-green-500" />) : (<ArrowDownCircle className="h-5 w-5 text-red-500" />)}
-                </TableCell>
-                <TableCell className="font-medium">{transaction.description}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{transaction.category}</Badge>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {formatDateForDisplay(transaction.dueDate || transaction.date)}
-                </TableCell>
-                <TableCell className={cn('text-right font-semibold', transaction.type === 'receita' ? 'text-green-500' : 'text-red-500')}>
-                  {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                       {transaction.status === 'pendente' && (
-                         <DropdownMenuItem onSelect={() => handleMarkAsPaid(transaction.id)}><CheckCircle className="mr-2 h-4 w-4"/>Marcar como Pago</DropdownMenuItem>
-                       )}
-                       {transaction.relatedSaleId && (
-                         <DropdownMenuItem onSelect={() => handleDetailsClick(transaction)}><FileText className="mr-2 h-4 w-4" />Ver Detalhes da Venda</DropdownMenuItem>
-                       )}
-                       {transaction.relatedServiceOrderId && (
-                         <DropdownMenuItem asChild><Link href={`/ordens-de-servico?orderId=${transaction.relatedServiceOrderId}`}><FileText className="mr-2 h-4 w-4"/>Ver Ordem de Serviço</Link></DropdownMenuItem>
-                       )}
-                      <DropdownMenuItem onSelect={() => handlePrintClick(transaction)}><Printer className="mr-2 h-4 w-4" />Imprimir Recibo</DropdownMenuItem>
-                      {transaction.relatedSaleId && (<>
-                        <DropdownMenuSeparator />
+            {filteredTransactions.map((transaction) => {
+              const isPending = transaction.status === 'pendente';
+              const valueColor = transaction.type === 'receita' ? 'text-green-500' : 'text-red-500';
+              
+              return (
+                <TableRow key={transaction.id} className={isPending ? 'bg-red-500/10' : ''}>
+                  <TableCell>
+                    {transaction.type === 'receita' ? (<ArrowUpCircle className="h-5 w-5 text-green-500" />) : (<ArrowDownCircle className="h-5 w-5 text-red-500" />)}
+                  </TableCell>
+                  <TableCell className="font-medium">{transaction.description}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{transaction.category}</Badge>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {formatDateForDisplay(transaction.dueDate || transaction.date)}
+                  </TableCell>
+                  <TableCell className={cn('text-right font-semibold', !isPending && valueColor)}>
+                    {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                         {transaction.status === 'pendente' && (
+                           <DropdownMenuItem onSelect={() => handleMarkAsPaid(transaction.id)}><CheckCircle className="mr-2 h-4 w-4"/>Marcar como Pago</DropdownMenuItem>
+                         )}
+                         {transaction.relatedSaleId && (
+                           <DropdownMenuItem onSelect={() => handleDetailsClick(transaction)}><FileText className="mr-2 h-4 w-4" />Ver Detalhes da Venda</DropdownMenuItem>
+                         )}
+                         {transaction.relatedServiceOrderId && (
+                           <DropdownMenuItem asChild><Link href={`/ordens-de-servico?orderId=${transaction.relatedServiceOrderId}`}><FileText className="mr-2 h-4 w-4"/>Ver Ordem de Serviço</Link></DropdownMenuItem>
+                         )}
+                        <DropdownMenuItem onSelect={() => handlePrintClick(transaction)}><Printer className="mr-2 h-4 w-4" />Imprimir Recibo</DropdownMenuItem>
+                        {transaction.relatedSaleId && (<>
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">Estornar Venda</DropdownMenuItem></AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader><AlertDialogTitle>Confirmar Estorno</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. A venda será cancelada, o lançamento financeiro removido e os produtos retornarão ao estoque. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleReverseSale(transaction)}>Confirmar Estorno</AlertDialogAction></AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog></>
+                        )}
                         <AlertDialog>
-                          <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">Estornar Venda</DropdownMenuItem></AlertDialogTrigger>
+                          <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className={!transaction.relatedSaleId ? 'text-destructive' : ''}>Excluir Lançamento</DropdownMenuItem></AlertDialogTrigger>
                           <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Confirmar Estorno</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. A venda será cancelada, o lançamento financeiro removido e os produtos retornarão ao estoque. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleReverseSale(transaction)}>Confirmar Estorno</AlertDialogAction></AlertDialogFooter>
+                            <AlertDialogHeader><AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle><AlertDialogDescription>Atenção: esta ação removerá apenas o registro financeiro. A venda e o estoque não serão alterados. Para reverter tudo, use "Estornar Venda".</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Excluir Mesmo Assim</AlertDialogAction></AlertDialogFooter>
                           </AlertDialogContent>
-                        </AlertDialog></>
-                      )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className={!transaction.relatedSaleId ? 'text-destructive' : ''}>Excluir Lançamento</DropdownMenuItem></AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle><AlertDialogDescription>Atenção: esta ação removerá apenas o registro financeiro. A venda e o estoque não serão alterados. Para reverter tudo, use "Estornar Venda".</AlertDialogDescription></AlertDialogHeader>
-                          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Excluir Mesmo Assim</AlertDialogAction></AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
              {filteredTransactions.length === 0 && (
                 <TableRow><TableCell colSpan={6} className="h-24 text-center">Nenhuma transação encontrada para os filtros selecionados.</TableCell></TableRow>
             )}

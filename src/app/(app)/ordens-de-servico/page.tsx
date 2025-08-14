@@ -35,12 +35,6 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -53,7 +47,7 @@ import {
 } from '@/components/ui/select';
 import { getServiceOrders, saveServiceOrders, getCustomers, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, getSettings } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
-import type { Customer, ServiceOrder, User, InternalNote, FinancialTransaction, CompanyInfo } from '@/types';
+import type { Customer, ServiceOrder, User, InternalNote, FinancialTransaction, OSPayment, CompanyInfo } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { ViewCommentsDialog } from '@/components/service-orders/view-comments-dialog';
 import { cn } from '@/lib/utils';
@@ -62,6 +56,7 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { add } from 'date-fns';
+import { AddPaymentDialog } from '@/components/service-orders/add-payment-dialog';
 
 const formatDate = (dateString: string | undefined) => {
   if (!dateString || isNaN(new Date(dateString).getTime())) {
@@ -95,7 +90,9 @@ function ServiceOrdersComponent() {
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [editingOrder, setEditingOrder] = React.useState<ServiceOrder | null>(null);
   const [commentsOrder, setCommentsOrder] = React.useState<ServiceOrder | null>(null);
+  const [paymentOrder, setPaymentOrder] = React.useState<ServiceOrder | null>(null);
   const [isCommentsDialogOpen, setIsCommentsDialogOpen] = React.useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
   const [customerForNewOS, setCustomerForNewOS] = React.useState<Customer | null>(null);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -161,7 +158,7 @@ function ServiceOrdersComponent() {
         toast({
             variant: "destructive",
             title: "Erro ao carregar dados",
-            description: "Não foi possível buscar os dados do Firestore. Verifique sua conexão e as regras de segurança do Firebase.",
+            description: "Não foi possível buscar os dados. Verifique o console para mais detalhes.",
         });
     } finally {
         setIsLoading(false);
@@ -347,36 +344,36 @@ function ServiceOrdersComponent() {
     });
   };
 
-  const handleAddPayment = async (order: ServiceOrder) => {
-    const finalValue = order.finalValue ?? order.totalValue;
-
-    if (!finalValue || finalValue <= 0) {
-      // If no value, just finalize
-      await handleQuickStatusChange(order.id, 'Finalizado');
-      return;
-    }
-
-    // Create financial transaction
-    const transaction: Omit<FinancialTransaction, 'id'> = {
-      type: 'receita',
-      description: `Recebimento OS #${order.id.slice(-4)}`,
-      amount: finalValue,
-      date: new Date().toISOString().split('T')[0],
-      category: 'Venda de Serviço',
-      paymentMethod: order.paymentMethod || 'Dinheiro',
-      relatedServiceOrderId: order.id,
-    };
+  const handleOpenPaymentDialog = (order: ServiceOrder) => {
+    setPaymentOrder(order);
+    setIsPaymentDialogOpen(true);
+  };
+  
+  const handleSavePayment = async (orderId: string, newPayments: OSPayment[], newTransactions: FinancialTransaction[]) => {
+    const allTransactions = await getFinancialTransactions();
+    await saveFinancialTransactions([...newTransactions, ...allTransactions]);
     
-    const existingTransactions = await getFinancialTransactions();
-    await saveFinancialTransactions([{ ...transaction, id: `FIN-${Date.now()}` }, ...existingTransactions]);
-    
-    // Update OS status
-    await handleQuickStatusChange(order.id, 'Finalizado');
+    const updatedOrders = orders.map(o => {
+        if (o.id === orderId) {
+            const updatedPayments = [...(o.payments || []), ...newPayments];
+            const totalPaid = updatedPayments.reduce((acc, p) => acc + p.amount, 0);
+            const totalValue = o.finalValue ?? o.totalValue;
+            const newStatus = totalPaid >= totalValue ? 'Finalizado' : 'Aguardando Pagamento';
+            return { ...o, payments: updatedPayments, status: newStatus };
+        }
+        return o;
+    });
+
+    await saveServiceOrders(updatedOrders);
+    setOrders(updatedOrders);
+    window.dispatchEvent(new Event('storage-change-serviceOrders'));
+    window.dispatchEvent(new Event('storage-change-financialTransactions'));
 
     toast({
-      title: 'Pagamento Registrado!',
-      description: `Receita de R$ ${finalValue.toFixed(2)} registrada e OS finalizada.`,
+        title: 'Pagamento Processado!',
+        description: `${newPayments.length} pagamento(s) foram registrados com sucesso.`
     });
+    setIsPaymentDialogOpen(false);
   };
 
   const handlePrint = async (documentType: 'entry' | 'quote' | 'delivery', order: ServiceOrder) => {
@@ -638,7 +635,7 @@ function ServiceOrdersComponent() {
             doc.autoTable({
                 startY: currentY,
                 head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-                body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${item.unitPrice.toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+                body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${(item.unitPrice).toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
                 theme: 'striped',
                 headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
                 bodyStyles: { fontSize: 8, cellPadding: 1.5 },
@@ -922,8 +919,7 @@ function ServiceOrdersComponent() {
                   ? order.equipment
                   : `${order.equipment.type || ''} ${order.equipment.brand || ''} ${order.equipment.model || ''}`.trim();
                 const isFinished = ['Finalizado', 'Entregue', 'Cancelada'].includes(order.status);
-                const finalValue = order.finalValue ?? order.totalValue;
-
+                
                 return (
                   <TableRow key={order.id}>
                     <TableCell className="hidden sm:table-cell">
@@ -947,7 +943,6 @@ function ServiceOrdersComponent() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                       <TooltipProvider>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -992,25 +987,10 @@ function ServiceOrdersComponent() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {!isFinished && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <DropdownMenuItem onSelect={() => handleAddPayment(order)}>
+                                <DropdownMenuItem onSelect={() => handleOpenPaymentDialog(order)}>
                                     <DollarSign className="mr-2 h-4 w-4 text-green-500"/>
                                     Adicionar Pagamento
-                                  </DropdownMenuItem>
-                                </TooltipTrigger>
-                                <TooltipContent side="left">
-                                   <div className="p-2 text-sm max-w-xs">
-                                      <p className="font-bold mb-2">Resumo Financeiro:</p>
-                                      <p>Valor Total: R$ {finalValue?.toFixed(2) || '0.00'}</p>
-                                      <ul className="list-disc pl-4 mt-1 text-xs text-muted-foreground">
-                                          {(order.items || []).map((item, index) => (
-                                              <li key={`${item.id}-${index}`}>{item.description} - R$ {(item.unitPrice || 0).toFixed(2)}</li>
-                                          ))}
-                                      </ul>
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
+                                </DropdownMenuItem>
                             )}
                             {isFinished && (
                               <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
@@ -1020,7 +1000,6 @@ function ServiceOrdersComponent() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TooltipProvider>
                     </TableCell>
                   </TableRow>
                 )
@@ -1042,6 +1021,12 @@ function ServiceOrdersComponent() {
       onOpenChange={handleCommentsDialogClose}
       serviceOrder={commentsOrder}
       onCommentAdd={handleCommentAdded}
+    />
+    <AddPaymentDialog
+      isOpen={isPaymentDialogOpen}
+      onOpenChange={setIsPaymentDialogOpen}
+      serviceOrder={paymentOrder}
+      onSave={handleSavePayment}
     />
     </>
   );

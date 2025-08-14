@@ -92,6 +92,24 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
   const isEditing = !!serviceOrder;
   
+  const resetForm = React.useCallback(async (keepCustomer = false) => {
+    const settings = await getSettings();
+    const defaultWarrantyDays = settings.defaultWarrantyDays || 90;
+    
+    setSelectedCustomerId(keepCustomer ? selectedCustomerId : '');
+    setEquipmentType('');
+    setEquipment({ brand: '', model: '', serial: '' });
+    setAccessories('');
+    setReportedProblem('');
+    setTechnicalReport('');
+    setItems([]);
+    setPayments([]);
+    setStatus('Aberta');
+    setInternalNotes([]);
+    setNewComment('');
+    setWarranty(`${defaultWarrantyDays} dias`);
+  }, [selectedCustomerId]);
+
   React.useEffect(() => {
     const loadData = async () => {
       const [customersData, stockData] = await Promise.all([
@@ -304,10 +322,22 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     return finalOrder;
   };
   
-  const handleSave = () => {
+  const handleSaveAndClose = () => {
     const finalOrder = getFinalOrderData();
     if (finalOrder && onSave) {
-        onSave(finalOrder);
+      onSave(finalOrder);
+    }
+  };
+  
+  const handleSaveAndNew = () => {
+    const finalOrder = getFinalOrderData();
+    if (finalOrder && onSave) {
+      onSave(finalOrder);
+      if (!isEditing) {
+        resetForm(true); // Mantém o cliente selecionado para a próxima OS
+      } else {
+        if(onOpenChange) onOpenChange(false);
+      }
     }
   };
 
@@ -527,8 +557,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                                   <div className="border rounded-md p-2 bg-muted/30 max-h-60 overflow-y-auto space-y-3">
                                       {internalNotes.length > 0 ? ( internalNotes.map((note, index) => (
                                               <div key={index} className="text-sm p-2 bg-background rounded-md shadow-sm">
-                                                  <p className="font-semibold">{note.comment}</p>
-                                                  <p className="text-xs text-muted-foreground mt-1">- {note.user} em {new Date(note.date).toLocaleString('pt-BR')}</p>
+                                                  <p className="leading-relaxed">{note.comment}</p>
+                                                  <p className="text-xs text-muted-foreground mt-1 pt-2 border-t border-muted">
+                                                      Adicionado por <span className="font-semibold">{note.user}</span> em {new Date(note.date).toLocaleString('pt-BR')}
+                                                  </p>
                                               </div>))) : (<p className="text-sm text-muted-foreground p-4 text-center">Nenhum comentário interno ainda.</p>)}
                                   </div>
                               </div>
@@ -543,11 +575,16 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                   </div>
               </Tabs>
           </div>
-          <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-end">
-              <div className="flex justify-end gap-2 mt-4 sm:mt-0">
-                  <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
-                  <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
-              </div>
+          <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-between">
+            <div>
+              {isEditing && onOpenChange && (
+                  <Button variant="ghost" onClick={() => onOpenChange(false)}>Fechar</Button>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 mt-4 sm:mt-0">
+                <Button variant="outline" onClick={handleSaveAndNew} disabled={isEditing}>Salvar e Criar Nova</Button>
+                <Button onClick={handleSaveAndClose}>{isEditing ? 'Salvar Alterações' : 'Salvar e Fechar'}</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

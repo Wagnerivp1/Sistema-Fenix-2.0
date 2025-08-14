@@ -76,8 +76,9 @@ import {
   saveStock,
   getCompanyInfo,
   getServiceOrders,
+  saveServiceOrders,
 } from '@/lib/storage';
-import type { FinancialTransaction, Sale, StockItem, ServiceOrder } from '@/types';
+import type { FinancialTransaction, Sale, StockItem, ServiceOrder, OSPayment } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PrintReceiptDialog } from '@/components/financials/print-receipt-dialog';
@@ -104,7 +105,7 @@ export default function FinanceiroPage() {
   const { toast } = useToast();
   const [allTransactions, setAllTransactions] = React.useState<FinancialTransaction[]>([]);
   const [allSales, setAllSales] = React.useState<Sale[]>([]);
-  const [pendingServiceOrders, setPendingServiceOrders] = React.useState<ServiceOrder[]>([]);
+  const [allServiceOrders, setAllServiceOrders] = React.useState<ServiceOrder[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [descriptionFilter, setDescriptionFilter] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
@@ -119,7 +120,7 @@ export default function FinanceiroPage() {
   const [saleForDetails, setSaleForDetails] = React.useState<Sale | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
 
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     setIsLoading(true);
     const [loadedTransactions, loadedSales, loadedOrders] = await Promise.all([
         getFinancialTransactions(),
@@ -130,13 +131,13 @@ export default function FinanceiroPage() {
     
     setAllTransactions(loadedTransactions);
     setAllSales(loadedSales);
-    setPendingServiceOrders(loadedOrders.filter(o => o.status === "Aguardando Pagamento"));
+    setAllServiceOrders(loadedOrders);
     setIsLoading(false);
-  };
+  }, []);
 
   React.useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const handleDeleteTransaction = async (transactionId: string) => {
     const updatedTransactions = allTransactions.filter(t => t.id !== transactionId);
@@ -177,33 +178,86 @@ export default function FinanceiroPage() {
   };
 
   const handleMarkAsPaid = async (txId: string) => {
-    const updated = allTransactions.map(tx => tx.id === txId ? {...tx, status: 'pago' as const, date: new Date().toISOString().split('T')[0]} : tx);
-    setAllTransactions(updated);
-    await saveFinancialTransactions(updated);
+    const transactionToPay = allTransactions.find(tx => tx.id === txId);
+    if (!transactionToPay) return;
+
+    // Update financial transaction
+    const updatedTransactions = allTransactions.map(tx => 
+        tx.id === txId ? { ...tx, status: 'pago' as const, date: new Date().toISOString().split('T')[0] } : tx
+    );
+    setAllTransactions(updatedTransactions);
+    await saveFinancialTransactions(updatedTransactions);
+
+    // If it's related to an OS, update the OS
+    if (transactionToPay.relatedServiceOrderId) {
+        const osId = transactionToPay.relatedServiceOrderId;
+        const currentOrders = await getServiceOrders();
+        let osUpdated = false;
+
+        const updatedOrders = currentOrders.map(order => {
+            if (order.id === osId) {
+                const newPayment: OSPayment = {
+                    id: `PAY-${Date.now()}`,
+                    amount: transactionToPay.amount,
+                    date: new Date().toISOString().split('T')[0],
+                    method: transactionToPay.paymentMethod,
+                };
+                
+                const existingPayments = order.payments || [];
+                const updatedPayments = [...existingPayments, newPayment];
+                const totalPaid = updatedPayments.reduce((acc, p) => acc + p.amount, 0);
+                const totalValue = order.finalValue ?? order.totalValue ?? 0;
+                
+                const updatedOrder = {
+                    ...order,
+                    payments: updatedPayments,
+                    status: totalPaid >= totalValue ? 'Finalizado' : order.status,
+                };
+                osUpdated = true;
+                return updatedOrder;
+            }
+            return order;
+        });
+
+        if (osUpdated) {
+            setAllServiceOrders(updatedOrders);
+            await saveServiceOrders(updatedOrders);
+        }
+    }
+
     toast({ title: 'Sucesso!', description: 'Transação marcada como paga.'});
-  }
+    // The component will re-render due to state change, refreshing the lists.
+  };
 
   const combinedReceivables = React.useMemo(() => {
       const pendingTransactions = allTransactions.filter(t => t.status === 'pendente' && t.type === 'receita');
-      const osReceivables = pendingServiceOrders.map(o => {
-        const totalPaid = o.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
-        const balanceDue = (o.finalValue ?? o.totalValue ?? 0) - totalPaid;
-        return {
-            id: o.id,
-            type: 'receita' as const,
-            description: `Saldo pendente OS #${o.id.slice(-4)} - ${o.customerName}`,
-            amount: balanceDue,
-            date: o.date,
-            dueDate: o.deliveredDate,
-            status: 'pendente' as const,
-            category: 'Venda de Serviço' as const,
-            paymentMethod: o.paymentMethod || 'Pendente',
-            relatedServiceOrderId: o.id,
-        };
-      }).filter(o => o.amount > 0);
+      
+      const osReceivables = allServiceOrders.flatMap(o => {
+          const totalPaid = o.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
+          const balanceDue = (o.finalValue ?? o.totalValue ?? 0) - totalPaid;
+          if (o.status === 'Aguardando Pagamento' && balanceDue > 0) {
+              return [{
+                  id: `OS-PENDING-${o.id}`,
+                  type: 'receita' as const,
+                  description: `Saldo pendente OS #${o.id.slice(-4)} - ${o.customerName}`,
+                  amount: balanceDue,
+                  date: o.date,
+                  dueDate: o.deliveredDate,
+                  status: 'pendente' as const,
+                  category: 'Venda de Serviço' as const,
+                  paymentMethod: o.paymentMethod || 'Pendente',
+                  relatedServiceOrderId: o.id,
+              }];
+          }
+          return [];
+      });
 
-      return [...pendingTransactions, ...osReceivables].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [allTransactions, pendingServiceOrders]);
+      // Remove os-based receivables if there are already specific pending financial transactions for it
+      const pendingOsIdsWithTransactions = new Set(pendingTransactions.map(t => t.relatedServiceOrderId));
+      const filteredOsReceivables = osReceivables.filter(o => !pendingOsIdsWithTransactions.has(o.relatedServiceOrderId));
+
+      return [...pendingTransactions, ...filteredOsReceivables].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [allTransactions, allServiceOrders]);
 
 
   const filteredTransactions = React.useMemo(() => {
@@ -508,7 +562,7 @@ export default function FinanceiroPage() {
           <TableBody>
             {filteredTransactions.map((transaction) => {
               const isPending = transaction.status === 'pendente';
-              const valueColorClass = transaction.type === 'receita' ? 'text-green-500' : 'text-red-500';
+              const valueColorClass = transaction.type === 'receita' && !isPending ? 'text-green-500' : isPending ? 'text-destructive' : 'text-red-500';
               
               return (
                 <TableRow key={transaction.id} className={cn(isPending && 'bg-destructive/10')}>
@@ -524,7 +578,7 @@ export default function FinanceiroPage() {
                   <TableCell className="hidden md:table-cell">
                     {formatDateForDisplay(transaction.dueDate || transaction.date)}
                   </TableCell>
-                  <TableCell className={cn('text-right font-semibold', isPending ? 'text-destructive' : valueColorClass)}>
+                  <TableCell className={cn('text-right font-semibold', valueColorClass)}>
                     {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">

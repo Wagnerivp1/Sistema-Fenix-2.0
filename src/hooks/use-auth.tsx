@@ -49,8 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [setTheme]);
 
   React.useEffect(() => {
-    // If loading is finished and there is no user, redirect to login page,
-    // unless we are already on the login page.
     if (!isLoading && !user && pathname !== '/') {
       router.replace('/');
     }

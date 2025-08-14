@@ -29,18 +29,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user } = useAuth();
-  const [isVerified, setIsVerified] = React.useState(false);
-
+  const { user, isLoading } = useAuth();
+  
   React.useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
       router.replace('/');
-    } else {
-      setIsVerified(true);
     }
-  }, [user, router]);
+  }, [user, isLoading, router]);
 
-  if (!isVerified) {
+  if (isLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <p>Verificando autenticação...</p>

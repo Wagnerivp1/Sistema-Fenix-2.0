@@ -12,6 +12,7 @@ import {
   FileText,
   WalletCards,
   CheckCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -186,7 +187,7 @@ export default function FinanceiroPage() {
       const pendingTransactions = allTransactions.filter(t => t.status === 'pendente' && t.type === 'receita');
       const osReceivables = pendingServiceOrders.map(o => {
         const totalPaid = o.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
-        const balanceDue = (o.finalValue ?? o.totalValue) - totalPaid;
+        const balanceDue = (o.finalValue ?? o.totalValue ?? 0) - totalPaid;
         return {
             id: o.id,
             type: 'receita' as const,
@@ -348,6 +349,39 @@ export default function FinanceiroPage() {
       generateContent();
     }
   }
+  
+  const renderReceivablesHeader = () => {
+    if (typeFilter !== 'contas_a_receber') return null;
+
+    if (combinedReceivables.length > 0) {
+      const totalReceivable = combinedReceivables.reduce((sum, item) => sum + item.amount, 0);
+      return (
+        <div className="mb-4 p-4 border-l-4 border-destructive bg-destructive/10 rounded-r-lg text-destructive">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-6 w-6" />
+            <div>
+              <h3 className="text-lg font-bold">Contas a Receber</h3>
+              <p className="text-sm font-semibold">
+                Total pendente: R$ {totalReceivable.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mb-4 p-4 border-l-4 border-green-500 bg-green-500/10 rounded-r-lg text-green-700">
+         <div className="flex items-center gap-3">
+            <CheckCircle className="h-6 w-6" />
+            <div>
+              <h3 className="text-lg font-bold">Nenhum Pagamento Pendente</h3>
+              <p className="text-sm">Todas as contas a receber estão em dia.</p>
+            </div>
+          </div>
+      </div>
+    );
+  };
 
   if (isLoading) {
     return <div>Carregando transações...</div>;
@@ -458,6 +492,8 @@ export default function FinanceiroPage() {
             </div>
         </div>
 
+        {renderReceivablesHeader()}
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -472,21 +508,23 @@ export default function FinanceiroPage() {
           <TableBody>
             {filteredTransactions.map((transaction) => {
               const isPending = transaction.status === 'pendente';
-              const valueColor = transaction.type === 'receita' ? 'text-green-500' : 'text-red-500';
+              const valueColorClass = transaction.type === 'receita' ? 'text-green-500' : 'text-red-500';
               
               return (
-                <TableRow key={transaction.id} className={isPending ? 'bg-red-500/10' : ''}>
+                <TableRow key={transaction.id} className={cn(isPending && 'bg-destructive/10')}>
                   <TableCell>
                     {transaction.type === 'receita' ? (<ArrowUpCircle className="h-5 w-5 text-green-500" />) : (<ArrowDownCircle className="h-5 w-5 text-red-500" />)}
                   </TableCell>
-                  <TableCell className="font-medium">{transaction.description}</TableCell>
+                  <TableCell className={cn('font-medium', isPending && 'text-destructive')}>
+                    {transaction.description}
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline">{transaction.category}</Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {formatDateForDisplay(transaction.dueDate || transaction.date)}
                   </TableCell>
-                  <TableCell className={cn('text-right font-semibold', !isPending && valueColor)}>
+                  <TableCell className={cn('text-right font-semibold', isPending ? 'text-destructive' : valueColorClass)}>
                     {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">

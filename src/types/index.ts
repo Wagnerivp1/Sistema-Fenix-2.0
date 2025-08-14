@@ -1,11 +1,16 @@
 
-
 export type InternalNote = {
   user: string; // The name of the user who made the comment
   date: string; // ISO 8601 date string
   comment: string;
 };
 
+export type OSPayment = {
+    id: string;
+    amount: number;
+    date: string;
+    method: string;
+}
 
 export type Customer = {
   id: string;
@@ -40,6 +45,7 @@ export type ServiceOrder = {
   discount?: number;
   finalValue?: number;
   items?: ServiceOrderItem[];
+  payments?: OSPayment[];
   internalNotes?: InternalNote[] | string;
   technicalReport?: string;
   accessories?: string;
@@ -105,6 +111,8 @@ export type FinancialTransaction = {
     description: string;
     amount: number;
     date: string; // YYYY-MM-DD
+    dueDate?: string; // YYYY-MM-DD, for installments
+    status?: 'pago' | 'pendente';
     category: 'Venda de Produto' | 'Venda de Serviço' | 'Compra de Peça' | 'Salário' | 'Aluguel' | 'Outra Receita' | 'Outra Despesa';
     paymentMethod: string;
     relatedSaleId?: string;

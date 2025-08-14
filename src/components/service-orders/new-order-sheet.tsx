@@ -3,7 +3,7 @@
 'use client';
 
 import * as React from 'react';
-import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check, ShieldCheck, MessageSquare, DollarSign } from 'lucide-react';
+import { PlusCircle, Printer, FileText, Trash2, X, ChevronsUpDown, Check, ShieldCheck, MessageSquare, DollarSign, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -40,11 +40,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCustomers, getStock, getCompanyInfo, getSettings, saveFinancialTransactions, getFinancialTransactions } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
-import type { Customer, ServiceOrder, StockItem, CompanyInfo, User, InternalNote, FinancialTransaction } from '@/types';
+import type { Customer, ServiceOrder, StockItem, CompanyInfo, User, InternalNote, FinancialTransaction, OSPayment } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { add } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 interface NewOrderSheetProps {
   onNewOrderClick: (customer?: Customer | null) => void;
@@ -78,24 +79,20 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
   const [internalNotes, setInternalNotes] = React.useState<InternalNote[]>([]);
   const [newComment, setNewComment] = React.useState('');
   const [items, setItems] = React.useState<QuoteItem[]>([]);
+  const [payments, setPayments] = React.useState<OSPayment[]>([]);
+  const [newPayment, setNewPayment] = React.useState({ amount: 0, method: 'Dinheiro' });
   const [status, setStatus] = React.useState<ServiceOrder['status']>('Aberta');
   const [warranty, setWarranty] = React.useState('');
-  const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = React.useState(false);
+  
   const [isManualAddDialogOpen, setIsManualAddDialogOpen] = React.useState(false);
   const [manualAddItem, setManualAddItem] = React.useState<QuoteItem | null>(null);
   
-  const [paymentDetails, setPaymentDetails] = React.useState({
-    discount: 0,
-    paymentMethod: 'Dinheiro',
-  });
-
   const [newItem, setNewItem] = React.useState({ description: '', quantity: 1, unitPrice: 0, type: 'service' as 'service' | 'part' });
   const [openCombobox, setOpenCombobox] = React.useState(false);
 
   const isEditing = !!serviceOrder;
   
   React.useEffect(() => {
-    // Carrega clientes, estoque e usuário logado
     const loadData = async () => {
       const [customersData, stockData] = await Promise.all([
         getCustomers(),
@@ -124,7 +121,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                 setEquipmentType(type || '');
                 setEquipment({ brand: brand || '', model: model || '', serial: serviceOrder.serialNumber || '' });
             } else if (typeof serviceOrder.equipment === 'object' && serviceOrder.equipment !== null) {
-                const eq = serviceOrder.equipment as any; // Cast for backward compatibility
+                const eq = serviceOrder.equipment as any;
                 setEquipmentType(eq.type || '');
                 setEquipment({ brand: eq.brand || '', model: eq.model || '', serial: eq.serialNumber || serviceOrder.serialNumber || '' });
             }
@@ -133,8 +130,8 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             setReportedProblem(serviceOrder.reportedProblem || '');
             setTechnicalReport(serviceOrder.technicalReport || ''); 
             setItems(serviceOrder.items || []); 
+            setPayments(serviceOrder.payments || []);
             setStatus(serviceOrder.status);
-            // BACKWARDS COMPATIBILITY: if internalNotes is a string, convert it to the new format
             if (typeof serviceOrder.internalNotes === 'string') {
                 setInternalNotes([{ user: 'Sistema', date: new Date().toISOString(), comment: serviceOrder.internalNotes as string }]);
             } else {
@@ -142,12 +139,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             }
             setNewComment('');
             setWarranty(serviceOrder.warranty || defaultWarranty);
-            setPaymentDetails({
-              discount: serviceOrder.discount || 0,
-              paymentMethod: serviceOrder.paymentMethod || 'Dinheiro'
-            });
         } else {
-            // Reset form for a new OS
             const customerIdToSet = customer ? customer.id : '';
             setSelectedCustomerId(customerIdToSet);
             setEquipmentType('');
@@ -156,17 +148,16 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
             setReportedProblem('');
             setTechnicalReport('');
             setItems([]);
+            setPayments([]);
             setStatus('Aberta');
             setInternalNotes([]);
             setNewComment('');
             setWarranty(defaultWarranty);
-            setPaymentDetails({ discount: 0, paymentMethod: 'Dinheiro' });
         }
       }
     };
     loadWarranty();
   }, [serviceOrder, customer, isEditing, isOpen, customers]);
-
 
   const handleEquipmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -193,7 +184,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
 
     setItems([...items, { ...newItem, id: Date.now() }]);
-    setNewItem({ description: '', quantity: 1, unitPrice: 0, type: 'service' }); // Reset for next item
+    setNewItem({ description: '', quantity: 1, unitPrice: 0, type: 'service' });
   };
 
   const confirmManualAdd = () => {
@@ -209,10 +200,58 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     setItems(items.filter(item => item.id !== id));
   };
   
-  const calculateTotal = (type?: 'service' | 'part') => {
-    const filteredItems = type ? items.filter(item => item.type === type) : items;
-    return filteredItems.reduce((total, item) => total + (item.quantity || 0) * (item.unitPrice || 0), 0);
+  const calculateTotal = () => {
+    return items.reduce((total, item) => total + (item.quantity || 0) * (item.unitPrice || 0), 0);
   };
+  
+  const totalValue = calculateTotal();
+  const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0);
+  const balanceDue = totalValue - totalPaid;
+
+  const handleAddPayment = async () => {
+      if (newPayment.amount <= 0 || newPayment.amount > balanceDue) {
+          toast({ variant: "destructive", title: "Valor de pagamento inválido."});
+          return;
+      }
+      
+      const paymentToAdd: OSPayment = {
+          id: `PAY-${Date.now()}`,
+          amount: newPayment.amount,
+          date: new Date().toISOString().split('T')[0],
+          method: newPayment.method,
+      };
+
+      setPayments(prev => [...prev, paymentToAdd]);
+      
+      const newBalance = balanceDue - newPayment.amount;
+      if (newBalance <= 0) {
+          setStatus("Finalizado");
+      } else {
+          setStatus("Aguardando Pagamento");
+      }
+      
+      const transaction: Omit<FinancialTransaction, 'id'> = {
+        type: 'receita',
+        description: `Pagamento da OS #${serviceOrder?.id.slice(-4) || 'NOVA'}`,
+        amount: newPayment.amount,
+        date: new Date().toISOString().split('T')[0],
+        category: 'Venda de Serviço',
+        paymentMethod: newPayment.method,
+        relatedServiceOrderId: serviceOrder?.id,
+        status: 'pago',
+      };
+      
+      const existingTransactions = await getFinancialTransactions();
+      await saveFinancialTransactions([{ ...transaction, id: `FIN-${Date.now()}` }, ...existingTransactions]);
+
+      toast({ title: "Pagamento adicionado!", description: `R$ ${newPayment.amount.toFixed(2)} recebido.`});
+      setNewPayment({ amount: 0, method: 'Dinheiro' });
+  };
+  
+  const handleRemovePayment = (paymentId: string) => {
+    setPayments(payments.filter(p => p.id !== paymentId));
+  }
+
 
   const handleAddComment = () => {
     if (!newComment.trim() || !currentUser) return;
@@ -238,9 +277,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         return null;
     }
 
-    const totalValue = calculateTotal();
-    const finalValue = totalValue - (paymentDetails.discount || 0);
-
     const finalOrder: ServiceOrder = {
         id: serviceOrder?.id || `OS-${Date.now()}`,
         customerName: selectedCustomer.name,
@@ -249,10 +285,8 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         status: status,
         date: serviceOrder?.date || new Date().toISOString().split('T')[0],
         totalValue: totalValue,
-        discount: paymentDetails.discount,
-        finalValue: finalValue,
-        paymentMethod: paymentDetails.paymentMethod,
         items: items,
+        payments: payments,
         internalNotes: internalNotes,
         technicalReport: technicalReport,
         accessories: accessories,
@@ -261,12 +295,9 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
         attendant: serviceOrder?.attendant || currentUser?.name || 'Admin',
     };
 
-    // If status is 'Entregue' and no deliveredDate, set it
     if (finalOrder.status === 'Entregue' && !finalOrder.deliveredDate) {
       finalOrder.deliveredDate = new Date().toISOString().split('T')[0];
-    }
-    // If status is not 'Entregue', clear the deliveredDate
-    else if (finalOrder.status !== 'Entregue') {
+    } else if (finalOrder.status !== 'Entregue') {
       delete finalOrder.deliveredDate;
     }
     
@@ -280,43 +311,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     }
   };
 
-  const handleStatusChange = (value: ServiceOrder['status'] | 'Finalizar') => {
-    if (value === 'Finalizar') {
-      setIsFinalizeDialogOpen(true);
-    } else {
-      setStatus(value as ServiceOrder['status']);
-    }
-  };
-
-  const handleFinalize = async (isPaid: boolean) => {
-    const finalStatus = isPaid ? 'Finalizado' : 'Aguardando Pagamento';
-    setStatus(finalStatus);
-    
-    // Create a temporary order object with the new status to get the final data
-    const tempOrder = { ...getFinalOrderData(), status: finalStatus };
-    
-    if (isPaid && tempOrder.finalValue && tempOrder.finalValue > 0) {
-      const transaction: Omit<FinancialTransaction, 'id'> = {
-        type: 'receita',
-        description: `Recebimento OS #${tempOrder.id.slice(-4)}`,
-        amount: tempOrder.finalValue,
-        date: new Date().toISOString().split('T')[0],
-        category: 'Venda de Serviço',
-        paymentMethod: tempOrder.paymentMethod || 'Dinheiro',
-        relatedServiceOrderId: tempOrder.id,
-      };
-      
-      const existingTransactions = await getFinancialTransactions();
-      await saveFinancialTransactions([{ ...transaction, id: `FIN-${Date.now()}` }, ...existingTransactions]);
-      
-      toast({
-          title: 'Lançamento Financeiro Criado!',
-          description: `Receita de R$ ${tempOrder.finalValue.toFixed(2)} registrada.`,
-      });
-    }
-
-    setIsFinalizeDialogOpen(false);
-  };
 
   const trigger = (
     <Button size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => onNewOrderClick()}>
@@ -335,7 +329,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         {onOpenChange && <DialogTrigger asChild>{trigger}</DialogTrigger>}
         {!onOpenChange && trigger}
-        <DialogContent className="sm:max-w-4xl w-full h-[95vh] flex flex-col p-0">
+        <DialogContent className="sm:max-w-5xl w-full h-[95vh] flex flex-col p-0">
           <DialogHeader className="p-4 flex-shrink-0 border-b">
             <DialogTitle>{isEditing ? `Editar Ordem de Serviço #${serviceOrder?.id.slice(-4)}` : 'Nova Ordem de Serviço'}</DialogTitle>
             <DialogDescription>
@@ -346,9 +340,10 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
           <div className="flex-grow min-h-0">
               <Tabs defaultValue="general" className="h-full flex flex-col">
                   <div className="px-4 pt-4">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="general">Dados Gerais</TabsTrigger>
                         <TabsTrigger value="items">Serviços e Peças</TabsTrigger>
+                        <TabsTrigger value="financial">Financeiro</TabsTrigger>
                         <TabsTrigger value="notes">Comentários</TabsTrigger>
                     </TabsList>
                   </div>
@@ -373,7 +368,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                               </div>
                               <div>
                                 <Label htmlFor="status">Status</Label>
-                                <Select value={status} onValueChange={handleStatusChange}>
+                                <Select value={status} onValueChange={(v) => setStatus(v as ServiceOrder['status'])}>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Status" />
                                   </SelectTrigger>
@@ -383,7 +378,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                                     <SelectItem value="Aguardando peça">Aguardando peça</SelectItem>
                                     <SelectItem value="Aprovado">Aprovado</SelectItem>
                                     <SelectItem value="Em conserto">Em conserto</SelectItem>
-                                    <SelectItem value="Finalizar">Finalizar...</SelectItem>
                                     <SelectItem value="Aguardando Pagamento">Aguardando Pagamento</SelectItem>
                                     <SelectItem value="Finalizado">Finalizado</SelectItem>
                                     <SelectItem value="Entregue">Entregue</SelectItem>
@@ -413,49 +407,26 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                              <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
                                   <Label htmlFor="reported_problem">Defeito Reclamado</Label>
-                                  <Textarea
-                                    id="reported_problem"
-                                    placeholder="Descrição do problema relatado pelo cliente."
-                                    value={reportedProblem}
-                                    onChange={(e) => setReportedProblem(e.target.value)}
-                                    rows={3}
-                                  />
+                                  <Textarea id="reported_problem" placeholder="Descrição do problema relatado pelo cliente." value={reportedProblem} onChange={(e) => setReportedProblem(e.target.value)} rows={3}/>
                                 </div>
                                 <div className="space-y-1.5">
                                   <Label htmlFor="accessories">Acessórios Entregues</Label>
-                                  <Textarea
-                                    id="accessories"
-                                    placeholder="Ex: Carregador original, mochila preta e adaptador HDMI."
-                                    value={accessories}
-                                    onChange={(e) => setAccessories(e.target.value)}
-                                    rows={3}
-                                  />
+                                  <Textarea id="accessories" placeholder="Ex: Carregador original, mochila preta e adaptador HDMI." value={accessories} onChange={(e) => setAccessories(e.target.value)} rows={3}/>
                                 </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
+                                <Textarea id="technical_report" placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc." value={technicalReport} onChange={(e) => setTechnicalReport(e.target.value)} rows={4}/>
                               </div>
                               <div className="grid grid-cols-2 gap-3 items-end">
                                   <div className="space-y-1.5">
                                       <Label htmlFor="warranty">Garantia Aplicada</Label>
-                                      <Input 
-                                          id="warranty" 
-                                          placeholder="Ex: 90 dias"
-                                          value={warranty}
-                                          onChange={(e) => setWarranty(e.target.value)}
-                                      />
+                                      <Input id="warranty" placeholder="Ex: 90 dias" value={warranty} onChange={(e) => setWarranty(e.target.value)}/>
                                       <p className="text-xs text-muted-foreground">Exemplos: 90 dias, 6 meses, 1 ano, Sem garantia</p>
                                   </div>
                               </div>
                         </TabsContent>
                         <TabsContent value="items" className="mt-0 space-y-3">
-                          <div className="grid grid-cols-1 gap-1.5">
-                            <Label htmlFor="technical_report">Diagnóstico / Laudo Técnico</Label>
-                            <Textarea
-                              id="technical_report"
-                              placeholder="Descrição técnica detalhada do diagnóstico, serviço a ser executado, peças necessárias, etc."
-                              value={technicalReport}
-                              onChange={(e) => setTechnicalReport(e.target.value)}
-                              rows={4}
-                            />
-                          </div>
                           <div>
                             <div className="space-y-2">
                               {items.map((item) => (
@@ -486,26 +457,16 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                                           </PopoverTrigger>
                                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                               <Command>
-                                                  <CommandInput 
-                                                      placeholder="Procurar peça..."
-                                                      value={newItem.description}
-                                                      onValueChange={(search) => setNewItem({...newItem, description: search })}
-                                                  />
+                                                  <CommandInput placeholder="Procurar peça..." value={newItem.description} onValueChange={(search) => setNewItem({...newItem, description: search })}/>
                                                   <CommandList>
                                                       <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
                                                       <CommandGroup>
                                                           {stock.map((stockItem) => (
-                                                              <CommandItem
-                                                                  key={stockItem.id}
-                                                                  value={stockItem.name}
-                                                                  onSelect={(currentValue) => {
+                                                              <CommandItem key={stockItem.id} value={stockItem.name} onSelect={(currentValue) => {
                                                                       const selected = stock.find(s => s.name.toLowerCase() === currentValue.toLowerCase());
-                                                                      if (selected) {
-                                                                          setNewItem({ ...newItem, description: selected.name, unitPrice: selected.price });
-                                                                      }
+                                                                      if (selected) { setNewItem({ ...newItem, description: selected.name, unitPrice: selected.price }); }
                                                                       setOpenCombobox(false);
-                                                                  }}
-                                                              >
+                                                                  }}>
                                                                   <Check className={cn("mr-2 h-4 w-4", newItem.description.toLowerCase() === stockItem.name.toLowerCase() ? "opacity-100" : "opacity-0")} />
                                                                   {stockItem.name}
                                                               </CommandItem>
@@ -515,69 +476,64 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                                               </Command>
                                           </PopoverContent>
                                       </Popover>
-                                  ) : (
-                                      <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
-                                  )}
+                                  ) : ( <Input id="newItemDescription" placeholder="Ex: Formatação" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} /> )}
                               </div>
-
-                              <div className="w-28">
-                                <Label className="text-xs">Tipo</Label>
-                                <Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value, description: '', unitPrice: 0 })}>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="service">Serviço</SelectItem>
-                                    <SelectItem value="part">Peça</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="w-16">
-                                <Label htmlFor="newItemQty" className="text-xs">Qtd</Label>
-                                <Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} />
-                              </div>
-                              <div className="w-24">
-                                <Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label>
-                                <Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} disabled={newItem.type === 'part'} />
-                              </div>
+                              <div className="w-28"><Label className="text-xs">Tipo</Label><Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value, description: '', unitPrice: 0 })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="service">Serviço</SelectItem><SelectItem value="part">Peça</SelectItem></SelectContent></Select></div>
+                              <div className="w-16"><Label htmlFor="newItemQty" className="text-xs">Qtd</Label><Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} /></div>
+                              <div className="w-24"><Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label><Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} disabled={newItem.type === 'part'} /></div>
                               <Button onClick={handleAddItem} size="sm">Adicionar</Button>
                             </div>
-                            <div className="mt-4 text-right">
-                              <p className="text-lg font-bold">Total: R$ {(calculateTotal()).toFixed(2)}</p>
-                            </div>
+                            <div className="mt-4 text-right"><p className="text-lg font-bold">Total: R$ {(totalValue).toFixed(2)}</p></div>
                           </div>
+                        </TabsContent>
+                         <TabsContent value="financial" className="mt-0 space-y-4">
+                            <div className="p-4 border rounded-lg bg-muted/20">
+                                <h3 className="font-semibold text-lg mb-4">Resumo Financeiro</h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Valor Total da OS</span><span className="font-medium">R$ {totalValue.toFixed(2)}</span></div>
+                                    <div className="flex justify-between items-center text-green-500"><span >Total Pago</span><span className="font-medium">R$ {totalPaid.toFixed(2)}</span></div>
+                                    <div className="flex justify-between items-center text-xl font-bold text-primary border-t pt-2 mt-2"><span >Saldo Devedor</span><span>R$ {balanceDue.toFixed(2)}</span></div>
+                                </div>
+                            </div>
+                             <div className="p-4 border rounded-lg">
+                                <h4 className="font-semibold mb-2">Histórico de Pagamentos</h4>
+                                {payments.length > 0 ? (
+                                    <Table><TableHeader><TableRow><TableHead>Data</TableHead><TableHead>Valor</TableHead><TableHead>Método</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
+                                        <TableBody>
+                                        {payments.map(p => (
+                                            <TableRow key={p.id}><TableCell>{new Date(p.date).toLocaleDateString('pt-BR')}</TableCell><TableCell>R$ {p.amount.toFixed(2)}</TableCell><TableCell>{p.method}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => handleRemovePayment(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
+                                        ))}
+                                        </TableBody>
+                                    </Table>
+                                ) : (<p className="text-sm text-muted-foreground text-center p-4">Nenhum pagamento registrado.</p>)}
+                             </div>
+                             <div className="p-4 border rounded-lg border-dashed">
+                                 <h4 className="font-semibold mb-2">Registrar Novo Pagamento Parcial</h4>
+                                 <div className="flex items-end gap-2">
+                                     <div className="flex-grow space-y-1"><Label htmlFor="newPaymentAmount">Valor</Label><Input type="number" id="newPaymentAmount" value={newPayment.amount || ''} onChange={e => setNewPayment(p => ({...p, amount: parseFloat(e.target.value) || 0}))}/></div>
+                                     <div className="flex-grow space-y-1"><Label htmlFor="newPaymentMethod">Método</Label>
+                                         <Select value={newPayment.method} onValueChange={(v) => setNewPayment(p => ({...p, method: v}))}>
+                                             <SelectTrigger><SelectValue/></SelectTrigger>
+                                             <SelectContent><SelectItem value="Dinheiro">Dinheiro</SelectItem><SelectItem value="PIX">PIX</SelectItem><SelectItem value="Cartão de Crédito">Crédito</SelectItem><SelectItem value="Cartão de Débito">Débito</SelectItem></SelectContent>
+                                         </Select>
+                                     </div>
+                                     <Button onClick={handleAddPayment} disabled={newPayment.amount <= 0 || newPayment.amount > balanceDue}>Adicionar</Button>
+                                 </div>
+                             </div>
                         </TabsContent>
                         <TabsContent value="notes" className="mt-0">
                            <div className="space-y-4">
-                              <div className="space-y-2">
-                                  <Label>Histórico de Comentários</Label>
+                              <div className="space-y-2"><Label>Histórico de Comentários</Label>
                                   <div className="border rounded-md p-2 bg-muted/30 max-h-60 overflow-y-auto space-y-3">
-                                      {internalNotes.length > 0 ? (
-                                          internalNotes.map((note, index) => (
+                                      {internalNotes.length > 0 ? ( internalNotes.map((note, index) => (
                                               <div key={index} className="text-sm p-2 bg-background rounded-md shadow-sm">
                                                   <p className="font-semibold">{note.comment}</p>
-                                                  <p className="text-xs text-muted-foreground mt-1">
-                                                      - {note.user} em {new Date(note.date).toLocaleString('pt-BR')}
-                                                  </p>
-                                              </div>
-                                          ))
-                                      ) : (
-                                          <p className="text-sm text-muted-foreground p-4 text-center">Nenhum comentário interno ainda.</p>
-                                      )}
+                                                  <p className="text-xs text-muted-foreground mt-1">- {note.user} em {new Date(note.date).toLocaleString('pt-BR')}</p>
+                                              </div>))) : (<p className="text-sm text-muted-foreground p-4 text-center">Nenhum comentário interno ainda.</p>)}
                                   </div>
                               </div>
-                               <div className="space-y-2">
-                                  <Label htmlFor="new_comment">Adicionar Novo Comentário</Label>
-                                  <div className="flex items-start gap-2">
-                                      <Textarea
-                                          id="new_comment"
-                                          placeholder="Adicione observações para a equipe..."
-                                          value={newComment}
-                                          onChange={(e) => setNewComment(e.target.value)}
-                                          rows={3}
-                                      />
-                                      <Button onClick={handleAddComment} className="mt-auto">Adicionar</Button>
-                                  </div>
+                               <div className="space-y-2"><Label htmlFor="new_comment">Adicionar Novo Comentário</Label>
+                                  <div className="flex items-start gap-2"><Textarea id="new_comment" placeholder="Adicione observações para a equipe..." value={newComment} onChange={(e) => setNewComment(e.target.value)} rows={3}/><Button onClick={handleAddComment} className="mt-auto">Adicionar</Button></div>
                                   <p className="text-sm text-muted-foreground">Estas anotações são para uso exclusivo da equipe.</p>
                               </div>
                           </div>
@@ -587,80 +543,18 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                   </div>
               </Tabs>
           </div>
-          
-          <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-between">
-              <div></div>
+          <DialogFooter className="p-4 border-t flex-shrink-0 bg-card sm:justify-end">
               <div className="flex justify-end gap-2 mt-4 sm:mt-0">
-                  <DialogClose asChild>
-                      <Button variant="ghost">Cancelar</Button>
-                  </DialogClose>
+                  <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
                   <Button onClick={handleSave}>{isEditing ? 'Salvar Alterações' : 'Salvar Ordem de Serviço'}</Button>
               </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                  <DialogTitle>Finalizar e Cobrar Ordem de Serviço</DialogTitle>
-                  <DialogDescription>
-                      Confirme o valor final e a forma de pagamento.
-                  </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                  <div className="flex justify-between items-center text-lg">
-                      <span>Subtotal</span>
-                      <span className="font-semibold">R$ {calculateTotal().toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                      <Label htmlFor="discount">Desconto (R$)</Label>
-                      <Input
-                          id="discount"
-                          type="number"
-                          className="w-28 h-9 text-right font-medium"
-                          value={paymentDetails.discount || ''}
-                          onChange={(e) => setPaymentDetails(p => ({...p, discount: parseFloat(e.target.value) || 0}))}
-                      />
-                  </div>
-                  <div className="flex justify-between items-center text-xl font-bold text-primary border-t pt-2">
-                      <span>Total a Pagar</span>
-                      <span>R$ {(calculateTotal() - paymentDetails.discount).toFixed(2)}</span>
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
-                       <Select value={paymentDetails.paymentMethod} onValueChange={(v) => setPaymentDetails(p => ({ ...p, paymentMethod: v }))}>
-                          <SelectTrigger id="paymentMethod">
-                              <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                              <SelectItem value="PIX">PIX</SelectItem>
-                              <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                              <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
-                          </SelectContent>
-                      </Select>
-                  </div>
-              </div>
-              <DialogFooter>
-                  <Button variant="ghost" onClick={() => handleFinalize(false)}>Salvar como Pendente</Button>
-                  <Button onClick={() => handleFinalize(true)}>Confirmar Pagamento</Button>
-              </DialogFooter>
-          </DialogContent>
-      </Dialog>
-
-
       <AlertDialog open={isManualAddDialogOpen} onOpenChange={setIsManualAddDialogOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Peça fora do estoque</AlertDialogTitle>
-            <AlertDialogDescription>
-              A peça <span className="font-bold">"{manualAddItem?.description}"</span> não consta no estoque. Deseja adicioná-la mesmo assim?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setManualAddItem(null)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmManualAdd}>Adicionar</AlertDialogAction>
-          </AlertDialogFooter>
+          <AlertDialogHeader><AlertDialogTitle>Peça fora do estoque</AlertDialogTitle><AlertDialogDescription>A peça <span className="font-bold">"{manualAddItem?.description}"</span> não consta no estoque. Deseja adicioná-la mesmo assim?</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel onClick={() => setManualAddItem(null)}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={confirmManualAdd}>Adicionar</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>

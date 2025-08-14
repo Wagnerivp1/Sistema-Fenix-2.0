@@ -10,6 +10,8 @@ import {
   Printer,
   X,
   FileText,
+  WalletCards,
+  CheckCircle,
 } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -72,12 +74,14 @@ import {
   getStock,
   saveStock,
   getCompanyInfo,
+  getServiceOrders,
 } from '@/lib/storage';
-import type { FinancialTransaction, Sale, StockItem } from '@/types';
+import type { FinancialTransaction, Sale, StockItem, ServiceOrder } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PrintReceiptDialog } from '@/components/financials/print-receipt-dialog';
 import { SaleDetailsDialog } from '@/components/financials/sale-details-dialog';
+import Link from 'next/link';
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -99,6 +103,7 @@ export default function FinanceiroPage() {
   const { toast } = useToast();
   const [allTransactions, setAllTransactions] = React.useState<FinancialTransaction[]>([]);
   const [allSales, setAllSales] = React.useState<Sale[]>([]);
+  const [pendingServiceOrders, setPendingServiceOrders] = React.useState<ServiceOrder[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [descriptionFilter, setDescriptionFilter] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('all');
@@ -115,13 +120,16 @@ export default function FinanceiroPage() {
 
   const loadData = async () => {
     setIsLoading(true);
-    const [loadedTransactions, loadedSales] = await Promise.all([
+    const [loadedTransactions, loadedSales, loadedOrders] = await Promise.all([
         getFinancialTransactions(),
-        getSales()
+        getSales(),
+        getServiceOrders(),
     ]);
     loadedTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
     setAllTransactions(loadedTransactions);
     setAllSales(loadedSales);
+    setPendingServiceOrders(loadedOrders.filter(o => o.status === "Aguardando Pagamento"));
     setIsLoading(false);
   };
 
@@ -167,19 +175,51 @@ export default function FinanceiroPage() {
     });
   };
 
+  const handleMarkAsPaid = async (txId: string) => {
+    const updated = allTransactions.map(tx => tx.id === txId ? {...tx, status: 'pago' as const, date: new Date().toISOString().split('T')[0]} : tx);
+    setAllTransactions(updated);
+    await saveFinancialTransactions(updated);
+    toast({ title: 'Sucesso!', description: 'Transação marcada como paga.'});
+  }
+
+  const combinedReceivables = React.useMemo(() => {
+      const pendingTransactions = allTransactions.filter(t => t.status === 'pendente' && t.type === 'receita');
+      const osReceivables = pendingServiceOrders.map(o => {
+        const totalPaid = o.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
+        const balanceDue = (o.finalValue ?? o.totalValue) - totalPaid;
+        return {
+            id: o.id,
+            type: 'receita' as const,
+            description: `Saldo pendente OS #${o.id.slice(-4)} - ${o.customerName}`,
+            amount: balanceDue,
+            date: o.date,
+            dueDate: o.deliveredDate,
+            status: 'pendente' as const,
+            category: 'Venda de Serviço' as const,
+            paymentMethod: o.paymentMethod || 'Pendente',
+            relatedServiceOrderId: o.id,
+        };
+      }).filter(o => o.amount > 0);
+
+      return [...pendingTransactions, ...osReceivables].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [allTransactions, pendingServiceOrders]);
+
+
   const filteredTransactions = React.useMemo(() => {
+    if (typeFilter === 'contas_a_receber') {
+        return combinedReceivables.filter(t => t.description.toLowerCase().includes(descriptionFilter.toLowerCase()));
+    }
+
     return allTransactions.filter(t => {
       const transactionDate = t.date ? parseISO(`${t.date}T00:00:00Z`) : null;
       const matchesDescription = t.description.toLowerCase().includes(descriptionFilter.toLowerCase());
       const matchesType = typeFilter === 'all' || t.type === typeFilter;
       const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
-      const matchesDate = !dateRange || 
-                          !dateRange.from || 
-                          (transactionDate && transactionDate >= dateRange.from && (!dateRange.to || transactionDate <= dateRange.to));
+      const matchesDate = !dateRange || !dateRange.from || (transactionDate && transactionDate >= dateRange.from && (!dateRange.to || transactionDate <= dateRange.to));
 
       return matchesDescription && matchesType && matchesDate && matchesCategory;
     });
-  }, [allTransactions, descriptionFilter, typeFilter, categoryFilter, dateRange]);
+  }, [allTransactions, descriptionFilter, typeFilter, categoryFilter, dateRange, combinedReceivables]);
 
 
   const totalReceitas = filteredTransactions
@@ -231,8 +271,6 @@ export default function FinanceiroPage() {
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 15;
       let currentY = 40;
-      const fontColor = '#000000';
-      const primaryColor = '#e0e7ff';
       let textX = margin;
       const logoWidth = 25;
       const logoHeight = 25;
@@ -352,12 +390,13 @@ export default function FinanceiroPage() {
                         <SelectValue placeholder="Tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">Todos os Tipos</SelectItem>
+                        <SelectItem value="all">Todos os Lançamentos</SelectItem>
                         <SelectItem value="receita">Receitas</SelectItem>
                         <SelectItem value="despesa">Despesas</SelectItem>
+                        <SelectItem value="contas_a_receber">Contas a Receber</SelectItem>
                     </SelectContent>
                 </Select>
-                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                 <Select value={categoryFilter} onValueChange={setCategoryFilter} disabled={typeFilter === 'contas_a_receber'}>
                   <SelectTrigger>
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
@@ -377,42 +416,24 @@ export default function FinanceiroPage() {
                     <Button
                       id="date"
                       variant={'outline'}
-                      className={cn(
-                        'text-left font-normal',
-                        !dateRange && 'text-muted-foreground'
-                      )}
+                      className={cn( 'text-left font-normal', !dateRange && 'text-muted-foreground' )}
+                      disabled={typeFilter === 'contas_a_receber'}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateRange?.from ? (
-                        dateRange.to ? (
-                          <>
-                            {format(dateRange.from, 'dd/MM/yyyy')} -{' '}
-                            {format(dateRange.to, 'dd/MM/yyyy')}
-                          </>
-                        ) : (
-                          format(dateRange.from, 'dd/MM/yyyy')
-                        )
-                      ) : (
-                        <span>Selecione um período</span>
-                      )}
+                      {dateRange?.from ? ( dateRange.to ? (
+                          <> {format(dateRange.from, 'dd/MM/yyyy')} -{' '} {format(dateRange.to, 'dd/MM/yyyy')} </>
+                        ) : ( format(dateRange.from, 'dd/MM/yyyy') )
+                      ) : ( <span>Selecione um período</span> )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={dateRange?.from}
-                      selected={dateRange}
-                      onSelect={setDateRange}
-                      numberOfMonths={1}
-                      locale={ptBR}
-                    />
+                    <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={1} locale={ptBR}/>
                   </PopoverContent>
                 </Popover>
             </div>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                     {dateRange && (
+                     {dateRange && typeFilter !== 'contas_a_receber' && (
                          <Button variant="ghost" size="sm" onClick={() => setDateRange(undefined)}>
                             <X className="mr-2 h-4 w-4" />
                             Limpar Filtro de Data
@@ -443,106 +464,57 @@ export default function FinanceiroPage() {
               <TableHead className="w-12"></TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Categoria</TableHead>
-              <TableHead className="hidden md:table-cell">Data</TableHead>
+              <TableHead className="hidden md:table-cell">{typeFilter === 'contas_a_receber' ? 'Vencimento' : 'Data'}</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="w-[64px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredTransactions.map((transaction) => (
-              <TableRow key={transaction.id}>
+              <TableRow key={transaction.id} className={transaction.status === 'pendente' ? 'bg-yellow-500/10' : ''}>
                 <TableCell>
-                  {transaction.type === 'receita' ? (
-                    <ArrowUpCircle className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <ArrowDownCircle className="h-5 w-5 text-red-500" />
-                  )}
+                  {transaction.type === 'receita' ? (<ArrowUpCircle className="h-5 w-5 text-green-500" />) : (<ArrowDownCircle className="h-5 w-5 text-red-500" />)}
                 </TableCell>
                 <TableCell className="font-medium">{transaction.description}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{transaction.category}</Badge>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {formatDateForDisplay(transaction.date)}
+                  {formatDateForDisplay(transaction.dueDate || transaction.date)}
                 </TableCell>
-                <TableCell
-                  className={cn(
-                    'text-right font-semibold',
-                    transaction.type === 'receita' ? 'text-green-500' : 'text-red-500'
-                  )}
-                >
+                <TableCell className={cn('text-right font-semibold', transaction.type === 'receita' ? 'text-green-500' : 'text-red-500')}>
                   {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      {transaction.relatedSaleId && (
-                         <DropdownMenuItem onSelect={() => handleDetailsClick(transaction)}>
-                            <FileText className="mr-2 h-4 w-4" />
-                            Ver Detalhes da Venda
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem onSelect={() => handlePrintClick(transaction)}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Imprimir Recibo
-                      </DropdownMenuItem>
-                      {transaction.relatedSaleId && (
-                        <>
+                       {transaction.status === 'pendente' && (
+                         <DropdownMenuItem onSelect={() => handleMarkAsPaid(transaction.id)}><CheckCircle className="mr-2 h-4 w-4"/>Marcar como Pago</DropdownMenuItem>
+                       )}
+                       {transaction.relatedSaleId && (
+                         <DropdownMenuItem onSelect={() => handleDetailsClick(transaction)}><FileText className="mr-2 h-4 w-4" />Ver Detalhes da Venda</DropdownMenuItem>
+                       )}
+                       {transaction.relatedServiceOrderId && (
+                         <DropdownMenuItem asChild><Link href={`/ordens-de-servico?orderId=${transaction.relatedServiceOrderId}`}><FileText className="mr-2 h-4 w-4"/>Ver Ordem de Serviço</Link></DropdownMenuItem>
+                       )}
+                      <DropdownMenuItem onSelect={() => handlePrintClick(transaction)}><Printer className="mr-2 h-4 w-4" />Imprimir Recibo</DropdownMenuItem>
+                      {transaction.relatedSaleId && (<>
                         <DropdownMenuSeparator />
                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-                              Estornar Venda
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
+                          <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">Estornar Venda</DropdownMenuItem></AlertDialogTrigger>
                           <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar Estorno</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. A venda será cancelada, o lançamento
-                                financeiro removido e os produtos retornarão ao estoque. Deseja continuar?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleReverseSale(transaction)}>
-                                Confirmar Estorno
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
+                            <AlertDialogHeader><AlertDialogTitle>Confirmar Estorno</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. A venda será cancelada, o lançamento financeiro removido e os produtos retornarão ao estoque. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleReverseSale(transaction)}>Confirmar Estorno</AlertDialogAction></AlertDialogFooter>
                           </AlertDialogContent>
-                        </AlertDialog>
-                        </>
+                        </AlertDialog></>
                       )}
                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
-                            className={!transaction.relatedSaleId ? 'text-destructive' : ''}
-                          >
-                            Excluir Lançamento
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
+                        <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className={!transaction.relatedSaleId ? 'text-destructive' : ''}>Excluir Lançamento</DropdownMenuItem></AlertDialogTrigger>
                         <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Atenção: esta ação removerá apenas o registro financeiro. A venda e o
-                              estoque não serão alterados. Para reverter tudo, use "Estornar Venda".
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>
-                              Excluir Mesmo Assim
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
+                          <AlertDialogHeader><AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle><AlertDialogDescription>Atenção: esta ação removerá apenas o registro financeiro. A venda e o estoque não serão alterados. Para reverter tudo, use "Estornar Venda".</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Excluir Mesmo Assim</AlertDialogAction></AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </DropdownMenuContent>
@@ -551,26 +523,14 @@ export default function FinanceiroPage() {
               </TableRow>
             ))}
              {filteredTransactions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    Nenhuma transação encontrada para os filtros selecionados.
-                  </TableCell>
-                </TableRow>
+                <TableRow><TableCell colSpan={6} className="h-24 text-center">Nenhuma transação encontrada para os filtros selecionados.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
-     <PrintReceiptDialog
-      isOpen={isPrintDialogOpen}
-      onOpenChange={setIsPrintDialogOpen}
-      transaction={transactionToPrint}
-    />
-     <SaleDetailsDialog
-      isOpen={isDetailsOpen}
-      onOpenChange={setIsDetailsOpen}
-      sale={saleForDetails}
-     />
+     <PrintReceiptDialog isOpen={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen} transaction={transactionToPrint}/>
+     <SaleDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} sale={saleForDetails}/>
     </>
   );
 }

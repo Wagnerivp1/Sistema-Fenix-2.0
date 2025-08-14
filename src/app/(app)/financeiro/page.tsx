@@ -471,7 +471,7 @@ export default function FinanceiroPage() {
           </TableHeader>
           <TableBody>
             {filteredTransactions.map((transaction) => (
-              <TableRow key={transaction.id} className={transaction.status === 'pendente' ? 'bg-yellow-500/10' : ''}>
+              <TableRow key={transaction.id} className={transaction.status === 'pendente' ? 'bg-red-500/10' : ''}>
                 <TableCell>
                   {transaction.type === 'receita' ? (<ArrowUpCircle className="h-5 w-5 text-green-500" />) : (<ArrowDownCircle className="h-5 w-5 text-red-500" />)}
                 </TableCell>

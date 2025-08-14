@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -66,7 +65,7 @@ export function MainNav() {
         const isActive = pathname.startsWith(item.href) && (item.href !== '/produtos' || pathname === '/produtos' || pathname.startsWith('/produtos/kits'));
         return (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href} passHref legacyBehavior>
+            <Link href={item.href}>
                 <SidebarMenuButton isActive={isActive} tooltip={item.label}>
                     <item.icon />
                     <span>{item.label}</span>

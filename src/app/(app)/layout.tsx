@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarInset,
+  SidebarProvider,
 } from '@/components/ui/sidebar'
 import {
   CircleUser,
@@ -48,18 +49,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-      <Sidebar>
+      <SidebarProvider>
         <AppointmentReminder />
-        <SidebarHeader>
-          <Logo />
-        </SidebarHeader>
-        <SidebarContent>
-            <MainNav />
-        </SidebarContent>
-        <SidebarFooter>
-             <HeaderActions />
-        </SidebarFooter>
+        <Sidebar>
+          <SidebarHeader>
+            <Logo />
+          </SidebarHeader>
+          <SidebarContent>
+              <MainNav />
+          </SidebarContent>
+          <SidebarFooter>
+              <HeaderActions />
+          </SidebarFooter>
+        </Sidebar>
         <SidebarInset>{children}</SidebarInset>
-      </Sidebar>
+      </SidebarProvider>
   );
 }

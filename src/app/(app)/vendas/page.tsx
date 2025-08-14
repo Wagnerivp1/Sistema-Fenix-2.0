@@ -2,8 +2,10 @@
 'use client';
 
 import * as React from 'react';
-import { ShoppingCart, Trash2, ScanLine, FileText } from 'lucide-react';
-import { addDays } from 'date-fns';
+import { ShoppingCart, Trash2, ScanLine, FileText, Calendar as CalendarIcon } from 'lucide-react';
+import { addDays, addMonths, format } from 'date-fns';
+import { DateRange } from "react-day-picker";
+import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -27,6 +29,9 @@ import { ChangeCalculatorDialog } from '@/components/sales/change-calculator-dia
 import { PrintSaleReceiptDialog } from '@/components/sales/print-sale-receipt-dialog';
 import { PixQrCodeDialog } from '@/components/sales/pix-qr-code-dialog';
 import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 export default function VendasPage() {
   const { toast } = useToast();
@@ -48,6 +53,11 @@ export default function VendasPage() {
   
   const [stock, setStock] = React.useState<StockItem[]>([]);
   const [barcode, setBarcode] = React.useState('');
+  
+  // States for installments
+  const [isInstallments, setIsInstallments] = React.useState(false);
+  const [installmentsCount, setInstallmentsCount] = React.useState(2);
+  const [firstDueDate, setFirstDueDate] = React.useState<Date | undefined>(addMonths(new Date(), 1));
 
 
   React.useEffect(() => {
@@ -58,6 +68,14 @@ export default function VendasPage() {
     loadData();
     barcodeInputRef.current?.focus();
   }, []);
+
+  React.useEffect(() => {
+    if (paymentMethod !== 'parcelado') {
+      setIsInstallments(false);
+    } else {
+      setIsInstallments(true);
+    }
+  }, [paymentMethod]);
   
   const addProductToSale = (productToAdd: Omit<SaleItem, 'id'> & { id?: string }) => {
     setSaleItems(prevItems => {
@@ -65,7 +83,7 @@ export default function VendasPage() {
         if (existingItem) {
             return prevItems.map(item =>
                 item.id === productToAdd.id
-                    ? { ...item, quantity: item.quantity + productToAdd.quantity }
+                    ? { ...item, quantity: (item.quantity || 0) + (productToAdd.quantity || 0) }
                     : item
             );
         } else {
@@ -122,7 +140,7 @@ export default function VendasPage() {
     return () => {
         window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [saleItems, discount, paymentMethod, observations]);
+  }, [saleItems, discount, paymentMethod, observations, isInstallments, installmentsCount, firstDueDate]);
 
 
   const handleRemoveItem = (itemId: string) => {
@@ -155,6 +173,9 @@ export default function VendasPage() {
     setObservations('');
     setCurrentSaleId('');
     setCompanyInfoForDialog(null);
+    setIsInstallments(false);
+    setInstallmentsCount(2);
+    setFirstDueDate(addMonths(new Date(), 1));
     barcodeInputRef.current?.focus();
   }
   
@@ -193,10 +214,13 @@ export default function VendasPage() {
     let stockWasUpdated = false;
 
     saleItems.forEach(saleItem => {
-        const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
-        if (stockIndex !== -1) {
-            updatedStock[stockIndex].quantity -= saleItem.quantity;
-            stockWasUpdated = true;
+        // Only update stock for items that have a product ID (not manual items)
+        if (saleItem.id && saleItem.id.startsWith('PROD-')) {
+            const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
+            if (stockIndex !== -1) {
+                updatedStock[stockIndex].quantity -= saleItem.quantity;
+                stockWasUpdated = true;
+            }
         }
     });
 
@@ -206,19 +230,42 @@ export default function VendasPage() {
     }
 
 
-    // 3. Create Financial Transaction
-    const newTransaction: FinancialTransaction = {
-        id: `FIN-${Date.now()}`,
-        type: 'receita',
-        description: 'Venda de Produtos (PDV)',
-        amount: finalTotal,
-        date: new Date().toISOString().split('T')[0],
-        category: 'Venda de Produto',
-        paymentMethod: paymentMethod,
-        relatedSaleId: newSale.id,
-    };
+    // 3. Create Financial Transaction(s)
     const existingTransactions = await getFinancialTransactions();
-    await saveFinancialTransactions([newTransaction, ...existingTransactions]);
+    let newTransactions: FinancialTransaction[] = [];
+    
+    if (isInstallments) {
+        const installmentAmount = finalTotal / installmentsCount;
+        for (let i = 0; i < installmentsCount; i++) {
+            const dueDate = addMonths(firstDueDate || new Date(), i);
+            newTransactions.push({
+                id: `FIN-${Date.now()}-${i}`,
+                type: 'receita',
+                description: `Parcela ${i+1}/${installmentsCount} - Venda #${newSale.id.slice(-6)}`,
+                amount: installmentAmount,
+                date: newSale.date,
+                dueDate: format(dueDate, 'yyyy-MM-dd'),
+                category: 'Venda de Produto',
+                paymentMethod: paymentMethod,
+                relatedSaleId: newSale.id,
+                status: 'pendente',
+            });
+        }
+    } else {
+        newTransactions.push({
+            id: `FIN-${Date.now()}`,
+            type: 'receita',
+            description: 'Venda de Produtos (PDV)',
+            amount: finalTotal,
+            date: new Date().toISOString().split('T')[0],
+            category: 'Venda de Produto',
+            paymentMethod: paymentMethod,
+            relatedSaleId: newSale.id,
+            status: 'pago',
+        });
+    }
+
+    await saveFinancialTransactions([...newTransactions, ...existingTransactions]);
 
     // 4. Notify and Reset
     toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });
@@ -375,7 +422,7 @@ export default function VendasPage() {
                 <div className="flex justify-between items-center">
                   <span>Desconto (R$)</span>
                   <Input 
-                    value={discount.toFixed(2)} 
+                    value={discount} 
                     onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
                     className="w-28 h-9 text-right font-medium" 
                   />
@@ -396,9 +443,38 @@ export default function VendasPage() {
                       <SelectItem value="pix">PIX</SelectItem>
                       <SelectItem value="credito">Cartão de Crédito</SelectItem>
                       <SelectItem value="debito">Cartão de Débito</SelectItem>
+                      <SelectItem value="parcelado">Parcelado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+               {isInstallments && (
+                <div className="p-4 border rounded-md bg-muted/50 space-y-4">
+                  <Label>Detalhes do Parcelamento</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                       <Label htmlFor="installmentsCount" className="text-xs">Nº de Parcelas</Label>
+                       <Input id="installmentsCount" type="number" value={installmentsCount} onChange={e => setInstallmentsCount(parseInt(e.target.value))} min={2} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="firstDueDate" className="text-xs">1º Vencimento</Label>
+                       <Popover>
+                          <PopoverTrigger asChild>
+                            <Button id="firstDueDate" variant={'outline'} className={cn('w-full justify-start text-left font-normal', !firstDueDate && 'text-muted-foreground')}>
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {firstDueDate ? format(firstDueDate, 'dd/MM/yyyy') : <span>Selecione</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={firstDueDate} onSelect={setFirstDueDate} initialFocus /></PopoverContent>
+                        </Popover>
+                    </div>
+                  </div>
+                   <div className="text-center text-sm text-muted-foreground">
+                    <p>{installmentsCount}x de <span className="font-bold">R$ {(finalTotal / installmentsCount).toFixed(2)}</span></p>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="observations">Observações</Label>
                 <Textarea 
@@ -441,3 +517,4 @@ export default function VendasPage() {
     </>
   );
 }
+

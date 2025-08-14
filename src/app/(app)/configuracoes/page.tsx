@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music, FileQuote, Package, PackagePlus } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music, FileQuote, Package, PackagePlus, Paintbrush } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -36,14 +36,16 @@ import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AppSettings {
   defaultWarrantyDays: number;
 }
 
-const initialNewUser: Omit<User, 'id' | 'password'> = {
+const initialNewUser: Partial<User> = {
   name: '',
   login: '',
+  theme: 'dark',
   permissions: {
     accessDashboard: true,
     accessClients: false,
@@ -106,6 +108,10 @@ export default function ConfiguracoesPage() {
   
   const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
+    setNewUser(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (id: keyof typeof newUser, value: string) => {
     setNewUser(prev => ({ ...prev, [id]: value }));
   };
   
@@ -361,7 +367,7 @@ export default function ConfiguracoesPage() {
     let updatedUsers: User[];
     if (editingUser) {
       const userToUpdate: User = { ...editingUser, ...newUser, password: newUser.password || editingUser.password };
-      if (newUser.password === '') {
+      if (!newUser.password) {
         delete userToUpdate.password;
       }
       updatedUsers = users.map(u => u.id === editingUser.id ? userToUpdate : u);
@@ -373,6 +379,7 @@ export default function ConfiguracoesPage() {
         login: newUser.login!,
         password: newUser.password!,
         permissions: newUser.permissions!,
+        theme: newUser.theme,
       };
       updatedUsers = [...users, userToAdd];
       toast({ title: 'Usuário Adicionado!', description: `${newUser.name} foi adicionado ao sistema.` });
@@ -505,6 +512,7 @@ export default function ConfiguracoesPage() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Login</TableHead>
+              <TableHead>Tema</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -513,6 +521,7 @@ export default function ConfiguracoesPage() {
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.login}</TableCell>
+                <TableCell><Badge variant="outline">{user.theme || 'Padrão'}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
                    <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)} disabled={!isCurrentUserAdmin}>Editar</Button>
                    <AlertDialog>
@@ -538,7 +547,7 @@ export default function ConfiguracoesPage() {
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow><TableCell colSpan={3} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -621,6 +630,10 @@ export default function ConfiguracoesPage() {
                  </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha forte'} value={newUser.password || ''} onChange={handleUserInputChange} /></div>
+                    <div className="space-y-2">
+                      <Label htmlFor="theme">Tema Padrão</Label>
+                      <Select value={newUser.theme} onValueChange={(v) => handleSelectChange('theme', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="dark">Escuro (Padrão)</SelectItem><SelectItem value="light">Claro</SelectItem><SelectItem value="slate">Slate</SelectItem><SelectItem value="stone">Stone</SelectItem><SelectItem value="rose">Rose</SelectItem><SelectItem value="green">Verde</SelectItem><SelectItem value="orange">Laranja</SelectItem></SelectContent></Select>
+                    </div>
                  </div>
               </div>
               <Separator className="md:col-span-2" />

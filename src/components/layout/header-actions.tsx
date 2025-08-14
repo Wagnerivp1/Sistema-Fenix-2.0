@@ -59,16 +59,13 @@ export function HeaderActions() {
                 <DropdownMenuPortal>
                     <DropdownMenuSubContent>
                          <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-                            <DropdownMenuRadioItem value="default">Padrão</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="dark">Escuro (Padrão)</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="light">Claro</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="slate">Slate</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="stone">Stone</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="rose">Rose</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="green">Verde</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="orange">Laranja</DropdownMenuRadioItem>
-                             <DropdownMenuSeparator />
-                            <DropdownMenuRadioItem value="dark">Escuro</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="light">Claro</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="system">Sistema</DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
                     </DropdownMenuSubContent>
                 </DropdownMenuPortal>

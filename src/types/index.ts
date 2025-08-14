@@ -142,6 +142,7 @@ export type User = {
   login: string;
   password?: string;
   permissions: UserPermissions;
+  theme?: string;
 };
 
 

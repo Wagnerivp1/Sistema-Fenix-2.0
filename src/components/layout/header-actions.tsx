@@ -7,11 +7,8 @@ import { useTheme } from 'next-themes';
 import {
   CircleUser,
   LogOut,
-  Moon,
-  Sun,
-  Paintbrush,
-  Check,
   Settings,
+  Paintbrush,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,12 +21,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
   DropdownMenuPortal,
+  DropdownMenuSubContent,
   DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
+  DropdownMenuRadioItem
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
 export function HeaderActions() {
@@ -39,12 +35,14 @@ export function HeaderActions() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
+            <Button variant="ghost" className="w-full justify-start gap-2">
                 <CircleUser className="h-5 w-5" />
-                <span className="sr-only">Toggle user menu</span>
+                <div className="flex flex-col items-start">
+                    <span className="text-sm font-medium">{user?.name || 'Minha Conta'}</span>
+                </div>
             </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 mb-2">
             <DropdownMenuLabel>{user?.name || 'Minha Conta'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
@@ -62,6 +60,12 @@ export function HeaderActions() {
                     <DropdownMenuSubContent>
                          <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
                             <DropdownMenuRadioItem value="default">Padrão</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="slate">Slate</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="stone">Stone</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="rose">Rose</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="green">Verde</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="orange">Laranja</DropdownMenuRadioItem>
+                             <DropdownMenuSeparator />
                             <DropdownMenuRadioItem value="dark">Escuro</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="light">Claro</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="system">Sistema</DropdownMenuRadioItem>

@@ -17,14 +17,8 @@ import {
   FileText,
 } from 'lucide-react';
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useSidebar } from '@/components/ui/sidebar';
+import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/use-auth';
 import type { User, UserPermissions } from '@/types';
 
@@ -49,9 +43,7 @@ const allNavItems: NavItem[] = [
 
 export function MainNav() {
   const pathname = usePathname();
-  const { state } = useSidebar();
   const { user: currentUser } = useAuth();
-  const isCollapsed = state === 'collapsed';
 
   const navItems = React.useMemo(() => {
     if (!currentUser || !currentUser.permissions) return [];
@@ -60,44 +52,29 @@ export function MainNav() {
 
   if (!currentUser) {
     return (
-      <nav className="flex flex-col gap-2 px-4 py-4">
-          <p className="text-xs text-center text-muted-foreground p-4">
-            Faça login para ver o menu.
-          </p>
-      </nav>
+        <div className="flex flex-col gap-2 px-4 py-4">
+            <p className="text-xs text-center text-muted-foreground p-4">
+                Faça login para ver o menu.
+            </p>
+        </div>
     )
   }
 
   return (
-    <nav className="flex flex-col gap-2 px-4 py-4">
-      <TooltipProvider>
+    <SidebarMenu>
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.href) && (item.href !== '/produtos' || pathname === '/produtos' || pathname.startsWith('/produtos/kits'));
         return (
-          <Tooltip key={item.href} delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Link
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary-foreground hover:bg-primary/80',
-                  isActive && 'bg-primary text-primary-foreground',
-                  isCollapsed && 'justify-center'
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {!isCollapsed && <span>{item.label}</span>}
-                <span className="sr-only">{item.label}</span>
-              </Link>
-            </TooltipTrigger>
-            {isCollapsed && (
-              <TooltipContent side="right">
-                {item.label}
-              </TooltipContent>
-            )}
-          </Tooltip>
+          <SidebarMenuItem key={item.href}>
+            <Link href={item.href} passHref legacyBehavior>
+                <SidebarMenuButton isActive={isActive} tooltip={item.label}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                </SidebarMenuButton>
+            </Link>
+          </SidebarMenuItem>
         );
       })}
-      </TooltipProvider>
-    </nav>
+      </SidebarMenu>
   );
 }

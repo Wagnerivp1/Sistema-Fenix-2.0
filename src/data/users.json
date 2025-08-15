@@ -4,7 +4,7 @@
     "id": "master",
     "name": "Master User",
     "login": "admin",
-    "password": "admin",
+    "password": "YWRtaW4=",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
@@ -25,7 +25,7 @@
   {
     "name": "Wagner Lopes",
     "login": "wagner123",
-    "password": "jl001215",
+    "password": "amwwMDEyMTU=",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
@@ -47,7 +47,7 @@
   {
     "name": "MIRIAM JOCIMARA",
     "login": "miriam123",
-    "password": "jl001215",
+    "password": "amwwMDEyMTU=",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
@@ -86,6 +86,6 @@
       "accessQuotes": true
     },
     "id": "1753118832504-0.6500854434014606",
-    "password": "001215"
+    "password": "MDAxMjE1"
   }
 ]

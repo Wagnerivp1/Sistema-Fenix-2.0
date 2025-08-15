@@ -68,7 +68,7 @@ export default function LoginPage() {
       
       const inputPasswordEncoded = btoa(password);
 
-      if (user && (user.password === password || user.password === inputPasswordEncoded)) {
+      if (user && user.password === inputPasswordEncoded) {
         saveSessionToken(`TOKEN-${Date.now()}-${Math.random()}`, user);
         toast({
           title: 'Login bem-sucedido!',
@@ -113,7 +113,6 @@ export default function LoginPage() {
       login: newUser.login,
       password: btoa(newUser.password), // Encrypt password
       permissions: defaultPermissions,
-      theme: 'dark'
     };
     
     await saveUsers([...users, userToSave]);

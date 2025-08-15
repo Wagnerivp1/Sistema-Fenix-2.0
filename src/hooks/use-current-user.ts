@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import type { User } from '@/types';
-import { getUsers } from '@/lib/storage';
+// No need to import getUsers, we will read directly from localStorage
 
 interface AuthState {
   user: User | null;
@@ -17,20 +17,19 @@ export function useCurrentUser(): AuthState {
   });
 
   React.useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUser = () => {
       if (typeof window === 'undefined') {
         setAuthState({ user: null, isLoading: false });
         return;
       }
       
-      const loggedInUserLogin = localStorage.getItem('loggedInUser');
-      if (loggedInUserLogin) {
+      const loggedInUserObject = localStorage.getItem('loggedInUserObject');
+      if (loggedInUserObject) {
         try {
-          const allUsers = await getUsers();
-          const currentUser = allUsers.find(u => u.login === loggedInUserLogin) || null;
+          const currentUser = JSON.parse(loggedInUserObject);
           setAuthState({ user: currentUser, isLoading: false });
         } catch (error) {
-          console.error("Failed to fetch user data:", error);
+          console.error("Failed to parse user data from localStorage:", error);
           setAuthState({ user: null, isLoading: false });
         }
       } else {

@@ -56,17 +56,24 @@ export function getSessionToken(): string | null {
   return window.localStorage.getItem('session_token');
 }
 
-export function saveSessionToken(token: string, userLogin: string): void {
+export function saveSessionToken(token: string, user: User): void {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem('session_token', token);
-  window.localStorage.setItem('loggedInUser', userLogin);
+  // Store the user login to identify who is logged in.
+  window.localStorage.setItem('loggedInUser', user.login);
+  // Also save the full user object (without password) for quick access by hooks.
+  const userToStore = { ...user };
+  delete userToStore.password;
+  window.localStorage.setItem('loggedInUserObject', JSON.stringify(userToStore));
   window.dispatchEvent(new Event('storage')); // Notify components of login change
 }
+
 
 export function removeSessionToken(): void {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem('session_token');
   window.localStorage.removeItem('loggedInUser');
+  window.localStorage.removeItem('loggedInUserObject');
   window.dispatchEvent(new Event('storage')); // Notify components of logout change
 }
 

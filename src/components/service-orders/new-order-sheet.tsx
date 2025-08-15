@@ -326,6 +326,9 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
     const finalOrder = getFinalOrderData();
     if (finalOrder && onSave) {
       onSave(finalOrder);
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
     }
   };
   

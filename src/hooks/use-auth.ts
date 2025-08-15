@@ -40,6 +40,8 @@ export function useAuth(): AuthState {
 
     fetchUser();
 
+    // The 'storage' event is generic and fires for any localStorage change
+    // from other tabs, ensuring session consistency.
     const handleStorageChange = () => fetchUser();
 
     window.addEventListener('storage', handleStorageChange);

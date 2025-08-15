@@ -14,7 +14,7 @@ interface LogoProps {
     onLoginPage?: boolean;
 }
 
-function LogoInternal({ className, onLoginPage }: LogoProps) {
+function LogoInternal({ className }: { className?: string }) {
   const { state } = useSidebar();
   const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo | null>(null);
 
@@ -28,6 +28,7 @@ function LogoInternal({ className, onLoginPage }: LogoProps) {
 
     const handleStorageChange = () => fetchCompanyInfo();
     
+    // Custom event dispatched from storage.ts when company info changes
     window.addEventListener('companyInfoChanged', handleStorageChange);
     return () => {
         window.removeEventListener('companyInfoChanged', handleStorageChange);
@@ -64,6 +65,7 @@ export function Logo({ className, onLoginPage = false }: LogoProps) {
 
     const handleStorageChange = () => fetchCompanyInfo();
     
+    // Custom event dispatched from storage.ts when company info changes
     window.addEventListener('companyInfoChanged', handleStorageChange);
     return () => {
         window.removeEventListener('companyInfoChanged', handleStorageChange);
@@ -86,6 +88,5 @@ export function Logo({ className, onLoginPage = false }: LogoProps) {
   }
 
   // Only call useSidebar when not on login page
-  return <LogoInternal className={className} onLoginPage={onLoginPage} />;
+  return <LogoInternal className={className} />;
 }
-

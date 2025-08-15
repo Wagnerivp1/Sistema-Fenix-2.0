@@ -1,3 +1,3 @@
 // This file is no longer in use.
-// The new authentication system uses a simpler approach with a token stored in localStorage
-// and an AuthGuard component to protect routes. The new hook is in `use-auth.ts`.
+// It has been replaced by src/hooks/use-auth.ts to resolve a build conflict.
+// Its content has been cleared to prevent further issues.

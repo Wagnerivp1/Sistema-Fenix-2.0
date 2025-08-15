@@ -56,10 +56,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <MainNav />
           </SidebarContent>
           <SidebarFooter>
-            <HeaderActions onLogout={() => {
-              removeSessionToken();
-              window.location.href = '/';
-            }}/>
+            <HeaderActions />
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>{children}</SidebarInset>

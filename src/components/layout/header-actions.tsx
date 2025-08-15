@@ -18,12 +18,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { removeSessionToken } from '@/lib/storage';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
-interface HeaderActionsProps {
-    onLogout: () => void;
-}
+export function HeaderActions() {
+    const router = useRouter();
+    const { toast } = useToast();
 
-export function HeaderActions({ onLogout }: HeaderActionsProps) {
+    const handleLogout = () => {
+        removeSessionToken();
+        toast({ title: 'Logout bem-sucedido!', description: 'Você foi desconectado.' });
+        // Usar router.push para uma navegação mais suave no Next.js
+        router.push('/');
+    };
 
     return (
         <DropdownMenu>
@@ -45,7 +53,7 @@ export function HeaderActions({ onLogout }: HeaderActionsProps) {
                 </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onLogout}>
+                <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sair</span>
                 </DropdownMenuItem>

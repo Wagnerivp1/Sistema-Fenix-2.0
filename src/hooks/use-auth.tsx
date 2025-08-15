@@ -1,3 +1,2 @@
-// This file is no longer in use.
-// It has been replaced by src/hooks/use-auth.ts to resolve a build conflict.
-// Its content has been cleared to prevent further issues.
+// This file is intentionally left blank.
+// Its functionality has been consolidated into `use-auth.ts` to resolve build conflicts.

@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/hooks/use-auth';
 
 export const metadata: Metadata = {
   title: 'Assistec Now',
@@ -26,7 +25,6 @@ export default function RootLayout({
         ></link>
       </head>
       <body>
-        <AuthProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
@@ -36,7 +34,6 @@ export default function RootLayout({
             {children}
             <Toaster />
           </ThemeProvider>
-        </AuthProvider>
       </body>
     </html>
   );

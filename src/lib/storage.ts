@@ -3,10 +3,15 @@
 
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote, Kit } from '@/types';
 import stockData from '@/data/stock.json';
-import defaultUsers from '@/data/users.json';
 
-// --- Default Data ---
-const defaultStock: StockItem[] = stockData;
+const defaultUsers: User[] = [
+    {
+        "id": "master",
+        "username": "admin",
+        // Senha 'admin' codificada em base64
+        "password": "YWRtaW4=", 
+    }
+];
 
 // Helper to safely get data from localStorage
 function getFromStorage<T>(key: string, defaultValue: T): T {
@@ -49,6 +54,42 @@ function saveToStorage<T>(key: string, data: T): void {
   }
 }
 
+// --- Auth Functions ---
+
+export function getSessionToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem('session_token');
+}
+
+export function saveSessionToken(token: string): void {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('session_token', token);
+}
+
+export function removeSessionToken(): void {
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem('session_token');
+}
+
+
+// Users
+export async function getUsers(): Promise<User[]> {
+  return getFromStorage<User[]>('users', defaultUsers);
+}
+export async function saveUser(username: string, password: string): Promise<void> {
+    const users = await getUsers();
+    if (users.find(u => u.username === username)) {
+        throw new Error('Este nome de usuário já existe.');
+    }
+    const newUser: User = {
+        id: `USER-${Date.now()}`,
+        username,
+        password: btoa(password) // Encode password to Base64
+    };
+    saveToStorage('users', [...users, newUser]);
+}
+
+
 // --- Data Functions ---
 
 // Customers
@@ -69,7 +110,7 @@ export async function saveServiceOrders(orders: ServiceOrder[]): Promise<void> {
 
 // Stock Items
 export async function getStock(): Promise<StockItem[]> {
-    return getFromStorage<StockItem[]>('stock', defaultStock);
+    return getFromStorage<StockItem[]>('stock', stockData);
 }
 export async function saveStock(stock: StockItem[]): Promise<void> {
     saveToStorage('stock', stock);
@@ -89,14 +130,6 @@ export async function getFinancialTransactions(): Promise<FinancialTransaction[]
 }
 export async function saveFinancialTransactions(transactions: FinancialTransaction[]): Promise<void> {
   saveToStorage('financialTransactions', transactions);
-}
-
-// Users
-export async function getUsers(): Promise<User[]> {
-  return getFromStorage<User[]>('users', defaultUsers as User[]);
-}
-export async function saveUsers(users: User[]): Promise<void> {
-  saveToStorage('users', users);
 }
 
 // Appointments

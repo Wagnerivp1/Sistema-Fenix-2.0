@@ -1,4 +1,5 @@
 
+
 export type InternalNote = {
   user: string; // The name of the user who made the comment
   date: string; // ISO 8601 date string
@@ -119,30 +120,10 @@ export type FinancialTransaction = {
     relatedServiceOrderId?: string;
 };
 
-export type UserPermissions = {
-  accessDashboard: boolean;
-  accessClients: boolean;
-  accessServiceOrders: boolean;
-  accessInventory: boolean;
-  accessSales: boolean;
-  accessFinancials: boolean;
-  accessSettings: boolean;
-  accessDangerZone: boolean;
-  accessAgenda: boolean;
-  accessQuotes: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-  canViewPasswords: boolean;
-  canManageUsers: boolean;
-};
-
 export type User = {
   id: string;
-  name: string;
-  login: string;
-  password?: string;
-  permissions: UserPermissions;
-  theme?: string;
+  username: string;
+  password?: string; // Stored as Base64
 };
 
 

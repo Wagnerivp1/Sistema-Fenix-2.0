@@ -2,50 +2,50 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarHeader,
-  SidebarTrigger,
   SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarFooter,
   SidebarInset,
   SidebarProvider,
-} from '@/components/ui/sidebar'
-import {
-  CircleUser,
-} from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { Logo } from '@/components/logo';
 import { HeaderActions } from '@/components/layout/header-actions';
 import { AppointmentReminder } from '@/components/reminders/appointment-reminder';
-import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
+import { getSessionToken, removeSessionToken } from '@/lib/storage';
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
-  
-  React.useEffect(() => {
-    if (!isLoading && !user) {
-      router.replace('/');
-    }
-  }, [user, isLoading, router]);
+  const [isVerified, setIsVerified] = React.useState(false);
 
-  if (isLoading || !user) {
+  React.useEffect(() => {
+    const token = getSessionToken();
+    if (!token) {
+      router.replace('/');
+    } else {
+      setIsVerified(true);
+    }
+  }, [router]);
+
+  if (!isVerified) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <p>Verificando autenticação...</p>
-      </div>
+        <div className="flex h-screen w-full items-center justify-center">
+            <p>Verificando sessão...</p>
+        </div>
     );
   }
 
+  return <>{children}</>;
+}
+
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  // O AuthGuard agora está fora do AppLayout para envolver tudo
   return (
+    <AuthGuard>
       <SidebarProvider>
         <AppointmentReminder />
         <Sidebar>
@@ -53,13 +53,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Logo />
           </SidebarHeader>
           <SidebarContent>
-              <MainNav />
+            <MainNav />
           </SidebarContent>
           <SidebarFooter>
-              <HeaderActions />
+            <HeaderActions onLogout={() => {
+              removeSessionToken();
+              window.location.href = '/';
+            }}/>
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>{children}</SidebarInset>
       </SidebarProvider>
+    </AuthGuard>
   );
 }

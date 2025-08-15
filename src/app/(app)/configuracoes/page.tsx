@@ -44,6 +44,7 @@ interface AppSettings {
 const initialNewUser: Partial<User> = {
   name: '',
   login: '',
+  password: '',
   permissions: {
     accessDashboard: true,
     accessClients: false,
@@ -120,7 +121,8 @@ export default function ConfiguracoesPage() {
   };
 
   const handleSelectAllPermissions = () => {
-    const allPermissions = Object.keys(newUser.permissions || {}).reduce((acc, key) => {
+    if (!newUser.permissions) return;
+    const allPermissions = Object.keys(newUser.permissions).reduce((acc, key) => {
       acc[key as keyof UserPermissions] = true;
       return acc;
     }, {} as UserPermissions);
@@ -345,9 +347,9 @@ export default function ConfiguracoesPage() {
   const handleOpenUserDialog = (user: User | null) => {
     setEditingUser(user);
     if (user) {
-      setNewUser(user);
+      setNewUser({ ...user, password: '' });
     } else {
-      setNewUser(initialNewUser);
+      setNewUser(JSON.parse(JSON.stringify(initialNewUser)));
     }
     setIsUserDialogOpen(true);
   }
@@ -360,9 +362,11 @@ export default function ConfiguracoesPage() {
 
     let updatedUsers: User[];
     if (editingUser) {
-      const userToUpdate: User = { ...editingUser, ...newUser, password: newUser.password || editingUser.password };
-      if (!newUser.password) {
-        delete userToUpdate.password;
+      const userToUpdate: User = { ...editingUser, ...newUser };
+      if (newUser.password) {
+        userToUpdate.password = btoa(newUser.password);
+      } else {
+        userToUpdate.password = editingUser.password;
       }
       updatedUsers = users.map(u => u.id === editingUser.id ? userToUpdate : u);
       toast({ title: 'Usuário Atualizado!', description: `Os dados de ${newUser.name} foram salvos.` });
@@ -371,7 +375,7 @@ export default function ConfiguracoesPage() {
         id: `USER-${Date.now()}`,
         name: newUser.name!,
         login: newUser.login!,
-        password: newUser.password!,
+        password: btoa(newUser.password!),
         permissions: newUser.permissions!,
       };
       updatedUsers = [...users, userToAdd];
@@ -505,7 +509,6 @@ export default function ConfiguracoesPage() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Login</TableHead>
-              <TableHead>Tema</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -514,7 +517,6 @@ export default function ConfiguracoesPage() {
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.login}</TableCell>
-                <TableCell><Badge variant="outline">{user.theme || 'Padrão'}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
                    <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)} disabled={!isCurrentUserAdmin}>Editar</Button>
                    <AlertDialog>
@@ -540,7 +542,7 @@ export default function ConfiguracoesPage() {
                 </TableCell>
               </TableRow>
             )) : (
-              <TableRow><TableCell colSpan={4} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={3} className="h-24 text-center">Nenhum usuário cadastrado.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -668,3 +670,5 @@ export default function ConfiguracoesPage() {
     </div>
   )
 }
+
+    

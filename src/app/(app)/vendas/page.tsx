@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getStock, getSales, saveStock, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, saveSales } from '@/lib/storage';
-import { useAuth } from '@/hooks/use-auth';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 
 export default function VendasPage() {
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useCurrentUser();
   const [saleItems, setSaleItems] = React.useState<SaleItem[]>([]);
   const [discount, setDiscount] = React.useState(0);
   const [paymentMethod, setPaymentMethod] = React.useState('dinheiro');

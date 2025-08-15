@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { getCustomers, getStock, getCompanyInfo, saveCustomers, getKits } from '@/lib/storage';
-import { useAuth } from '@/hooks/use-auth';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import {
   Select,
   SelectContent,
@@ -72,7 +72,7 @@ interface QuoteBuilderProps {
 
 export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuilderProps) {
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useCurrentUser();
   
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [stock, setStock] = React.useState<StockItem[]>([]);

@@ -30,7 +30,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings, getSales, getQuotes, getAppointments, getFinancialTransactions, saveSales, saveQuotes, saveAppointments, saveFinancialTransactions, getCustomers, saveCustomers, getServiceOrders, saveServiceOrders, getKits, saveKits } from '@/lib/storage';
-import { useAuth } from '@/hooks/use-auth';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import type { User, CompanyInfo, UserPermissions } from '@/types';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -66,7 +66,7 @@ const initialNewUser: Partial<User> = {
 
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useCurrentUser();
   const [settings, setSettings] = React.useState<AppSettings>({ defaultWarrantyDays: 90 });
   const [companyInfo, setCompanyInfo] = React.useState<CompanyInfo>({ name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '', notificationSoundUrl: '' });
   const [users, setUsers] = React.useState<User[]>([]);

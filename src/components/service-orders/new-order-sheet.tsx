@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCustomers, getStock, getCompanyInfo, getSettings, saveFinancialTransactions, getFinancialTransactions } from '@/lib/storage';
-import { useAuth } from '@/hooks/use-auth';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import type { Customer, ServiceOrder, StockItem, CompanyInfo, User, InternalNote, FinancialTransaction, OSPayment } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -66,7 +66,7 @@ interface QuoteItem {
 
 export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen, onOpenChange, onSave }: NewOrderSheetProps) {
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useCurrentUser();
   
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [stock, setStock] = React.useState<StockItem[]>([]);

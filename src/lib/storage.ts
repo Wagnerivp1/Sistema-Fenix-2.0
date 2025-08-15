@@ -3,43 +3,36 @@
 
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote, Kit } from '@/types';
 import stockData from '@/data/stock.json';
+import defaultUsersData from '@/data/users.json';
 
-const defaultUsers: User[] = [
-    {
-        "id": "master",
-        "username": "admin",
-        // Senha 'admin' codificada em base64
-        "password": "YWRtaW4=", 
-    }
-];
+// --- Helper Functions ---
 
-// Helper to safely get data from localStorage
+// Helper to safely get data from localStorage, initializing with a default value if not present.
 function getFromStorage<T>(key: string, defaultValue: T): T {
   if (typeof window === 'undefined') {
     return defaultValue;
   }
   try {
     const item = window.localStorage.getItem(key);
-    // If the item doesn't exist, initialize localStorage with the default value and return it.
     if (item === null) {
-        window.localStorage.setItem(key, JSON.stringify(defaultValue));
-        return defaultValue;
+      // If no item exists, set the default value in storage and return it.
+      window.localStorage.setItem(key, JSON.stringify(defaultValue));
+      return defaultValue;
     }
-    // If the item exists, parse and return it.
     return JSON.parse(item);
   } catch (error) {
-    console.error(`Error reading ${key} from localStorage`, error);
-    // On error, still try to set the default value to recover.
+    console.error(`Error reading or parsing ${key} from localStorage. Initializing with default.`, error);
+    // Attempt to recover by setting the default value.
     try {
-        window.localStorage.setItem(key, JSON.stringify(defaultValue));
+      window.localStorage.setItem(key, JSON.stringify(defaultValue));
     } catch (e) {
-        console.error(`Failed to recover and set default for ${key}`, e);
+      console.error(`Failed to set default value for ${key} during recovery.`, e);
     }
     return defaultValue;
   }
 }
 
-// Helper to safely save data to localStorage
+// Helper to safely save data to localStorage and notify other components
 function saveToStorage<T>(key: string, data: T): void {
   if (typeof window === 'undefined') {
     return;
@@ -49,6 +42,8 @@ function saveToStorage<T>(key: string, data: T): void {
     window.localStorage.setItem(key, serializedData);
     // Dispatch a custom event to notify other tabs/components of the change
     window.dispatchEvent(new Event(`storage-change-${key}`));
+    // Also dispatch the generic storage event for wider compatibility (e.g., useAuth hook)
+    window.dispatchEvent(new Event('storage'));
   } catch (error) {
     console.error(`Error saving ${key} to localStorage`, error);
   }
@@ -57,38 +52,33 @@ function saveToStorage<T>(key: string, data: T): void {
 // --- Auth Functions ---
 
 export function getSessionToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem('session_token');
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem('session_token');
 }
 
-export function saveSessionToken(token: string): void {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('session_token', token);
+export function saveSessionToken(token: string, userLogin: string): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem('session_token', token);
+  window.localStorage.setItem('loggedInUser', userLogin);
+  window.dispatchEvent(new Event('storage')); // Notify components of login change
 }
 
 export function removeSessionToken(): void {
-    if (typeof window === 'undefined') return;
-    window.localStorage.removeItem('session_token');
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem('session_token');
+  window.localStorage.removeItem('loggedInUser');
+  window.dispatchEvent(new Event('storage')); // Notify components of logout change
 }
-
 
 // Users
 export async function getUsers(): Promise<User[]> {
-  return getFromStorage<User[]>('users', defaultUsers);
-}
-export async function saveUser(username: string, password: string): Promise<void> {
-    const users = await getUsers();
-    if (users.find(u => u.username === username)) {
-        throw new Error('Este nome de usuário já existe.');
-    }
-    const newUser: User = {
-        id: `USER-${Date.now()}`,
-        username,
-        password: btoa(password) // Encode password to Base64
-    };
-    saveToStorage('users', [...users, newUser]);
+  // Type assertion because the imported JSON will conform to User[]
+  return getFromStorage<User[]>('users', defaultUsersData as User[]);
 }
 
+export async function saveUsers(users: User[]): Promise<void> {
+  saveToStorage('users', users);
+}
 
 // --- Data Functions ---
 
@@ -110,10 +100,11 @@ export async function saveServiceOrders(orders: ServiceOrder[]): Promise<void> {
 
 // Stock Items
 export async function getStock(): Promise<StockItem[]> {
-    return getFromStorage<StockItem[]>('stock', stockData);
+  // Type assertion because the imported JSON will conform to StockItem[]
+  return getFromStorage<StockItem[]>('stock', stockData as StockItem[]);
 }
 export async function saveStock(stock: StockItem[]): Promise<void> {
-    saveToStorage('stock', stock);
+  saveToStorage('stock', stock);
 }
 
 // Sales
@@ -134,46 +125,45 @@ export async function saveFinancialTransactions(transactions: FinancialTransacti
 
 // Appointments
 export async function getAppointments(): Promise<Appointment[]> {
-    return getFromStorage<Appointment[]>('appointments', []);
+  return getFromStorage<Appointment[]>('appointments', []);
 }
 export async function saveAppointments(appointments: Appointment[]): Promise<void> {
-    saveToStorage('appointments', appointments);
+  saveToStorage('appointments', appointments);
 }
 
 // Quotes
 export async function getQuotes(): Promise<Quote[]> {
-    return getFromStorage<Quote[]>('quotes', []);
+  return getFromStorage<Quote[]>('quotes', []);
 }
 export async function saveQuotes(quotes: Quote[]): Promise<void> {
-    saveToStorage('quotes', quotes);
+  saveToStorage('quotes', quotes);
 }
 
 // Kits
 export async function getKits(): Promise<Kit[]> {
-    return getFromStorage<Kit[]>('kits', []);
+  return getFromStorage<Kit[]>('kits', []);
 }
 export async function saveKits(kits: Kit[]): Promise<void> {
-    saveToStorage('kits', kits);
+  saveToStorage('kits', kits);
 }
-
 
 // --- Singleton Data ---
 
 // Company Info
 export async function getCompanyInfo(): Promise<CompanyInfo> {
-    const defaultValue: CompanyInfo = { name: '', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '' };
-    return getFromStorage<CompanyInfo>('companyInfo', defaultValue);
-};
+  const defaultValue: CompanyInfo = { name: 'Assistec Now', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '', notificationSoundUrl: '' };
+  return getFromStorage<CompanyInfo>('companyInfo', defaultValue);
+}
 export async function saveCompanyInfo(info: CompanyInfo): Promise<void> {
-    saveToStorage('companyInfo', info);
-    window.dispatchEvent(new Event('companyInfoChanged'));
-};
+  saveToStorage('companyInfo', info);
+  window.dispatchEvent(new Event('companyInfoChanged'));
+}
 
 // General Settings
 export async function getSettings(): Promise<{ defaultWarrantyDays: number }> {
-    const defaultValue = { defaultWarrantyDays: 90 };
-    return getFromStorage<{ defaultWarrantyDays: number }>('settings', defaultValue);
-};
+  const defaultValue = { defaultWarrantyDays: 90 };
+  return getFromStorage<{ defaultWarrantyDays: number }>('settings', defaultValue);
+}
 export async function saveSettings(settings: { defaultWarrantyDays: number }): Promise<void> {
-    saveToStorage('settings', settings);
-};
+  saveToStorage('settings', settings);
+}

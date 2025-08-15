@@ -9,27 +9,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
-import { getUsers, saveUser, saveSessionToken, getSessionToken } from '@/lib/storage';
+import { getUsers, saveUsers, saveSessionToken, getSessionToken } from '@/lib/storage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { User } from '@/types';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [loginUsername, setLoginUsername] = React.useState('');
-  const [loginPassword, setLoginPassword] = React.useState('');
+  const [login, setLogin] = React.useState('');
+  const [password, setPassword] = React.useState('');
   
-  const [registerUsername, setRegisterUsername] = React.useState('');
-  const [registerPassword, setRegisterPassword] = React.useState('');
-  const [confirmPassword, setConfirmPassword] = React.useState('');
-
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    // Garante que os usuários padrão sejam criados na primeira visita
+    // This function ensures the default user list is in localStorage on first load.
     getUsers(); 
     
-    // Se já existe um token, redireciona para o dashboard
+    // If a token already exists, redirect to the dashboard
     if (getSessionToken()) {
         router.replace('/dashboard');
     } else {
@@ -43,16 +40,18 @@ export default function LoginPage() {
 
     try {
       const users = await getUsers();
-      const user = users.find(u => u.username === loginUsername);
+      const user = users.find(u => u.login === login);
+      
+      // Passwords in users.json are plain text, they are encoded on save.
+      // We need to encode the input password to check against potentially already-encoded ones.
+      const inputPasswordEncoded = btoa(password);
 
-      const encodedPassword = btoa(loginPassword);
-
-      if (user && user.password === encodedPassword) {
+      if (user && (user.password === password || user.password === inputPasswordEncoded)) {
         const sessionToken = `TOKEN-${Date.now()}-${Math.random()}`;
-        saveSessionToken(sessionToken);
+        saveSessionToken(sessionToken, user.login); // Save token and user login
         toast({
           title: 'Login bem-sucedido!',
-          description: 'Redirecionando para o dashboard...',
+          description: `Bem-vindo, ${user.name}! Redirecionando...`,
         });
         router.push('/dashboard');
       } else {
@@ -74,27 +73,6 @@ export default function LoginPage() {
     }
   };
   
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (registerPassword !== confirmPassword) {
-        toast({ variant: 'destructive', title: 'Senhas não conferem!' });
-        return;
-    }
-    setIsLoading(true);
-    try {
-        await saveUser(registerUsername, registerPassword);
-        toast({ title: 'Usuário registrado com sucesso!', description: 'Você já pode fazer login.'});
-        // Alternar para a aba de login ou limpar campos
-        setRegisterUsername('');
-        setRegisterPassword('');
-        setConfirmPassword('');
-    } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Erro ao registrar', description: error.message });
-    } finally {
-        setIsLoading(false);
-    }
-  }
-  
   if (isLoading) {
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -111,84 +89,35 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold">Acesse sua conta</CardTitle>
         </CardHeader>
         <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="login">Login</TabsTrigger>
-                    <TabsTrigger value="register">Registrar</TabsTrigger>
-                </TabsList>
-                <TabsContent value="login">
-                     <form onSubmit={handleLogin} className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                        <Label htmlFor="login-user">Usuário</Label>
-                        <Input
-                            id="login-user"
-                            type="text"
-                            placeholder="Seu usuário"
-                            required
-                            value={loginUsername}
-                            onChange={(e) => setLoginUsername(e.target.value)}
-                            disabled={isLoading}
-                        />
-                        </div>
-                        <div className="space-y-2">
-                        <Label htmlFor="login-password">Senha</Label>
-                        <Input
-                            id="login-password"
-                            type="password"
-                            required
-                            value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
-                            disabled={isLoading}
-                        />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? 'Entrando...' : 'Login'}
-                        </Button>
-                    </form>
-                </TabsContent>
-                <TabsContent value="register">
-                     <form onSubmit={handleRegister} className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                        <Label htmlFor="register-user">Novo Usuário</Label>
-                        <Input
-                            id="register-user"
-                            type="text"
-                            placeholder="Escolha um usuário"
-                            required
-                            value={registerUsername}
-                            onChange={(e) => setRegisterUsername(e.target.value)}
-                            disabled={isLoading}
-                        />
-                        </div>
-                        <div className="space-y-2">
-                        <Label htmlFor="register-password">Senha</Label>
-                        <Input
-                            id="register-password"
-                            type="password"
-                            required
-                            value={registerPassword}
-                            onChange={(e) => setRegisterPassword(e.target.value)}
-                            disabled={isLoading}
-                        />
-                        </div>
-                        <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirme a Senha</Label>
-                        <Input
-                            id="confirm-password"
-                            type="password"
-                            required
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            disabled={isLoading}
-                        />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? 'Registrando...' : 'Registrar'}
-                        </Button>
-                    </form>
-                </TabsContent>
-            </Tabs>
-         
+           <form onSubmit={handleLogin} className="space-y-4 pt-4">
+              <div className="space-y-2">
+              <Label htmlFor="login-user">Usuário</Label>
+              <Input
+                  id="login-user"
+                  type="text"
+                  placeholder="Seu usuário de login"
+                  required
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
+                  disabled={isLoading}
+              />
+              </div>
+              <div className="space-y-2">
+              <Label htmlFor="login-password">Senha</Label>
+              <Input
+                  id="login-password"
+                  type="password"
+                  placeholder="Sua senha"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+              />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Entrando...' : 'Login'}
+              </Button>
+          </form>
         </CardContent>
       </Card>
     </div>

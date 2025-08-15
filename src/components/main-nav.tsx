@@ -42,13 +42,23 @@ const allNavItems: NavItem[] = [
 
 export function MainNav() {
   const pathname = usePathname();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isLoading } = useAuth();
 
   const navItems = React.useMemo(() => {
     if (!currentUser || !currentUser.permissions) return [];
     return allNavItems.filter(item => currentUser.permissions[item.permission]);
   }, [currentUser]);
 
+  if (isLoading) {
+    return (
+        <div className="flex flex-col gap-2 px-4 py-4">
+            <p className="text-xs text-center text-muted-foreground p-4">
+                Carregando usuário...
+            </p>
+        </div>
+    )
+  }
+  
   if (!currentUser) {
     return (
         <div className="flex flex-col gap-2 px-4 py-4">

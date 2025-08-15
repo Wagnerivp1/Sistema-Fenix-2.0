@@ -120,10 +120,30 @@ export type FinancialTransaction = {
     relatedServiceOrderId?: string;
 };
 
+export type UserPermissions = {
+  accessDashboard: boolean;
+  accessClients: boolean;
+  accessServiceOrders: boolean;
+  accessInventory: boolean;
+  accessSales: boolean;
+  accessFinancials: boolean;
+  accessSettings: boolean;
+  accessDangerZone: boolean;
+  accessAgenda: boolean;
+  accessQuotes: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canViewPasswords: boolean;
+  canManageUsers: boolean;
+}
+
 export type User = {
   id: string;
-  username: string;
-  password?: string; // Stored as Base64
+  name: string;
+  login: string;
+  password?: string; // Stored as plain text in JSON, can be encoded in localStorage
+  permissions: UserPermissions;
+  theme?: string;
 };
 
 

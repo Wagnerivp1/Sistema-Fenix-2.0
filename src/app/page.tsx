@@ -21,15 +21,10 @@ export default function LoginPage() {
   const [login, setLogin] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [users, setUsers] = React.useState<User[]>([]);
-
+  
+  // This useEffect ensures that the default users are loaded into localStorage on first visit.
   React.useEffect(() => {
-    // Pre-load users to avoid race conditions on login
-    const loadInitialData = async () => {
-      const usersData = await getUsers();
-      setUsers(usersData);
-    };
-    loadInitialData();
+    getUsers();
   }, []);
 
 
@@ -39,7 +34,7 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
 
-    // Use the pre-loaded users state
+    const users = await getUsers(); // Fetch the most current user list directly.
     const userToAuth = users.find(u => u.login === login);
 
     if (userToAuth && userToAuth.password === password) {

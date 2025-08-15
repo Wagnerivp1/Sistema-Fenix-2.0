@@ -53,13 +53,10 @@ export default function LoginPage() {
     // This function ensures the default user list is in localStorage on first load.
     getUsers(); 
     
-    // If a token already exists, redirect to the dashboard
-    if (getSessionToken()) {
-        router.replace('/dashboard');
-    } else {
-        setIsLoading(false);
-    }
-  }, [router]);
+    // The AuthGuard in the main layout will handle redirects if a token exists.
+    // This page should always be accessible to non-logged-in users.
+    setIsLoading(false);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

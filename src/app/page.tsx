@@ -5,13 +5,38 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
 import { getUsers, saveUsers, saveSessionToken, getSessionToken } from '@/lib/storage';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { User } from '@/types';
+import type { User, UserPermissions } from '@/types';
+
+const defaultPermissions: UserPermissions = {
+  accessDashboard: true,
+  accessClients: true,
+  accessServiceOrders: true,
+  accessInventory: true,
+  accessSales: true,
+  accessFinancials: false,
+  accessSettings: false,
+  accessDangerZone: false,
+  accessAgenda: true,
+  accessQuotes: true,
+  canEdit: true,
+  canDelete: false,
+  canViewPasswords: false,
+  canManageUsers: false,
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +46,8 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState('');
   
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isRegisterOpen, setIsRegisterOpen] = React.useState(false);
+  const [newUser, setNewUser] = React.useState({ name: '', login: '', password: '' });
 
   React.useEffect(() => {
     // This function ensures the default user list is in localStorage on first load.
@@ -42,13 +69,10 @@ export default function LoginPage() {
       const users = await getUsers();
       const user = users.find(u => u.login === login);
       
-      // Passwords in users.json are plain text, they are encoded on save.
-      // We need to encode the input password to check against potentially already-encoded ones.
       const inputPasswordEncoded = btoa(password);
 
       if (user && (user.password === password || user.password === inputPasswordEncoded)) {
-        const sessionToken = `TOKEN-${Date.now()}-${Math.random()}`;
-        saveSessionToken(sessionToken, user.login); // Save token and user login
+        saveSessionToken(`TOKEN-${Date.now()}-${Math.random()}`, user);
         toast({
           title: 'Login bem-sucedido!',
           description: `Bem-vindo, ${user.name}! Redirecionando...`,
@@ -71,6 +95,34 @@ export default function LoginPage() {
       });
       setIsLoading(false);
     }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUser.name || !newUser.login || !newUser.password) {
+      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Por favor, preencha todos os campos.' });
+      return;
+    }
+    
+    const users = await getUsers();
+    if (users.some(u => u.login === newUser.login)) {
+      toast({ variant: 'destructive', title: 'Usuário já existe', description: 'Este login já está em uso. Por favor, escolha outro.' });
+      return;
+    }
+
+    const userToSave: User = {
+      id: `USER-${Date.now()}`,
+      name: newUser.name,
+      login: newUser.login,
+      password: btoa(newUser.password), // Encrypt password
+      permissions: defaultPermissions,
+      theme: 'dark'
+    };
+    
+    await saveUsers([...users, userToSave]);
+    toast({ title: 'Usuário registrado com sucesso!', description: 'Agora você pode fazer login com suas novas credenciais.'});
+    setIsRegisterOpen(false);
+    setNewUser({ name: '', login: '', password: '' });
   };
   
   if (isLoading) {
@@ -119,6 +171,43 @@ export default function LoginPage() {
               </Button>
           </form>
         </CardContent>
+        <CardFooter className="flex-col gap-4">
+            <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="link" className="w-full">
+                        Registrar novo usuário
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Registrar Novo Usuário</DialogTitle>
+                        <DialogDescription>
+                            Crie uma nova conta para acessar o sistema. As permissões serão limitadas por padrão.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleRegister}>
+                        <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="reg-name">Nome Completo</Label>
+                                <Input id="reg-name" value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="reg-login">Usuário de Acesso</Label>
+                                <Input id="reg-login" value={newUser.login} onChange={(e) => setNewUser({...newUser, login: e.target.value})} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="reg-password">Senha</Label>
+                                <Input id="reg-password" type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
+                            </div>
+                        </div>
+                         <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={() => setIsRegisterOpen(false)}>Cancelar</Button>
+                            <Button type="submit">Registrar</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </CardFooter>
       </Card>
     </div>
   );

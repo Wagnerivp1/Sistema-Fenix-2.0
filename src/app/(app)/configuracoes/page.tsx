@@ -632,7 +632,18 @@ export default function ConfiguracoesPage() {
                     <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha forte'} value={newUser.password || ''} onChange={handleUserInputChange} /></div>
                     <div className="space-y-2">
                       <Label htmlFor="theme">Tema Padrão</Label>
-                      <Select value={newUser.theme} onValueChange={(v) => handleSelectChange('theme', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="dark">Escuro (Padrão)</SelectItem><SelectItem value="light">Claro</SelectItem><SelectItem value="slate">Slate</SelectItem><SelectItem value="stone">Stone</SelectItem><SelectItem value="rose">Rose</SelectItem><SelectItem value="green">Verde</SelectItem><SelectItem value="orange">Laranja</SelectItem></SelectContent></Select>
+                      <Select value={newUser.theme || 'dark'} onValueChange={(v) => handleSelectChange('theme', v)}>
+                        <SelectTrigger><SelectValue/></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="dark">Escuro (Padrão)</SelectItem>
+                            <SelectItem value="light">Claro</SelectItem>
+                            <SelectItem value="slate">Slate</SelectItem>
+                            <SelectItem value="stone">Stone</SelectItem>
+                            <SelectItem value="rose">Rose</SelectItem>
+                            <SelectItem value="green">Verde</SelectItem>
+                            <SelectItem value="orange">Laranja</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                  </div>
               </div>

@@ -17,15 +17,23 @@ function getFromStorage<T>(key: string, defaultValue: T): T {
   }
   try {
     const item = window.localStorage.getItem(key);
-    // If the item exists in storage, parse and return it.
-    if (item) {
+    // If the item exists and is not just an empty array '[]', parse and return it.
+    // This ensures that if the user clears all data, it can be re-initialized.
+    if (item && item !== '[]') {
       return JSON.parse(item);
     }
     // Otherwise, initialize localStorage with the default value and return it.
+    // This is the crucial part for first-time setup.
     window.localStorage.setItem(key, JSON.stringify(defaultValue));
     return defaultValue;
   } catch (error) {
     console.error(`Error reading ${key} from localStorage`, error);
+    // On error, still try to set the default value to recover.
+    try {
+        window.localStorage.setItem(key, JSON.stringify(defaultValue));
+    } catch (e) {
+        console.error(`Failed to recover and set default for ${key}`, e);
+    }
     return defaultValue;
   }
 }

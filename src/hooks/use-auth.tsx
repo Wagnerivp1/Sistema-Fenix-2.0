@@ -49,21 +49,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [setTheme]);
 
   React.useEffect(() => {
+    // If loading is finished, and there's no user, and we are not on the login page, redirect to login
     if (!isLoading && !user && pathname !== '/') {
       router.replace('/');
     }
   }, [user, isLoading, pathname, router]);
 
-
   const login = (userData: User) => {
     try {
       const userToSave = { ...userData };
-      delete userToSave.password; // Never store the password
+      // IMPORTANT: Never store the password in session/local storage for security reasons.
+      delete userToSave.password; 
+      
       window.sessionStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(userToSave));
       setUser(userToSave);
+
       if (userToSave.theme) {
         setTheme(userToSave.theme);
       }
+      
+      // Dispatch an event to notify other components/tabs if needed
       window.dispatchEvent(new StorageEvent('storage', { key: LOGGED_IN_USER_KEY }));
     } catch (error) {
       console.error('Error saving logged in user to sessionStorage:', error);
@@ -71,10 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    window.sessionStorage.removeItem(LOGGED_IN_USER_KEY);
-    setUser(null);
-    window.dispatchEvent(new StorageEvent('storage', { key: LOGGED_IN_USER_KEY }));
-    router.replace('/');
+    try {
+      window.sessionStorage.removeItem(LOGGED_IN_USER_KEY);
+      setUser(null);
+      window.dispatchEvent(new StorageEvent('storage', { key: LOGGED_IN_USER_KEY }));
+      router.replace('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   const value = { user, login, logout, isLoading };

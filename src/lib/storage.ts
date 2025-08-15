@@ -6,9 +6,7 @@ import stockData from '@/data/stock.json';
 import defaultUsers from '@/data/users.json';
 
 // --- Default Data ---
-// Directly use the imported JSON array.
 const defaultStock: StockItem[] = stockData;
-
 
 // Helper to safely get data from localStorage
 function getFromStorage<T>(key: string, defaultValue: T): T {
@@ -17,15 +15,13 @@ function getFromStorage<T>(key: string, defaultValue: T): T {
   }
   try {
     const item = window.localStorage.getItem(key);
-    // If the item exists and is not just an empty array '[]', parse and return it.
-    // This ensures that if the user clears all data, it can be re-initialized.
-    if (item && item !== '[]') {
-      return JSON.parse(item);
+    // If the item doesn't exist, initialize localStorage with the default value and return it.
+    if (item === null) {
+        window.localStorage.setItem(key, JSON.stringify(defaultValue));
+        return defaultValue;
     }
-    // Otherwise, initialize localStorage with the default value and return it.
-    // This is the crucial part for first-time setup.
-    window.localStorage.setItem(key, JSON.stringify(defaultValue));
-    return defaultValue;
+    // If the item exists, parse and return it.
+    return JSON.parse(item);
   } catch (error) {
     console.error(`Error reading ${key} from localStorage`, error);
     // On error, still try to set the default value to recover.
@@ -73,7 +69,6 @@ export async function saveServiceOrders(orders: ServiceOrder[]): Promise<void> {
 
 // Stock Items
 export async function getStock(): Promise<StockItem[]> {
-    // On first load, it will use defaultStock if 'stock' is not in localStorage
     return getFromStorage<StockItem[]>('stock', defaultStock);
 }
 export async function saveStock(stock: StockItem[]): Promise<void> {
@@ -98,8 +93,7 @@ export async function saveFinancialTransactions(transactions: FinancialTransacti
 
 // Users
 export async function getUsers(): Promise<User[]> {
-  // Use defaultUsers as the fallback value, which getFromStorage will use to initialize localStorage if it's empty.
-  return getFromStorage<User[]>('users', defaultUsers);
+  return getFromStorage<User[]>('users', defaultUsers as User[]);
 }
 export async function saveUsers(users: User[]): Promise<void> {
   saveToStorage('users', users);

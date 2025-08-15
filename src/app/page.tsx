@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { getUsers } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
-import type { User } from '@/types';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,12 +20,11 @@ export default function LoginPage() {
   const [login, setLogin] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
+
   // This useEffect ensures that the default users are loaded into localStorage on first visit.
   React.useEffect(() => {
     getUsers();
   }, []);
-
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,21 +32,31 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
 
-    const users = await getUsers(); // Fetch the most current user list directly.
-    const userToAuth = users.find(u => u.login === login);
+    try {
+      const users = await getUsers(); // Fetch the most current user list directly.
+      const userToAuth = users.find(u => u.login === login);
 
-    if (userToAuth && userToAuth.password === password) {
-      authLogin(userToAuth);
-      toast({
-        title: 'Login bem-sucedido!',
-        description: 'Redirecionando para o dashboard...',
-      });
-      router.push('/dashboard');
-    } else {
+      if (userToAuth && userToAuth.password === password) {
+        authLogin(userToAuth); // Pass the full user object to the auth context
+        toast({
+          title: 'Login bem-sucedido!',
+          description: 'Redirecionando para o dashboard...',
+        });
+        router.push('/dashboard');
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Credenciais inválidas',
+          description: 'Por favor, verifique seu usuário e senha.',
+        });
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
       toast({
         variant: 'destructive',
-        title: 'Credenciais inválidas',
-        description: 'Por favor, verifique seu usuário e senha.',
+        title: 'Erro no Login',
+        description: 'Ocorreu um problema ao tentar fazer o login. Tente novamente.',
       });
       setIsSubmitting(false);
     }

@@ -5,30 +5,6 @@ import * as React from 'react';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { useCurrentUser } from '@/hooks/use-current-user';
-
-// Componente para aplicar o tema do usuário logado
-function UserThemeApplier({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useCurrentUser();
-  const theme = user?.theme || 'dark';
-
-  if (isLoading) {
-    // Evita piscar a tela com o tema padrão antes de carregar o do usuário
-    return <div className="h-screen w-full bg-background" />;
-  }
-
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme={theme}
-      enableSystem={false}
-      themes={["light", "dark", "slate", "stone", "rose", "green", "orange"]}
-    >
-      {children}
-    </ThemeProvider>
-  );
-}
-
 
 export default function RootLayout({
   children,
@@ -46,10 +22,15 @@ export default function RootLayout({
         ></link>
       </head>
       <body>
-        <UserThemeApplier>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
           <Toaster />
-        </UserThemeApplier>
+        </ThemeProvider>
       </body>
     </html>
   );

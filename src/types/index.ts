@@ -143,7 +143,6 @@ export type User = {
   login: string;
   password?: string; // Stored as plain text in JSON, can be encoded in localStorage
   permissions: UserPermissions;
-  theme?: string;
 };
 
 

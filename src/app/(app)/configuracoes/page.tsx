@@ -36,7 +36,6 @@ import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AppSettings {
   defaultWarrantyDays: number;
@@ -45,7 +44,6 @@ interface AppSettings {
 const initialNewUser: Partial<User> = {
   name: '',
   login: '',
-  theme: 'dark',
   permissions: {
     accessDashboard: true,
     accessClients: false,
@@ -108,10 +106,6 @@ export default function ConfiguracoesPage() {
   
   const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setNewUser(prev => ({ ...prev, [id]: value }));
-  };
-
-  const handleSelectChange = (id: keyof typeof newUser, value: string) => {
     setNewUser(prev => ({ ...prev, [id]: value }));
   };
   
@@ -379,7 +373,6 @@ export default function ConfiguracoesPage() {
         login: newUser.login!,
         password: newUser.password!,
         permissions: newUser.permissions!,
-        theme: newUser.theme,
       };
       updatedUsers = [...users, userToAdd];
       toast({ title: 'Usuário Adicionado!', description: `${newUser.name} foi adicionado ao sistema.` });
@@ -630,21 +623,6 @@ export default function ConfiguracoesPage() {
                  </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha forte'} value={newUser.password || ''} onChange={handleUserInputChange} /></div>
-                    <div className="space-y-2">
-                      <Label htmlFor="theme">Tema Padrão</Label>
-                      <Select value={newUser.theme || 'dark'} onValueChange={(v) => handleSelectChange('theme', v)}>
-                        <SelectTrigger><SelectValue/></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="dark">Escuro (Padrão)</SelectItem>
-                            <SelectItem value="light">Claro</SelectItem>
-                            <SelectItem value="slate">Slate</SelectItem>
-                            <SelectItem value="stone">Stone</SelectItem>
-                            <SelectItem value="rose">Rose</SelectItem>
-                            <SelectItem value="green">Verde</SelectItem>
-                            <SelectItem value="orange">Laranja</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                  </div>
               </div>
               <Separator className="md:col-span-2" />

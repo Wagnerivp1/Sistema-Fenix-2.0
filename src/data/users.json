@@ -20,8 +20,7 @@
       "canDelete": true,
       "canViewPasswords": true,
       "canManageUsers": true
-    },
-    "theme": "dark"
+    }
   },
   {
     "name": "Wagner Lopes",
@@ -43,14 +42,12 @@
       "accessAgenda": true,
       "accessQuotes": true
     },
-    "id": "1752520921537-0.9328935433699823",
-    "theme": "dark"
+    "id": "1752520921537-0.9328935433699823"
   },
   {
     "name": "MIRIAM JOCIMARA",
     "login": "miriam123",
     "password": "jl001215",
-    "theme": "dark",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
@@ -72,7 +69,6 @@
   {
     "name": "Ana Leticia Boeno Lopes ",
     "login": "ana123",
-    "theme": "dark",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,

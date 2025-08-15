@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MoreHorizontal, Undo2, MessageSquare, DollarSign, Printer, MessageCircle } from 'lucide-react';
+import { MoreHorizontal, Undo2, MessageSquare, DollarSign, Printer, MessageCircle, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,9 +45,20 @@ import {
   SelectGroup,
   SelectLabel,
 } from '@/components/ui/select';
-import { getServiceOrders, saveServiceOrders, getCustomers, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, getSettings } from '@/lib/storage';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { getServiceOrders, saveServiceOrders, getCustomers, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, getSettings, getStock, saveStock } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
-import type { Customer, ServiceOrder, User, InternalNote, FinancialTransaction, OSPayment, CompanyInfo } from '@/types';
+import type { Customer, ServiceOrder, User, InternalNote, FinancialTransaction, OSPayment, CompanyInfo, StockItem } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { ViewCommentsDialog } from '@/components/service-orders/view-comments-dialog';
 import { cn } from '@/lib/utils';
@@ -375,6 +386,50 @@ function ServiceOrdersComponent() {
     });
     setIsPaymentDialogOpen(false);
   };
+  
+  const handleDeleteOrder = async (orderId: string) => {
+    const orderToDelete = orders.find(o => o.id === orderId);
+    if (!orderToDelete) return;
+    
+    // 1. Revert stock for parts
+    if (orderToDelete.items && orderToDelete.items.length > 0) {
+        const partsToReturn = orderToDelete.items.filter(item => item.type === 'part');
+        if (partsToReturn.length > 0) {
+            const currentStock = await getStock();
+            const updatedStock = [...currentStock];
+            
+            partsToReturn.forEach(part => {
+                const stockItemIndex = updatedStock.findIndex(si => si.name.toLowerCase() === part.description.toLowerCase());
+                if (stockItemIndex !== -1) {
+                    updatedStock[stockItemIndex].quantity += part.quantity;
+                }
+            });
+            
+            await saveStock(updatedStock);
+        }
+    }
+
+    // 2. Revert financial transactions
+    const currentTransactions = await getFinancialTransactions();
+    const updatedTransactions = currentTransactions.filter(t => t.relatedServiceOrderId !== orderId);
+    await saveFinancialTransactions(updatedTransactions);
+
+    // 3. Delete the service order
+    const updatedOrders = orders.filter(o => o.id !== orderId);
+    await saveServiceOrders(updatedOrders);
+    setOrders(updatedOrders);
+
+    // Notify other components
+    window.dispatchEvent(new Event('storage-change-serviceOrders'));
+    window.dispatchEvent(new Event('storage-change-stock'));
+    window.dispatchEvent(new Event('storage-change-financialTransactions'));
+    
+    toast({
+        title: "OS Excluída com Sucesso!",
+        description: `A OS #${orderId.slice(-4)} foi removida, o estoque e as finanças foram ajustados.`,
+    });
+  };
+
 
   const handlePrint = async (documentType: 'entry' | 'quote' | 'delivery', order: ServiceOrder) => {
     const companyInfo = await getCompanyInfo();
@@ -998,6 +1053,29 @@ function ServiceOrdersComponent() {
                                 Reabrir OS
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuSeparator />
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Excluir OS
+                                    </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta ação é irreversível. A OS será excluída, as peças retornarão ao estoque e os lançamentos financeiros serão estornados.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteOrder(order.id)} className="bg-destructive hover:bg-destructive/90">
+                                            Sim, Excluir OS
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                           </DropdownMenuContent>
                         </DropdownMenu>
                     </TableCell>
@@ -1039,3 +1117,4 @@ export default function ServiceOrdersPage() {
     </React.Suspense>
   );
 }
+

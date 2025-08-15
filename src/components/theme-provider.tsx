@@ -2,20 +2,21 @@
 "use client"
 
 import * as React from "react"
-import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
+import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { type ThemeProviderProps } from "next-themes/dist/types"
 
-const themes = ["dark", "light", "slate", "stone", "rose", "green", "orange"];
-
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  const { defaultTheme } = props;
+  const [key, setKey] = React.useState(0);
+
+  // Força a remontagem do provider quando o tema padrão (do usuário) muda
+  React.useEffect(() => {
+    setKey(prevKey => prevKey + 1);
+  }, [defaultTheme]);
+
+
   return (
-    <NextThemesProvider 
-      {...props}
-      themes={themes}
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem={false}
-    >
+    <NextThemesProvider key={key} {...props}>
       {children}
     </NextThemesProvider>
   )

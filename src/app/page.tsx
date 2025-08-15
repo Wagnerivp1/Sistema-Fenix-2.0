@@ -12,49 +12,54 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { getUsers } from '@/lib/storage';
 import { useAuth } from '@/hooks/use-auth';
+import type { User } from '@/types';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { login: authLogin } = useAuth();
+  const { login: authLogin, isLoading: isAuthLoading } = useAuth();
   const [login, setLogin] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [users, setUsers] = React.useState<User[]>([]);
+
+  React.useEffect(() => {
+    // Pre-load users to avoid race conditions on login
+    const loadInitialData = async () => {
+      const usersData = await getUsers();
+      setUsers(usersData);
+    };
+    loadInitialData();
+  }, []);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (isSubmitting) return;
 
-    try {
-        const users = await getUsers();
-        const authenticatedUser = users.find(
-          (user) => user.login === login && user.password === password
-        );
+    setIsSubmitting(true);
 
-        if (authenticatedUser) {
-            authLogin(authenticatedUser);
-            toast({
-                title: 'Login bem-sucedido!',
-                description: 'Redirecionando para o dashboard...',
-            });
-            router.push('/dashboard');
-        } else {
-          toast({
-            variant: 'destructive',
-            title: 'Credenciais inválidas',
-            description: 'Por favor, verifique seu usuário e senha.',
-          });
-          setIsLoading(false);
-        }
-    } catch (error) {
-        toast({
-            variant: 'destructive',
-            title: 'Erro ao fazer login',
-            description: 'Não foi possível conectar ao servidor. Tente novamente.',
-        });
-        setIsLoading(false);
+    // Use the pre-loaded users state
+    const userToAuth = users.find(u => u.login === login);
+
+    if (userToAuth && userToAuth.password === password) {
+      authLogin(userToAuth);
+      toast({
+        title: 'Login bem-sucedido!',
+        description: 'Redirecionando para o dashboard...',
+      });
+      router.push('/dashboard');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Credenciais inválidas',
+        description: 'Por favor, verifique seu usuário e senha.',
+      });
+      setIsSubmitting(false);
     }
   };
+  
+  const isLoading = isAuthLoading || isSubmitting;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">

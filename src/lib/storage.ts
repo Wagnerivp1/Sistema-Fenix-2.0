@@ -3,6 +3,7 @@
 
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote, Kit } from '@/types';
 import stockData from '@/data/stock.json';
+import defaultUsers from '@/data/users.json';
 
 // --- Default Data ---
 // Directly use the imported JSON array.
@@ -22,7 +23,7 @@ function getFromStorage<T>(key: string, defaultValue: T): T {
         if (Array.isArray(parsed) && parsed.length > 0) {
             return parsed;
         }
-        if (!Array.isArray(parsed)) {
+        if (!Array.isArray(parsed) && parsed !== null) {
              return parsed;
         }
     }
@@ -95,29 +96,12 @@ export async function saveFinancialTransactions(transactions: FinancialTransacti
 
 // Users
 export async function getUsers(): Promise<User[]> {
-  const defaultUser: User = {
-    id: 'master',
-    name: 'Master User',
-    login: 'admin',
-    password: 'admin',
-    permissions: {
-      accessDashboard: true,
-      accessClients: true,
-      accessServiceOrders: true,
-      accessInventory: true,
-      accessSales: true,
-      accessFinancials: true,
-      accessSettings: true,
-      accessDangerZone: true,
-      accessAgenda: true,
-      accessQuotes: true,
-      canEdit: true,
-      canDelete: true,
-      canViewPasswords: true,
-      canManageUsers: true,
-    },
-  };
-  return getFromStorage<User[]>('users', [defaultUser]);
+  // Always try to load from storage first. Only use defaultUsers if storage is empty.
+  const storedUsers = getFromStorage<User[]>('users', []);
+  if (storedUsers.length > 0) {
+    return storedUsers;
+  }
+  return defaultUsers;
 }
 export async function saveUsers(users: User[]): Promise<void> {
   saveToStorage('users', users);

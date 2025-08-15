@@ -17,15 +17,9 @@ function getFromStorage<T>(key: string, defaultValue: T): T {
   }
   try {
     const item = window.localStorage.getItem(key);
-    // If the item exists in storage and is not an empty array string, use it.
+    // If the item exists in storage, parse and return it.
     if (item) {
-        const parsed = JSON.parse(item);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-        }
-        if (!Array.isArray(parsed) && parsed !== null) {
-             return parsed;
-        }
+      return JSON.parse(item);
     }
     // Otherwise, initialize localStorage with the default value and return it.
     window.localStorage.setItem(key, JSON.stringify(defaultValue));
@@ -71,7 +65,7 @@ export async function saveServiceOrders(orders: ServiceOrder[]): Promise<void> {
 
 // Stock Items
 export async function getStock(): Promise<StockItem[]> {
-    // On first load, it will use defaultStock if 'stock' is not in localStorage or is empty
+    // On first load, it will use defaultStock if 'stock' is not in localStorage
     return getFromStorage<StockItem[]>('stock', defaultStock);
 }
 export async function saveStock(stock: StockItem[]): Promise<void> {
@@ -96,12 +90,8 @@ export async function saveFinancialTransactions(transactions: FinancialTransacti
 
 // Users
 export async function getUsers(): Promise<User[]> {
-  // Always try to load from storage first. Only use defaultUsers if storage is empty.
-  const storedUsers = getFromStorage<User[]>('users', []);
-  if (storedUsers.length > 0) {
-    return storedUsers;
-  }
-  return defaultUsers;
+  // Use defaultUsers as the fallback value, which getFromStorage will use to initialize localStorage if it's empty.
+  return getFromStorage<User[]>('users', defaultUsers);
 }
 export async function saveUsers(users: User[]): Promise<void> {
   saveToStorage('users', users);

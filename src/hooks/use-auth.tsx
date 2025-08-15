@@ -1,2 +1,2 @@
-// This file is intentionally left blank.
-// Its functionality has been consolidated into `use-auth.ts` to resolve build conflicts.
+// This file is no longer in use and is intentionally left blank.
+// It caused conflicts with the new authentication hook.

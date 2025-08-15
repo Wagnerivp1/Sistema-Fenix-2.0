@@ -18,7 +18,7 @@ import {
 
 import { cn } from '@/lib/utils';
 import { useSidebar, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { useAuth } from '@/hooks/use-auth';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import type { User, UserPermissions } from '@/types';
 
 interface NavItem {
@@ -42,7 +42,7 @@ const allNavItems: NavItem[] = [
 
 export function MainNav() {
   const pathname = usePathname();
-  const { user: currentUser, isLoading } = useAuth();
+  const { user: currentUser, isLoading } = useCurrentUser();
 
   const navItems = React.useMemo(() => {
     if (!currentUser || !currentUser.permissions) return [];

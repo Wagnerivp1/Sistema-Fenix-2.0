@@ -57,7 +57,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { getServiceOrders, saveServiceOrders, getCustomers, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, getSettings, getStock, saveStock } from '@/lib/storage';
-import { useAuth } from '@/hooks/use-auth';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import type { Customer, ServiceOrder, User, InternalNote, FinancialTransaction, OSPayment, CompanyInfo, StockItem } from '@/types';
 import { NewOrderSheet } from '@/components/service-orders/new-order-sheet';
 import { ViewCommentsDialog } from '@/components/service-orders/view-comments-dialog';
@@ -95,7 +95,7 @@ function ServiceOrdersComponent() {
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customerId');
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useCurrentUser();
   
   const [orders, setOrders] = React.useState<ServiceOrder[]>([]);
   const [customers, setCustomers] = React.useState<Customer[]>([]);
@@ -1118,3 +1118,6 @@ export default function ServiceOrdersPage() {
   );
 }
 
+
+
+    

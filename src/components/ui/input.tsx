@@ -4,73 +4,81 @@ import { cn } from "@/lib/utils"
 
 const formatCurrency = (value: number | string | undefined): string => {
   if (value === undefined || value === null || value === '') return '';
-  let stringValue = String(value).replace(/\D/g, '');
-  if (stringValue === '') return '';
+  
+  // Remove non-numeric characters, except for a comma or period for decimals
+  let stringValue = String(value).replace(/[^0-9,.]/g, '');
+  
+  // Standardize decimal separator to period
+  stringValue = stringValue.replace(',', '.');
+  
+  // Ensure only one decimal point
+  const parts = stringValue.split('.');
+  if (parts.length > 2) {
+    stringValue = parts[0] + '.' + parts.slice(1).join('');
+  }
 
-  // Converte para número e divide por 100 para tratar como centavos
-  const numberValue = parseFloat(stringValue) / 100;
+  const numberValue = parseFloat(stringValue);
+
+  if (isNaN(numberValue)) return '';
 
   return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-  .format(numberValue)
-  .replace('R$', '') // Remove o símbolo da moeda para um campo mais limpo
-  .trim();
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numberValue);
 };
 
-const unformatCurrency = (value: string | undefined): string => {
-    if (value === undefined || value === null) return '';
-    return String(value).replace(/\D/g, '');
+const parseCurrency = (value: string | undefined): number => {
+    if (value === undefined || value === null || value === '') return 0;
+    const numericString = String(value).replace(/[^0-9,]/g, '').replace(',', '.');
+    return parseFloat(numericString) || 0;
 }
 
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, value: propValue, onChange, ...props }, ref) => {
-    // Apenas aplica a máscara de moeda se o tipo for "number" e não tiver um "step" (indicando que não é um number-stepper)
+  ({ className, type, value: propValue, onChange, onBlur, ...props }, ref) => {
     const isCurrency = type === 'number' && !props.step;
-
-    const [internalValue, setInternalValue] = React.useState(() => {
-      if (isCurrency) {
-        return formatCurrency(String(propValue || ''));
-      }
-      return String(propValue || '');
-    });
+    const [internalValue, setInternalValue] = React.useState(String(propValue || ''));
+    const [isEditing, setIsEditing] = React.useState(false);
 
     React.useEffect(() => {
-        const newValue = String(propValue || '');
-        if (isCurrency) {
-            setInternalValue(formatCurrency(newValue.replace('.', '')));
-        } else {
-            setInternalValue(newValue);
+        const numericValue = typeof propValue === 'number' ? propValue : parseCurrency(String(propValue));
+        if (!isEditing) {
+            setInternalValue(formatCurrency(numericValue));
         }
-    }, [propValue, isCurrency]);
+    }, [propValue, isEditing]);
+
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        setIsEditing(true);
+        const numericValue = parseCurrency(e.target.value);
+        setInternalValue(numericValue === 0 ? '' : String(numericValue).replace('.', ','));
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        setIsEditing(false);
+        const numericValue = parseCurrency(e.target.value);
+        setInternalValue(formatCurrency(numericValue));
+        onBlur?.(e);
+    };
 
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (isCurrency) {
-        const rawValue = e.target.value;
-        const formatted = formatCurrency(rawValue);
-        setInternalValue(formatted);
-        
-        // Propaga a mudança para o formulário com o valor numérico correto
-        if (onChange) {
-            const numericString = unformatCurrency(rawValue);
-            const numericValue = parseFloat(numericString) / 100;
+        const inputValue = e.target.value;
+        // Allow only numbers and a single comma
+        if (/^[0-9]*[,]?[0-9]*$/.test(inputValue)) {
+            setInternalValue(inputValue);
             
-            // Simula um evento de mudança com o valor numérico
-            const syntheticEvent = {
-                ...e,
-                target: {
-                    ...e.target,
-                    id: props.id!,
-                    value: isNaN(numericValue) ? '' : String(numericValue),
-                }
-            };
-             onChange(syntheticEvent as React.ChangeEvent<HTMLInputElement>);
+            if (onChange) {
+                const numericValue = parseCurrency(inputValue);
+                const syntheticEvent = {
+                    ...e,
+                    target: {
+                        ...e.target,
+                        id: props.id!,
+                        value: String(numericValue),
+                    }
+                };
+                onChange(syntheticEvent as React.ChangeEvent<HTMLInputElement>);
+            }
         }
-      } else {
-        onChange?.(e);
-      }
     };
     
     return (
@@ -83,7 +91,9 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
         )}
         ref={ref}
         value={internalValue}
-        onChange={handleOnChange}
+        onChange={isCurrency ? handleOnChange : onChange}
+        onFocus={isCurrency ? handleFocus : undefined}
+        onBlur={isCurrency ? handleBlur : onBlur}
         {...props}
       />
     )

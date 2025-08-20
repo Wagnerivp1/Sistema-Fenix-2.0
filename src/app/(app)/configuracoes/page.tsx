@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings, getSales, getQuotes, getAppointments, getFinancialTransactions, saveSales, saveQuotes, saveAppointments, saveFinancialTransactions, getCustomers, saveCustomers, getServiceOrders, saveServiceOrders, getKits, saveKits } from '@/lib/storage';
+import { getUsers, saveUsers, getCompanyInfo, saveCompanyInfo, saveSettings, getSettings, getSales, getQuotes, getAppointments, getFinancialTransactions, saveSales, saveQuotes, saveAppointments, saveFinancialTransactions, getCustomers, saveCustomers, getServiceOrders, saveServiceOrders, getKits, saveKits, getStock, saveStock } from '@/lib/storage';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import type { User, CompanyInfo, UserPermissions } from '@/types';
 import Image from 'next/image';
@@ -219,7 +219,7 @@ export default function ConfiguracoesPage() {
   const handleBackup = async () => {
     try {
       const backupData: Record<string, any> = {};
-      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'quotes', 'appointments', 'kits'];
+      const dataTypes = ['customers', 'serviceOrders', 'sales', 'financialTransactions', 'users', 'companyInfo', 'settings', 'quotes', 'appointments', 'kits', 'stock'];
       
       const dataPromises = dataTypes.map(async (type) => {
         switch(type) {
@@ -233,6 +233,7 @@ export default function ConfiguracoesPage() {
             case 'quotes': return { key: type, data: await getQuotes() };
             case 'appointments': return { key: type, data: await getAppointments() };
             case 'kits': return { key: type, data: await getKits() };
+            case 'stock': return { key: type, data: await getStock() };
             default: return null;
         }
       });
@@ -297,6 +298,7 @@ export default function ConfiguracoesPage() {
             { key: 'appointments', saveFunc: saveAppointments },
             { key: 'quotes', saveFunc: saveQuotes },
             { key: 'kits', saveFunc: saveKits },
+            { key: 'stock', saveFunc: saveStock },
         ];
 
         const hasKnownKey = dataTypes.some(dt => dt.key in data);
@@ -331,6 +333,7 @@ export default function ConfiguracoesPage() {
         saveAppointments([]),
         saveQuotes([]),
         saveKits([]),
+        saveStock([]),
         saveCompanyInfo({} as CompanyInfo),
         saveSettings({ defaultWarrantyDays: 90 })
       ];
@@ -674,5 +677,3 @@ export default function ConfiguracoesPage() {
     </div>
   )
 }
-
-    

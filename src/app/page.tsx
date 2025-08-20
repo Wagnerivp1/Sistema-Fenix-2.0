@@ -20,6 +20,7 @@ import { Logo } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
 import { getUsers, saveUsers, saveSessionToken, getSessionToken } from '@/lib/storage';
 import type { User, UserPermissions } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const defaultPermissions: UserPermissions = {
   accessDashboard: true,
@@ -38,6 +39,24 @@ const defaultPermissions: UserPermissions = {
   canManageUsers: false,
 };
 
+const adminPermissions: UserPermissions = {
+  accessDashboard: true,
+  accessClients: true,
+  accessServiceOrders: true,
+  accessInventory: true,
+  accessSales: true,
+  accessFinancials: true,
+  accessSettings: true,
+  accessDangerZone: true,
+  accessAgenda: true,
+  accessQuotes: true,
+  canEdit: true,
+  canDelete: true,
+  canViewPasswords: true,
+  canManageUsers: true,
+};
+
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -48,6 +67,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRegisterOpen, setIsRegisterOpen] = React.useState(false);
   const [newUser, setNewUser] = React.useState({ name: '', login: '', password: '' });
+  const [newUserType, setNewUserType] = React.useState<'normal' | 'admin'>('normal');
 
   React.useEffect(() => {
     // This function ensures the default user list is in localStorage on first load.
@@ -112,7 +132,8 @@ export default function LoginPage() {
       name: newUser.name,
       login: newUser.login,
       password: btoa(newUser.password), // Encrypt password
-      permissions: defaultPermissions,
+      permissions: newUserType === 'admin' ? adminPermissions : defaultPermissions,
+      userType: newUserType,
     };
     
     await saveUsers([...users, userToSave]);
@@ -194,6 +215,18 @@ export default function LoginPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="reg-password">Senha</Label>
                                 <Input id="reg-password" type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="reg-type">Tipo de Usuário</Label>
+                                <Select value={newUserType} onValueChange={(v) => setNewUserType(v as any)}>
+                                  <SelectTrigger id="reg-type">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="normal">Usuário Padrão</SelectItem>
+                                    <SelectItem value="admin">Administrador (Todos os privilégios)</SelectItem>
+                                  </SelectContent>
+                                </Select>
                             </div>
                         </div>
                          <DialogFooter>

@@ -24,53 +24,55 @@ Input.displayName = "Input"
 
 
 interface CurrencyInputProps extends Omit<InputProps, 'onChange' | 'value'> {
-  value: number | string;
+  value: number;
   onValueChange: (value: number) => void;
 }
 
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
   ({ value, onValueChange, className, ...props }, ref) => {
-    const [displayValue, setDisplayValue] = React.useState('');
-
     const format = (num: number) => {
-      if (isNaN(num)) return '';
-      return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(num);
     };
 
-    const parse = (str: string) => {
-      const cleaned = str.replace(/[^\d,]/g, '').replace(',', '.');
-      return parseFloat(cleaned) || 0;
-    };
+    const [displayValue, setDisplayValue] = React.useState(format(value || 0));
 
     React.useEffect(() => {
-      const numericValue = typeof value === 'string' ? parse(value) : value;
-      setDisplayValue(format(numericValue));
+        // Update display value only if it's different from the internal state
+        // to avoid overriding user input.
+        const numericValue = parse(displayValue);
+        if (numericValue !== value) {
+            setDisplayValue(format(value || 0));
+        }
     }, [value]);
+    
+    const parse = (str: string): number => {
+        const numbers = str.replace(/[^\d]/g, '');
+        if (!numbers) return 0;
+        return Number(numbers) / 100;
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const inputVal = e.target.value;
       const numericValue = parse(inputVal);
       
-      if (!isNaN(numericValue)) {
-          onValueChange(numericValue);
-      }
+      // Update the parent component with the raw numeric value
+      onValueChange(numericValue);
       
-      setDisplayValue(inputVal.replace(/[^\d,]/g, ''));
-    };
-
-    const handleBlur = () => {
-       const numericValue = parse(displayValue);
-       setDisplayValue(format(numericValue));
+      // Update the display with the formatted value
+      setDisplayValue(format(numericValue));
     };
 
     return (
       <Input
         ref={ref}
         type="text"
+        inputMode="decimal"
         className={cn("text-right", className)}
         value={displayValue}
         onChange={handleChange}
-        onBlur={handleBlur}
         placeholder="0,00"
         {...props}
       />

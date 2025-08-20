@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Input, CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { StockItem } from '@/types';
@@ -51,9 +51,12 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
-    const isNumberField = ['price', 'costPrice', 'quantity', 'minStock'].includes(id);
-    setFormData(prev => ({ ...prev, [id]: isNumberField ? parseFloat(value) || 0 : value }));
+    setFormData(prev => ({ ...prev, [id]: value }));
   };
+  
+  const handleNumericChange = (id: keyof StockItem, value: number) => {
+    setFormData(prev => ({...prev, [id]: value}))
+  }
 
   const handleSave = () => {
     const id = item?.id || `PROD-${Date.now()}`;
@@ -93,11 +96,11 @@ export function EditStockItemDialog({ item, isOpen, onOpenChange, onSave }: Edit
              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="price">Preço de Venda (R$)</Label>
-                    <Input id="price" type="number" value={formData.price || ''} onChange={handleChange} />
+                    <CurrencyInput id="price" value={formData.price || 0} onValueChange={(val) => handleNumericChange('price', val)} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="costPrice">Preço de Custo (R$)</Label>
-                    <Input id="costPrice" type="number" value={formData.costPrice || ''} onChange={handleChange} />
+                    <CurrencyInput id="costPrice" value={formData.costPrice || 0} onValueChange={(val) => handleNumericChange('costPrice', val)} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="quantity">Qtd. em Estoque</Label>

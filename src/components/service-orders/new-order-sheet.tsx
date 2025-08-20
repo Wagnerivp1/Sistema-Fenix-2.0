@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Input } from '@/components/ui/input';
+import { Input, CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -468,8 +468,8 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                                       <span className="col-span-5 truncate">{item.description}</span>
                                       <span className="col-span-2 text-sm text-muted-foreground">({item.type === 'service' ? 'Serviço' : 'Peça'})</span>
                                       <span className="col-span-1 text-sm text-muted-foreground">Qtd: {item.quantity}</span>
-                                      <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {(item.unitPrice || 0).toFixed(2)}</span>
-                                      <span className="col-span-2 font-medium text-right">R$ {((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2)}</span>
+                                      <span className="col-span-2 text-sm text-muted-foreground">Unit: R$ {item.unitPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                      <span className="col-span-2 font-medium text-right">R$ {(item.quantity * item.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                   </div>
                                   <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleRemoveItem(item.id)}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -513,19 +513,19 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                               </div>
                               <div className="w-28"><Label className="text-xs">Tipo</Label><Select value={newItem.type} onValueChange={(value: 'service' | 'part') => setNewItem({...newItem, type: value, description: '', unitPrice: 0 })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="service">Serviço</SelectItem><SelectItem value="part">Peça</SelectItem></SelectContent></Select></div>
                               <div className="w-16"><Label htmlFor="newItemQty" className="text-xs">Qtd</Label><Input id="newItemQty" type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value, 10) || 1})} /></div>
-                              <div className="w-24"><Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label><Input id="newItemPrice" type="number" placeholder="0.00" value={newItem.unitPrice || ''} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value) || 0})} disabled={newItem.type === 'part'} /></div>
+                              <div className="w-24"><Label htmlFor="newItemPrice" className="text-xs">Valor R$</Label><CurrencyInput id="newItemPrice" value={newItem.unitPrice} onValueChange={(val) => setNewItem({...newItem, unitPrice: val})} disabled={newItem.type === 'part'} /></div>
                               <Button onClick={handleAddItem} size="sm">Adicionar</Button>
                             </div>
-                            <div className="mt-4 text-right"><p className="text-lg font-bold">Total: R$ {(totalValue).toFixed(2)}</p></div>
+                            <div className="mt-4 text-right"><p className="text-lg font-bold">Total: R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p></div>
                           </div>
                         </TabsContent>
                          <TabsContent value="financial" className="mt-0 space-y-4">
                             <div className="p-4 border rounded-lg bg-muted/20">
                                 <h3 className="font-semibold text-lg mb-4">Resumo Financeiro</h3>
                                 <div className="space-y-3">
-                                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Valor Total da OS</span><span className="font-medium">R$ {totalValue.toFixed(2)}</span></div>
-                                    <div className="flex justify-between items-center text-green-500"><span >Total Pago</span><span className="font-medium">R$ {totalPaid.toFixed(2)}</span></div>
-                                    <div className="flex justify-between items-center text-xl font-bold text-primary border-t pt-2 mt-2"><span >Saldo Devedor</span><span>R$ {balanceDue.toFixed(2)}</span></div>
+                                    <div className="flex justify-between items-center"><span className="text-muted-foreground">Valor Total da OS</span><span className="font-medium">R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                                    <div className="flex justify-between items-center text-green-500"><span >Total Pago</span><span className="font-medium">R$ {totalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                                    <div className="flex justify-between items-center text-xl font-bold text-primary border-t pt-2 mt-2"><span >Saldo Devedor</span><span>R$ {balanceDue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
                                 </div>
                             </div>
                              <div className="p-4 border rounded-lg">
@@ -534,7 +534,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                                     <Table><TableHeader><TableRow><TableHead>Data</TableHead><TableHead>Valor</TableHead><TableHead>Método</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
                                         <TableBody>
                                         {payments.map(p => (
-                                            <TableRow key={p.id}><TableCell>{new Date(p.date).toLocaleDateString('pt-BR')}</TableCell><TableCell>R$ {p.amount.toFixed(2)}</TableCell><TableCell>{p.method}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => handleRemovePayment(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
+                                            <TableRow key={p.id}><TableCell>{new Date(p.date).toLocaleDateString('pt-BR')}</TableCell><TableCell>R$ {p.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell><TableCell>{p.method}</TableCell><TableCell><Button variant="ghost" size="icon" onClick={() => handleRemovePayment(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell></TableRow>
                                         ))}
                                         </TableBody>
                                     </Table>
@@ -543,7 +543,7 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
                              <div className="p-4 border rounded-lg border-dashed">
                                  <h4 className="font-semibold mb-2">Registrar Novo Pagamento Parcial</h4>
                                  <div className="flex items-end gap-2">
-                                     <div className="flex-grow space-y-1"><Label htmlFor="newPaymentAmount">Valor</Label><Input type="number" id="newPaymentAmount" value={newPayment.amount || ''} onChange={e => setNewPayment(p => ({...p, amount: parseFloat(e.target.value) || 0}))}/></div>
+                                     <div className="flex-grow space-y-1"><Label htmlFor="newPaymentAmount">Valor</Label><CurrencyInput id="newPaymentAmount" value={newPayment.amount} onValueChange={(val) => setNewPayment(p => ({...p, amount: val}))}/></div>
                                      <div className="flex-grow space-y-1"><Label htmlFor="newPaymentMethod">Método</Label>
                                          <Select value={newPayment.method} onValueChange={(v) => setNewPayment(p => ({...p, method: v}))}>
                                              <SelectTrigger><SelectValue/></SelectTrigger>

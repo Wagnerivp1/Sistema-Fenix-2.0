@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Input, CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -47,6 +47,7 @@ export function AddTransactionDialog({ isOpen, onOpenChange, type, onSave }: Add
     if (isOpen) {
       setFormData({
         ...initialFormState,
+        amount: 0,
         category: type === 'receita' ? 'Outra Receita' : 'Outra Despesa',
       });
     }
@@ -54,14 +55,15 @@ export function AddTransactionDialog({ isOpen, onOpenChange, type, onSave }: Add
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [id]: id === 'amount' ? parseFloat(value) || 0 : value
-    }));
+    setFormData(prev => ({ ...prev, [id]: value }));
   };
 
   const handleSelectChange = (id: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handleAmountChange = (value: number) => {
+    setFormData(prev => ({...prev, amount: value}));
   };
 
   const handleSave = (printReceipt: boolean) => {
@@ -106,11 +108,10 @@ export function AddTransactionDialog({ isOpen, onOpenChange, type, onSave }: Add
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Valor (R$)</Label>
-              <Input
+              <CurrencyInput
                 id="amount"
-                type="number"
-                value={formData.amount || ''}
-                onChange={handleInputChange}
+                value={formData.amount}
+                onValueChange={handleAmountChange}
               />
             </div>
             <div className="space-y-2">

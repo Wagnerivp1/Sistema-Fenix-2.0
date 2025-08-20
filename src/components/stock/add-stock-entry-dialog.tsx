@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Input, CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { StockItem } from '@/types';
 
@@ -27,9 +27,9 @@ export function AddStockEntryDialog({ item, isOpen, onOpenChange, onSave }: AddS
   const [cost, setCost] = React.useState(0);
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && item) {
       setQuantity(1);
-      setCost(item?.costPrice || 0);
+      setCost(item.costPrice || 0);
     }
   }, [isOpen, item]);
 
@@ -57,7 +57,7 @@ export function AddStockEntryDialog({ item, isOpen, onOpenChange, onSave }: AddS
           </div>
           <div className="space-y-2">
             <Label htmlFor="cost">Novo Preço de Custo (por unidade)</Label>
-            <Input id="cost" type="number" value={cost || ''} onChange={(e) => setCost(Number(e.target.value))} />
+            <CurrencyInput id="cost" value={cost} onValueChange={setCost} />
           </div>
         </div>
         <DialogFooter>

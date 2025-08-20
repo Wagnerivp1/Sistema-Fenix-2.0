@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 interface ChangeCalculatorDialogProps {
@@ -27,18 +27,17 @@ export function ChangeCalculatorDialog({
   total,
   onConfirm,
 }: ChangeCalculatorDialogProps) {
-  const [amountPaid, setAmountPaid] = React.useState<number | string>('');
+  const [amountPaid, setAmountPaid] = React.useState<number>(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (isOpen) {
-      setAmountPaid('');
-      // Focus the input when the dialog opens
+      setAmountPaid(0);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
-  const change = (Number(amountPaid) || 0) - total;
+  const change = amountPaid - total;
 
   const handleConfirm = () => {
     onConfirm();
@@ -63,28 +62,26 @@ export function ChangeCalculatorDialog({
           <div className="text-center">
             <Label className="text-lg">Total da Venda</Label>
             <p className="text-4xl font-bold text-primary">
-              R$ {total.toFixed(2)}
+              R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="amount-paid" className="text-lg">
               Valor Recebido
             </Label>
-            <Input
+            <CurrencyInput
               id="amount-paid"
               ref={inputRef}
-              type="number"
               className="h-14 text-center text-2xl font-bold"
               value={amountPaid}
-              onChange={(e) => setAmountPaid(e.target.value)}
+              onValueChange={setAmountPaid}
               onKeyDown={handleKeyDown}
-              placeholder="0.00"
             />
           </div>
           <div className="text-center">
             <Label className="text-lg">Troco</Label>
             <p className="text-4xl font-bold text-green-500">
-              R$ {change > 0 ? change.toFixed(2) : '0.00'}
+              R$ {change > 0 ? change.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
             </p>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { ptBR } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Input, CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Table,
@@ -268,7 +268,7 @@ export default function VendasPage() {
     await saveFinancialTransactions([...newTransactions, ...existingTransactions]);
 
     // 4. Notify and Reset
-    toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toFixed(2)} registrada com sucesso.` });
+    toast({ title: 'Venda Finalizada!', description: `Venda de R$ ${finalTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} registrada com sucesso.` });
     
     // 5. Conditional dialogs
     setIsChangeCalcOpen(false);
@@ -384,8 +384,8 @@ export default function VendasPage() {
                                       className="w-16 h-8 text-center mx-auto"
                                   />
                               </TableCell>
-                              <TableCell className="text-right">R$ {(item.price || 0).toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-semibold">R$ {((item.price || 0) * (item.quantity || 0)).toFixed(2)}</TableCell>
+                              <TableCell className="text-right">{item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</TableCell>
+                              <TableCell className="text-right font-semibold">{(item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</TableCell>
                               <TableCell>
                                   <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
                                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -417,19 +417,19 @@ export default function VendasPage() {
               <div className="space-y-2 text-base">
                 <div className="flex justify-between items-center">
                   <span>Subtotal</span>
-                  <span className="font-medium">R$ {subtotal.toFixed(2)}</span>
+                  <span className="font-medium">{subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Desconto (R$)</span>
-                  <Input 
+                  <CurrencyInput 
                     value={discount} 
-                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                    className="w-28 h-9 text-right font-medium" 
+                    onValueChange={setDiscount}
+                    className="w-28 h-9" 
                   />
                 </div>
                 <div className="flex justify-between items-center font-bold text-xl text-primary border-t pt-2">
                   <span>Total</span>
-                  <span>R$ {finalTotal.toFixed(2)}</span>
+                  <span>{finalTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               </div>
               <div className="space-y-2">
@@ -470,7 +470,7 @@ export default function VendasPage() {
                     </div>
                   </div>
                    <div className="text-center text-sm text-muted-foreground">
-                    <p>{installmentsCount}x de <span className="font-bold">R$ {(finalTotal / installmentsCount).toFixed(2)}</span></p>
+                    <p>{installmentsCount}x de <span className="font-bold">{(finalTotal / installmentsCount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></p>
                   </div>
                 </div>
               )}

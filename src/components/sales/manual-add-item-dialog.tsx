@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Input, CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -33,7 +33,7 @@ interface ManualAddItemDialogProps {
   stockItems?: StockItem[];
 }
 
-const initialItemState = { name: '', price: 0, quantity: 1 };
+const initialItemState: Omit<SaleItem, 'id'> & { id?: string } = { name: '', price: 0, quantity: 1 };
 
 export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem, stockItems = [] }: ManualAddItemDialogProps) {
   const [item, setItem] = React.useState<Omit<SaleItem, 'id'> & { id?: string }>(initialItemState);
@@ -49,9 +49,13 @@ export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem, stockItem
     const { id, value } = e.target;
     setItem(prev => ({
       ...prev,
-      [id]: id === 'name' ? value : parseFloat(value) || 0,
+      [id]: value,
     }));
   };
+  
+  const handleNumericChange = (id: keyof SaleItem, value: number) => {
+    setItem(prev => ({ ...prev, [id]: value }));
+  }
 
   const handleAdd = () => {
     if (item.name && item.price > 0 && item.quantity > 0) {
@@ -119,11 +123,11 @@ export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem, stockItem
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="price">Preço Unitário (R$)</Label>
-                <Input id="price" type="number" value={item.price || ''} onChange={handleChange} />
+                <CurrencyInput id="price" value={item.price} onValueChange={(val) => handleNumericChange('price', val)} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="quantity">Quantidade</Label>
-                <Input id="quantity" type="number" value={item.quantity} onChange={handleChange} />
+                <Input id="quantity" type="number" value={item.quantity} onChange={(e) => handleNumericChange('quantity', parseInt(e.target.value))} />
             </div>
           </div>
         </div>

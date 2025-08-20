@@ -137,6 +137,14 @@ export default function FinanceiroPage() {
 
   React.useEffect(() => {
     loadData();
+    // Adicionar listener para recarregar dados quando houver mudanças
+    window.addEventListener('storage-change-financialTransactions', loadData);
+    window.addEventListener('storage-change-serviceOrders', loadData);
+
+    return () => {
+      window.removeEventListener('storage-change-financialTransactions', loadData);
+      window.removeEventListener('storage-change-serviceOrders', loadData);
+    };
   }, [loadData]);
 
   const handleDeleteTransaction = async (transactionId: string) => {

@@ -46,6 +46,8 @@ export default function DashboardPage() {
       setTransactionToPrint(newTransaction);
       setIsPrintDialogOpen(true);
     }
+    // Disparar evento para que outros componentes (como a lista de transações) possam recarregar
+    window.dispatchEvent(new Event('storage-change-financialTransactions'));
   };
 
   React.useEffect(() => {

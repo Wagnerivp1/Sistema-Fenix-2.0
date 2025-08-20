@@ -78,7 +78,7 @@ export function AlertsAndNotifications() {
                   Existem {pendingPaymentOrders.length} OS aguardando pagamento.
                 </p>
                 <Button variant="link" asChild className="p-0 h-auto mt-1 text-yellow-700">
-                   <Link href="/financeiro">Ver no Financeiro</Link>
+                   <Link href="/financeiro?type=contas_a_receber">Ver no Financeiro</Link>
                 </Button>
               </div>
             </div>

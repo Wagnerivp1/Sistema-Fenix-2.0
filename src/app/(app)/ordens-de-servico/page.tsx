@@ -368,7 +368,7 @@ function ServiceOrdersComponent() {
         if (o.id === orderId) {
             const updatedPayments = [...(o.payments || []), ...newPayments];
             const totalPaid = updatedPayments.reduce((acc, p) => acc + p.amount, 0);
-            const totalValue = o.finalValue ?? o.totalValue;
+            const totalValue = o.finalValue ?? o.totalValue ?? 0;
             const newStatus = totalPaid >= totalValue ? 'Finalizado' : 'Aguardando Pagamento';
             return { ...o, payments: updatedPayments, status: newStatus };
         }
@@ -463,7 +463,7 @@ function ServiceOrdersComponent() {
         const logoHeight = 30;
         const logoSpacing = 5;
         const totalPaid = order.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-        const balanceDue = (order.finalValue ?? order.totalValue) - totalPaid;
+        const balanceDue = (order.finalValue ?? order.totalValue ?? 0) - totalPaid;
         const dueDate = order.deliveredDate ? formatDate(add(new Date(order.deliveredDate), { days: 7 }).toISOString()) : 'Não definido';
         const status = balanceDue <= 0 ? 'Pago' : 'Pendente';
 

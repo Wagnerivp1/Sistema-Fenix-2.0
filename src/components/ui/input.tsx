@@ -31,38 +31,36 @@ interface CurrencyInputProps extends Omit<InputProps, 'onChange' | 'value'> {
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
   ({ value, onValueChange, className, ...props }, ref) => {
     
-    const formatToBRL = (num: number) => {
+    // Helper to format a number into BRL currency string
+    const format = (num: number) => {
       return new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(num);
     };
 
-    const [displayValue, setDisplayValue] = React.useState(formatToBRL(value || 0));
-
-    React.useEffect(() => {
-      // This effect updates the display value if the `value` prop changes from outside,
-      // for example, when the form is reset or initialized.
-      const numericValue = parse(displayValue);
-      if (numericValue !== value) {
-        setDisplayValue(formatToBRL(value || 0));
-      }
-    }, [value]);
+    // State for the display value
+    const [displayValue, setDisplayValue] = React.useState(format(value || 0));
     
-    const parse = (str: string): number => {
-      const numbers = str.replace(/[^\d]/g, '');
-      if (!numbers) return 0;
-      return Number(numbers) / 100;
-    };
+    // Effect to update display value if the external `value` prop changes
+    React.useEffect(() => {
+        const numericDisplayValue = Number(displayValue.replace(/[^\d]/g, '')) / 100;
+        if (value !== numericDisplayValue) {
+            setDisplayValue(format(value || 0));
+        }
+    }, [value]);
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const inputVal = e.target.value;
-      const numericValue = parse(inputVal);
-      
-      onValueChange(numericValue); // Update parent with the raw numeric value
-      setDisplayValue(formatToBRL(numericValue)); // Update display with formatted value
+      const numericVal = Number(inputVal.replace(/[^\d]/g, '')) / 100;
+
+      if (!isNaN(numericVal)) {
+        onValueChange(numericVal);
+        setDisplayValue(format(numericVal));
+      }
     };
-    
+
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         e.target.select();
     };

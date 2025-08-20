@@ -78,18 +78,32 @@ export default function VendasPage() {
   }, [paymentMethod]);
   
   const addProductToSale = (productToAdd: Omit<SaleItem, 'id'> & { id?: string }) => {
-    setSaleItems(prevItems => {
-        const existingItem = prevItems.find(item => item.id && item.id === productToAdd.id);
-        if (existingItem) {
+      setSaleItems(prevItems => {
+          // Find by ID first (for stock items)
+          const existingItemById = productToAdd.id ? prevItems.find(item => item.id === productToAdd.id) : undefined;
+          
+          if (existingItemById) {
+              return prevItems.map(item =>
+                  item.id === productToAdd.id
+                      ? { ...item, quantity: (item.quantity || 0) + (productToAdd.quantity || 1) }
+                      : item
+              );
+          }
+
+          // If not found by ID, find by name (for manual items)
+          const existingItemByName = prevItems.find(item => item.name.toLowerCase() === productToAdd.name.toLowerCase());
+          
+          if(existingItemByName) {
             return prevItems.map(item =>
-                item.id === productToAdd.id
-                    ? { ...item, quantity: (item.quantity || 0) + (productToAdd.quantity || 0) }
-                    : item
-            );
-        } else {
-            return [...prevItems, { ...productToAdd, id: productToAdd.id || `ITEM-${Date.now()}` } as SaleItem];
-        }
-    });
+                  item.name.toLowerCase() === productToAdd.name.toLowerCase()
+                      ? { ...item, quantity: (item.quantity || 0) + (productToAdd.quantity || 1) }
+                      : item
+              );
+          }
+
+          // If it's a new item, add it to the cart
+          return [...prevItems, { ...productToAdd, id: productToAdd.id || `ITEM-${Date.now()}`, quantity: productToAdd.quantity || 1 } as SaleItem];
+      });
   };
   
   const handleBarcodeScan = () => {

@@ -1,7 +1,7 @@
 
 'use client';
 import Link from 'next/link';
-import { AlertTriangle, Download, Archive } from 'lucide-react';
+import { AlertTriangle, Download, Archive, WalletCards } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -11,30 +11,39 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import * as React from 'react';
-import type { StockItem } from '@/types';
-import { getStock } from '@/lib/storage';
+import type { StockItem, ServiceOrder } from '@/types';
+import { getStock, getServiceOrders } from '@/lib/storage';
 
 export function AlertsAndNotifications() {
   const [lowStockItems, setLowStockItems] = React.useState<StockItem[]>([]);
+  const [pendingPaymentOrders, setPendingPaymentOrders] = React.useState<ServiceOrder[]>([]);
 
   const checkAlerts = React.useCallback(async () => {
     // Check stock levels
     const stock = await getStock();
     const lowItems = stock.filter(item => item.quantity <= item.minStock && item.minStock > 0);
     setLowStockItems(lowItems);
+    
+    // Check for orders awaiting payment
+    const serviceOrders = await getServiceOrders();
+    const pendingOrders = serviceOrders.filter(order => order.status === 'Aguardando Pagamento');
+    setPendingPaymentOrders(pendingOrders);
+
   }, []);
 
   React.useEffect(() => {
     checkAlerts();
     // Listen for storage changes that might affect alerts
     window.addEventListener('storage-change-stock', checkAlerts);
+    window.addEventListener('storage-change-serviceOrders', checkAlerts);
     
     return () => {
         window.removeEventListener('storage-change-stock', checkAlerts);
+        window.removeEventListener('storage-change-serviceOrders', checkAlerts);
     };
   }, [checkAlerts]);
 
-  const hasAlerts = lowStockItems.length > 0;
+  const hasAlerts = lowStockItems.length > 0 || pendingPaymentOrders.length > 0;
 
   return (
     <Card className="h-full flex flex-col">
@@ -54,6 +63,22 @@ export function AlertsAndNotifications() {
                 </p>
                 <Button variant="link" asChild className="p-0 h-auto mt-1 text-destructive">
                    <Link href="/produtos">Verificar Produtos</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+         {pendingPaymentOrders.length > 0 && (
+          <div className="border-l-4 border-yellow-500 bg-yellow-500/10 p-4 rounded-r-lg">
+            <div className="flex items-start gap-3">
+              <WalletCards className="h-5 w-5 text-yellow-600" />
+              <div>
+                <h4 className="font-semibold text-yellow-700">Pagamentos Pendentes</h4>
+                <p className="text-sm text-yellow-600/80">
+                  Existem {pendingPaymentOrders.length} OS aguardando pagamento.
+                </p>
+                <Button variant="link" asChild className="p-0 h-auto mt-1 text-yellow-700">
+                   <Link href="/financeiro">Ver no Financeiro</Link>
                 </Button>
               </div>
             </div>

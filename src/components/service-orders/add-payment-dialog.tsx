@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input, CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from '@/components/ui/calendar';
@@ -36,7 +36,7 @@ export function AddPaymentDialog({ isOpen, onOpenChange, serviceOrder, onSave }:
   const [paymentType, setPaymentType] = React.useState<'integral' | 'parcelado'>('integral');
   const [installments, setInstallments] = React.useState(2);
   const [firstDueDate, setFirstDueDate] = React.useState<Date | undefined>(addMonths(new Date(), 1));
-  const [entryAmount, setEntryAmount] = React.useState<number | string>('');
+  const [entryAmount, setEntryAmount] = React.useState<number>(0);
   const [paymentMethod, setPaymentMethod] = React.useState('Dinheiro');
   
   const totalPaid = serviceOrder?.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
@@ -47,7 +47,7 @@ export function AddPaymentDialog({ isOpen, onOpenChange, serviceOrder, onSave }:
       setPaymentType('integral');
       setInstallments(2);
       setFirstDueDate(addMonths(new Date(), 1));
-      setEntryAmount('');
+      setEntryAmount(0);
       setPaymentMethod('Dinheiro');
     }
   }, [isOpen]);
@@ -132,7 +132,7 @@ export function AddPaymentDialog({ isOpen, onOpenChange, serviceOrder, onSave }:
                  <div className="space-y-4 p-4 border rounded-md">
                      <div className="space-y-2">
                         <Label htmlFor="entryAmount">Valor de Entrada (Opcional)</Label>
-                        <Input id="entryAmount" type="number" placeholder="0.00" value={entryAmount} onChange={e => setEntryAmount(e.target.value)} />
+                        <CurrencyInput id="entryAmount" value={entryAmount} onValueChange={setEntryAmount} />
                     </div>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">

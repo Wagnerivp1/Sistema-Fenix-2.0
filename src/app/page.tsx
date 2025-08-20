@@ -66,17 +66,26 @@ export default function LoginPage() {
   
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRegisterOpen, setIsRegisterOpen] = React.useState(false);
+  const [isMasterPasswordVerified, setIsMasterPasswordVerified] = React.useState(false);
+  const [masterPassword, setMasterPassword] = React.useState('');
+  
   const [newUser, setNewUser] = React.useState({ name: '', login: '', password: '' });
   const [newUserType, setNewUserType] = React.useState<'normal' | 'admin'>('normal');
 
   React.useEffect(() => {
-    // This function ensures the default user list is in localStorage on first load.
     getUsers(); 
     
-    // The AuthGuard in the main layout will handle redirects if a token exists.
-    // This page should always be accessible to non-logged-in users.
     setIsLoading(false);
   }, []);
+  
+  React.useEffect(() => {
+    // Reset states when register dialog is closed
+    if (!isRegisterOpen) {
+      setIsMasterPasswordVerified(false);
+      setMasterPassword('');
+    }
+  }, [isRegisterOpen]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +120,19 @@ export default function LoginPage() {
         description: 'Ocorreu um problema ao tentar fazer o login. Tente novamente.',
       });
       setIsLoading(false);
+    }
+  };
+  
+  const handleMasterPasswordCheck = () => {
+    // Senha mestra "25101978"
+    if (masterPassword === '25101978') {
+      setIsMasterPasswordVerified(true);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Senha Mestra Incorreta',
+        description: 'Você não tem permissão para registrar novos usuários.',
+      });
     }
   };
 
@@ -196,44 +218,67 @@ export default function LoginPage() {
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Registrar Novo Usuário</DialogTitle>
-                        <DialogDescription>
-                            Crie uma nova conta para acessar o sistema. As permissões serão limitadas por padrão.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleRegister}>
-                        <div className="grid gap-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="reg-name">Nome Completo</Label>
-                                <Input id="reg-name" value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="reg-login">Usuário de Acesso</Label>
-                                <Input id="reg-login" value={newUser.login} onChange={(e) => setNewUser({...newUser, login: e.target.value})} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="reg-password">Senha</Label>
-                                <Input id="reg-password" type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="reg-type">Tipo de Usuário</Label>
-                                <Select value={newUserType} onValueChange={(v) => setNewUserType(v as any)}>
-                                  <SelectTrigger id="reg-type">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="normal">Usuário Padrão</SelectItem>
-                                    <SelectItem value="admin">Administrador (Todos os privilégios)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                         <DialogFooter>
-                            <Button type="button" variant="ghost" onClick={() => setIsRegisterOpen(false)}>Cancelar</Button>
-                            <Button type="submit">Registrar</Button>
-                        </DialogFooter>
-                    </form>
+                  {!isMasterPasswordVerified ? (
+                    <>
+                      <DialogHeader>
+                          <DialogTitle>Acesso Restrito</DialogTitle>
+                          <DialogDescription>
+                              Para registrar um novo usuário, por favor, insira a senha mestra do administrador.
+                          </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                          <div className="space-y-2">
+                              <Label htmlFor="master-password">Senha Mestra</Label>
+                              <Input id="master-password" type="password" value={masterPassword} onChange={(e) => setMasterPassword(e.target.value)} />
+                          </div>
+                      </div>
+                      <DialogFooter>
+                          <Button type="button" variant="ghost" onClick={() => setIsRegisterOpen(false)}>Cancelar</Button>
+                          <Button type="button" onClick={handleMasterPasswordCheck}>Verificar</Button>
+                      </DialogFooter>
+                    </>
+                  ) : (
+                    <>
+                      <DialogHeader>
+                          <DialogTitle>Registrar Novo Usuário</DialogTitle>
+                          <DialogDescription>
+                              Crie uma nova conta para acessar o sistema.
+                          </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleRegister}>
+                          <div className="grid gap-4 py-4">
+                              <div className="space-y-2">
+                                  <Label htmlFor="reg-name">Nome Completo</Label>
+                                  <Input id="reg-name" value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})} />
+                              </div>
+                              <div className="space-y-2">
+                                  <Label htmlFor="reg-login">Usuário de Acesso</Label>
+                                  <Input id="reg-login" value={newUser.login} onChange={(e) => setNewUser({...newUser, login: e.target.value})} />
+                              </div>
+                              <div className="space-y-2">
+                                  <Label htmlFor="reg-password">Senha</Label>
+                                  <Input id="reg-password" type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
+                              </div>
+                              <div className="space-y-2">
+                                  <Label htmlFor="reg-type">Tipo de Usuário</Label>
+                                  <Select value={newUserType} onValueChange={(v) => setNewUserType(v as any)}>
+                                    <SelectTrigger id="reg-type">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="normal">Usuário Padrão</SelectItem>
+                                      <SelectItem value="admin">Administrador (Todos os privilégios)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                              </div>
+                          </div>
+                          <DialogFooter>
+                              <Button type="button" variant="ghost" onClick={() => setIsRegisterOpen(false)}>Cancelar</Button>
+                              <Button type="submit">Registrar</Button>
+                          </DialogFooter>
+                      </form>
+                    </>
+                  )}
                 </DialogContent>
             </Dialog>
         </CardFooter>

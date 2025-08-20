@@ -3,8 +3,8 @@
   {
     "id": "master",
     "name": "Master User",
-    "login": "admin",
-    "password": "YWRtaW4=",
+    "login": "user master",
+    "password": "bWFzdGVy",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,

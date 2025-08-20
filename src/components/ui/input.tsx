@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -30,35 +31,40 @@ interface CurrencyInputProps extends Omit<InputProps, 'onChange' | 'value'> {
 
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
   ({ value, onValueChange, className, ...props }, ref) => {
-    
-    // Helper to format a number into BRL currency string
-    const format = (num: number) => {
-      return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(num);
-    };
+    const [displayValue, setDisplayValue] = React.useState('');
 
-    // State for the display value
-    const [displayValue, setDisplayValue] = React.useState(format(value || 0));
+    const format = (num: number) => {
+        return new Intl.NumberFormat('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(num);
+    };
     
-    // Effect to update display value if the external `value` prop changes
     React.useEffect(() => {
-        const numericDisplayValue = Number(displayValue.replace(/[^\d]/g, '')) / 100;
-        if (value !== numericDisplayValue) {
-            setDisplayValue(format(value || 0));
+        const formattedValue = format(value || 0);
+        // Only update if the formatted value is different, to avoid overriding user input unnecessarily
+        if (formattedValue !== displayValue) {
+           setDisplayValue(formattedValue);
         }
     }, [value]);
 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const inputVal = e.target.value;
-      const numericVal = Number(inputVal.replace(/[^\d]/g, '')) / 100;
+        const inputVal = e.target.value;
+        // Keep only digits
+        const digitsOnly = inputVal.replace(/\D/g, '');
+        // Convert to a numeric value (e.g., "12345" becomes 123.45)
+        const numericValue = Number(digitsOnly) / 100;
 
-      if (!isNaN(numericVal)) {
-        onValueChange(numericVal);
-        setDisplayValue(format(numericVal));
-      }
+        if (!isNaN(numericValue)) {
+            // Update the external state with the raw numeric value
+            onValueChange(numericValue);
+            // Update the internal display state with the formatted value
+            setDisplayValue(format(numericValue));
+        } else {
+            onValueChange(0);
+            setDisplayValue(format(0));
+        }
     };
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {

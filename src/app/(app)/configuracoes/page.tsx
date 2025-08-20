@@ -364,8 +364,10 @@ export default function ConfiguracoesPage() {
     if (editingUser) {
       const userToUpdate: User = { ...editingUser, ...newUser };
       if (newUser.password) {
+        // Encode password only if it has changed
         userToUpdate.password = btoa(newUser.password);
       } else {
+        // Keep the old encoded password
         userToUpdate.password = editingUser.password;
       }
       updatedUsers = users.map(u => u.id === editingUser.id ? userToUpdate : u);
@@ -375,7 +377,7 @@ export default function ConfiguracoesPage() {
         id: `USER-${Date.now()}`,
         name: newUser.name!,
         login: newUser.login!,
-        password: btoa(newUser.password!),
+        password: btoa(newUser.password!), // Always encode for new users
         permissions: newUser.permissions!,
       };
       updatedUsers = [...users, userToAdd];
@@ -388,7 +390,8 @@ export default function ConfiguracoesPage() {
     setEditingUser(null);
   };
   
-  const isCurrentUserAdmin = currentUser?.permissions.canManageUsers;
+  const canManageUsers = currentUser?.permissions.canManageUsers;
+  const isEditingSelf = editingUser?.id === currentUser?.id;
 
   if (isLoading) {
     return (
@@ -408,6 +411,7 @@ export default function ConfiguracoesPage() {
             id={key}
             checked={newUser.permissions?.[key]}
             onCheckedChange={(checked) => handlePermissionChange(key, Boolean(checked))}
+            disabled={!canManageUsers}
         />
         <label htmlFor={key} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             {label}
@@ -424,16 +428,16 @@ export default function ConfiguracoesPage() {
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1"><Label htmlFor="name">Nome da Empresa</Label><Input id="name" value={companyInfo.name || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
-                <div className="space-y-1"><Label htmlFor="document">CNPJ / CPF</Label><Input id="document" value={companyInfo.document || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
+                <div className="space-y-1"><Label htmlFor="name">Nome da Empresa</Label><Input id="name" value={companyInfo.name || ''} onChange={handleCompanyInfoChange} disabled={!canManageUsers} /></div>
+                <div className="space-y-1"><Label htmlFor="document">CNPJ / CPF</Label><Input id="document" value={companyInfo.document || ''} onChange={handleCompanyInfoChange} disabled={!canManageUsers} /></div>
             </div>
-             <div className="space-y-1"><Label htmlFor="address">Endereço</Label><Input id="address" value={companyInfo.address || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
+             <div className="space-y-1"><Label htmlFor="address">Endereço</Label><Input id="address" value={companyInfo.address || ''} onChange={handleCompanyInfoChange} disabled={!canManageUsers} /></div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1"><Label htmlFor="phone">Telefone de Contato</Label><Input id="phone" value={companyInfo.phone || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
-                <div className="space-y-1"><Label htmlFor="emailOrSite">E-mail ou Website</Label><Input id="emailOrSite" value={companyInfo.emailOrSite || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
+                <div className="space-y-1"><Label htmlFor="phone">Telefone de Contato</Label><Input id="phone" value={companyInfo.phone || ''} onChange={handleCompanyInfoChange} disabled={!canManageUsers} /></div>
+                <div className="space-y-1"><Label htmlFor="emailOrSite">E-mail ou Website</Label><Input id="emailOrSite" value={companyInfo.emailOrSite || ''} onChange={handleCompanyInfoChange} disabled={!canManageUsers} /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1"><Label htmlFor="pixKey">Chave PIX</Label><Input id="pixKey" placeholder="CNPJ, E-mail, Telefone ou Chave Aleatória" value={companyInfo.pixKey || ''} onChange={handleCompanyInfoChange} disabled={!isCurrentUserAdmin} /></div>
+                <div className="space-y-1"><Label htmlFor="pixKey">Chave PIX</Label><Input id="pixKey" placeholder="CNPJ, E-mail, Telefone ou Chave Aleatória" value={companyInfo.pixKey || ''} onChange={handleCompanyInfoChange} disabled={!canManageUsers} /></div>
             </div>
              <div className="space-y-2">
                 <Label>Logo da Empresa</Label>
@@ -442,16 +446,16 @@ export default function ConfiguracoesPage() {
                     {companyInfo.logoUrl ? <Image src={companyInfo.logoUrl} alt="Logo Preview" width={80} height={80} className="object-contain" /> : <ImageIcon className="w-10 h-10 text-muted-foreground" />}
                   </div>
                   <div className="flex flex-col gap-2">
-                     <Button variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={!isCurrentUserAdmin}>Escolher Arquivo</Button>
+                     <Button variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={!canManageUsers}>Escolher Arquivo</Button>
                     <input ref={logoInputRef} type="file" className="hidden" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload}/>
-                     {companyInfo.logoUrl && <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRemoveLogo} disabled={!isCurrentUserAdmin}><X className="w-4 h-4 mr-1" />Remover Logo</Button>}
+                     {companyInfo.logoUrl && <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRemoveLogo} disabled={!canManageUsers}><X className="w-4 h-4 mr-1" />Remover Logo</Button>}
                     <p className="text-xs text-muted-foreground">Recomendado: PNG ou SVG, até 1MB.</p>
                   </div>
                 </div>
             </div>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
-            <Button onClick={handleSaveCompanyInfo} disabled={!isCurrentUserAdmin}><Building className="mr-2 h-4 w-4" />Salvar Dados da Empresa</Button>
+            <Button onClick={handleSaveCompanyInfo} disabled={!canManageUsers}><Building className="mr-2 h-4 w-4" />Salvar Dados da Empresa</Button>
         </CardFooter>
     </Card>
     
@@ -465,7 +469,7 @@ export default function ConfiguracoesPage() {
            <h3 className="text-lg font-semibold mb-2">Garantia</h3>
            <div className="space-y-2">
              <Label htmlFor="defaultWarrantyDays">Prazo de Garantia Padrão (em dias)</Label>
-             <Input id="defaultWarrantyDays" type="number" className="max-w-xs" value={settings.defaultWarrantyDays || ''} onChange={handleSettingsChange} disabled={!isCurrentUserAdmin} />
+             <Input id="defaultWarrantyDays" type="number" className="max-w-xs" value={settings.defaultWarrantyDays || ''} onChange={handleSettingsChange} disabled={!canManageUsers} />
              <p className="text-sm text-muted-foreground">Este valor será usado como padrão para os serviços que não tiverem uma garantia específica.</p>
            </div>
         </div>
@@ -482,16 +486,16 @@ export default function ConfiguracoesPage() {
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
-                     <Button variant="outline" size="sm" onClick={() => soundInputRef.current?.click()} disabled={!isCurrentUserAdmin}>Escolher Som</Button>
+                     <Button variant="outline" size="sm" onClick={() => soundInputRef.current?.click()} disabled={!canManageUsers}>Escolher Som</Button>
                     <input ref={soundInputRef} type="file" className="hidden" accept="audio/mpeg, audio/wav, audio/ogg" onChange={handleSoundUpload}/>
-                     {companyInfo.notificationSoundUrl && <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRemoveSound} disabled={!isCurrentUserAdmin}><X className="w-4 h-4 mr-1" />Remover Som</Button>}
+                     {companyInfo.notificationSoundUrl && <Button variant="ghost" size="sm" className="text-destructive" onClick={handleRemoveSound} disabled={!canManageUsers}><X className="w-4 h-4 mr-1" />Remover Som</Button>}
                     <p className="text-xs text-muted-foreground">Recomendado: MP3 ou WAV, até 1MB.</p>
                   </div>
                 </div>
             </div>
         </div>
       </CardContent>
-      <CardFooter className="border-t px-6 py-4"><Button onClick={handleSaveSettings} disabled={!isCurrentUserAdmin}><Save className="mr-2 h-4 w-4" />Salvar Alterações</Button></CardFooter>
+      <CardFooter className="border-t px-6 py-4"><Button onClick={handleSaveSettings} disabled={!canManageUsers}><Save className="mr-2 h-4 w-4" />Salvar Alterações</Button></CardFooter>
     </Card>
 
     <Card>
@@ -500,7 +504,7 @@ export default function ConfiguracoesPage() {
           <CardTitle>Gerenciamento de Usuários</CardTitle>
           <CardDescription>Adicione, edite ou desative contas de usuário.</CardDescription>
         </div>
-        <Button size="sm" onClick={() => handleOpenUserDialog(null)} disabled={!isCurrentUserAdmin}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Usuário</Button>
+        <Button size="sm" onClick={() => handleOpenUserDialog(null)} disabled={!canManageUsers}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Usuário</Button>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
@@ -518,10 +522,10 @@ export default function ConfiguracoesPage() {
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.login}</TableCell>
                 <TableCell className="text-right space-x-2">
-                   <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)} disabled={!isCurrentUserAdmin}>Editar</Button>
+                   <Button variant="outline" size="sm" onClick={() => handleOpenUserDialog(user)}>Editar</Button>
                    <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" disabled={!isCurrentUserAdmin || user.id === currentUser?.id}>Excluir</Button>
+                        <Button variant="destructive" size="sm" disabled={!canManageUsers || user.id === currentUser?.id}>Excluir</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
@@ -558,7 +562,7 @@ export default function ConfiguracoesPage() {
                     <h4 className="font-semibold">Conversor de Backup</h4>
                     <p className="text-sm text-muted-foreground">Converta um arquivo de backup de uma versão anterior do sistema para o formato atual.</p>
                 </div>
-                <Button variant="secondary" asChild disabled={!isCurrentUserAdmin}><Link href="/configuracoes/ferramentas"><Wrench className="mr-2 h-4 w-4"/>Abrir Ferramenta</Link></Button>
+                <Button variant="secondary" asChild disabled={!canManageUsers}><Link href="/configuracoes/ferramentas"><Wrench className="mr-2 h-4 w-4"/>Abrir Ferramenta</Link></Button>
             </div>
         </CardContent>
     </Card>
@@ -620,18 +624,18 @@ export default function ConfiguracoesPage() {
               <div className="md:col-span-2 space-y-4">
                  <h3 className="text-lg font-semibold flex items-center"><UserIcon className="mr-2 h-5 w-5" /> Dados Pessoais e de Acesso</h3>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label htmlFor="name">Nome Completo</Label><Input id="name" placeholder="John Doe" value={newUser.name || ''} onChange={handleUserInputChange} /></div>
-                    <div className="space-y-2"><Label htmlFor="login">Login de Acesso</Label><Input id="login" placeholder="joao.silva" value={newUser.login || ''} onChange={handleUserInputChange} /></div>
+                    <div className="space-y-2"><Label htmlFor="name">Nome Completo</Label><Input id="name" placeholder="John Doe" value={newUser.name || ''} onChange={handleUserInputChange} disabled={!canManageUsers && !isEditingSelf}/></div>
+                    <div className="space-y-2"><Label htmlFor="login">Login de Acesso</Label><Input id="login" placeholder="joao.silva" value={newUser.login || ''} onChange={handleUserInputChange} disabled={!canManageUsers && !isEditingSelf}/></div>
                  </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha forte'} value={newUser.password || ''} onChange={handleUserInputChange} /></div>
+                    <div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" placeholder={editingUser ? 'Deixe em branco para não alterar' : 'Senha forte'} value={newUser.password || ''} onChange={handleUserInputChange} disabled={!canManageUsers && !isEditingSelf}/></div>
                  </div>
               </div>
               <Separator className="md:col-span-2" />
                <div className="md:col-span-2 space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold flex items-center"><ShieldCheck className="mr-2 h-5 w-5" /> Permissões do Usuário</h3>
-                    <Button variant="outline" size="sm" onClick={handleSelectAllPermissions}>Selecionar Tudo</Button>
+                    <Button variant="outline" size="sm" onClick={handleSelectAllPermissions} disabled={!canManageUsers}>Selecionar Tudo</Button>
                 </div>
                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   <div className="space-y-3">

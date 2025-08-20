@@ -57,6 +57,13 @@ export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem, stockItem
     setItem(prev => ({ ...prev, [id]: value }));
   }
 
+  const handleUpdateQuantity = (value: string) => {
+    const newQuantity = parseInt(value, 10);
+    // Prevent NaN by defaulting to 0 if input is empty
+    handleNumericChange('quantity', isNaN(newQuantity) ? 0 : newQuantity);
+  };
+
+
   const handleAdd = () => {
     if (item.name && item.price > 0 && item.quantity > 0) {
       onAddItem(item);
@@ -127,7 +134,7 @@ export function ManualAddItemDialog({ isOpen, onOpenChange, onAddItem, stockItem
             </div>
             <div className="space-y-2">
                 <Label htmlFor="quantity">Quantidade</Label>
-                <Input id="quantity" type="number" value={item.quantity} onChange={(e) => handleNumericChange('quantity', parseInt(e.target.value))} />
+                <Input id="quantity" type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(e.target.value)} />
             </div>
           </div>
         </div>

@@ -92,24 +92,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
 
   const isEditing = !!serviceOrder;
   
-  const resetForm = React.useCallback(async (keepCustomer = false) => {
-    const settings = await getSettings();
-    const defaultWarrantyDays = settings.defaultWarrantyDays || 90;
-    
-    setSelectedCustomerId(keepCustomer ? selectedCustomerId : '');
-    setEquipmentType('');
-    setEquipment({ brand: '', model: '', serial: '' });
-    setAccessories('');
-    setReportedProblem('');
-    setTechnicalReport('');
-    setItems([]);
-    setPayments([]);
-    setStatus('Aberta');
-    setInternalNotes([]);
-    setNewComment('');
-    setWarranty(`${defaultWarrantyDays} dias`);
-  }, [selectedCustomerId]);
-
   React.useEffect(() => {
     const loadData = async () => {
       const [customersData, stockData] = await Promise.all([
@@ -328,18 +310,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
       onSave(finalOrder);
       if (onOpenChange) {
         onOpenChange(false);
-      }
-    }
-  };
-  
-  const handleSaveAndNew = () => {
-    const finalOrder = getFinalOrderData();
-    if (finalOrder && onSave) {
-      onSave(finalOrder);
-      if (!isEditing) {
-        resetForm(true); // Mantém o cliente selecionado para a próxima OS
-      } else {
-        if(onOpenChange) onOpenChange(false);
       }
     }
   };
@@ -585,7 +555,6 @@ export function NewOrderSheet({ onNewOrderClick, customer, serviceOrder, isOpen,
               )}
             </div>
             <div className="flex justify-end gap-2 mt-4 sm:mt-0">
-                <Button variant="outline" onClick={handleSaveAndNew} disabled={isEditing}>Salvar e Criar Nova</Button>
                 <Button onClick={handleSaveAndClose}>{isEditing ? 'Salvar Alterações' : 'Salvar e Fechar'}</Button>
             </div>
           </DialogFooter>

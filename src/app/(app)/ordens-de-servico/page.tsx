@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MoreHorizontal, Undo2, MessageSquare, DollarSign, Printer, MessageCircle, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Undo2, MessageSquare, DollarSign, Printer, MessageCircle, Trash2, FileSignature } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -66,7 +66,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { add } from 'date-fns';
+import { add, format } from 'date-fns';
 import { AddPaymentDialog } from '@/components/service-orders/add-payment-dialog';
 
 const formatDate = (dateString: string | undefined) => {
@@ -431,7 +431,7 @@ function ServiceOrdersComponent() {
   };
 
 
-  const handlePrint = async (documentType: 'entry' | 'quote' | 'delivery', order: ServiceOrder) => {
+  const handlePrint = async (documentType: 'entry' | 'quote' | 'delivery' | 'invoice', order: ServiceOrder) => {
     const companyInfo = await getCompanyInfo();
     const customer = customers.find(c => c.name === order.customerName);
 
@@ -446,6 +446,156 @@ function ServiceOrdersComponent() {
       generateQuotePdf(order, customer, companyInfo);
     } else if (documentType === 'delivery') {
       generateDeliveryReceiptPdf(order, customer, companyInfo);
+    } else if (documentType === 'invoice') {
+      generateInvoicePdf(order, customer, companyInfo);
+    }
+  };
+
+  const generateInvoicePdf = (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+     const performGeneration = (logoImage: HTMLImageElement | null) => {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let currentY = 20;
+        let textX = margin;
+        const fontColor = '#000000';
+        const logoWidth = 30;
+        const logoHeight = 30;
+        const logoSpacing = 5;
+        const totalPaid = order.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+        const balanceDue = (order.finalValue ?? order.totalValue) - totalPaid;
+        const dueDate = order.deliveredDate ? formatDate(add(new Date(order.deliveredDate), { days: 7 }).toISOString()) : 'Não definido';
+        const status = balanceDue <= 0 ? 'Pago' : 'Pendente';
+
+
+        // Header
+        if (logoImage) {
+            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
+            textX = margin + logoWidth + logoSpacing;
+        }
+        
+        doc.setFont('helvetica');
+        doc.setTextColor(fontColor);
+        
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        if (companyInfo.name) {
+            doc.text(companyInfo.name, textX, currentY);
+            currentY += 8;
+        }
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        if (companyInfo.address) {
+            doc.text(companyInfo.address, textX, currentY);
+            currentY += 4;
+        }
+        if (companyInfo.phone || companyInfo.emailOrSite) {
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
+        }
+
+        const rightHeaderX = pageWidth - margin;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text("FATURA DE SERVIÇO", rightHeaderX, currentY - 8, { align: 'right' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Nº: #${order.id.slice(-4)}`, rightHeaderX, currentY - 2, { align: 'right' });
+        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
+        
+        currentY = 55;
+
+        // Customer Details
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Cliente:", margin, currentY);
+        currentY += 6;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(customer.name, margin, currentY);
+        currentY += 5;
+        if(customer.address) doc.text(customer.address, margin, currentY);
+        currentY += 5;
+        if(customer.phone) doc.text(`Telefone: ${customer.phone}`, margin, currentY);
+        
+        // Invoice Info
+        const invoiceInfoX = pageWidth / 2 + 10;
+        let invoiceInfoY = 55;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Detalhes da Fatura:", invoiceInfoX, invoiceInfoY);
+        invoiceInfoY += 6;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Data de Vencimento: ${dueDate}`, invoiceInfoX, invoiceInfoY);
+        invoiceInfoY += 5;
+        doc.text(`Status: ${status}`, invoiceInfoX, invoiceInfoY);
+        
+        currentY += 15;
+        
+        // Items Table
+        if (order.items && order.items.length > 0) {
+            doc.autoTable({
+                startY: currentY,
+                head: [['Descrição', 'Qtd.', 'Vlr. Unit.', 'Total']],
+                body: order.items.map(item => [item.description, item.quantity, `R$ ${(item.unitPrice).toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+                theme: 'striped',
+                headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9 },
+                bodyStyles: { fontSize: 9 },
+            });
+            currentY = doc.lastAutoTable.finalY;
+        }
+
+        // Financial Summary
+        const summaryY = currentY + 10;
+        const summaryX = pageWidth - margin - 60;
+        doc.setFontSize(10);
+        doc.autoTable({
+            startY: summaryY,
+            body: [
+                ['Subtotal:', `R$ ${(order.totalValue).toFixed(2)}`],
+                ['Desconto:', `- R$ ${(order.discount || 0).toFixed(2)}`],
+                ['Total Pago:', `R$ ${totalPaid.toFixed(2)}`],
+                [{ content: 'SALDO DEVEDOR:', styles: { fontStyle: 'bold' } }, { content: `R$ ${balanceDue.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
+            ],
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 2 },
+            columnStyles: { 0: { halign: 'right' }, 1: { halign: 'right', fontStyle: 'bold' } },
+            margin: { left: summaryX }
+        });
+        currentY = doc.lastAutoTable.finalY + 10;
+
+        // Payment Info
+        doc.setFontSize(9);
+        doc.text('Forma de Pagamento Sugerida:', margin, currentY);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(order.paymentMethod || 'Não especificado', margin, currentY + 5);
+
+        if (companyInfo.pixKey) {
+            doc.setFontSize(9);
+            doc.text('Chave PIX para pagamento:', margin, currentY + 15);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(companyInfo.pixKey, margin, currentY + 20);
+        }
+        
+        // Footer
+        const footerY = doc.internal.pageSize.getHeight() - 15;
+        doc.setLineWidth(0.5);
+        doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
+        doc.setFontSize(8);
+        doc.text('Agradecemos a sua preferência!', pageWidth / 2, footerY, { align: 'center' });
+        
+        doc.output('dataurlnewwindow');
+    };
+    if (companyInfo?.logoUrl) {
+      const img = new Image();
+      img.src = companyInfo.logoUrl;
+      img.crossOrigin = "anonymous";
+      img.onload = () => performGeneration(img);
+      img.onerror = () => performGeneration(null);
+    } else {
+      performGeneration(null);
     }
   };
 
@@ -1033,6 +1183,7 @@ function ServiceOrdersComponent() {
                                       <DropdownMenuItem onSelect={() => handlePrint('entry', order)}>Recibo de Entrada</DropdownMenuItem>
                                       <DropdownMenuItem onSelect={() => handlePrint('quote', order)}>Orçamento de Serviço</DropdownMenuItem>
                                       <DropdownMenuItem onSelect={() => handlePrint('delivery', order)}>Recibo de Entrega</DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => handlePrint('invoice', order)}>Gerar Fatura</DropdownMenuItem>
                                   </DropdownMenuSubContent>
                               </DropdownMenuPortal>
                             </DropdownMenuSub>
@@ -1119,5 +1270,7 @@ export default function ServiceOrdersPage() {
 }
 
 
+
+    
 
     

@@ -22,23 +22,6 @@ import { getUsers, saveUsers, saveSessionToken, getSessionToken } from '@/lib/st
 import type { User, UserPermissions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const defaultPermissions: UserPermissions = {
-  accessDashboard: true,
-  accessClients: true,
-  accessServiceOrders: true,
-  accessInventory: true,
-  accessSales: true,
-  accessFinancials: false,
-  accessSettings: false,
-  accessDangerZone: false,
-  accessAgenda: true,
-  accessQuotes: true,
-  canEdit: true,
-  canDelete: false,
-  canViewPasswords: false,
-  canManageUsers: false,
-};
-
 const adminPermissions: UserPermissions = {
   accessDashboard: true,
   accessClients: true,
@@ -56,6 +39,8 @@ const adminPermissions: UserPermissions = {
   canManageUsers: true,
 };
 
+const defaultPermissions: UserPermissions = adminPermissions;
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -70,7 +55,7 @@ export default function LoginPage() {
   const [masterPassword, setMasterPassword] = React.useState('');
   
   const [newUser, setNewUser] = React.useState({ name: '', login: '', password: '' });
-  const [newUserType, setNewUserType] = React.useState<'normal' | 'admin'>('normal');
+  const [newUserType, setNewUserType] = React.useState<'admin'>('admin');
 
   React.useEffect(() => {
     getUsers(); 
@@ -154,8 +139,8 @@ export default function LoginPage() {
       name: newUser.name,
       login: newUser.login,
       password: btoa(newUser.password), // Encrypt password
-      permissions: newUserType === 'admin' ? adminPermissions : defaultPermissions,
-      userType: newUserType,
+      permissions: adminPermissions,
+      userType: 'admin',
     };
     
     await saveUsers([...users, userToSave]);
@@ -242,7 +227,7 @@ export default function LoginPage() {
                       <DialogHeader>
                           <DialogTitle>Registrar Novo Usuário</DialogTitle>
                           <DialogDescription>
-                              Crie uma nova conta para acessar o sistema.
+                              Crie uma nova conta de administrador para acessar o sistema.
                           </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleRegister}>
@@ -258,18 +243,6 @@ export default function LoginPage() {
                               <div className="space-y-2">
                                   <Label htmlFor="reg-password">Senha</Label>
                                   <Input id="reg-password" type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
-                              </div>
-                              <div className="space-y-2">
-                                  <Label htmlFor="reg-type">Tipo de Usuário</Label>
-                                  <Select value={newUserType} onValueChange={(v) => setNewUserType(v as any)}>
-                                    <SelectTrigger id="reg-type">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="normal">Usuário Padrão</SelectItem>
-                                      <SelectItem value="admin">Administrador (Todos os privilégios)</SelectItem>
-                                    </SelectContent>
-                                  </Select>
                               </div>
                           </div>
                           <DialogFooter>

@@ -13,6 +13,7 @@ import {
   WalletCards,
   CheckCircle,
   AlertTriangle,
+  FileSignature,
 } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -293,21 +294,32 @@ export default function FinanceiroPage() {
     .reduce((acc, t) => acc + t.amount, 0);
   const saldoPeriodo = totalReceitas - totalDespesas;
   
-  const calculateCurrentMonthBalance = () => {
+  const monthlySummary = React.useMemo(() => {
     const today = new Date();
     const startOfCurrentMonth = startOfMonth(today);
     const endOfCurrentMonth = endOfMonth(today);
 
-    return allTransactions
-        .filter(t => {
-            if (!t.date || isNaN(new Date(t.date).getTime())) return false;
-            const transactionDate = parseISO(t.date);
-            return isWithinInterval(transactionDate, { start: startOfCurrentMonth, end: endOfCurrentMonth });
-        })
-        .reduce((acc, t) => {
-            return t.type === 'receita' ? acc + t.amount : acc - t.amount;
-        }, 0);
-  };
+    let receitas = 0;
+    let despesas = 0;
+
+    allTransactions.forEach(t => {
+        if (!t.date || isNaN(new Date(t.date).getTime())) return;
+        const transactionDate = parseISO(t.date);
+        if (isWithinInterval(transactionDate, { start: startOfCurrentMonth, end: endOfCurrentMonth })) {
+            if (t.type === 'receita') {
+                receitas += t.amount;
+            } else {
+                despesas += t.amount;
+            }
+        }
+    });
+
+    return {
+        receitas: receitas,
+        despesas: despesas,
+        saldo: receitas - despesas,
+    };
+}, [allTransactions]);
   
   const handlePrintClick = (transaction: FinancialTransaction) => {
     setTransactionToPrint(transaction);
@@ -465,10 +477,10 @@ export default function FinanceiroPage() {
             <p
               className={cn(
                 'text-2xl font-bold',
-                calculateCurrentMonthBalance() >= 0 ? 'text-green-500' : 'text-destructive'
+                monthlySummary.saldo >= 0 ? 'text-green-500' : 'text-destructive'
               )}
             >
-              R$ {calculateCurrentMonthBalance().toFixed(2)}
+              R$ {monthlySummary.saldo.toFixed(2)}
             </p>
           </div>
         </div>
@@ -527,7 +539,7 @@ export default function FinanceiroPage() {
                   </PopoverContent>
                 </Popover>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-y-4">
                 <div className="flex items-center gap-2">
                      {dateRange && typeFilter !== 'contas_a_receber' && (
                          <Button variant="ghost" size="sm" onClick={() => setDateRange(undefined)}>
@@ -540,16 +552,21 @@ export default function FinanceiroPage() {
                         Imprimir Relatório
                      </Button>
                 </div>
-                <div className="flex gap-4 text-sm font-medium text-right">
-                    <div className="text-green-500">
-                        <span>Receitas no Período:</span> R$ {totalReceitas.toFixed(2)}
-                    </div>
-                    <div className="text-red-500">
-                        <span>Despesas no Período:</span> R$ {totalDespesas.toFixed(2)}
-                    </div>
-                     <div className={cn(saldoPeriodo >= 0 ? "text-primary" : "text-destructive")}>
-                        <span>Saldo do Período:</span> R$ {saldoPeriodo.toFixed(2)}
-                    </div>
+                <div className="grid grid-cols-4 gap-x-4 gap-y-2 text-sm text-right w-full md:w-auto">
+                    <div></div> {/* Empty cell for alignment */}
+                    <div className="font-bold text-green-500">Receitas</div>
+                    <div className="font-bold text-red-500">Despesas</div>
+                    <div className="font-bold text-primary">Saldo</div>
+
+                    <div className="font-medium text-muted-foreground">Período</div>
+                    <div className="text-green-500">R$ {totalReceitas.toFixed(2)}</div>
+                    <div className="text-red-500">R$ {totalDespesas.toFixed(2)}</div>
+                    <div className={cn(saldoPeriodo >= 0 ? "text-primary" : "text-destructive")}>R$ {saldoPeriodo.toFixed(2)}</div>
+                    
+                    <div className="font-medium text-muted-foreground">Mês</div>
+                    <div className="text-green-500">R$ {monthlySummary.receitas.toFixed(2)}</div>
+                    <div className="text-red-500">R$ {monthlySummary.despesas.toFixed(2)}</div>
+                    <div className={cn(monthlySummary.saldo >= 0 ? "text-primary" : "text-destructive")}>R$ {monthlySummary.saldo.toFixed(2)}</div>
                 </div>
             </div>
         </div>

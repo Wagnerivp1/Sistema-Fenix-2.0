@@ -1001,7 +1001,7 @@ function ServiceOrdersComponent() {
       
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      const warrantyLines = doc.splitTextToSize(warrantyContent.join('\n\n'), pageWidth - margin * 2 - 6);
+      const warrantyLines = doc.splitTextToSize(warrantyContent.join('\\n\\n'), pageWidth - margin * 2 - 6);
       const warrantyHeight = doc.getTextDimensions(warrantyLines).h;
       
       doc.setDrawColor(200, 200, 200);
@@ -1173,17 +1173,20 @@ function ServiceOrdersComponent() {
                                   </DropdownMenuSubContent>
                               </DropdownMenuPortal>
                             </DropdownMenuSub>
+                            <DropdownMenuItem onSelect={() => handlePrint('invoice', order)}>
+                               <FileSignature className="mr-2 h-4 w-4" />
+                               Gerar Fatura
+                            </DropdownMenuItem>
                              <DropdownMenuSub>
                               <DropdownMenuSubTrigger>
                                  <Printer className="mr-2 h-4 w-4" />
-                                 Imprimir
+                                 Outros Documentos
                               </DropdownMenuSubTrigger>
                               <DropdownMenuPortal>
                                   <DropdownMenuSubContent>
                                       <DropdownMenuItem onSelect={() => handlePrint('entry', order)}>Recibo de Entrada</DropdownMenuItem>
                                       <DropdownMenuItem onSelect={() => handlePrint('quote', order)}>Orçamento de Serviço</DropdownMenuItem>
                                       <DropdownMenuItem onSelect={() => handlePrint('delivery', order)}>Recibo de Entrega</DropdownMenuItem>
-                                      <DropdownMenuItem onSelect={() => handlePrint('invoice', order)}>Gerar Fatura</DropdownMenuItem>
                                   </DropdownMenuSubContent>
                               </DropdownMenuPortal>
                             </DropdownMenuSub>
@@ -1268,3 +1271,5 @@ export default function ServiceOrdersPage() {
     </React.Suspense>
   );
 }
+
+    

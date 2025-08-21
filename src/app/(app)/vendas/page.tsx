@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { ShoppingCart, Trash2, ScanLine, FileText, Calendar as CalendarIcon } from 'lucide-react';
+import { ShoppingCart, Trash2, ScanLine, FileText, Calendar as CalendarIcon, FileSignature } from 'lucide-react';
 import { addDays, addMonths, format } from 'date-fns';
 import { DateRange } from "react-day-picker";
 import { ptBR } from 'date-fns/locale';
@@ -19,6 +19,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
 import { getStock, getSales, saveStock, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, saveSales } from '@/lib/storage';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem } from '@/types';
@@ -49,6 +60,7 @@ export default function VendasPage() {
   const [isPrintReceiptOpen, setIsPrintReceiptOpen] = React.useState(false);
   const [saleToPrint, setSaleToPrint] = React.useState<Sale | null>(null);
   const [isPixDialogOpen, setIsPixDialogOpen] = React.useState(false);
+  const [isCreditSaleDialogOpen, setIsCreditSaleDialogOpen] = React.useState(false);
   const [currentSaleId, setCurrentSaleId] = React.useState('');
   
   const [stock, setStock] = React.useState<StockItem[]>([]);
@@ -78,32 +90,29 @@ export default function VendasPage() {
   }, [paymentMethod]);
   
   const addProductToSale = (productToAdd: Omit<SaleItem, 'id'> & { id?: string }) => {
-      setSaleItems(prevItems => {
-          // Find by ID first (for stock items)
-          const existingItemById = productToAdd.id ? prevItems.find(item => item.id === productToAdd.id) : undefined;
-          
-          if (existingItemById) {
-              return prevItems.map(item =>
-                  item.id === productToAdd.id
-                      ? { ...item, quantity: (item.quantity || 0) + (productToAdd.quantity || 1) }
-                      : item
-              );
-          }
-
-          // If not found by ID, find by name (for manual items)
-          const existingItemByName = prevItems.find(item => item.name.toLowerCase() === productToAdd.name.toLowerCase());
-          
-          if(existingItemByName) {
+    setSaleItems(prevItems => {
+        const existingItemById = productToAdd.id && productToAdd.id.startsWith('PROD-') ? prevItems.find(item => item.id === productToAdd.id) : undefined;
+        
+        if (existingItemById) {
             return prevItems.map(item =>
-                  item.name.toLowerCase() === productToAdd.name.toLowerCase()
-                      ? { ...item, quantity: (item.quantity || 0) + (productToAdd.quantity || 1) }
-                      : item
-              );
-          }
+                item.id === productToAdd.id
+                    ? { ...item, quantity: (item.quantity || 0) + (productToAdd.quantity || 1) }
+                    : item
+            );
+        }
 
-          // If it's a new item, add it to the cart
-          return [...prevItems, { ...productToAdd, id: productToAdd.id || `ITEM-${Date.now()}`, quantity: productToAdd.quantity || 1 } as SaleItem];
-      });
+        const existingItemByName = prevItems.find(item => item.name.toLowerCase() === productToAdd.name.toLowerCase());
+        
+        if(existingItemByName) {
+          return prevItems.map(item =>
+                item.name.toLowerCase() === productToAdd.name.toLowerCase()
+                    ? { ...item, quantity: (item.quantity || 0) + (productToAdd.quantity || 1) }
+                    : item
+            );
+        }
+
+        return [...prevItems, { ...productToAdd, id: productToAdd.id || `ITEM-${Date.now()}`, quantity: productToAdd.quantity || 1 } as SaleItem];
+    });
   };
   
   const handleBarcodeScan = () => {
@@ -248,7 +257,21 @@ export default function VendasPage() {
     const existingTransactions = await getFinancialTransactions();
     let newTransactions: FinancialTransaction[] = [];
     
-    if (isInstallments) {
+    if (paymentMethod === 'a_prazo') {
+        newTransactions.push({
+            id: `FIN-${Date.now()}`,
+            type: 'receita',
+            description: `Venda a prazo #${newSale.id.slice(-6)}`,
+            amount: finalTotal,
+            date: newSale.date,
+            dueDate: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+            category: 'Venda de Produto',
+            paymentMethod: 'A prazo',
+            relatedSaleId: newSale.id,
+            status: 'pendente',
+        });
+    }
+    else if (isInstallments) {
         const installmentAmount = finalTotal / installmentsCount;
         for (let i = 0; i < installmentsCount; i++) {
             const dueDate = addMonths(firstDueDate || new Date(), i);
@@ -287,6 +310,7 @@ export default function VendasPage() {
     // 5. Conditional dialogs
     setIsChangeCalcOpen(false);
     setIsPixDialogOpen(false);
+    setIsCreditSaleDialogOpen(false);
     
     if (shouldPrint) {
         setSaleToPrint(newSale);
@@ -322,6 +346,8 @@ export default function VendasPage() {
             return;
         }
         setIsPixDialogOpen(true);
+    } else if (paymentMethod === 'a_prazo') {
+        setIsCreditSaleDialogOpen(true);
     }
     else {
         processSale(true);
@@ -457,6 +483,7 @@ export default function VendasPage() {
                       <SelectItem value="pix">PIX</SelectItem>
                       <SelectItem value="credito">Cartão de Crédito</SelectItem>
                       <SelectItem value="debito">Cartão de Débito</SelectItem>
+                      <SelectItem value="a_prazo">A prazo</SelectItem>
                       <SelectItem value="parcelado">Parcelado</SelectItem>
                   </SelectContent>
                 </Select>
@@ -528,6 +555,24 @@ export default function VendasPage() {
       onOpenChange={setIsPrintReceiptOpen}
       sale={saleToPrint}
     />
+    <AlertDialog open={isCreditSaleDialogOpen} onOpenChange={setIsCreditSaleDialogOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar Venda a Prazo</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Esta ação registrará a venda e criará uma pendência no Contas a Receber. Deseja gerar uma fatura para impressão?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogAction variant="outline" onClick={() => processSale(false)}>Salvar sem Fatura</AlertDialogAction>
+                <AlertDialogAction onClick={() => processSale(true)}>
+                  <FileSignature className="mr-2 h-4 w-4" />
+                  Salvar e Gerar Fatura
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+
     </>
   );
 }

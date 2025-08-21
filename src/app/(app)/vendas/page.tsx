@@ -37,7 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ChangeCalculatorDialog } from '@/components/sales/change-calculator-dialog';
-import { PrintSaleReceiptDialog } from '@/components/sales/print-sale-receipt-dialog';
+import { SaleInvoiceDialog } from '@/components/sales/sale-invoice-dialog';
 import { PixQrCodeDialog } from '@/components/sales/pix-qr-code-dialog';
 import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -57,7 +57,7 @@ export default function VendasPage() {
   const barcodeInputRef = React.useRef<HTMLInputElement>(null);
   const [companyInfoForDialog, setCompanyInfoForDialog] = React.useState<CompanyInfo | null>(null);
   
-  const [isPrintReceiptOpen, setIsPrintReceiptOpen] = React.useState(false);
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = React.useState(false);
   const [saleToPrint, setSaleToPrint] = React.useState<Sale | null>(null);
   const [isPixDialogOpen, setIsPixDialogOpen] = React.useState(false);
   const [isCreditSaleDialogOpen, setIsCreditSaleDialogOpen] = React.useState(false);
@@ -314,7 +314,7 @@ export default function VendasPage() {
     
     if (shouldPrint) {
         setSaleToPrint(newSale);
-        setIsPrintReceiptOpen(true);
+        setIsInvoiceDialogOpen(true);
     }
     
     resetSale();
@@ -550,9 +550,9 @@ export default function VendasPage() {
         sale={{ total: finalTotal, id: currentSaleId }}
         onConfirm={() => processSale(true)}
     />
-    <PrintSaleReceiptDialog
-      isOpen={isPrintReceiptOpen}
-      onOpenChange={setIsPrintReceiptOpen}
+    <SaleInvoiceDialog
+      isOpen={isInvoiceDialogOpen}
+      onOpenChange={setIsInvoiceDialogOpen}
       sale={saleToPrint}
     />
     <AlertDialog open={isCreditSaleDialogOpen} onOpenChange={setIsCreditSaleDialogOpen}>

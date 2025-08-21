@@ -15,7 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { User, Calendar, Clock, Printer, ShoppingCart, DollarSign, StickyNote } from 'lucide-react';
-import type { Sale, CompanyInfo } from '@/types';
+import type { Sale, CompanyInfo, SaleItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
 import jsPDF from 'jspdf';
@@ -28,7 +28,7 @@ declare module 'jspdf' {
     }
 }
 
-interface SaleDetailsDialogProps {
+interface SaleInvoiceDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   sale: Sale | null;
@@ -50,7 +50,7 @@ const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label
     </div>
 );
 
-export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDialogProps) {
+export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDialogProps) {
     const { toast } = useToast();
 
     const handlePrint = async () => {
@@ -172,9 +172,9 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-3xl h-[80vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Detalhes da Venda #{sale.id.slice(-6)}</DialogTitle>
+                    <DialogTitle>Fatura da Venda #{sale.id.slice(-6)}</DialogTitle>
                     <DialogDescription>
-                        Informações completas sobre a transação realizada.
+                        A venda foi finalizada. Imprima a fatura para o cliente.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -246,12 +246,12 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
                     </ScrollArea>
                 </div>
 
-                <DialogFooter className="flex-shrink-0 pt-4 border-t">
-                    <Button variant="outline" onClick={handlePrint}>
+                <DialogFooter className="flex-shrink-0 pt-4 border-t sm:justify-between">
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+                    <Button onClick={handlePrint}>
                         <Printer className="mr-2 h-4 w-4" />
-                        Imprimir Detalhes
+                        Imprimir Fatura
                     </Button>
-                    <Button onClick={() => onOpenChange(false)}>Fechar</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

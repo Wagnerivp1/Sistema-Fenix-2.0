@@ -157,6 +157,30 @@
     "unitOfMeasure": "UN"
   },
   {
+    "id": "PROD-003",
+    "barcode": "PROD-003",
+    "name": "Memória RAM DDR4 16GB 2666MHz Kingston",
+    "description": "Memória para desktop com 2666MHz",
+    "category": "Peças de Computador",
+    "costPrice": 190,
+    "price": 220,
+    "quantity": 10,
+    "minStock": 3,
+    "unitOfMeasure": "UN"
+  },
+  {
+    "id": "PROD-004",
+    "barcode": "PROD-004",
+    "name": "Memória RAM DDR4 16GB 3200MHz Kingston",
+    "description": "Memória para desktop com 3200MHz",
+    "category": "Peças de Computador",
+    "costPrice": 225,
+    "price": 260,
+    "quantity": 8,
+    "minStock": 3,
+    "unitOfMeasure": "UN"
+  },
+  {
     "id": "PROD-005",
     "barcode": "PROD-005",
     "name": "Memória RAM DDR4 4GB 2400MHz Kingston",
@@ -217,27 +241,15 @@
     "unitOfMeasure": "UN"
   },
   {
-    "id": "PROD-003",
-    "barcode": "PROD-003",
-    "name": "Memória RAM DDR4 16GB 2666MHz Kingston",
-    "description": "Memória para desktop com 2666MHz",
+    "id": "PROD-010",
+    "barcode": "PROD-010",
+    "name": "Placa de Vídeo NVIDIA RTX 3060 12GB",
+    "description": "Placa de vídeo para jogos e edição de vídeos",
     "category": "Peças de Computador",
-    "costPrice": 190,
-    "price": 220,
-    "quantity": 10,
-    "minStock": 3,
-    "unitOfMeasure": "UN"
-  },
-  {
-    "id": "PROD-004",
-    "barcode": "PROD-004",
-    "name": "Memória RAM DDR4 16GB 3200MHz Kingston",
-    "description": "Memória para desktop com 3200MHz",
-    "category": "Peças de Computador",
-    "costPrice": 225,
-    "price": 260,
-    "quantity": 8,
-    "minStock": 3,
+    "costPrice": 1800,
+    "price": 2179,
+    "quantity": 5,
+    "minStock": 2,
     "unitOfMeasure": "UN"
   },
   {
@@ -248,18 +260,6 @@
     "category": "Peças de Computador",
     "costPrice": 400,
     "price": 499,
-    "quantity": 5,
-    "minStock": 2,
-    "unitOfMeasure": "UN"
-  },
-  {
-    "id": "PROD-010",
-    "barcode": "PROD-010",
-    "name": "Placa de Vídeo NVIDIA RTX 3060 12GB",
-    "description": "Placa de vídeo para jogos e edição de vídeos",
-    "category": "Peças de Computador",
-    "costPrice": 1800,
-    "price": 2179,
     "quantity": 5,
     "minStock": 2,
     "unitOfMeasure": "UN"

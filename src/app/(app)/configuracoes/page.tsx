@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
-import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music, FileQuote, Package, PackagePlus, Paintbrush } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, Trash2, PlusCircle, Users, KeyRound, Phone, User as UserIcon, Building, Image as ImageIcon, X, Wrench, ShieldCheck, QrCode, Calendar, Music, FileQuote, Package, PackagePlus, Paintbrush, ExternalLink } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -47,19 +47,19 @@ const initialNewUser: Partial<User> = {
   password: '',
   permissions: {
     accessDashboard: true,
-    accessClients: false,
-    accessServiceOrders: false,
-    accessInventory: false,
-    accessSales: false,
-    accessFinancials: false,
-    accessSettings: false,
-    accessDangerZone: false,
-    accessAgenda: false,
-    accessQuotes: false,
-    canEdit: false,
-    canDelete: false,
-    canViewPasswords: false,
-    canManageUsers: false,
+    accessClients: true,
+    accessServiceOrders: true,
+    accessInventory: true,
+    accessSales: true,
+    accessFinancials: true,
+    accessSettings: true,
+    accessDangerZone: true,
+    accessAgenda: true,
+    accessQuotes: true,
+    canEdit: true,
+    canDelete: true,
+    canViewPasswords: true,
+    canManageUsers: true,
   },
 };
 
@@ -553,6 +553,31 @@ export default function ConfiguracoesPage() {
             )}
           </TableBody>
         </Table>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Plano e Faturamento</CardTitle>
+        <CardDescription>
+          Consulte os limites do plano gratuito e a calculadora de preços para uso excedente.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h4 className="font-semibold">Calculadora de Preços Firebase</h4>
+            <p className="text-sm text-muted-foreground">
+              O sistema opera no plano Spark (gratuito) do Firebase. Se precisar de mais recursos, consulte os preços aqui.
+            </p>
+          </div>
+          <Button variant="secondary" asChild>
+            <a href="https://firebase.google.com/pricing" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Ver Preços
+            </a>
+          </Button>
         </div>
       </CardContent>
     </Card>

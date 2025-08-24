@@ -87,6 +87,7 @@ export default function CustomersPage() {
             getCustomers(),
             getServiceOrders()
         ]);
+        customersData.sort((a, b) => a.name.localeCompare(b.name));
         setCustomers(customersData);
         setServiceOrders(serviceOrdersData);
         setIsLoading(false);
@@ -139,6 +140,7 @@ export default function CustomersPage() {
   
   const handleUpdateCustomer = async (updatedCustomer: Customer) => {
     const updatedCustomers = customers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c);
+    updatedCustomers.sort((a, b) => a.name.localeCompare(b.name));
     await saveCustomers(updatedCustomers);
     setCustomers(updatedCustomers);
     setSelectedCustomer(updatedCustomer);
@@ -189,6 +191,7 @@ export default function CustomersPage() {
     };
 
     const updatedCustomers = [...customers, customerToAdd];
+    updatedCustomers.sort((a, b) => a.name.localeCompare(b.name));
     await saveCustomers(updatedCustomers);
     setCustomers(updatedCustomers);
     

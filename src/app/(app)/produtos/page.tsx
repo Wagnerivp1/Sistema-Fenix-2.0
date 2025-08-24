@@ -54,6 +54,7 @@ function ProductsComponent() {
     const loadStock = async () => {
       setIsLoading(true);
       const stockData = await getStock();
+      stockData.sort((a, b) => a.name.localeCompare(b.name));
       setStock(stockData);
       setIsLoading(false);
     };
@@ -86,6 +87,7 @@ function ProductsComponent() {
     } else {
       updatedStock = [...stock, itemToSave];
     }
+    updatedStock.sort((a, b) => a.name.localeCompare(b.name));
     setStock(updatedStock);
     await saveStock(updatedStock);
     toast({ title: 'Produto Salvo!', description: `${itemToSave.name} foi atualizado com sucesso.`});

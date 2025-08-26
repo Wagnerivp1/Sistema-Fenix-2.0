@@ -75,31 +75,28 @@ export function AddPaymentDialog({ isOpen, onOpenChange, serviceOrder, onSave }:
         }
         
         const remainingBalance = balanceDue - entry;
-        const installmentAmount = installments > 0 ? remainingBalance / installments : 0;
+        if (remainingBalance <= 0 && entry > 0) {
+           // This case is handled as full payment now. No installments needed.
+        } else if (installments > 0) {
+          const installmentAmount = remainingBalance / installments;
 
-        for (let i = 0; i < installments; i++) {
-            const dueDate = addMonths(firstDueDate || new Date(), i);
-            const isFirstInstallmentWithNoEntry = i === 0 && entry === 0;
+          for (let i = 0; i < installments; i++) {
+              const dueDate = addMonths(firstDueDate || new Date(), i);
 
-            // Registra o pagamento da primeira parcela APENAS se não houver entrada
-            if (isFirstInstallmentWithNoEntry) {
-                newPayments.push({ id: `PAY-${Date.now()}-${i}`, amount: installmentAmount, date: new Date().toISOString().split('T')[0], method: paymentMethod });
-            }
-
-            // Cria a transação financeira para CADA parcela
-            newTransactions.push({
-                id: `FIN-${Date.now()}-${i}`,
-                type: 'receita',
-                description: `Parcela ${i+1}/${installments} OS #${serviceOrder.id.slice(-4)}`,
-                amount: installmentAmount,
-                date: new Date().toISOString().split('T')[0], // Data de criação da transação
-                dueDate: format(dueDate, 'yyyy-MM-dd'), // Data de vencimento da parcela
-                category: 'Venda de Serviço',
-                paymentMethod,
-                relatedServiceOrderId: serviceOrder.id,
-                // A parcela só é paga se for a primeira e não houver entrada
-                status: isFirstInstallmentWithNoEntry ? 'pago' : 'pendente', 
-            });
+              // Cria a transação financeira para CADA parcela como pendente
+              newTransactions.push({
+                  id: `FIN-${Date.now()}-${i}`,
+                  type: 'receita',
+                  description: `Parcela ${i+1}/${installments} OS #${serviceOrder.id.slice(-4)}`,
+                  amount: installmentAmount,
+                  date: new Date().toISOString().split('T')[0], // Data de criação da transação
+                  dueDate: format(dueDate, 'yyyy-MM-dd'), // Data de vencimento da parcela
+                  category: 'Venda de Serviço',
+                  paymentMethod: paymentMethod, // Usar o método principal para referência
+                  relatedServiceOrderId: serviceOrder.id,
+                  status: 'pendente', 
+              });
+          }
         }
     }
     

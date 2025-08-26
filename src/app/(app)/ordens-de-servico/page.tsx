@@ -369,7 +369,17 @@ function ServiceOrdersComponent() {
             const updatedPayments = [...(o.payments || []), ...newPayments];
             const totalPaid = updatedPayments.reduce((acc, p) => acc + p.amount, 0);
             const totalValue = o.finalValue ?? o.totalValue ?? 0;
-            const newStatus = totalPaid >= totalValue ? 'Finalizado' : 'Aguardando Pagamento';
+            const hasPendingInstallments = newTransactions.some(t => t.status === 'pendente');
+
+            let newStatus: ServiceOrder['status'] = o.status;
+            if (hasPendingInstallments) {
+                newStatus = 'Aguardando Pagamento';
+            } else if (totalPaid >= totalValue) {
+                newStatus = 'Finalizado';
+            } else {
+                 newStatus = 'Aguardando Pagamento';
+            }
+            
             return { ...o, payments: updatedPayments, status: newStatus };
         }
         return o;
@@ -382,7 +392,7 @@ function ServiceOrdersComponent() {
 
     toast({
         title: 'Pagamento Processado!',
-        description: `${newPayments.length} pagamento(s) foram registrados com sucesso.`
+        description: `${newPayments.length} pagamento(s) e/ou ${newTransactions.length} pendência(s) foram registrados.`
     });
     setIsPaymentDialogOpen(false);
   };

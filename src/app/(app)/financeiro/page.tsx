@@ -187,86 +187,48 @@ export default function FinanceiroPage() {
   };
 
   const handleMarkAsPaid = async (txId: string) => {
-    const transactionToPay = allTransactions.find(tx => tx.id === txId);
-    if (!transactionToPay) return;
-
-    // Update financial transaction
-    const updatedTransactions = allTransactions.map(tx => 
-        tx.id === txId ? { ...tx, status: 'pago' as const, date: new Date().toISOString().split('T')[0] } : tx
-    );
+    let transactionToPay: FinancialTransaction | undefined;
+    const updatedTransactions = allTransactions.map(tx => {
+        if (tx.id === txId) {
+            transactionToPay = { ...tx, status: 'pago' as const, date: new Date().toISOString().split('T')[0] };
+            return transactionToPay;
+        }
+        return tx;
+    });
     setAllTransactions(updatedTransactions);
     await saveFinancialTransactions(updatedTransactions);
 
-    // If it's related to an OS, update the OS
-    if (transactionToPay.relatedServiceOrderId) {
+    // If it's related to an OS, check if it was the last pending payment
+    if (transactionToPay?.relatedServiceOrderId) {
         const osId = transactionToPay.relatedServiceOrderId;
-        const currentOrders = await getServiceOrders();
-        let osUpdated = false;
+        const remainingPending = updatedTransactions.some(tx => 
+            tx.relatedServiceOrderId === osId && tx.status === 'pendente'
+        );
 
-        const updatedOrders = currentOrders.map(order => {
-            if (order.id === osId) {
-                const newPayment: OSPayment = {
-                    id: `PAY-${Date.now()}`,
-                    amount: transactionToPay.amount,
-                    date: new Date().toISOString().split('T')[0],
-                    method: transactionToPay.paymentMethod,
-                };
-                
-                const existingPayments = order.payments || [];
-                const updatedPayments = [...existingPayments, newPayment];
-                const totalPaid = updatedPayments.reduce((acc, p) => acc + p.amount, 0);
-                const totalValue = order.finalValue ?? order.totalValue ?? 0;
-                
-                const updatedOrder = {
-                    ...order,
-                    payments: updatedPayments,
-                    status: totalPaid >= totalValue ? 'Finalizado' : order.status,
-                };
-                osUpdated = true;
-                return updatedOrder;
-            }
-            return order;
-        });
-
-        if (osUpdated) {
-            setAllServiceOrders(updatedOrders);
+        if (!remainingPending) {
+            const currentOrders = await getServiceOrders();
+            const updatedOrders = currentOrders.map(order => {
+                if (order.id === osId) {
+                    return { ...order, status: 'Finalizado' as const };
+                }
+                return order;
+            });
             await saveServiceOrders(updatedOrders);
+            setAllServiceOrders(updatedOrders);
+            window.dispatchEvent(new Event('storage-change-serviceOrders')); // Notify other components
+            toast({ title: 'Ordem de Serviço Finalizada!', description: `A OS #${osId.slice(-4)} foi concluída pois todos os pagamentos foram quitados.` });
+        } else {
+             toast({ title: 'Sucesso!', description: 'Parcela marcada como paga.'});
         }
+    } else {
+         toast({ title: 'Sucesso!', description: 'Transação marcada como paga.'});
     }
-
-    toast({ title: 'Sucesso!', description: 'Transação marcada como paga.'});
-    // The component will re-render due to state change, refreshing the lists.
   };
 
   const combinedReceivables = React.useMemo(() => {
       const pendingTransactions = allTransactions.filter(t => t.status === 'pendente' && t.type === 'receita');
-      
-      const osReceivables = allServiceOrders.flatMap(o => {
-          const totalPaid = o.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
-          const balanceDue = (o.finalValue ?? o.totalValue ?? 0) - totalPaid;
-          if (o.status === 'Aguardando Pagamento' && balanceDue > 0) {
-              return [{
-                  id: `OS-PENDING-${o.id}`,
-                  type: 'receita' as const,
-                  description: `Saldo pendente OS #${o.id.slice(-4)} - ${o.customerName}`,
-                  amount: balanceDue,
-                  date: o.date,
-                  dueDate: o.deliveredDate,
-                  status: 'pendente' as const,
-                  category: 'Venda de Serviço' as const,
-                  paymentMethod: o.paymentMethod || 'Pendente',
-                  relatedServiceOrderId: o.id,
-              }];
-          }
-          return [];
-      });
-
-      // Remove os-based receivables if there are already specific pending financial transactions for it
-      const pendingOsIdsWithTransactions = new Set(pendingTransactions.map(t => t.relatedServiceOrderId));
-      const filteredOsReceivables = osReceivables.filter(o => !pendingOsIdsWithTransactions.has(o.relatedServiceOrderId));
-
-      return [...pendingTransactions, ...filteredOsReceivables].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [allTransactions, allServiceOrders]);
+      return [...pendingTransactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [allTransactions]);
 
 
   const filteredTransactions = React.useMemo(() => {

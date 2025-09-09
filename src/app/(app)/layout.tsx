@@ -22,12 +22,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isVerified, setIsVerified] = React.useState(false);
 
   React.useEffect(() => {
-    const token = getSessionToken();
-    if (!token) {
-      router.replace('/');
-    } else {
-      setIsVerified(true);
-    }
+    const checkToken = async () => {
+      const token = await getSessionToken();
+      if (!token) {
+        router.replace('/');
+      } else {
+        setIsVerified(true);
+      }
+    };
+    checkToken();
   }, [router]);
 
   if (!isVerified) {

@@ -100,11 +100,6 @@ export function AppointmentReminder() {
       setCompanyInfo(info);
     };
     fetchCompanyInfo();
-    
-    // Listen for changes in company info to update sound URL
-    const handleInfoChange = () => fetchCompanyInfo();
-    window.addEventListener('companyInfoChanged', handleInfoChange);
-    return () => window.removeEventListener('companyInfoChanged', handleInfoChange);
   }, []);
 
 

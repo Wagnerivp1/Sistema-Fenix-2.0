@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import type { User } from '@/types';
-// No need to import getUsers, we will read directly from localStorage
+import { getLoggedInUser } from '@/lib/storage';
 
 interface AuthState {
   user: User | null;
@@ -17,36 +17,29 @@ export function useCurrentUser(): AuthState {
   });
 
   React.useEffect(() => {
-    const fetchUser = () => {
-      if (typeof window === 'undefined') {
-        setAuthState({ user: null, isLoading: false });
-        return;
-      }
-      
-      const loggedInUserObject = localStorage.getItem('loggedInUserObject');
-      if (loggedInUserObject) {
-        try {
-          const currentUser = JSON.parse(loggedInUserObject);
-          setAuthState({ user: currentUser, isLoading: false });
-        } catch (error) {
-          console.error("Failed to parse user data from localStorage:", error);
-          setAuthState({ user: null, isLoading: false });
-        }
-      } else {
+    const fetchUser = async () => {
+      try {
+        const currentUser = await getLoggedInUser();
+        setAuthState({ user: currentUser, isLoading: false });
+      } catch (error) {
+        console.error("Failed to fetch logged in user:", error);
         setAuthState({ user: null, isLoading: false });
       }
     };
 
     fetchUser();
+    
+    // Although we are not using localStorage anymore, other tabs might not
+    // be aware of a login/logout. A more robust solution might use
+    // BroadcastChannel or websockets, but for this app's scope, we can
+    // re-validate periodically or on window focus.
+    const handleFocus = () => fetchUser();
+    window.addEventListener('focus', handleFocus);
 
-    // The 'storage' event is generic and fires for any localStorage change
-    // from other tabs, ensuring session consistency.
-    const handleStorageChange = () => fetchUser();
-
-    window.addEventListener('storage', handleStorageChange);
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleFocus);
     };
+    
   }, []);
 
   return authState;

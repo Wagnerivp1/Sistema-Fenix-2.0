@@ -26,10 +26,9 @@ export function HeaderActions() {
     const router = useRouter();
     const { toast } = useToast();
 
-    const handleLogout = () => {
-        removeSessionToken();
+    const handleLogout = async () => {
+        await removeSessionToken();
         toast({ title: 'Logout bem-sucedido!', description: 'Você foi desconectado.' });
-        // Usar router.push para uma navegação mais suave no Next.js
         router.push('/');
     };
 

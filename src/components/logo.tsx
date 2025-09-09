@@ -25,14 +25,6 @@ function LogoInternal({ className }: { className?: string }) {
     };
 
     fetchCompanyInfo();
-
-    const handleStorageChange = () => fetchCompanyInfo();
-    
-    // Custom event dispatched from storage.ts when company info changes
-    window.addEventListener('companyInfoChanged', handleStorageChange);
-    return () => {
-        window.removeEventListener('companyInfoChanged', handleStorageChange);
-    };
   }, []);
 
   return (
@@ -62,14 +54,6 @@ export function Logo({ className, onLoginPage = false }: LogoProps) {
     };
 
     fetchCompanyInfo();
-
-    const handleStorageChange = () => fetchCompanyInfo();
-    
-    // Custom event dispatched from storage.ts when company info changes
-    window.addEventListener('companyInfoChanged', handleStorageChange);
-    return () => {
-        window.removeEventListener('companyInfoChanged', handleStorageChange);
-    };
   }, []);
   
   if (onLoginPage) {

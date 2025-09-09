@@ -58,10 +58,17 @@ export default function LoginPage() {
   const [newUserType, setNewUserType] = React.useState<'admin'>('admin');
 
   React.useEffect(() => {
-    getUsers(); 
-    
-    setIsLoading(false);
-  }, []);
+    // Check if a session already exists
+    const checkSession = async () => {
+      const token = await getSessionToken();
+      if (token) {
+        router.replace('/dashboard');
+      } else {
+        setIsLoading(false);
+      }
+    };
+    checkSession();
+  }, [router]);
   
   React.useEffect(() => {
     // Reset states when register dialog is closed
@@ -83,7 +90,7 @@ export default function LoginPage() {
       const inputPasswordEncoded = btoa(password);
 
       if (user && user.password === inputPasswordEncoded) {
-        saveSessionToken(`TOKEN-${Date.now()}-${Math.random()}`, user);
+        await saveSessionToken(`TOKEN-${Date.now()}-${Math.random()}`, user);
         toast({
           title: 'Login bem-sucedido!',
           description: `Bem-vindo, ${user.name}! Redirecionando...`,

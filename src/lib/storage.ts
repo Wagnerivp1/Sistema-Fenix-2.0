@@ -1,176 +1,185 @@
 
-'use client';
+'use server';
 
+import {promises as fs} from 'fs';
+import path from 'path';
 import type { Customer, ServiceOrder, StockItem, Sale, FinancialTransaction, User, CompanyInfo, Appointment, Quote, Kit } from '@/types';
 import stockData from '@/data/stock.json';
 import defaultUsersData from '@/data/users.json';
 
+// --- File Paths ---
+const dataDir = path.join(process.cwd(), 'src', 'data');
+const getFilePath = (filename: string) => path.join(dataDir, filename);
+
+const USERS_FILE = getFilePath('users.json');
+const CUSTOMERS_FILE = getFilePath('customers.json');
+const SERVICE_ORDERS_FILE = getFilePath('serviceOrders.json');
+const STOCK_FILE = getFilePath('stock.json');
+const SALES_FILE = getFilePath('sales.json');
+const FINANCIAL_TRANSACTIONS_FILE = getFilePath('financialTransactions.json');
+const APPOINTMENTS_FILE = getFilePath('appointments.json');
+const QUOTES_FILE = getFilePath('quotes.json');
+const KITS_FILE = getFilePath('kits.json');
+const COMPANY_INFO_FILE = getFilePath('companyInfo.json');
+const SETTINGS_FILE = getFilePath('settings.json');
+const SESSION_FILE = getFilePath('session.json');
+
+
 // --- Helper Functions ---
 
-// Helper to safely get data from localStorage, initializing with a default value if not present.
-function getFromStorage<T>(key: string, defaultValue: T): T {
-  if (typeof window === 'undefined') {
-    return defaultValue;
-  }
+async function readData<T>(filePath: string, defaultValue: T): Promise<T> {
   try {
-    const item = window.localStorage.getItem(key);
-    if (item === null) {
-      // If no item exists, set the default value in storage and return it.
-      window.localStorage.setItem(key, JSON.stringify(defaultValue));
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(fileContent);
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      // File doesn't exist, so write the default value and return it.
+      await writeData(filePath, defaultValue);
       return defaultValue;
     }
-    return JSON.parse(item);
-  } catch (error) {
-    console.error(`Error reading or parsing ${key} from localStorage. Initializing with default.`, error);
-    // Attempt to recover by setting the default value.
-    try {
-      window.localStorage.setItem(key, JSON.stringify(defaultValue));
-    } catch (e) {
-      console.error(`Failed to set default value for ${key} during recovery.`, e);
-    }
+    console.error(`Error reading file ${filePath}:`, error);
+    // In case of other errors (like parsing), return default to prevent crash
     return defaultValue;
   }
 }
 
-// Helper to safely save data to localStorage and notify other components
-function saveToStorage<T>(key: string, data: T): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
+async function writeData<T>(filePath: string, data: T): Promise<void> {
   try {
-    const serializedData = JSON.stringify(data);
-    window.localStorage.setItem(key, serializedData);
-    // Dispatch a custom event to notify other tabs/components of the change
-    window.dispatchEvent(new Event(`storage-change-${key}`));
-    // Also dispatch the generic storage event for wider compatibility (e.g., useAuth hook)
-    window.dispatchEvent(new Event('storage'));
+    const jsonString = JSON.stringify(data, null, 2);
+    await fs.writeFile(filePath, jsonString, 'utf-8');
   } catch (error) {
-    console.error(`Error saving ${key} to localStorage`, error);
+    console.error(`Error writing to file ${filePath}:`, error);
   }
 }
+
 
 // --- Auth Functions ---
 
-export function getSessionToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem('session_token');
+// Note: Session management will be simplified for a file-based system.
+// In a real multi-user scenario, a more robust session mechanism would be needed.
+
+export async function getSessionToken(): Promise<string | null> {
+    try {
+        const session = await readData<{ token: string | null }>(SESSION_FILE, { token: null });
+        return session.token;
+    } catch {
+        return null;
+    }
 }
 
-export function saveSessionToken(token: string, user: User): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem('session_token', token);
-  // Store the user login to identify who is logged in.
-  window.localStorage.setItem('loggedInUser', user.login);
-  // Also save the full user object (without password) for quick access by hooks.
-  const userToStore = { ...user };
-  delete userToStore.password;
-  window.localStorage.setItem('loggedInUserObject', JSON.stringify(userToStore));
-  window.dispatchEvent(new Event('storage')); // Notify components of login change
+export async function getLoggedInUser(): Promise<User | null> {
+    const users = await getUsers();
+    const session = await readData<{ loggedInUserLogin: string | null }>(SESSION_FILE, { loggedInUserLogin: null });
+    if (!session.loggedInUserLogin) return null;
+    
+    const user = users.find(u => u.login === session.loggedInUserLogin);
+    if (user) {
+      const userToReturn = { ...user };
+      delete userToReturn.password; // Never return password
+      return userToReturn;
+    }
+    return null;
 }
 
-
-export function removeSessionToken(): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem('session_token');
-  window.localStorage.removeItem('loggedInUser');
-  window.localStorage.removeItem('loggedInUserObject');
-  window.dispatchEvent(new Event('storage')); // Notify components of logout change
+export async function saveSessionToken(token: string, user: User): Promise<void> {
+    await writeData(SESSION_FILE, { token, loggedInUserLogin: user.login });
 }
+
+export async function removeSessionToken(): Promise<void> {
+    await writeData(SESSION_FILE, { token: null, loggedInUserLogin: null });
+}
+
 
 // Users
 export async function getUsers(): Promise<User[]> {
-  // Type assertion because the imported JSON will conform to User[]
-  return getFromStorage<User[]>('users', defaultUsersData as User[]);
+  return await readData<User[]>(USERS_FILE, defaultUsersData as User[]);
 }
 
 export async function saveUsers(users: User[]): Promise<void> {
-  saveToStorage('users', users);
+  await writeData(USERS_FILE, users);
 }
-
-// --- Data Functions ---
 
 // Customers
 export async function getCustomers(): Promise<Customer[]> {
-  return getFromStorage<Customer[]>('customers', []);
+  return await readData<Customer[]>(CUSTOMERS_FILE, []);
 }
 export async function saveCustomers(customers: Customer[]): Promise<void> {
-  saveToStorage('customers', customers);
+  await writeData(CUSTOMERS_FILE, customers);
 }
 
 // Service Orders
 export async function getServiceOrders(): Promise<ServiceOrder[]> {
-  return getFromStorage<ServiceOrder[]>('serviceOrders', []);
+  return await readData<ServiceOrder[]>(SERVICE_ORDERS_FILE, []);
 }
 export async function saveServiceOrders(orders: ServiceOrder[]): Promise<void> {
-  saveToStorage('serviceOrders', orders);
+  await writeData(SERVICE_ORDERS_FILE, orders);
 }
 
 // Stock Items
 export async function getStock(): Promise<StockItem[]> {
-  // Type assertion because the imported JSON will conform to StockItem[]
-  return getFromStorage<StockItem[]>('stock', stockData as StockItem[]);
+  return await readData<StockItem[]>(STOCK_FILE, stockData as StockItem[]);
 }
 export async function saveStock(stock: StockItem[]): Promise<void> {
-  saveToStorage('stock', stock);
+  await writeData(STOCK_FILE, stock);
 }
 
 // Sales
 export async function getSales(): Promise<Sale[]> {
-  return getFromStorage<Sale[]>('sales', []);
+  return await readData<Sale[]>(SALES_FILE, []);
 }
 export async function saveSales(sales: Sale[]): Promise<void> {
-  saveToStorage('sales', sales);
+  await writeData(SALES_FILE, sales);
 }
 
 // Financial Transactions
 export async function getFinancialTransactions(): Promise<FinancialTransaction[]> {
-  return getFromStorage<FinancialTransaction[]>('financialTransactions', []);
+  return await readData<FinancialTransaction[]>(FINANCIAL_TRANSACTIONS_FILE, []);
 }
 export async function saveFinancialTransactions(transactions: FinancialTransaction[]): Promise<void> {
-  saveToStorage('financialTransactions', transactions);
+  await writeData(FINANCIAL_TRANSACTIONS_FILE, transactions);
 }
 
 // Appointments
 export async function getAppointments(): Promise<Appointment[]> {
-  return getFromStorage<Appointment[]>('appointments', []);
+  return await readData<Appointment[]>(APPOINTMENTS_FILE, []);
 }
 export async function saveAppointments(appointments: Appointment[]): Promise<void> {
-  saveToStorage('appointments', appointments);
+  await writeData(APPOINTMENTS_FILE, appointments);
 }
 
 // Quotes
 export async function getQuotes(): Promise<Quote[]> {
-  return getFromStorage<Quote[]>('quotes', []);
+  return await readData<Quote[]>(QUOTES_FILE, []);
 }
 export async function saveQuotes(quotes: Quote[]): Promise<void> {
-  saveToStorage('quotes', quotes);
+  await writeData(QUOTES_FILE, quotes);
 }
 
 // Kits
 export async function getKits(): Promise<Kit[]> {
-  return getFromStorage<Kit[]>('kits', []);
+  return await readData<Kit[]>(KITS_FILE, []);
 }
 export async function saveKits(kits: Kit[]): Promise<void> {
-  saveToStorage('kits', kits);
+  await writeData(KITS_FILE, kits);
 }
+
 
 // --- Singleton Data ---
 
 // Company Info
 export async function getCompanyInfo(): Promise<CompanyInfo> {
   const defaultValue: CompanyInfo = { name: 'Assistec Now', address: '', phone: '', emailOrSite: '', document: '', logoUrl: '', pixKey: '', notificationSoundUrl: '' };
-  return getFromStorage<CompanyInfo>('companyInfo', defaultValue);
+  return await readData<CompanyInfo>(COMPANY_INFO_FILE, defaultValue);
 }
 export async function saveCompanyInfo(info: CompanyInfo): Promise<void> {
-  saveToStorage('companyInfo', info);
-  window.dispatchEvent(new Event('companyInfoChanged'));
+  await writeData(COMPANY_INFO_FILE, info);
 }
 
 // General Settings
 export async function getSettings(): Promise<{ defaultWarrantyDays: number }> {
   const defaultValue = { defaultWarrantyDays: 90 };
-  return getFromStorage<{ defaultWarrantyDays: number }>('settings', defaultValue);
+  return await readData<{ defaultWarrantyDays: number }>(SETTINGS_FILE, defaultValue);
 }
 export async function saveSettings(settings: { defaultWarrantyDays: number }): Promise<void> {
-  saveToStorage('settings', settings);
+  await writeData(SETTINGS_FILE, settings);
 }

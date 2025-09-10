@@ -1,0 +1,493 @@
+[
+  {
+    "description": "Clínica Harmonia",
+    "amount": 220,
+    "date": "2025-08-26",
+    "category": "Outra Receita",
+    "paymentMethod": "PIX",
+    "type": "receita",
+    "id": "FIN-1756240852065"
+  },
+  {
+    "description": "Farmácia Remédio Ana",
+    "amount": 29.8,
+    "date": "2025-08-26",
+    "category": "Outra Despesa",
+    "paymentMethod": "Dinheiro",
+    "type": "despesa",
+    "id": "FIN-1756240786720"
+  },
+  {
+    "description": "Farmácia ",
+    "amount": 6.5,
+    "date": "2025-08-26",
+    "category": "Outra Despesa",
+    "paymentMethod": "Dinheiro",
+    "type": "despesa",
+    "id": "FIN-1756240743185"
+  },
+  {
+    "description": "RECARGA CARTUCHO PRETO",
+    "amount": 30,
+    "date": "2025-08-26",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "type": "receita",
+    "id": "FIN-1756240641929"
+  },
+  {
+    "id": "FIN-1756236651813",
+    "type": "receita",
+    "description": "Pagamento integral OS #3219",
+    "amount": 130,
+    "date": "2025-08-26",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "relatedServiceOrderId": "OS-1755801113219",
+    "status": "pago"
+  },
+  {
+    "description": "Compra de copos ",
+    "amount": 11.08,
+    "date": "2025-08-25",
+    "category": "Outra Despesa",
+    "paymentMethod": "Cartão de Crédito",
+    "type": "despesa",
+    "id": "FIN-1756142150608"
+  },
+  {
+    "id": "FIN-1755883692285",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 75,
+    "date": "2025-08-22",
+    "category": "Venda de Produto",
+    "paymentMethod": "pix",
+    "relatedSaleId": "SALE-1755883690891",
+    "status": "pago"
+  },
+  {
+    "id": "FIN-1755883643768",
+    "type": "receita",
+    "description": "Venda de Produtos (PDV)",
+    "amount": 115,
+    "date": "2025-08-22",
+    "category": "Venda de Produto",
+    "paymentMethod": "pix",
+    "relatedSaleId": "SALE-1755883641155",
+    "status": "pago"
+  },
+  {
+    "description": "Cartão mercado pago",
+    "amount": 780,
+    "date": "2025-08-20",
+    "category": "Outra Despesa",
+    "paymentMethod": "PIX",
+    "type": "despesa",
+    "id": "FIN-1755721767702"
+  },
+  {
+    "description": "advocacia SINGH",
+    "amount": 60,
+    "date": "2025-08-20",
+    "category": "Outra Receita",
+    "paymentMethod": "PIX",
+    "type": "receita",
+    "id": "FIN-1755717695994"
+  },
+  {
+    "id": "FIN-1755714453063-entry",
+    "type": "receita",
+    "description": "Entrada OS #5342",
+    "amount": 500,
+    "date": "2025-08-20",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1755714015342",
+    "status": "pago"
+  },
+  {
+    "id": "FIN-1755714453063-0",
+    "type": "receita",
+    "description": "Parcela 1/3 OS #5342",
+    "amount": 300,
+    "date": "2025-08-20",
+    "dueDate": "2025-09-20",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1755714015342",
+    "status": "pendente"
+  },
+  {
+    "id": "FIN-1755714453064-1",
+    "type": "receita",
+    "description": "Parcela 2/3 OS #5342",
+    "amount": 300,
+    "date": "2025-08-20",
+    "dueDate": "2025-10-20",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1755714015342",
+    "status": "pendente"
+  },
+  {
+    "id": "FIN-1755714453064-2",
+    "type": "receita",
+    "description": "Parcela 3/3 OS #5342",
+    "amount": 300,
+    "date": "2025-08-20",
+    "dueDate": "2025-11-20",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1755714015342",
+    "status": "pendente"
+  },
+  {
+    "description": "Certidão ",
+    "amount": 80,
+    "date": "2025-08-20",
+    "category": "Outra Despesa",
+    "paymentMethod": "PIX",
+    "type": "despesa",
+    "id": "FIN-1755713912198"
+  },
+  {
+    "id": "FIN-1755713581398",
+    "type": "receita",
+    "description": "Pagamento integral OS #3765",
+    "amount": 360,
+    "date": "2025-08-20",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "relatedServiceOrderId": "OS-1755635393765",
+    "status": "pago"
+  },
+  {
+    "id": "FIN-1755537902350-0",
+    "type": "receita",
+    "description": "Parcela 1/1 - Venda #902335",
+    "amount": 140,
+    "date": "2025-08-20",
+    "dueDate": "2025-08-22",
+    "category": "Venda de Produto",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1755537902335",
+    "status": "pago"
+  },
+  {
+    "description": "SOLDA",
+    "amount": 18,
+    "date": "2025-08-19",
+    "category": "Outra Despesa",
+    "paymentMethod": "Dinheiro",
+    "type": "despesa",
+    "id": "FIN-1755631714577"
+  },
+  {
+    "description": "Etiquetas",
+    "amount": 10,
+    "date": "2025-08-18",
+    "category": "Outra Despesa",
+    "paymentMethod": "Dinheiro",
+    "type": "despesa",
+    "id": "FIN-1755542038789"
+  },
+  {
+    "id": "FIN-1755537765707-0",
+    "type": "receita",
+    "description": "Parcela 1/1 - Venda #703615",
+    "amount": 600,
+    "date": "2025-08-18",
+    "dueDate": "2025-09-18",
+    "category": "Venda de Produto",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1755537703615",
+    "status": "pendente"
+  },
+  {
+    "description": "Colégio objetivo ",
+    "amount": 1191.5,
+    "date": "2025-08-18",
+    "category": "Outra Receita",
+    "paymentMethod": "PIX",
+    "type": "receita",
+    "id": "FIN-1755536071750"
+  },
+  {
+    "id": "FIN-1755518079835",
+    "type": "receita",
+    "description": "Pagamento integral OS #0428",
+    "amount": 360,
+    "date": "2025-08-18",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1755019840428",
+    "status": "pago"
+  },
+  {
+    "description": "PAGAMENTO  CARTAO MELIUZ ",
+    "amount": 1142.55,
+    "date": "2025-08-15",
+    "category": "Outra Despesa",
+    "paymentMethod": "PIX",
+    "type": "despesa",
+    "id": "FIN-1755279473360"
+  },
+  {
+    "description": "PAGAMENTO CLINICA SAO FRANCISCO ",
+    "amount": 300,
+    "date": "2025-08-15",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "type": "receita",
+    "id": "FIN-1755279410472"
+  },
+  {
+    "description": "PAGAMENTO FORNECEDOR ( INTERVIA INFORMÁTICA)",
+    "amount": 2299.8,
+    "date": "2025-08-15",
+    "category": "Outra Despesa",
+    "paymentMethod": "Dinheiro",
+    "type": "despesa",
+    "id": "FIN-1755279378105"
+  },
+  {
+    "description": "COMPRA DE BOLACHA DOCE ",
+    "amount": 6,
+    "date": "2025-08-15",
+    "category": "Outra Despesa",
+    "paymentMethod": "Cartão de Crédito",
+    "type": "despesa",
+    "id": "FIN-1755267291351"
+  },
+  {
+    "id": "FIN-1755267219550",
+    "type": "receita",
+    "description": "Pagamento integral OS #0241",
+    "amount": 120,
+    "date": "2025-08-15",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "relatedServiceOrderId": "OS-1755000060241",
+    "status": "pago"
+  },
+  {
+    "id": "FIN-1755267089222",
+    "type": "receita",
+    "description": "Pagamento integral OS #9857",
+    "amount": 0,
+    "date": "2025-08-15",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1755104379857",
+    "status": "pago"
+  },
+  {
+    "id": "FIN-1755267051614",
+    "type": "receita",
+    "description": "Pagamento integral OS #5950",
+    "amount": 50,
+    "date": "2025-08-15",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "relatedServiceOrderId": "OS-1755109335950",
+    "status": "pago"
+  },
+  {
+    "id": "FIN-1755193178505-entry",
+    "type": "receita",
+    "description": "Entrada OS #2682",
+    "amount": 475,
+    "date": "2025-08-14",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "1753379126419-0.7429841024912682",
+    "status": "pago"
+  },
+  {
+    "id": "FIN-1755193178505-0",
+    "type": "receita",
+    "description": "Parcela 1/1 OS #2682",
+    "amount": 475,
+    "date": "2025-08-14",
+    "dueDate": "2025-09-14",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "1753379126419-0.7429841024912682",
+    "status": "pendente"
+  },
+  {
+    "description": "JÚLIA COLÉGIO OBJETIVO ",
+    "amount": 60,
+    "date": "2025-08-14",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "type": "receita",
+    "id": "FIN-1755191784673"
+  },
+  {
+    "description": "ADVOCACIA BICHARA DOUTOR MOISÉS",
+    "amount": 120,
+    "date": "2025-08-14",
+    "category": "Venda de Serviço",
+    "paymentMethod": "PIX",
+    "type": "receita",
+    "id": "FIN-1755191725770"
+  },
+  {
+    "description": "Acerto márcio",
+    "amount": 615,
+    "date": "2025-08-13",
+    "category": "Outra Despesa",
+    "paymentMethod": "Dinheiro",
+    "type": "despesa",
+    "id": "FIN-1755111944477"
+  },
+  {
+    "description": "Mensalidade Concrevale",
+    "amount": 350,
+    "date": "2025-08-13",
+    "category": "Outra Receita",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1755111297054"
+  },
+  {
+    "description": "Contador ",
+    "amount": 120,
+    "date": "2025-08-13",
+    "category": "Outra Despesa",
+    "paymentMethod": "PIX",
+    "type": "despesa",
+    "id": "FIN-1755104837080"
+  },
+  {
+    "description": "Cartão Digio",
+    "amount": 619.87,
+    "date": "2025-08-13",
+    "category": "Outra Despesa",
+    "paymentMethod": "PIX",
+    "type": "despesa",
+    "id": "FIN-1755104806600"
+  },
+  {
+    "description": "GASOLINA CARRO ",
+    "amount": 154.9,
+    "date": "2025-08-13",
+    "category": "Outra Despesa",
+    "paymentMethod": "PIX",
+    "type": "despesa",
+    "id": "FIN-1755104739968"
+  },
+  {
+    "description": "Toner tinta",
+    "amount": 800,
+    "date": "2025-08-13",
+    "category": "Outra Despesa",
+    "paymentMethod": "PIX",
+    "type": "despesa",
+    "id": "FIN-1755104586792"
+  },
+  {
+    "description": "Luz loja ",
+    "amount": 106.19,
+    "date": "2025-08-13",
+    "category": "Outra Despesa",
+    "paymentMethod": "PIX",
+    "type": "despesa",
+    "id": "FIN-1755104520121"
+  },
+  {
+    "type": "receita",
+    "description": "Recebimento OS #2767",
+    "amount": 3200,
+    "date": "2025-08-13",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "1754069617587-0.9460596986242767",
+    "id": "FIN-1755090879545"
+  },
+  {
+    "type": "receita",
+    "description": "Recebimento OS #9898",
+    "amount": 320,
+    "date": "2025-08-13",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "1754327946552-0.6291500893709898",
+    "id": "FIN-1755090860530"
+  },
+  {
+    "type": "receita",
+    "description": "Recebimento OS #3457",
+    "amount": 120,
+    "date": "2025-08-12",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "relatedServiceOrderId": "OS-1755027893457",
+    "id": "FIN-1755028909921"
+  },
+  {
+    "description": "ACERTO TRINDADE",
+    "amount": 220,
+    "date": "2025-08-12",
+    "category": "Outra Receita",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1755028453551"
+  },
+  {
+    "description": "COMPRA DE BOLACHA E CAFÉ",
+    "amount": 38.77,
+    "date": "2025-08-12",
+    "category": "Outra Despesa",
+    "paymentMethod": "Cartão de Crédito",
+    "type": "despesa",
+    "id": "FIN-1755028405295"
+  },
+  {
+    "description": "ESCOLA IVAIPORÃ",
+    "amount": 200,
+    "date": "2025-08-12",
+    "category": "Venda de Produto",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1755022337418"
+  },
+  {
+    "description": "DR JOÃO RENATO ",
+    "amount": 20,
+    "date": "2025-08-12",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1755022116546"
+  },
+  {
+    "description": "INTERNET LOJA",
+    "amount": 59.18,
+    "date": "2025-08-12",
+    "category": "Outra Despesa",
+    "paymentMethod": "Dinheiro",
+    "type": "despesa",
+    "id": "FIN-1755022036858"
+  },
+  {
+    "description": "CHAMADO EDUARDO ADVOGADO",
+    "amount": 40,
+    "date": "2025-08-12",
+    "category": "Venda de Serviço",
+    "paymentMethod": "Dinheiro",
+    "type": "receita",
+    "id": "FIN-1755021968283"
+  },
+  {
+    "description": "GASOLINA CARRO ",
+    "amount": 62,
+    "date": "2025-08-12",
+    "category": "Outra Despesa",
+    "paymentMethod": "Cartão de Crédito",
+    "type": "despesa",
+    "id": "FIN-1755021589348"
+  }
+]

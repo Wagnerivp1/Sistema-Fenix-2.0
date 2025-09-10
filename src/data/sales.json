@@ -1,0 +1,102 @@
+[
+  {
+    "id": "SALE-1755537703615",
+    "date": "2025-08-18",
+    "time": "14:22:45",
+    "user": "Wagner lopes",
+    "items": [
+      {
+        "id": "PROD-1755537230951",
+        "name": "Tinta Epson 544 (magenta)",
+        "price": 75,
+        "quantity": 2
+      },
+      {
+        "id": "PROD-1755537298582",
+        "name": "Tinta Epson 544 (amarela)",
+        "price": 75,
+        "quantity": 2
+      },
+      {
+        "id": "PROD-1755537343646",
+        "name": "Tinta Epson 544 (Preta)",
+        "price": 75,
+        "quantity": 2
+      },
+      {
+        "id": "PROD-1755537408950",
+        "name": "Tinta Epson 544 (Azul)",
+        "price": 75,
+        "quantity": 2
+      }
+    ],
+    "subtotal": 600,
+    "discount": 0,
+    "total": 600,
+    "paymentMethod": "parcelado",
+    "observations": ""
+  },
+  {
+    "id": "SALE-1755537902335",
+    "date": "2025-08-18",
+    "time": "14:25:02",
+    "user": "Wagner lopes",
+    "items": [
+      {
+        "id": "PROD-1755535876701",
+        "name": "Tonner HP 283a",
+        "price": 70,
+        "quantity": 2
+      }
+    ],
+    "subtotal": 140,
+    "discount": 0,
+    "total": 140,
+    "paymentMethod": "parcelado",
+    "observations": ""
+  },
+  {
+    "id": "SALE-1755883641155",
+    "date": "2025-08-22",
+    "time": "14:27:23",
+    "user": "João Pedro Boeno Lopes",
+    "items": [
+      {
+        "id": "PROD-1755882938841",
+        "name": "Cartucho HP 667 (preto)",
+        "price": 95,
+        "quantity": 1
+      },
+      {
+        "name": "Recarga de cartucho colorido 667",
+        "price": 20,
+        "quantity": 1,
+        "id": "ITEM-1755883630506"
+      }
+    ],
+    "subtotal": 115,
+    "discount": 0,
+    "total": 115,
+    "paymentMethod": "pix",
+    "observations": ""
+  },
+  {
+    "id": "SALE-1755883690891",
+    "date": "2025-08-22",
+    "time": "14:28:12",
+    "user": "João Pedro Boeno Lopes",
+    "items": [
+      {
+        "id": "PROD-1755537343646",
+        "name": "Tinta Epson 544 (Preta)",
+        "price": 75,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 75,
+    "discount": 0,
+    "total": 75,
+    "paymentMethod": "pix",
+    "observations": ""
+  }
+]

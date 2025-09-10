@@ -1,1 +1,2060 @@
-[]
+[
+  {
+    "id": "OS-1756145668155",
+    "customerName": "OAB (subseção de Ivaiporã)",
+    "equipment": "COMPUTADOR S/M SEM MODELO",
+    "reportedProblem": "Troca da Fonte",
+    "status": "Finalizado",
+    "date": "2025-08-25",
+    "totalValue": 120,
+    "items": [
+      {
+        "description": "fonte ",
+        "quantity": 1,
+        "unitPrice": 120,
+        "type": "service",
+        "id": 1756236476716
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1756236532428-0",
+        "amount": 120,
+        "date": "2025-08-26",
+        "method": "Dinheiro"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "João Pedro Boeno Lopes"
+  },
+  {
+    "id": "OS-1756145364427",
+    "customerName": "Marcelo Kuplens",
+    "equipment": "COMPUTADOR S/M S/M",
+    "reportedProblem": "Orçamento",
+    "status": "Aguardando Pagamento",
+    "date": "2025-08-25",
+    "totalValue": 0,
+    "items": [],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "João Pedro Boeno Lopes"
+  },
+  {
+    "id": "OS-1756142585464",
+    "customerName": "Advocacia Júlio César da Costa",
+    "equipment": "NOTEBOOK ACER SEM MODELO",
+    "reportedProblem": "Lento ",
+    "status": "Aberta",
+    "date": "2025-08-25",
+    "totalValue": 0,
+    "items": [],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "Carregador",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "João Pedro Boeno Lopes"
+  },
+  {
+    "id": "OS-1755801190769",
+    "customerName": "Wagner Pizzaia ",
+    "equipment": "Impressora EPSON L3250",
+    "reportedProblem": "NÃO SAI TINTA PRETA",
+    "status": "Aberta",
+    "date": "2025-08-21",
+    "totalValue": 0,
+    "items": [],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "X5EU263836",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755801113219",
+    "customerName": "Wagner Pizzaia ",
+    "equipment": "Impressora epson L3110",
+    "reportedProblem": "NÃO SAI TINTA ",
+    "status": "Finalizado",
+    "date": "2025-08-21",
+    "totalValue": 130,
+    "items": [
+      {
+        "description": "Manutenção preventiva + Recuperação cabeça de impressão ",
+        "quantity": 1,
+        "unitPrice": 130,
+        "type": "service",
+        "id": 1756236635540
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1756236651813",
+        "amount": 130,
+        "date": "2025-08-26",
+        "method": "PIX"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "X5EU074422",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755714794070",
+    "customerName": "Freitas e Goedert (advocacia)",
+    "equipment": "Dois monitores S/M SEM MODELO",
+    "reportedProblem": "Não liga",
+    "status": "Aberta",
+    "date": "2025-08-20",
+    "totalValue": 0,
+    "items": [],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755714015342",
+    "customerName": "Escola ivaipoã. ",
+    "equipment": "Impressora Brother MCP-8952w",
+    "reportedProblem": "Semi-nova",
+    "status": "Aguardando Pagamento",
+    "date": "2025-08-20",
+    "totalValue": 1400,
+    "items": [
+      {
+        "description": "Venda Impressora Brother",
+        "quantity": 1,
+        "unitPrice": 1400,
+        "type": "service",
+        "id": 1755714424462
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1755714453063-entry",
+        "amount": 500,
+        "date": "2025-08-20",
+        "method": "Dinheiro"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "Venda",
+    "accessories": "Semi-nova",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755635393765",
+    "customerName": "RODOLF RODRIGUES DOS SANTOS ",
+    "equipment": "COMPUTADOR",
+    "reportedProblem": "FOMATAÇÃO MAIS SSD",
+    "status": "Finalizado",
+    "date": "2025-08-19",
+    "totalValue": 360,
+    "items": [
+      {
+        "description": "Formatação + ssd 240 ",
+        "quantity": 1,
+        "unitPrice": 360,
+        "type": "service",
+        "id": 1755697809876
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1755713581398",
+        "amount": 360,
+        "date": "2025-08-20",
+        "method": "PIX"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755547483138",
+    "customerName": "Thai Lanches",
+    "equipment": "NOTEBOOK POSITIVO Unique S2460",
+    "reportedProblem": "Não liga",
+    "status": "Aberta",
+    "date": "2025-08-18",
+    "totalValue": 0,
+    "items": [],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "Carregador",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755546412313",
+    "customerName": "APAC",
+    "equipment": "computador POSITIVO SEM MODELO",
+    "reportedProblem": "Formatação",
+    "status": "Aberta",
+    "date": "2025-08-18",
+    "totalValue": 880,
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 80,
+        "type": "service",
+        "id": 1755546343888
+      },
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 10,
+        "unitPrice": 80,
+        "type": "service",
+        "id": 1755546407313
+      }
+    ],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755544815783",
+    "customerName": "Hotel Vilhar ",
+    "equipment": "NO S/M S/M",
+    "reportedProblem": "Chamado Técnico",
+    "status": "Aguardando Pagamento",
+    "date": "2025-08-18",
+    "totalValue": 120,
+    "items": [
+      {
+        "description": "Configuração e compatilhamento de rede",
+        "quantity": 1,
+        "unitPrice": 120,
+        "type": "service",
+        "id": 1755544763815
+      }
+    ],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755518045777",
+    "customerName": "CLINICA HARMONIA ",
+    "equipment": "\\X\\ZX \\ZX\\ \\ZX",
+    "reportedProblem": "\\ZX",
+    "status": "Entregue",
+    "date": "2025-08-18",
+    "totalValue": 0,
+    "items": [],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "\\ZX\\",
+    "accessories": "\\ZX\\",
+    "serialNumber": "\\ZX\\",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes",
+    "deliveredDate": "2025-08-18"
+  },
+  {
+    "id": "OS-1755517885970",
+    "customerName": "CLINICA HARMONIA ",
+    "equipment": "IMPRESSORA EPSON L3250",
+    "reportedProblem": "MECANISMO TRAVADO ",
+    "status": "Entregue",
+    "date": "2025-08-18",
+    "totalValue": 220,
+    "items": [
+      {
+        "description": "Manutenção preventiva + Recuperação cabeça de impressão ",
+        "quantity": 1,
+        "unitPrice": 220,
+        "type": "service",
+        "id": 1756240681080
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1756148085679-0",
+        "amount": 220,
+        "date": "2025-08-25",
+        "method": "Dinheiro"
+      },
+      {
+        "id": "PAY-1756148297381-0",
+        "amount": 0,
+        "date": "2025-08-25",
+        "method": "Dinheiro"
+      },
+      {
+        "id": "PAY-1756236710316",
+        "amount": 0,
+        "date": "2025-08-26",
+        "method": "PIX"
+      },
+      {
+        "id": "PAY-1756236865644",
+        "amount": 0,
+        "date": "2025-08-26",
+        "method": "PIX"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "EFETUADO DIAGNÓSTICO E CONSTATADO A NECESSIDADE DE FAZER O RESET DA IMPRESSORA.",
+    "accessories": "SEM ACESSÓRIOS",
+    "serialNumber": "XAAB348012",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes",
+    "deliveredDate": "2025-08-26"
+  },
+  {
+    "id": "OS-1755267116271",
+    "customerName": "HÉLCIO CAMARGO",
+    "equipment": "NOTEBOOK Advocacia Arruda  RTYR",
+    "reportedProblem": "RTY",
+    "status": "Finalizado",
+    "date": "2025-08-15",
+    "totalValue": 0,
+    "items": [],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "RTYRT",
+    "accessories": "RTYR",
+    "serialNumber": "RTYR",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755267102334",
+    "customerName": "HÉLCIO CAMARGO",
+    "equipment": "RTYRT RTY RTYR",
+    "reportedProblem": "RTYR",
+    "status": "Finalizado",
+    "date": "2025-08-15",
+    "totalValue": 0,
+    "items": [],
+    "payments": [],
+    "internalNotes": [],
+    "technicalReport": "RTY",
+    "accessories": "RTY",
+    "serialNumber": "RTYR",
+    "warranty": "90 dias",
+    "attendant": "Wagner lopes"
+  },
+  {
+    "id": "OS-1755109335950",
+    "customerName": "ADVOCACIA Doutor Gilmar",
+    "equipment": "Computador S/A SEM MODELO",
+    "reportedProblem": "Chamado Técnico",
+    "status": "Finalizado",
+    "date": "2025-08-13",
+    "totalValue": 50,
+    "discount": 0,
+    "finalValue": 50,
+    "paymentMethod": "Dinheiro",
+    "items": [
+      {
+        "description": "Chamado Técnico ",
+        "quantity": 1,
+        "unitPrice": 50,
+        "type": "service",
+        "id": 1755109380566
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/a",
+    "serialNumber": "",
+    "warranty": "90 dias",
+    "attendant": "João Pedro Boeno Lopes",
+    "payments": [
+      {
+        "id": "PAY-1755267051614",
+        "amount": 50,
+        "date": "2025-08-15",
+        "method": "PIX"
+      }
+    ]
+  },
+  {
+    "id": "OS-1755104379857",
+    "customerName": "DIOU CARLOS ",
+    "equipment": "NOTEBOOK Dell SEM MODELO",
+    "reportedProblem": "Intalação de Office",
+    "status": "Finalizado",
+    "date": "2025-08-13",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "paymentMethod": "Dinheiro",
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "",
+    "serialNumber": "S/N",
+    "warranty": "90 dias",
+    "attendant": "João Pedro Boeno Lopes",
+    "payments": [
+      {
+        "id": "PAY-1755267089222",
+        "amount": 0,
+        "date": "2025-08-15",
+        "method": "Dinheiro"
+      }
+    ]
+  },
+  {
+    "id": "OS-1755027893457",
+    "customerName": "Moisés",
+    "equipment": "COMPUTADOR LG ALL IN ONE",
+    "reportedProblem": "QUEBRAR SENHA ",
+    "status": "Finalizado",
+    "date": "2025-08-12",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "paymentMethod": "Dinheiro",
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 120,
+        "type": "service",
+        "id": 1755028084063
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "CARREGADOR ",
+    "serialNumber": "",
+    "warranty": "90 dias",
+    "attendant": "Ana Leticia Boeno Lopes "
+  },
+  {
+    "id": "OS-1755019840428",
+    "customerName": "CMEI PAULO FREIRE ",
+    "equipment": "NOTEBOOK",
+    "reportedProblem": "NÃO RECONHECE O HD",
+    "status": "Finalizado",
+    "date": "2025-08-12",
+    "totalValue": 360,
+    "items": [
+      {
+        "description": "SSD 240 GIGA WD",
+        "quantity": 1,
+        "unitPrice": 260,
+        "type": "part",
+        "id": 1755259263938
+      },
+      {
+        "description": "FORMATAÇÃO E RECUPERAÇÃO DE DADOS.",
+        "quantity": 1,
+        "unitPrice": 100,
+        "type": "service",
+        "id": 1755259291866
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1755518079835",
+        "amount": 360,
+        "date": "2025-08-18",
+        "method": "Dinheiro"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "carregador ",
+    "serialNumber": "",
+    "warranty": "90 dias",
+    "attendant": "Ana Leticia Boeno Lopes "
+  },
+  {
+    "id": "OS-1755000060241",
+    "customerName": "DIOU CARLOS ",
+    "equipment": "NOTEBOOK THINKPAD 206S45D00",
+    "reportedProblem": "PERDEU A SENHA ",
+    "status": "Finalizado",
+    "date": "2025-08-12",
+    "totalValue": 120,
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 80,
+        "type": "service",
+        "id": 1755000014185
+      },
+      {
+        "description": "INSTALAÇÃO PACOTE OFFICE ",
+        "quantity": 1,
+        "unitPrice": 40,
+        "type": "service",
+        "id": 1755267207910
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1755267219550",
+        "amount": 120,
+        "date": "2025-08-15",
+        "method": "PIX"
+      }
+    ],
+    "internalNotes": [
+      {
+        "user": "Master User",
+        "date": "2025-08-12T12:00:51.785Z",
+        "comment": "CLIENTE JA TEM UM NOTEBOOK HP AQUI NA ASSISTENCIA NAOP ESQUECER DE ENTREGAR JUNTO QUANDO A FORMATAÇÃO ESTIVER PRONTA"
+      }
+    ],
+    "technicalReport": "CLIENTE PERDEU A SENHA DE LOGIN E O USUARIO ",
+    "accessories": "SEM ACESSORIOS ",
+    "serialNumber": "R90VLGTM",
+    "warranty": "90 dias",
+    "attendant": "Master User"
+  },
+  {
+    "id": "1754747569338-0.2804594613089322",
+    "customerName": "AROLDO (TOPOGEO)",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "LENOVO",
+      "model": "GAMING 15IHU6",
+      "serialNumber": "1111",
+      "id": "1754747569338-0.9698251159590605",
+      "clientId": "1754747446003-0.7680073229090186"
+    },
+    "reportedProblem": "NÃO RECONHECE ALGUNS EQUIPAMENTOS NA USB ",
+    "status": "Finalizado",
+    "date": "2025-08-09T13:52:49.338Z",
+    "deliveredDate": "2025-08-11T17:44:08.034Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 50,
+    "discount": 0,
+    "finalValue": 50,
+    "items": [
+      {
+        "id": "id_1754934236859_d43gr6zw9",
+        "description": "Atualização",
+        "value": 50,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "BOLSA , CARREGADOR ",
+    "serialNumber": "1111"
+  },
+  {
+    "id": "1754747312566-0.5102097805222529",
+    "customerName": "DIOU CARLOS ",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "HP",
+      "model": "ELITE DRAGONFLY",
+      "serialNumber": "5CG014CMVS",
+      "id": "1754747312565-0.941644199909436",
+      "clientId": "1754747233450-0.6686105561895997"
+    },
+    "reportedProblem": "NÃO CARREGA BATERIA ",
+    "status": "Entregue",
+    "date": "2025-08-09T13:48:32.565Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "CARREGADOR",
+    "serialNumber": "5CG014CMVS",
+    "deliveredDate": "2025-08-18"
+  },
+  {
+    "id": "1754676463969-0.10976517391454799",
+    "customerName": "Escola ivaipoã. ",
+    "equipment": "kit tinta EPSON 544",
+    "reportedProblem": "S/D",
+    "status": "Finalizado",
+    "date": "2025-08-08T18:07:43.969Z",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "paymentMethod": "Dinheiro",
+    "items": [
+      {
+        "id": "id_1754676499379_9e2o4ne0d",
+        "description": "kit de tinta ",
+        "value": 130,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "1111",
+    "warranty": "90 dias",
+    "attendant": "Sistema"
+  },
+  {
+    "id": "1754676115155-0.6092888179753267",
+    "customerName": "Edna (escola ivp)",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "POSITIVO",
+      "model": "SEM MODELO",
+      "serialNumber": "1111",
+      "id": "1754676115155-0.055233269238296634",
+      "clientId": "1754676036325-0.5951418441783294"
+    },
+    "reportedProblem": "Não liga",
+    "status": "Entregue",
+    "date": "2025-08-08T18:01:55.155Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "1111"
+  },
+  {
+    "id": "1754675884728-0.7570896407845296",
+    "customerName": "Creusa Pereira Teixeira",
+    "equipment": "COMPUTADOR SEM MARCA SEM MODELO",
+    "reportedProblem": " Não liga",
+    "status": "Finalizado",
+    "date": "2025-08-08T17:58:04.727Z",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "paymentMethod": "Dinheiro",
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "",
+    "accessories": "S/A",
+    "serialNumber": "1111",
+    "warranty": "90 dias",
+    "attendant": "Sistema"
+  },
+  {
+    "id": "1754674306344-0.23649273038616858",
+    "customerName": "AMPLA ARTEFATOS",
+    "equipment": {
+      "type": "dfrgdfg",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "1111",
+      "id": "1754674306344-0.8677651707351619",
+      "clientId": "1753472685180-0.1180730707559845"
+    },
+    "reportedProblem": "Instalação de certificdo",
+    "status": "Finalizado",
+    "date": "2025-08-08T17:31:46.344Z",
+    "deliveredDate": "2025-08-08T17:32:15.724Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 60,
+    "discount": 0,
+    "finalValue": 60,
+    "items": [
+      {
+        "id": "id_1754934611420_t8y01a16y",
+        "description": "Chamado técnico",
+        "value": 60,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "s/a",
+    "serialNumber": "1111"
+  },
+  {
+    "id": "1754587008988-0.24629553469452448",
+    "customerName": "CONCREVALI",
+    "equipment": {
+      "type": "IMPRESSORA ",
+      "brand": "EPSON",
+      "model": "L6270",
+      "serialNumber": "X8G6002794",
+      "id": "1754587008988-0.3996075210633018",
+      "clientId": "1754586479771-0.3507579603855565"
+    },
+    "reportedProblem": "MANUTENÇÃO",
+    "status": "Finalizado",
+    "date": "2025-08-07T17:16:48.987Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "A/S",
+    "serialNumber": "X8G6002794"
+  },
+  {
+    "id": "1754586595386-0.516255929758011",
+    "customerName": "CONCREVALI",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "ASUS",
+      "model": "TUF",
+      "serialNumber": "",
+      "id": "1754586595386-0.26056752334706523",
+      "clientId": "1754586479771-0.3507579603855565"
+    },
+    "reportedProblem": "FORMATAÇÃO",
+    "status": "Entregue",
+    "date": "2025-08-07T17:09:55.385Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": ""
+  },
+  {
+    "id": "1754327946552-0.6291500893709898",
+    "customerName": "Escola ivaipoã. ",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "HP",
+      "model": "M1132 MFP ",
+      "serialNumber": "CNG9CSTPNF",
+      "id": "1754327946552-0.796072142421661",
+      "clientId": "1753808271066-0.49650695169797754"
+    },
+    "reportedProblem": "não imprime",
+    "status": "Finalizado",
+    "date": "2025-08-04T17:19:06.551Z",
+    "deliveredDate": "2025-08-08T17:36:56.723Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 320,
+    "discount": 0,
+    "finalValue": 320,
+    "items": [
+      {
+        "id": "id_1754674601725_51h9i9bnm",
+        "description": "MANUTENÇÃO PREVENTIVA",
+        "value": 320,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "tonner",
+    "accessories": "A/S",
+    "serialNumber": "CNG9CSTPNF"
+  },
+  {
+    "id": "1754070339086-0.8647001919528571",
+    "customerName": "Carlos Ramos ",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "HP",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1754070339085-0.6921093269638879",
+      "clientId": "1754070290274-0.6204661443723137"
+    },
+    "reportedProblem": "Instalar auto-cad",
+    "status": "Finalizado",
+    "date": "2025-08-01T17:45:39.085Z",
+    "deliveredDate": "2025-08-08T14:58:18.196Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "Carregador.",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1754070051452-0.31068840155690647",
+    "customerName": "Wiliam BRM",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "HP",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1754070051452-0.0218784362151605",
+      "clientId": "1754070009182-0.49963108040346793"
+    },
+    "reportedProblem": " Semi novo",
+    "status": "Finalizado",
+    "date": "2025-08-01T17:40:51.452Z",
+    "deliveredDate": "2025-08-01T21:23:22.396Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 350,
+    "discount": 0,
+    "finalValue": 350,
+    "items": [
+      {
+        "id": "id_1754070102714_ko18wy5qh",
+        "description": "Notebook Semi-novo",
+        "value": 350,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "Carregador",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1754069884430-0.21759577112462958",
+    "customerName": "Moisés",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "LG",
+      "model": "ALL IN ONE ",
+      "serialNumber": "",
+      "id": "1754069884430-0.15291277173090034",
+      "clientId": "1754069734836-0.6906194110984947"
+    },
+    "reportedProblem": "Quebrar senha ",
+    "status": "Finalizado",
+    "date": "2025-08-01T17:38:04.429Z",
+    "deliveredDate": "2025-08-08T17:48:28.711Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "Carregador",
+    "serialNumber": ""
+  },
+  {
+    "id": "1754069617587-0.9460596986242767",
+    "customerName": "Advocacia Makita",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1754069617587-0.5022244119083097",
+      "clientId": "1754069521071-0.5251903866898372"
+    },
+    "reportedProblem": "Não está ligando",
+    "status": "Finalizado",
+    "date": "2025-08-01T17:33:37.587Z",
+    "deliveredDate": "2025-08-11T19:46:16.547Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 3200,
+    "discount": 0,
+    "finalValue": 3200,
+    "items": [
+      {
+        "id": "id_1754941538463_xn6dpkgdt",
+        "description": "Teclado e mouse ",
+        "value": 200,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "Sem acessório",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1754069281220-0.7957665175563264",
+    "customerName": "COLÉGIO OBJETIVO",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "HP",
+      "model": "M1132",
+      "serialNumber": "ABC12345",
+      "id": "1754069281220-0.5262852605431804",
+      "clientId": "1753462813417-0.37245804640151114"
+    },
+    "reportedProblem": "Manchas nas folhas",
+    "status": "Aguardando peça",
+    "date": "2025-08-01T17:28:01.220Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 160,
+    "discount": 0,
+    "finalValue": 160,
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "Impressora renata",
+    "accessories": "Toner",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1754068985978-0.7602921668104283",
+    "customerName": "COLÉGIO OBJETIVO",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1754068985978-0.19311678544619193",
+      "clientId": "1753462813417-0.37245804640151114"
+    },
+    "reportedProblem": "Defeito no botão",
+    "status": "Finalizado",
+    "date": "2025-08-01T17:23:05.978Z",
+    "deliveredDate": "2025-08-01T20:32:31.607Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "S/a",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753970158581-0.896543906450536",
+    "customerName": "Recanto do Charanga . ",
+    "equipment": {
+      "type": "computador + Nobreak",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753970158580-0.3376404310414942",
+      "clientId": "1753970052319-0.8173402287167776"
+    },
+    "reportedProblem": "Nobreak nao segura carga",
+    "status": "Entregue",
+    "date": "2025-07-31T13:55:58.580Z",
+    "deliveredDate": "2025-08-01T20:32:45.827Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 360,
+    "discount": 0,
+    "finalValue": 360,
+    "items": [
+      {
+        "id": "id_1753991650392_6slx00i9y",
+        "description": "Limpeza e Troca da pasta Térmica Computador.",
+        "value": 120,
+        "type": "service"
+      },
+      {
+        "id": "id_1753991767840_44tq8v070",
+        "description": "MANUTENÇAO NOBREAK",
+        "value": 50,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "EFETUADO DIAGNOSTICO DO NOBREAK E CONSTATADO QUE A BATERIA ESTA DANIFICADA SENDO NECESSÁRIO A TROCA , MAIS A LIMPEZA DA PLACA E DOS COMPONENTES . \nCOMPUTADOR : NECESSÁRIO A LIMPEZA E A TROCA DA PASTA TERMICA DO PROCESSADOR . ",
+    "accessories": "sem acessórios",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753899684156-0.1464488699022033",
+    "customerName": "Geovana Dameto",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "Waio",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753899684155-0.7533147530701549",
+      "clientId": "1753899494042-0.7999042541784604"
+    },
+    "reportedProblem": "Não Carrega",
+    "status": "Finalizado",
+    "date": "2025-07-30T18:21:24.155Z",
+    "deliveredDate": "2025-08-04T20:15:15.316Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 260,
+    "discount": 0,
+    "finalValue": 260,
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "Efetuado o teste e detectado que a fonte está com problema, sendo necessãrio a troca.",
+    "accessories": "Carregador, Sacola plástica preta.",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753895228205-0.42500250984599464",
+    "customerName": "CIAMÁQUINAS OFFCE",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "EPSON",
+      "model": "L395",
+      "serialNumber": "ABC12345",
+      "id": "1753895228205-0.7506235150937457",
+      "clientId": "1752779276427-0.007760477428592205"
+    },
+    "reportedProblem": "Troca da cabeça de impressão",
+    "status": "Finalizado",
+    "date": "2025-07-30T17:07:08.205Z",
+    "deliveredDate": "2025-07-30T17:08:40.371Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 350,
+    "discount": 0,
+    "finalValue": 350,
+    "items": [
+      {
+        "id": "id_1753985677003_b8irknzct",
+        "description": "MANUTENÇÃO PREVENTIVA",
+        "value": 70,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "Efetuado a troca da cabeça de impressão",
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753893597185-0.554549625402737",
+    "customerName": "IVAIPLACAS",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753893597185-0.35190225201007685",
+      "clientId": "1752765902944-0.6165074972827616"
+    },
+    "reportedProblem": "Não liga",
+    "status": "Finalizado",
+    "date": "2025-07-30T16:39:57.185Z",
+    "deliveredDate": "2025-07-30T18:59:43.888Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 129.9,
+    "discount": 0,
+    "finalValue": 129.9,
+    "items": [
+      {
+        "id": "id_1753989519413_xhv66wabj",
+        "description": "Reparo Botão + Fonte ",
+        "value": 100,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "Reparo no botão e na fonte",
+    "accessories": "s/a",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753818704216-0.005102155434062117",
+    "customerName": "COLÉGIO OBJETIVO",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753818704216-0.9833277608334858",
+      "clientId": "1753462813417-0.37245804640151114"
+    },
+    "reportedProblem": "NÃO ENTRA NO ACADESK",
+    "status": "Entregue",
+    "date": "2025-07-29T19:51:44.216Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753810560038-0.8388092309097275",
+    "customerName": "LOJA CRAVO E CANELA",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753810560038-0.610365372354707",
+      "clientId": "1753810500139-0.6009424666727826"
+    },
+    "reportedProblem": "FORMATAÇÃO",
+    "status": "Finalizado",
+    "date": "2025-07-29T17:36:00.038Z",
+    "deliveredDate": "2025-07-30T18:59:55.143Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753809957569-0.1264459305724882",
+    "customerName": "COLÉGIO OBJETIVO",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "HP",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753809957569-0.37761636748280536",
+      "clientId": "1753462813417-0.37245804640151114"
+    },
+    "reportedProblem": "tonner",
+    "status": "Entregue",
+    "date": "2025-07-29T17:25:57.569Z",
+    "deliveredDate": "2025-07-29T17:26:41.274Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 250,
+    "discount": 0,
+    "finalValue": 250,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753809608545-0.3044247025120962",
+    "customerName": "LOJA SÃO JORGE",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753809608545-0.8293640238090713",
+      "clientId": "1753809503437-0.9025694387682922"
+    },
+    "reportedProblem": "SISTEMA CORROMPIDO",
+    "status": "Finalizado",
+    "date": "2025-07-29T17:20:08.545Z",
+    "deliveredDate": "2025-07-29T17:30:21.163Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 40,
+    "discount": 0,
+    "finalValue": 40,
+    "items": [
+      {
+        "id": "id_1753821347933_au0yrr55p",
+        "description": "CHAMADO TECNICO",
+        "value": 40,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753809255220-0.9540555262461958",
+    "customerName": "SERGINHO DESPACHANTE",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "HP",
+      "model": "LASER JET PRO M125A",
+      "serialNumber": "BRBSGDKQ59",
+      "id": "1753809255220-0.0758687656080731",
+      "clientId": "1753808800516-0.2137008721545176"
+    },
+    "reportedProblem": "MANCHANDO IMORESSÃO",
+    "status": "Finalizado",
+    "date": "2025-07-29T17:14:15.219Z",
+    "deliveredDate": "2025-07-29T18:32:59.957Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "items": [
+      {
+        "id": "id_1753814125928_y0de3w3r6",
+        "description": "MANUTENÇÃO PREVENTIVA",
+        "value": 120,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "TONNER",
+    "serialNumber": "BRBSGDKQ59"
+  },
+  {
+    "id": "1753808378522-0.9339486682585703",
+    "customerName": "Escola ivaipoã. ",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "HP",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753808378522-0.8325820784227088",
+      "clientId": "1753808271066-0.49650695169797754"
+    },
+    "reportedProblem": "Manchando a impressão",
+    "status": "Finalizado",
+    "date": "2025-07-29T16:59:38.522Z",
+    "deliveredDate": "2025-07-29T18:00:19.385Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 70,
+    "discount": 0,
+    "finalValue": 70,
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "troca de toner",
+    "accessories": "s/a",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753725899746-0.13885061379280783",
+    "customerName": "Taynara (NPJ)",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "LG",
+      "model": "ALL IN ONE ",
+      "serialNumber": "911BZVL000151",
+      "id": "1753725899746-0.04108625964776402",
+      "clientId": "1753725676728-0.46749367314875023"
+    },
+    "reportedProblem": "Formatação",
+    "status": "Finalizado",
+    "date": "2025-07-28T18:04:59.745Z",
+    "deliveredDate": "2025-07-29T17:38:00.065Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "items": [
+      {
+        "id": "id_1753815148974_08e14gws2",
+        "description": "FORMATAÇÃO ",
+        "value": 120,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "Carregador, Cabo de força.",
+    "serialNumber": "911BZVL000151"
+  },
+  {
+    "id": "1753473122670-0.5395646439781595",
+    "customerName": "MIRIAM (CLINICA TRANSITAR)",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "HP",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753473122670-0.6161299939051116",
+      "clientId": "1753473064591-0.36867322269918235"
+    },
+    "reportedProblem": "FORMATAÇÃO",
+    "status": "Finalizado",
+    "date": "2025-07-25T19:52:02.669Z",
+    "deliveredDate": "2025-07-25T19:52:56.902Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 160,
+    "discount": 0,
+    "finalValue": 160,
+    "items": [
+      {
+        "id": "id_1753473161841_xmdtt8gm6",
+        "description": "FORMATAÇÃO, CALIBRAÇÃO DE BATERIA",
+        "value": 160,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "CARREGADOR, BOLSA",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753472738791-0.6411266922624876",
+    "customerName": "AMPLA ARTEFATOS",
+    "equipment": {
+      "type": "CHMADO",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753472738791-0.7732630708491837",
+      "clientId": "1753472685180-0.1180730707559845"
+    },
+    "reportedProblem": "INSTALAÇÃO DE PROGRAMA",
+    "status": "Entregue",
+    "date": "2025-07-25T19:45:38.790Z",
+    "deliveredDate": "2025-07-25T19:46:52.009Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 90,
+    "discount": 0,
+    "finalValue": 90,
+    "items": [
+      {
+        "id": "id_1753472797418_z3v20nuo9",
+        "description": "INSTALAÇÃO DE PROGRAMAS JURÍDICOS",
+        "value": 90,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753467395165-0.1102829461202256",
+    "customerName": "COLÉGIO OBJETIVO",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "HP",
+      "model": "M127FN",
+      "serialNumber": "ABC12345",
+      "id": "1753467395165-0.04932464848487461",
+      "clientId": "1753462813417-0.37245804640151114"
+    },
+    "reportedProblem": "SEM DEFEITO",
+    "status": "Finalizado",
+    "date": "2025-07-25T18:16:35.165Z",
+    "deliveredDate": "2025-07-25T18:27:46.798Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 860,
+    "discount": 0,
+    "finalValue": 860,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753462544732-0.10222543453026567",
+    "customerName": "SAUL BONIFÁCIO ",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753462544731-0.7309223360319846",
+      "clientId": "1753462460549-0.7193446136299082"
+    },
+    "reportedProblem": "ATIVAÇÃO OFFICE",
+    "status": "Entregue",
+    "date": "2025-07-25T16:55:44.731Z",
+    "deliveredDate": "2025-07-25T16:56:09.858Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 60,
+    "discount": 0,
+    "finalValue": 60,
+    "items": [
+      {
+        "id": "id_1753462621299_z8ytvcjoh",
+        "description": "INSTALAÇÃO LIBRE OFFICE",
+        "value": 60,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753462241466-0.47594789887725264",
+    "customerName": "FERNANDO SANTILIO",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "ACER",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753462241466-0.33608351678995474",
+      "clientId": "1753462175779-0.4609024950462688"
+    },
+    "reportedProblem": "COMPACTAR PDF",
+    "status": "Aguardando Pagamento",
+    "date": "2025-07-25T16:50:41.466Z",
+    "deliveredDate": "2025-07-25T16:51:44.944Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 40,
+    "discount": 0,
+    "finalValue": 40,
+    "items": [
+      {
+        "id": "id_1753462288443_pdxjqblfe",
+        "description": "CHAMADO TECNICO",
+        "value": 40,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753462078972-0.46191923446167793",
+    "customerName": "ERCIK (ADVOGADO)",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "ACER",
+      "model": "SEM MODELO",
+      "serialNumber": "ABC12345",
+      "id": "1753462078972-0.23195883398490158",
+      "clientId": "1753450207598-0.10007602308299524"
+    },
+    "reportedProblem": "FORMATAÇÃO, DOBRADIÇA QUEBRADA",
+    "status": "Finalizado",
+    "date": "2025-07-25T16:47:58.971Z",
+    "deliveredDate": "2025-07-28T20:20:26.522Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "items": [
+      {
+        "id": "id_1753735911616_4sw2ojk07",
+        "description": "Recuperação carcaça",
+        "value": 120,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "S/A",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753461776923-0.7998133933672857",
+    "customerName": "CMEI ODETE BRASIL ",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "EPSON",
+      "model": "L4260",
+      "serialNumber": "XAA9293693",
+      "id": "1753461776923-0.07970039068446721",
+      "clientId": "1753461605858-0.8713826447317187"
+    },
+    "reportedProblem": "MANUTENÇÃO",
+    "status": "Entregue",
+    "date": "2025-07-25T16:42:56.923Z",
+    "deliveredDate": "2025-07-28T12:12:35.813Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "items": [
+      {
+        "id": "id_1753704634707_tqcvu1yeo",
+        "description": "MANUTENÇÃO PREVENTIVA ",
+        "value": 120,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "EFETUADO DIAGNÓSTICO E CONSTATADO QUE A IMPRESSORA ESTAVA COM AS ALMOFADAS CARREGADSA SENDO A NECESSÁRIO A TROCA E A MANUTENÇÃO PREVENTIVA (LIMPEZA INTERNA E EXTERNA , LUBRIFICAÇÕES E AJUSTE DE MECANISMO .",
+    "accessories": "S/A",
+    "serialNumber": "XAA9293693"
+  },
+  {
+    "id": "1753459830875-0.19277781456150178",
+    "customerName": "ERCIK (ADVOGADO)",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "POSITIVO",
+      "model": "VISION",
+      "serialNumber": "ABC12345",
+      "id": "1753459830875-0.4037860974766946",
+      "clientId": "1753450207598-0.10007602308299524"
+    },
+    "reportedProblem": "TELA QUEBRADA",
+    "status": "Aguardando peça",
+    "date": "2025-07-25T16:10:30.875Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "accessories": "CARREGADOR UNIVERSAL-",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753459665344-0.14380947187319992",
+    "customerName": "SOLANGE PROFESSORA IDALIA ",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "DELL",
+      "model": "INSPIRON 3501",
+      "serialNumber": "ABC12345",
+      "id": "1753459665344-0.502806137614745",
+      "clientId": "1753459548705-0.9262861638030454"
+    },
+    "reportedProblem": "NÃO CARREGA",
+    "status": "Finalizado",
+    "date": "2025-07-25T16:07:45.344Z",
+    "deliveredDate": "2025-07-28T19:14:36.502Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 380,
+    "discount": 0,
+    "finalValue": 380,
+    "items": [
+      {
+        "id": "id_1753462353019_ytv3y3b3e",
+        "description": "TROCA DC JACK",
+        "value": 380,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "DC JACK QUEBRADO",
+    "accessories": "BOLSA, CARREGADOR",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1753379126419-0.7429841024912682",
+    "customerName": "ADVOCACIA LINCON",
+    "equipment": "COMPUTADOR S/M S/M",
+    "reportedProblem": "TRAVANDO ",
+    "status": "Aguardando Pagamento",
+    "date": "2025-07-24T17:45:26.419Z",
+    "totalValue": 950,
+    "items": [
+      {
+        "description": "COMPUTADOR DELL OPTPLEX",
+        "quantity": 1,
+        "unitPrice": 900,
+        "type": "part",
+        "id": 1755109570951
+      },
+      {
+        "description": "teclado usb",
+        "quantity": 1,
+        "unitPrice": 50,
+        "type": "service",
+        "id": 1755193151842
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1755193178505-entry",
+        "amount": 475,
+        "date": "2025-08-14",
+        "method": "Dinheiro"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "CLIENTE SOLICITOU A RECUPERAÇÃO DOS DADOS ",
+    "accessories": "SEM ACESSORIOS ",
+    "serialNumber": "111",
+    "warranty": "90 dias",
+    "attendant": "Sistema"
+  },
+  {
+    "id": "1753283874696-0.7675854352578476",
+    "customerName": "Dra Leila ",
+    "equipment": {
+      "type": "PENDRIVE ",
+      "brand": "SANDISK",
+      "model": "CRUZER BLADE",
+      "serialNumber": "123",
+      "id": "1753283874696-0.4220606759524971",
+      "clientId": "1753283722550-0.9771248242925842"
+    },
+    "reportedProblem": "ARQUIVOS DANIFICADOS E CORROMPIDOS ",
+    "status": "Finalizado",
+    "date": "2025-07-23T15:17:54.696Z",
+    "deliveredDate": "2025-07-28T17:11:51.312Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 0,
+    "discount": 0,
+    "finalValue": 0,
+    "items": [],
+    "internalNotes": [],
+    "technicalReport": "RECUPERAÇÃO DE ARQUIVOS ",
+    "accessories": "SEM ACESSORIOS",
+    "serialNumber": "123"
+  },
+  {
+    "id": "1753213215866-0.27621967001524383",
+    "customerName": "GRASIELLI BARRETO",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "VAYO",
+      "model": "VVV",
+      "serialNumber": "SM",
+      "id": "1753213215866-0.9418849483530518",
+      "clientId": "1753213162582-0.24689435505478108"
+    },
+    "reportedProblem": "INSTALAR OFFICE ",
+    "status": "Entregue",
+    "date": "2025-07-22T19:40:15.866Z",
+    "deliveredDate": "2025-07-22T19:59:33.180Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 60,
+    "discount": 0,
+    "finalValue": 60,
+    "items": [
+      {
+        "id": "id_1753213272675_ixpe7q97z",
+        "description": "INSTALAR PACOTTE OFFICE ",
+        "value": 60,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "COM CRREGADOR ",
+    "serialNumber": "SM"
+  },
+  {
+    "id": "1752779410369-0.32822606573457314",
+    "customerName": "CIAMÁQUINAS OFFCE",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "EPSON",
+      "model": "L395",
+      "serialNumber": "X2NZ374777",
+      "id": "1752779410369-0.5975560298355475",
+      "clientId": "1752779276427-0.007760477428592205"
+    },
+    "reportedProblem": "NÃO IMPRIME ",
+    "status": "Finalizado",
+    "date": "2025-07-17T19:10:10.367Z",
+    "deliveredDate": "2025-07-22T18:03:00.114Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 350,
+    "discount": 0,
+    "finalValue": 350,
+    "items": [
+      {
+        "id": "id_1753207459084_c59xlc8te",
+        "description": "MANUTENÇAO PREVENTIVA ",
+        "value": 70,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "EFETUADO DIAGNOSTICO CONSTADO QUE A CABEÇA DE IMPRESSÃO ESTA DANIFICADA SENDO NECESSARIO A TROCA.",
+    "accessories": "SEM ACESSORIO",
+    "serialNumber": "X2NZ374777"
+  },
+  {
+    "id": "1752777236701-0.4927395514167461",
+    "customerName": "JOÃO MARCOS .( ADVOGADO)",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "DELL",
+      "model": "INSPIRON 15",
+      "serialNumber": "28086073417",
+      "id": "1752777236701-0.8449981107624771",
+      "clientId": "1752777085090-0.3401838834676074"
+    },
+    "reportedProblem": "UPGRADE DE PEÇAS ",
+    "status": "Entregue",
+    "date": "2025-07-17T18:33:56.701Z",
+    "deliveredDate": "2025-07-18T17:30:53.343Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 150,
+    "discount": 0,
+    "finalValue": 150,
+    "items": [
+      {
+        "id": "id_1752777268929_09wm7e767",
+        "description": "MAO DE OBRA UPGRADE PEÇAS NOTEBOOK ",
+        "value": 150,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [
+      {
+        "id": "id_1752777309201_ysqp8wslo",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-17T18:35:09.201Z",
+        "text": "CLIENTE TROUXE AS PEÇAS QUER QUE RETIRE O ADAPTADOR E VOLTE O LEITOR DE CD . CLIENTE TROUXE O LEITOR DE CD ORIGINAL ."
+      }
+    ],
+    "technicalReport": "CLIENTE SOLICITA O UPGRADE DE SSD E DE MEMÓRIAS  \nOBS. PEÇAS FORNECEIDAS PELO CLIENTE ",
+    "accessories": "CARREGADOR E CABO DE FORÇA , LEITOR DE CD ORIGINAL ",
+    "serialNumber": "28086073417"
+  },
+  {
+    "id": "1752766038863-0.633127456261339",
+    "customerName": "IVAIPLACAS",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "EPSON",
+      "model": "L375",
+      "serialNumber": "WBJK226305",
+      "id": "1752766038863-0.20575460493877407",
+      "clientId": "1752765902944-0.6165074972827616"
+    },
+    "reportedProblem": "CORREIA ARREBENTADA",
+    "status": "Entregue",
+    "date": "2025-07-17T15:27:18.863Z",
+    "deliveredDate": "2025-07-17T15:33:09.652Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 180,
+    "discount": 0,
+    "finalValue": 180,
+    "items": [
+      {
+        "id": "id_1752766220421_6ev8ibd9x",
+        "description": "MAO DE OBRA ",
+        "value": 40,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [
+      {
+        "id": "id_1752766425749_1zpx74ur9",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-17T15:33:45.749Z",
+        "text": "EFETUADO A TROCA DA CORREIA (ROBERTO)"
+      }
+    ],
+    "technicalReport": "EFETUADO DIAGNOSTICO E CONSTATADO QUE A CORREIA ESTAVA ARREBENTADA E GASTA AS ENGRENAGENS DO SISTEMA DO CARRO DE IMPRESSÃO TAMBEM ESTÃO GASTAS NECESSARIO TROCA .",
+    "accessories": "SEM ACESSORIOS",
+    "serialNumber": "WBJK226305"
+  },
+  {
+    "id": "1752611303031-0.7760006876203803",
+    "customerName": "VALDECIR ALVARINO",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "EPSON ",
+      "model": "L3150",
+      "serialNumber": "ABC12345",
+      "id": "1752611303031-0.37063881780163666",
+      "clientId": "1752611147131-0.8346904741613428"
+    },
+    "reportedProblem": "NAO IMPRIME ",
+    "status": "Entregue",
+    "date": "2025-07-15T20:28:23.031Z",
+    "deliveredDate": "2025-07-18T18:38:12.329Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "items": [
+      {
+        "id": "id_1752781641205_zog5xyqbs",
+        "description": "MANUTENÇÃO PREVENTIVA ",
+        "value": 120,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [
+      {
+        "id": "id_1752781667358_96ur88cd5",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-17T19:47:47.358Z",
+        "text": "PSSADO VALOR TOTAL JUNTAMENTE COM O COMPUTADOR 220,00"
+      }
+    ],
+    "technicalReport": "MANUTENÇAO PREVENTIVA LIMPEZA INTERNA EXTERNA LUBRIFICAÇOES E AJUSTE DE MECANISMO . DESINTUPIR MANGUEIRAS E CABEÇA DE IMPRESSÃO ",
+    "accessories": "",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1752611194334-0.4733699327957318",
+    "customerName": "VALDECIR ALVARINO",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "HP",
+      "model": "ALL IN ONE ",
+      "serialNumber": "ABC12345",
+      "id": "1752611194334-0.3852978845903745",
+      "clientId": "1752611147131-0.8346904741613428"
+    },
+    "reportedProblem": "NÃO ENTRA NO WINDOS ",
+    "status": "Entregue",
+    "date": "2025-07-15T20:26:34.333Z",
+    "deliveredDate": "2025-07-18T18:38:24.103Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 80,
+    "discount": 0,
+    "finalValue": 80,
+    "items": [
+      {
+        "id": "id_1752781715589_506hp69yj",
+        "description": "ATUALIZAÇÃO DE SISTEMA",
+        "value": 80,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [
+      {
+        "id": "id_1752781735261_lizb0agp5",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-17T19:48:55.261Z",
+        "text": "PASSADO VALOR JUNTO COM A IMPRESSORA 220,00"
+      }
+    ],
+    "technicalReport": "ATUALIZAÇÃO DE SISTEMA E APLICATIVOS ",
+    "accessories": "CARREGADOR",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1752591164026-0.16961268312957978",
+    "customerName": "CLIENTE AVULSO",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "HP",
+      "model": "ALL IN ONE ",
+      "serialNumber": "ABC12345",
+      "id": "1752591164026-0.9092236190630624",
+      "clientId": "1752591100370-0.5475282037034886"
+    },
+    "reportedProblem": "LENTO NAO ENTRA NO WINDOWS",
+    "status": "Finalizado",
+    "date": "2025-07-15T14:52:44.026Z",
+    "deliveredDate": "2025-07-15T14:53:06.829Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 150,
+    "discount": 0,
+    "finalValue": 150,
+    "items": [
+      {
+        "id": "id_1752591265855_xj3hsj91y",
+        "description": "FORMATAÇÃO +MONTAGEM ",
+        "value": 150,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "TROCA HD PO SSD CLIENTE TROUXE SSD",
+    "accessories": "CARREGADOR ",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1752587625121-0.4228871275677658",
+    "customerName": "JULIANO JOSÉ PALMA ",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "GENÉRICO",
+      "model": "SM",
+      "serialNumber": "ABC12345",
+      "id": "1752587625121-0.3989865236801051",
+      "clientId": "1752587568423-0.36339501987805745"
+    },
+    "reportedProblem": "NÃO ENTRA NO WINDOWS ",
+    "status": "Entregue",
+    "date": "2025-07-15T13:53:45.121Z",
+    "deliveredDate": "2025-07-15T20:41:51.692Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 380,
+    "discount": 0,
+    "finalValue": 380,
+    "items": [
+      {
+        "id": "id_1752608982815_d6s46x9c2",
+        "description": "FORMATAÇÃO  + CONFIGURAÇÃO SSD ",
+        "value": 100,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [
+      {
+        "id": "id_1752601324547_h4zno6cw3",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-15T17:42:04.547Z",
+        "text": "TROCAR SSD VALOR PASSADO PARA O CLIENTE 380,00\nBKP DOS DADOS JA FOI FEITO"
+      }
+    ],
+    "technicalReport": "EFETUADO DIAGNOSTICO E CONSTATADO . QUE O hd ESTA DANIFICADO SENDO NECESSÁRIO A SUBSTITUIÇÃO POR UM SSD ",
+    "accessories": "SEM ACESSORIOS",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1752581466827-0.8915826343848778",
+    "customerName": "CINE FOTO REGINA ",
+    "equipment": {
+      "type": "IMPRESSORA ",
+      "brand": "BROTHER",
+      "model": "DCP-T830",
+      "serialNumber": "U67681F4H848003",
+      "id": "1752581466827-0.8791945667285874",
+      "clientId": "1752581309250-0.23832530068551883"
+    },
+    "reportedProblem": "ENROSCANDO PAPEL QUANDO IMPRIME FRENTE E VERSO",
+    "status": "Entregue",
+    "date": "2025-07-15T12:11:06.827Z",
+    "deliveredDate": "2025-07-15T22:11:19.195Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 130,
+    "discount": 0,
+    "finalValue": 130,
+    "items": [
+      {
+        "id": "id_1752617329268_5gshkzc68",
+        "description": "MANUTENÇAO PREVENTIVA ",
+        "value": 130,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "EFEYUADO DIAGNOSTICO E CONSTATADO PAPEL ENROSCADO NO MECANISMO NECESSARIO INTERVENÇAO TECNICA ",
+    "accessories": "SEM ACESSÓRIOS",
+    "serialNumber": "U67681F4H848003"
+  },
+  {
+    "id": "1752525205781-0.222365992264843",
+    "customerName": "ARMAZEM NATUREBA",
+    "equipment": {
+      "type": "IMPRESSORA",
+      "brand": "HP",
+      "model": "LJ 1020",
+      "serialNumber": "ABC12345",
+      "id": "1752525205780-0.16828237228810683",
+      "clientId": "1752525160400-0.21769594684339721"
+    },
+    "reportedProblem": "ENROSCANDO PAPEL ",
+    "status": "Entregue",
+    "date": "2025-07-14T20:33:25.780Z",
+    "deliveredDate": "2025-07-14T20:35:01.719Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "items": [
+      {
+        "id": "id_1752525258941_9m864r5dl",
+        "description": "MANUTENÇÕ PREVENTIVA ",
+        "value": 120,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "accessories": "TONNER",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1752524270527-0.30751067415024125",
+    "customerName": "CESTA BASICA SANTA RITA",
+    "equipment": {
+      "type": "Notebook",
+      "brand": "ACER",
+      "model": "ASPIRE 3",
+      "serialNumber": "ABC12345",
+      "id": "1752524270527-0.9724207698061066",
+      "clientId": "1752524196787-0.21135363759111103"
+    },
+    "reportedProblem": "DOBRADIÇAS QUEBRADAS",
+    "status": "Entregue",
+    "date": "2025-07-14T20:17:50.527Z",
+    "deliveredDate": "2025-07-21T13:46:27.073Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 300,
+    "discount": 0,
+    "finalValue": 300,
+    "items": [
+      {
+        "id": "id_1753101404560_9e4ygfo1x",
+        "description": "MONTAGEM TROCA DA TAMPA",
+        "value": 60,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [
+      {
+        "id": "id_1752591568191_7txq5sbx1",
+        "userId": "1752520921537-0.9328935433699823",
+        "userName": "Wagner Lopes",
+        "timestamp": "2025-07-15T14:59:28.191Z",
+        "text": "CLIENTE JA FOI INFORMADO SOBRE O VALOR DO ORÇAMENTO , FALTA PEDIR A TAMPA , VALOR PASSADO DA TAMPA 240,00, VALOR DA MAO DE OBRA 60,00\nVALOR DE CUSTO DA TAMPA 170,00. TOTAL DOS SERVIÇOS 300,00"
+      }
+    ],
+    "technicalReport": "EFETUADO DIAGNÓSTICO E CONSTATADO QUE A TAMPA ESTA QUEBRADA SENDO NECESS´RIO A TROCA .",
+    "accessories": "SEM ACESSORIOS",
+    "serialNumber": "ABC12345"
+  },
+  {
+    "id": "1752520779948-0.508259989288888",
+    "customerName": "ADVOCACIA JOÃO FABIO HILARIO (fILHO)",
+    "equipment": {
+      "type": "COMPUTADOR",
+      "brand": "SEM MARCA",
+      "model": "SEM MODELO",
+      "serialNumber": "1111",
+      "id": "1752520779948-0.2685609538229643",
+      "clientId": "1752520699538-0.03593661342012322"
+    },
+    "reportedProblem": "NÃO RECONHECE SSD",
+    "status": "Entregue",
+    "date": "2025-07-14T19:19:39.948Z",
+    "deliveredDate": "2025-07-16T21:06:39.949Z",
+    "attendant": "Sistema",
+    "warranty": "90 dias",
+    "totalValue": 120,
+    "discount": 0,
+    "finalValue": 120,
+    "items": [
+      {
+        "id": "id_1752600275465_lcqfbg4ag",
+        "description": "FORMATAÇÃO ",
+        "value": 120,
+        "type": "service"
+      }
+    ],
+    "internalNotes": [],
+    "technicalReport": "EFETUADO DIAGNOSTICO E CONSTATADO  QUE O SSD M2 ESTA DANIFICADO SENDO NECESSÁRIO TROCA ",
+    "accessories": "SEM TAMPA LATERAL E COM OS COOLER SOLTOS ",
+    "serialNumber": "1111"
+  }
+]

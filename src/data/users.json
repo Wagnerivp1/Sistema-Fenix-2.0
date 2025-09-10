@@ -1,10 +1,9 @@
-
 [
   {
     "id": "master",
     "name": "Master User",
-    "login": "master",
-    "password": "YWRtaW4=",
+    "login": "admin",
+    "password": "admin",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
@@ -23,7 +22,8 @@
     }
   },
   {
-    "name": "Wagner Lopes",
+    "id": "USER-1755019021028",
+    "name": "Wagner lopes",
     "login": "wagner123",
     "password": "amwwMDEyMTU=",
     "permissions": {
@@ -35,40 +35,19 @@
       "accessFinancials": true,
       "accessSettings": true,
       "accessDangerZone": true,
+      "accessAgenda": true,
+      "accessQuotes": true,
       "canEdit": true,
       "canDelete": true,
-      "canViewPasswords": false,
-      "canManageUsers": true,
-      "accessAgenda": true,
-      "accessQuotes": true
-    },
-    "id": "1752520921537-0.9328935433699823"
+      "canViewPasswords": true,
+      "canManageUsers": true
+    }
   },
   {
-    "name": "MIRIAM JOCIMARA",
-    "login": "miriam123",
-    "password": "amwwMDEyMTU=",
-    "permissions": {
-      "accessDashboard": true,
-      "accessClients": true,
-      "accessServiceOrders": true,
-      "accessInventory": true,
-      "accessSales": true,
-      "accessFinancials": true,
-      "accessSettings": false,
-      "accessDangerZone": false,
-      "canEdit": true,
-      "canDelete": true,
-      "canViewPasswords": false,
-      "canManageUsers": false,
-      "accessAgenda": true,
-      "accessQuotes": true
-    },
-    "id": "1752603011529-0.5807504643425918"
-  },
-  {
+    "id": "USER-1755019048148",
     "name": "Ana Leticia Boeno Lopes ",
-    "login": "ana123",
+    "login": "anaivp",
+    "password": "jl001215",
     "permissions": {
       "accessDashboard": true,
       "accessClients": true,
@@ -78,14 +57,57 @@
       "accessFinancials": true,
       "accessSettings": true,
       "accessDangerZone": true,
+      "accessAgenda": true,
+      "accessQuotes": true,
       "canEdit": true,
       "canDelete": true,
-      "canViewPasswords": false,
-      "canManageUsers": false,
+      "canViewPasswords": true,
+      "canManageUsers": true
+    }
+  },
+  {
+    "id": "USER-1755091299232",
+    "name": "João Pedro Boeno Lopes",
+    "login": "joaoivp",
+    "password": "jl00121516",
+    "permissions": {
+      "accessDashboard": true,
+      "accessClients": true,
+      "accessServiceOrders": true,
+      "accessInventory": true,
+      "accessSales": true,
+      "accessFinancials": true,
+      "accessSettings": true,
+      "accessDangerZone": true,
       "accessAgenda": true,
-      "accessQuotes": true
+      "accessQuotes": true,
+      "canEdit": true,
+      "canDelete": true,
+      "canViewPasswords": true,
+      "canManageUsers": true
+    }
+  },
+  {
+    "id": "USER-1756230603846",
+    "name": "Wagner lopes ",
+    "login": "teste",
+    "password": "MTIz",
+    "permissions": {
+      "accessDashboard": true,
+      "accessClients": true,
+      "accessServiceOrders": true,
+      "accessInventory": true,
+      "accessSales": true,
+      "accessFinancials": true,
+      "accessSettings": true,
+      "accessDangerZone": true,
+      "accessAgenda": true,
+      "accessQuotes": true,
+      "canEdit": true,
+      "canDelete": true,
+      "canViewPasswords": true,
+      "canManageUsers": true
     },
-    "id": "1753118832504-0.6500854434014606",
-    "password": "MDAxMjE1"
+    "userType": "admin"
   }
 ]

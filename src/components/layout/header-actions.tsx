@@ -7,7 +7,10 @@ import {
   CircleUser,
   LogOut,
   Settings,
+  Moon,
+  Sun,
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,21 +24,28 @@ import {
 import { removeSessionToken } from '@/lib/storage';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { ThemeToggle } from '@/components/layout/theme-toggle';
 
 export function HeaderActions() {
     const router = useRouter();
     const { toast } = useToast();
+    const { setTheme, theme } = useTheme();
 
     const handleLogout = async () => {
         await removeSessionToken();
         toast({ title: 'Logout bem-sucedido!', description: 'Você foi desconectado.' });
         router.push('/');
     };
+    
+    const toggleTheme = () => {
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+    }
 
     return (
         <div className="flex flex-col gap-2">
-            <ThemeToggle />
+             <Button variant="ghost" className="w-full justify-start gap-2" onClick={toggleTheme}>
+                 {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                 <span>{theme === 'dark' ? 'Tema Claro' : 'Tema Escuro'}</span>
+            </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="w-full justify-start gap-2">

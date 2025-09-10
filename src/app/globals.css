@@ -52,7 +52,13 @@ body {
     --ring: 212.7 26.8% 83.9%;
     --radius: 0.5rem;
   }
-  
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+
   .theme-stone {
     --background: 220 20% 99%;
     --foreground: 220 10% 15%;
@@ -73,9 +79,8 @@ body {
     --border: 220 10% 85%;
     --input: 220 10% 85%;
     --ring: 220 10% 40%;
-    --radius: 0.5rem;
   }
-  
+
   .theme-orange {
     --background: 24 94% 96%;
     --foreground: 24 94% 10%;
@@ -96,7 +101,6 @@ body {
     --border: 24 94% 80%;
     --input: 24 94% 80%;
     --ring: 24 94% 50%;
-    --radius: 0.5rem;
   }
 
   .theme-rose {
@@ -119,7 +123,6 @@ body {
     --border: 350 90% 88%;
     --input: 350 90% 88%;
     --ring: 350 90% 60%;
-    --radius: 0.5rem;
   }
 
   .theme-green {
@@ -142,38 +145,27 @@ body {
     --border: 145 60% 80%;
     --input: 145 60% 80%;
     --ring: 145 70% 40%;
-    --radius: 0.5rem;
   }
 
   .theme-zinc {
-    --background: 240 10% 15%;
-    --foreground: 240 10% 95%;
-    --card: 240 10% 15%;
-    --card-foreground: 240 10% 95%;
-    --popover: 240 10% 15%;
-    --popover-foreground: 240 10% 95%;
-    --primary: 240 10% 80%;
-    --primary-foreground: 240 10% 10%;
-    --secondary: 240 10% 25%;
-    --secondary-foreground: 240 10% 90%;
-    --muted: 240 10% 25%;
-    --muted-foreground: 240 10% 60%;
-    --accent: 240 10% 25%;
-    --accent-foreground: 240 10% 90%;
+    --background: 240 10% 98%;
+    --foreground: 240 10% 15%;
+    --card: 240 10% 98%;
+    --card-foreground: 240 10% 15%;
+    --popover: 240 10% 98%;
+    --popover-foreground: 240 10% 15%;
+    --primary: 240 10% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 10% 90%;
+    --secondary-foreground: 240 10% 25%;
+    --muted: 240 10% 90%;
+    --muted-foreground: 240 10% 55%;
+    --accent: 240 10% 90%;
+    --accent-foreground: 240 10% 25%;
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 10% 30%;
-    --input: 240 10% 30%;
-    --ring: 240 10% 80%;
-    --radius: 0.5rem;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
+    --border: 240 10% 85%;
+    --input: 240 10% 85%;
+    --ring: 240 10% 45%;
   }
 }

@@ -53,11 +53,26 @@
     "customerName": "Advocacia Júlio César da Costa",
     "equipment": "NOTEBOOK ACER SEM MODELO",
     "reportedProblem": "Lento ",
-    "status": "Aberta",
+    "status": "Finalizado",
     "date": "2025-08-25",
-    "totalValue": 0,
-    "items": [],
-    "payments": [],
+    "totalValue": 90,
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 90,
+        "type": "service",
+        "id": 1757526011934
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1757526132534",
+        "amount": 90,
+        "date": "2025-09-10",
+        "method": "PIX"
+      }
+    ],
     "internalNotes": [],
     "technicalReport": "",
     "accessories": "Carregador",

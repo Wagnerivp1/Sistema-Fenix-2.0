@@ -25,6 +25,7 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
+          themes={['light', 'dark', 'stone', 'orange', 'rose', 'green', 'zinc']}
           disableTransitionOnChange
         >
           {children}

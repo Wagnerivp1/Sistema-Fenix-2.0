@@ -138,13 +138,12 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
 
     if (companyInfo?.logoUrl) {
       const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = companyInfo.logoUrl;
       img.onload = () => generatePdfContent(img);
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");
         generatePdfContent(null);
       };
+      img.src = companyInfo.logoUrl;
     } else {
       generatePdfContent(null);
     }

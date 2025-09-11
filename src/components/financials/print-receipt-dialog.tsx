@@ -152,13 +152,12 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
 
     if (info.logoUrl) {
         const img = new Image();
-        img.src = info.logoUrl;
-        img.crossOrigin = "anonymous";
         img.onload = () => performGeneration(img);
         img.onerror = () => {
             console.error("Error loading logo for PDF, proceeding without it.");
             performGeneration(null);
         };
+        img.src = info.logoUrl;
     } else {
         performGeneration(null);
     }

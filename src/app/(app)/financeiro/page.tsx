@@ -301,6 +301,8 @@ export default function FinanceiroPage() {
 
 
   const generatePdf = async () => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
 
     const generateContent = (logoImage: HTMLImageElement | null = null) => {
@@ -375,12 +377,12 @@ export default function FinanceiroPage() {
 
     if (companyInfo?.logoUrl) {
       const img = new Image();
-      img.src = companyInfo.logoUrl;
       img.onload = () => generateContent(img);
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");
         generateContent(null);
       };
+      img.src = companyInfo.logoUrl;
     } else {
       generateContent();
     }
@@ -618,3 +620,4 @@ export default function FinanceiroPage() {
     </>
   );
 }
+

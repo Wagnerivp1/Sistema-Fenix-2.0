@@ -341,13 +341,12 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
 
     if (companyInfo?.logoUrl) {
       const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = companyInfo.logoUrl;
       img.onload = () => performGeneration(img);
       img.onerror = () => {
         console.error("Error loading logo for PDF, proceeding without it.");
         performGeneration(null);
       };
+      img.src = companyInfo.logoUrl;
     } else {
       performGeneration(null);
     }

@@ -212,7 +212,6 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
     if (companyInfo?.logoUrl) {
       const img = new Image();
-      img.crossOrigin = "anonymous";
       img.onload = () => {
         generateContent(img);
       };

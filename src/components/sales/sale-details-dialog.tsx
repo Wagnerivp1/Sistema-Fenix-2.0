@@ -153,13 +153,12 @@ export function SaleDetailsDialog({ isOpen, onOpenChange, sale }: SaleDetailsDia
 
         if (companyInfo?.logoUrl) {
             const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = companyInfo.logoUrl;
             img.onload = () => generateContent(img);
             img.onerror = () => {
                 console.error("Error loading logo for PDF, proceeding without it.");
                 generateContent(null);
             };
+            img.src = companyInfo.logoUrl;
         } else {
             generateContent(null);
         }

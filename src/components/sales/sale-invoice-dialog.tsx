@@ -18,15 +18,8 @@ import { User, Calendar, Clock, Printer, ShoppingCart, DollarSign, StickyNote } 
 import type { Sale, CompanyInfo, SaleItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import type { jsPDF } from 'jspdf';
 
-declare module 'jspdf' {
-    interface jsPDF {
-      autoTable: (options: any) => jsPDF;
-      lastAutoTable: { finalY: number };
-    }
-}
 
 interface SaleInvoiceDialogProps {
   isOpen: boolean;
@@ -59,6 +52,8 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
             return;
         }
 
+        const { jsPDF } = await import('jspdf');
+        await import('jspdf-autotable');
         const companyInfo = await getCompanyInfo();
 
         const generateContent = (logoImage: HTMLImageElement | null = null) => {
@@ -105,17 +100,17 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
             currentY = 50;
             
             // Detalhes da Venda
-            doc.autoTable({
+            (doc as any).autoTable({
                 startY: currentY,
                 head: [['Vendedor', 'Forma de Pagamento']],
                 body: [[sale.user, sale.paymentMethod]],
                 theme: 'grid',
                 styles: { fontSize: 9, cellPadding: 2, lineColor: [220,220,220] }
             });
-            currentY = doc.lastAutoTable.finalY + 8;
+            currentY = (doc as any).lastAutoTable.finalY + 8;
 
             // Tabela de Itens
-            doc.autoTable({
+            (doc as any).autoTable({
                 startY: currentY,
                 head: [['Produto', 'Qtd.', 'Preço Unit.', 'Subtotal']],
                 body: sale.items.map(item => [
@@ -133,7 +128,7 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
                     [{ content: 'Total Final:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${sale.total.toFixed(2)}`],
                 ]
             });
-            currentY = doc.lastAutoTable.finalY + 10;
+            currentY = (doc as any).lastAutoTable.finalY + 10;
             
             // Observações
             if (sale.observations) {
@@ -257,3 +252,5 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         </Dialog>
     );
 }
+
+    

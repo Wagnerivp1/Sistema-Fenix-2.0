@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Printer } from 'lucide-react';
-import jsPDF from 'jspdf';
+import type { jsPDF } from 'jspdf';
 import JsBarcode from 'jsbarcode';
 import { useToast } from '@/hooks/use-toast';
 import type { StockItem, CompanyInfo } from '@/types';
@@ -73,7 +73,8 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     }
   };
 
-  const generateA4Pdf = (barcodeDataUrl: string, companyInfo: CompanyInfo) => {
+  const generateA4Pdf = async (barcodeDataUrl: string, companyInfo: CompanyInfo) => {
+    const { jsPDF } = await import('jspdf');
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -210,3 +211,5 @@ export function PrintLabelDialog({ item, isOpen, onOpenChange }: PrintLabelDialo
     </>
   );
 }
+
+    

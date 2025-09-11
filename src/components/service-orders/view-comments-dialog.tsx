@@ -2,8 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import type { jsPDF } from 'jspdf';
 import { Printer } from 'lucide-react';
 import {
   Dialog,
@@ -21,13 +20,6 @@ import type { ServiceOrder, InternalNote } from '@/types';
 import { getCompanyInfo } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 
-
-declare module 'jspdf' {
-    interface jsPDF {
-      autoTable: (options: any) => jsPDF;
-      lastAutoTable: { finalY: number };
-    }
-}
 
 interface ViewCommentsDialogProps {
   isOpen: boolean;
@@ -70,6 +62,9 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
         });
         return;
     }
+    
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
 
     const companyInfo = await getCompanyInfo();
     const sortedNotes = sortNotesChronologically(serviceOrder.internalNotes);
@@ -110,7 +105,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
 
         currentY += 10;
 
-        doc.autoTable({
+        (doc as any).autoTable({
             startY: currentY,
             head: [['Data', 'Usuário', 'Comentário']],
             body: sortedNotes.map(note => [
@@ -130,7 +125,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
                 1: { cellWidth: 30 },
                 2: { cellWidth: 'auto' },
             },
-            didParseCell: (data) => {
+            didParseCell: (data: any) => {
                 // For long comments
                 if (data.column.index === 2) {
                     data.cell.styles.overflow = 'linebreak';
@@ -217,3 +212,5 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     </Dialog>
   );
 }
+
+    

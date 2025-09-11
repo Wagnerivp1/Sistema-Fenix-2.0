@@ -47,21 +47,10 @@ import {
   Check,
 } from 'lucide-react';
 import { addDays } from 'date-fns';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import type { jsPDF } from 'jspdf';
 import type { Quote, Customer, StockItem, SaleItem, User, CompanyInfo, Kit } from '@/types';
 import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
 
-
-declare module 'jspdf' {
-    interface jsPDF {
-      autoTable: (options: any) => jsPDF;
-      lastAutoTable: { finalY: number };
-    }
-}
-
-
-const initialNewCustomerState: Omit<Customer, 'id'> = { name: '', phone: '', email: '', address: '', document: '' };
 
 interface QuoteBuilderProps {
   isOpen: boolean;
@@ -86,7 +75,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
 
   const [isAddCustomerOpen, setIsAddCustomerOpen] = React.useState(false);
   const [isManualAddOpen, setIsManualAddOpen] = React.useState(false);
-  const [newCustomer, setNewCustomer] = React.useState(initialNewCustomerState);
+  const [newCustomer, setNewCustomer] = React.useState<Omit<Customer, 'id'>>({ name: '', phone: '', email: '', address: '', document: '' });
 
   React.useEffect(() => {
     const loadPrerequisites = async () => {
@@ -244,13 +233,16 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
   };
   
   const generatePdf = async () => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+
     const customer = customers.find(c => c.id === selectedCustomerId);
     if (!customer) { toast({variant: 'destructive', title: 'Selecione um cliente'}); return; }
 
     const companyInfo = await getCompanyInfo();
-    const doc = new jsPDF();
     
     const performGeneration = (logoImage: HTMLImageElement | null) => {
+        const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
         let currentY = 20;
@@ -309,8 +301,8 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
             'Nome:': customer.name,
             'Telefone:': customer.phone,
             'Documento:': customer.document || "Não informado"
-        }
-        doc.autoTable({
+        };
+        (doc as any).autoTable({
             body: Object.entries(customerInfo),
             startY: currentY,
             theme: 'grid',
@@ -319,10 +311,10 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
             styles: { fontSize: 9, cellPadding: 2, lineColor: [200,200,200], lineWidth: 0.1 },
             columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
         });
-        currentY = doc.lastAutoTable.finalY + 8;
+        currentY = (doc as any).lastAutoTable.finalY + 8;
         
         // Items
-        doc.autoTable({
+        (doc as any).autoTable({
             startY: currentY,
             head: [['Descrição', 'Qtd.', 'Vlr. Unit.', 'Subtotal']],
             body: items.map(item => [item.name, item.quantity, `R$ ${(item.price || 0).toFixed(2)}`, `R$ ${((item.price || 0) * (item.quantity || 0)).toFixed(2)}`]),
@@ -333,7 +325,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
             headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold' },
             footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' }
         });
-        currentY = doc.lastAutoTable.finalY + 10;
+        currentY = (doc as any).lastAutoTable.finalY + 10;
         
         // Footer terms
         doc.setFontSize(9);
@@ -490,3 +482,5 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     </>
   );
 }
+
+    

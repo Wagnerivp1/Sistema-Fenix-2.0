@@ -8,20 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FileDown, Calendar, User, Wrench, HardDrive, HelpCircle, FileText, ShoppingBag, DollarSign, ShieldCheck, MessageSquare, Tag, AlertCircle, Search } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import type { jsPDF } from 'jspdf';
 import { cn } from '@/lib/utils';
 import { add, isValid, parseISO } from 'date-fns';
 import { Input } from '../ui/input';
 import { getCompanyInfo, getSettings } from '@/lib/storage';
-
-
-declare module 'jspdf' {
-    interface jsPDF {
-      autoTable: (options: any) => jsPDF;
-      lastAutoTable: { finalY: number };
-    }
-}
 
 
 const formatDate = (dateString: string | undefined) => {
@@ -81,6 +72,9 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
   );
 
   const exportToPdf = async () => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+
     const companyInfo = await getCompanyInfo();
     const customerName = (filteredHistory[0] as any)?.customerName || (filteredHistory[0] as any)?.client?.name || "Cliente";
     
@@ -178,7 +172,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
         
         const drawInfoBox = (data: { [key: string]: string }, x: number, y: number, width: number) => {
             const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
-            doc.autoTable({
+            (doc as any).autoTable({
                 body: tableBody,
                 startY: y,
                 theme: 'grid',
@@ -187,7 +181,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
                 styles: { fontSize: 8.5, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
                 columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
             });
-            return doc.lastAutoTable.finalY;
+            return (doc as any).lastAutoTable.finalY;
         }
 
         const clientBoxHeight = drawInfoBox(clientData, margin, currentY, boxWidth);
@@ -196,7 +190,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
 
 
         if (order.items && order.items.length > 0) {
-          doc.autoTable({
+          (doc as any).autoTable({
             startY: currentY,
             head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
             body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${(item.unitPrice || 0).toFixed(2)}`, `R$ ${((item.unitPrice || 0) * item.quantity).toFixed(2)}`]),
@@ -209,7 +203,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
             ],
             margin: { left: margin, right: margin }
           });
-          currentY = doc.lastAutoTable.finalY + 5;
+          currentY = (doc as any).lastAutoTable.finalY + 5;
         }
       });
 
@@ -226,6 +220,7 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
         console.error("Error loading logo for PDF, proceeding without it.");
         generateContent(null);
       };
+      img.src = companyInfo.logoUrl;
     } else {
       generateContent(null);
     }
@@ -413,3 +408,5 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   return <InfoItem icon={warrantyIcon} label="Período de Garantia" value={warrantyInfoText} />
 };
+
+    

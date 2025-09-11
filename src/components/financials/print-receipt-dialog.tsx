@@ -14,18 +14,10 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Printer, ReceiptText, Sheet } from 'lucide-react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import type { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
 import type { FinancialTransaction, CompanyInfo } from '@/types';
-
-declare module 'jspdf' {
-    interface jsPDF {
-      autoTable: (options: any) => jsPDF;
-      lastAutoTable: { finalY: number };
-    }
-}
 
 
 interface PrintReceiptDialogProps {
@@ -60,7 +52,10 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     }
   };
 
-  const generateA4Pdf = (tx: FinancialTransaction, info: CompanyInfo) => {
+  const generateA4Pdf = async (tx: FinancialTransaction, info: CompanyInfo) => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+
     const performGeneration = (logoImage: HTMLImageElement | null) => {
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -129,7 +124,7 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
         currentY += 15;
 
         // Details Table
-        doc.autoTable({
+        (doc as any).autoTable({
             startY: currentY,
             theme: 'grid',
             styles: { fontSize: 10, cellPadding: 3, lineColor: [200,200,200] },
@@ -141,7 +136,7 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
             ],
             columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50 } },
         });
-        currentY = doc.lastAutoTable.finalY + 40;
+        currentY = (doc as any).lastAutoTable.finalY + 40;
         
         // Footer and Signature
         const city = info.address?.split('-')[0]?.split(',')[1]?.trim() || "___________________";
@@ -169,7 +164,9 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     }
   };
 
-  const generateThermalPdf = (tx: FinancialTransaction, info: CompanyInfo) => {
+  const generateThermalPdf = async (tx: FinancialTransaction, info: CompanyInfo) => {
+    const { jsPDF } = await import('jspdf');
+
     // 80mm width paper
     const doc = new jsPDF({ unit: 'mm', format: [80, 297] });
     const pageWidth = 80;

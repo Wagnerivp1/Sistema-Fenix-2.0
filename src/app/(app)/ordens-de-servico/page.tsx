@@ -468,13 +468,15 @@ function ServiceOrdersComponent() {
     let logoDataUrl: string | null = null;
     try {
         const logoPath = "/images/pdf-logos/logo.png";
-        logoDataUrl = await fetch(logoPath)
+        const imgData = await fetch(logoPath)
             .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve) => {
+            .then(blob => new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
                 reader.readAsDataURL(blob);
             }));
+        logoDataUrl = imgData;
     } catch (error) {
         console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
     }
@@ -625,13 +627,15 @@ function ServiceOrdersComponent() {
     let logoDataUrl: string | null = null;
     try {
         const logoPath = "/images/pdf-logos/logo.png";
-        logoDataUrl = await fetch(logoPath)
+        const imgData = await fetch(logoPath)
             .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve) => {
+            .then(blob => new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
                 reader.readAsDataURL(blob);
             }));
+        logoDataUrl = imgData;
     } catch (error) {
         console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
     }
@@ -762,13 +766,15 @@ function ServiceOrdersComponent() {
     let logoDataUrl: string | null = null;
     try {
         const logoPath = "/images/pdf-logos/logo.png";
-        logoDataUrl = await fetch(logoPath)
+        const imgData = await fetch(logoPath)
             .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve) => {
+            .then(blob => new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
                 reader.readAsDataURL(blob);
             }));
+        logoDataUrl = imgData;
     } catch (error) {
         console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
     }
@@ -911,13 +917,15 @@ function ServiceOrdersComponent() {
     let logoDataUrl: string | null = null;
     try {
         const logoPath = "/images/pdf-logos/logo.png";
-        logoDataUrl = await fetch(logoPath)
+        const imgData = await fetch(logoPath)
             .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve) => {
+            .then(blob => new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
                 reader.readAsDataURL(blob);
             }));
+        logoDataUrl = imgData;
     } catch (error) {
         console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
     }

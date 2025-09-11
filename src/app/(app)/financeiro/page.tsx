@@ -18,8 +18,6 @@ import {
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -305,87 +303,88 @@ export default function FinanceiroPage() {
     await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
 
-    const generateContent = (logoImage: HTMLImageElement | null = null) => {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 15;
-      let currentY = 40;
-      let textX = margin;
-      const logoWidth = 25;
-      const logoHeight = 25;
-      const logoSpacing = 5;
-
-      // Header
-      if (logoImage) {
-        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, 12, logoWidth, logoHeight);
-        textX = margin + logoWidth + logoSpacing;
-      }
-      
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text(companyInfo.name || "Relatório Financeiro", textX, 20);
-
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const period = dateRange?.from ? 
-                    `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${dateRange.to ? format(dateRange.to, 'dd/MM/yyyy') : 'hoje'}` :
-                    'Período: Todas as Transações';
-      doc.text(period, textX, 26);
-
-      // Summary
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text("Resumo do Período", margin, currentY);
-      currentY += 8;
-
-      doc.autoTable({
-          startY: currentY,
-          body: [
-              ['Total de Receitas', `R$ ${totalReceitas.toFixed(2)}`],
-              ['Total de Despesas', `R$ ${totalDespesas.toFixed(2)}`],
-              ['Saldo do Período', `R$ ${saldoPeriodo.toFixed(2)}`],
-          ],
-          theme: 'grid',
-          headStyles: { fillColor: [241, 245, 249] },
-          styles: { fontStyle: 'bold' }
-      });
-      currentY = doc.lastAutoTable.finalY + 10;
-      
-      // Transactions Table
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text("Transações Detalhadas", margin, currentY);
-      currentY += 8;
-
-      doc.autoTable({
-          startY: currentY,
-          head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor (R$)']],
-          body: filteredTransactions.map(t => [
-              formatDateForDisplay(t.date),
-              t.description,
-              t.category,
-              t.type === 'receita' ? 'Receita' : 'Despesa',
-              { content: t.amount.toFixed(2), styles: { halign: 'right', textColor: t.type === 'receita' ? '#16a34a' : '#dc2626' } }
-          ]),
-          theme: 'striped',
-          headStyles: { fillColor: [30, 41, 59] },
-      });
-
-      doc.autoPrint();
-      doc.output('dataurlnewwindow');
-    };
-
-    if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.onload = () => generateContent(img);
-      img.onerror = () => {
-        console.error("Error loading logo for PDF, proceeding without it.");
-        generateContent(null);
-      };
-      img.src = companyInfo.logoUrl;
-    } else {
-      generateContent();
+    let logoDataUrl: string | null = null;
+    try {
+        const logoPath = "/images/pdf-logos/logo.png";
+        const imgData = await fetch(logoPath)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            }));
+        logoDataUrl = imgData;
+    } catch (error) {
+        console.warn("Logo para PDF não encontrada no caminho padrão. O PDF será gerado sem logo.");
     }
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 40;
+    let textX = margin;
+    const logoWidth = 25;
+    const logoHeight = 25;
+    const logoSpacing = 5;
+
+    // Header
+    if (logoDataUrl) {
+      doc.addImage(logoDataUrl, 'PNG', margin, 12, logoWidth, logoHeight);
+      textX = margin + logoWidth + logoSpacing;
+    }
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text(companyInfo.name || "Relatório Financeiro", textX, 20);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const period = dateRange?.from ? 
+                  `Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${dateRange.to ? format(dateRange.to, 'dd/MM/yyyy') : 'hoje'}` :
+                  'Período: Todas as Transações';
+    doc.text(period, textX, 26);
+
+    // Summary
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text("Resumo do Período", margin, currentY);
+    currentY += 8;
+
+    (doc as any).autoTable({
+        startY: currentY,
+        body: [
+            ['Total de Receitas', `R$ ${totalReceitas.toFixed(2)}`],
+            ['Total de Despesas', `R$ ${totalDespesas.toFixed(2)}`],
+            ['Saldo do Período', `R$ ${saldoPeriodo.toFixed(2)}`],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [241, 245, 249] },
+        styles: { fontStyle: 'bold' }
+    });
+    currentY = (doc as any).lastAutoTable.finalY + 10;
+    
+    // Transactions Table
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text("Transações Detalhadas", margin, currentY);
+    currentY += 8;
+
+    (doc as any).autoTable({
+        startY: currentY,
+        head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor (R$)']],
+        body: filteredTransactions.map(t => [
+            formatDateForDisplay(t.date),
+            t.description,
+            t.category,
+            t.type === 'receita' ? 'Receita' : 'Despesa',
+            { content: t.amount.toFixed(2), styles: { halign: 'right', textColor: t.type === 'receita' ? '#16a34a' : '#dc2626' } }
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 41, 59] },
+    });
+
+    doc.autoPrint();
+    doc.output('dataurlnewwindow');
   }
   
   const renderReceivablesHeader = () => {
@@ -620,4 +619,3 @@ export default function FinanceiroPage() {
     </>
   );
 }
-

@@ -65,8 +65,7 @@ import { ViewCommentsDialog } from '@/components/service-orders/view-comments-di
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import type { jsPDF } from 'jspdf';
 import { add, format } from 'date-fns';
 import { AddPaymentDialog } from '@/components/service-orders/add-payment-dialog';
 
@@ -462,578 +461,600 @@ function ServiceOrdersComponent() {
     }
   };
 
-  const generateInvoicePdf = (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
-     const performGeneration = (logoImage: HTMLImageElement | null) => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 15;
-        let currentY = 20;
-        let textX = margin;
-        const fontColor = '#000000';
-        const logoWidth = 30;
-        const logoHeight = 30;
-        const logoSpacing = 5;
-        const totalPaid = order.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-        const balanceDue = (order.finalValue ?? order.totalValue ?? 0) - totalPaid;
-
-        // Header
-        if (logoImage) {
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
-            textX = margin + logoWidth + logoSpacing;
-        }
-        
-        doc.setFont('helvetica');
-        doc.setTextColor(fontColor);
-        
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        if (companyInfo.name) {
-            doc.text(companyInfo.name, textX, currentY);
-            currentY += 8;
-        }
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        if (companyInfo.address) {
-            doc.text(companyInfo.address, textX, currentY);
-            currentY += 4;
-        }
-        if (companyInfo.phone || companyInfo.emailOrSite) {
-            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
-        }
-
-        const rightHeaderX = pageWidth - margin;
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text("FATURA DE SERVIÇO", rightHeaderX, currentY - 8, { align: 'right' });
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Nº: #${order.id.slice(-4)}`, rightHeaderX, currentY - 2, { align: 'right' });
-        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
-        
-        currentY = 50;
-
-        const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
-            doc.setFillColor(243, 244, 246); // light gray bg
-            doc.rect(x, y, width, 7, 'F');
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, x + 3, y + 5);
-            
-            const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
-            doc.autoTable({
-                body: tableBody,
-                startY: y + 7,
-                theme: 'grid',
-                tableWidth: width,
-                margin: { left: x },
-                styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
-                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
-            });
-            return doc.lastAutoTable.finalY;
-        }
-
-        const boxWidth = (pageWidth - margin * 2 - 5) / 2;
-        
-        const clientData = {
-            'Nome:': customer.name,
-            'Telefone:': customer.phone,
-            'Endereço:': customer.address || "Não informado",
-        };
-        
-        const equipmentData = {
-            'Equipamento:': typeof order.equipment === 'string' ? order.equipment : `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`,
-            'Nº Série:': order.serialNumber || 'Não informado',
-            'Data de Entrada:': formatDate(order.date),
-        }
-
-        const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
-        const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
-        
-        currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
-        
-        // Items Table
-        if (order.items && order.items.length > 0) {
-            doc.autoTable({
-                startY: currentY,
-                head: [['Descrição', 'Qtd.', 'Vlr. Unit.', 'Total']],
-                body: order.items.map(item => [item.description, item.quantity, `R$ ${(item.unitPrice).toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
-                theme: 'striped',
-                headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9 },
-                bodyStyles: { fontSize: 9 },
-            });
-            currentY = doc.lastAutoTable.finalY;
-        }
-
-        // Financial Summary
-        const summaryY = currentY + 10;
-        const summaryX = pageWidth - margin - 60;
-        doc.setFontSize(10);
-        doc.autoTable({
-            startY: summaryY,
-            body: [
-                ['Subtotal:', `R$ ${(order.totalValue).toFixed(2)}`],
-                ['Desconto:', `- R$ ${(order.discount || 0).toFixed(2)}`],
-                ['Total Pago:', `R$ ${totalPaid.toFixed(2)}`],
-                [{ content: 'SALDO DEVEDOR:', styles: { fontStyle: 'bold' } }, { content: `R$ ${balanceDue.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
-            ],
-            theme: 'plain',
-            styles: { fontSize: 10, cellPadding: 2 },
-            columnStyles: { 0: { halign: 'right' }, 1: { halign: 'right', fontStyle: 'bold' } },
-            margin: { left: summaryX }
-        });
-        currentY = doc.lastAutoTable.finalY;
-
-        // Payment Info
-        if (companyInfo.pixKey) {
-            currentY += 10;
-            doc.setFontSize(9);
-            doc.text('Chave PIX para pagamento:', margin, currentY);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(companyInfo.pixKey, margin, currentY + 5);
-        }
-        
-        // Footer
-        const footerY = doc.internal.pageSize.getHeight() - 15;
-        doc.setLineWidth(0.5);
-        doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
-        doc.setFontSize(8);
-        doc.text('Agradecemos a sua preferência!', pageWidth / 2, footerY, { align: 'center' });
-        
-        doc.output('dataurlnewwindow');
-    };
-    if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.src = companyInfo.logoUrl;
-      img.crossOrigin = "anonymous";
-      img.onload = () => performGeneration(img);
-      img.onerror = () => performGeneration(null);
-    } else {
-      performGeneration(null);
+  const generateInvoicePdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+    
+    let logoDataUrl: string | null = null;
+    try {
+        const logoPath = "/images/pdf-logos/logo.png";
+        logoDataUrl = await fetch(logoPath)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            }));
+    } catch (error) {
+        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
     }
-  };
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 20;
+    let textX = margin;
+    const fontColor = '#000000';
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const logoSpacing = 5;
+    const totalPaid = order.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+    const balanceDue = (order.finalValue ?? order.totalValue ?? 0) - totalPaid;
 
-  const generateEntryReceiptPdf = (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
-     const performGeneration = (logoImage: HTMLImageElement | null) => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 15;
-        let currentY = 20;
-        let textX = margin;
-        const fontColor = '#000000';
-        const logoWidth = 30;
-        const logoHeight = 30;
-        const logoSpacing = 5;
-
-        // Header
-        if (logoImage) {
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
-            textX = margin + logoWidth + logoSpacing;
-        }
-        
-        doc.setFont('helvetica');
-        doc.setTextColor(fontColor);
-        
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        if (companyInfo.name) {
-            doc.text(companyInfo.name, textX, currentY);
-            currentY += 8;
-        }
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        if (companyInfo.address) {
-            doc.text(companyInfo.address, textX, currentY);
-            currentY += 4;
-        }
-        if (companyInfo.phone || companyInfo.emailOrSite) {
-            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
-        }
-
-        const rightHeaderX = pageWidth - margin;
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text("Recibo de Entrada de Equipamento", rightHeaderX, currentY - 8, { align: 'right' });
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`OS Nº: #${order.id.slice(-4)}`, rightHeaderX, currentY - 2, { align: 'right' });
-        doc.text(`Data Entrada: ${new Date(order.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}`, rightHeaderX, currentY + 4, { align: 'right' });
-        
-        currentY = 50;
-        
-        const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
-            doc.setFillColor(243, 244, 246); // light gray bg
-            doc.rect(x, y, width, 7, 'F');
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, x + 3, y + 5);
-            
-            const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
-            doc.autoTable({
-                body: tableBody,
-                startY: y + 7,
-                theme: 'grid',
-                tableWidth: width,
-                margin: { left: x },
-                styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
-                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
-            });
-            return doc.lastAutoTable.finalY;
-        }
-
-        const boxWidth = (pageWidth - margin * 2 - 5) / 2;
-        
-        const clientData = {
-            'Nome:': customer.name,
-            'Telefone:': customer.phone,
-            'Documento:': customer.document || "Não informado",
-        };
-        
-        const equipmentData = {
-            'Equipamento:': typeof order.equipment === 'string' ? order.equipment : `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`,
-            'Nº Série:': order.serialNumber || 'Não informado',
-            'Acessórios': order.accessories || 'Nenhum'
-        }
-
-        const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
-        const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
-        
-        currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
-
-        const drawFullWidthBox = (title: string, content: string, y: number) => {
-            doc.setFillColor(243, 244, 246);
-            doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, margin + 3, y + 5);
-            
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 6);
-            const textHeight = doc.getTextDimensions(textLines).h;
-            doc.setDrawColor(200, 200, 200);
-            doc.rect(margin, y + 7, pageWidth - margin * 2, textHeight + 6, 'S');
-            doc.text(textLines, margin + 3, y + 12);
-            return y + textHeight + 20;
-        }
-        
-        currentY = drawFullWidthBox('Defeito Relatado pelo Cliente', order.reportedProblem || 'Não informado.', currentY);
-
-        currentY += 10;
-        doc.setFontSize(8);
-        const termsText = "Declaro que o equipamento acima foi entregue para análise e orçamento. O prazo para orçamento é de 3 dias úteis. A apresentação deste recibo é obrigatória para a retirada do equipamento.";
-        const textLines = doc.splitTextToSize(termsText, pageWidth - margin * 2);
-        doc.text(textLines, margin, currentY);
-        currentY += (textLines.length * 4) + 20;
-
-        doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
+    // Header
+    if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
+    }
+    
+    doc.setFont('helvetica');
+    doc.setTextColor(fontColor);
+    
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    if (companyInfo.name) {
+        doc.text(companyInfo.name, textX, currentY);
+        currentY += 8;
+    }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (companyInfo.address) {
+        doc.text(companyInfo.address, textX, currentY);
         currentY += 4;
-        doc.setFontSize(9);
-        doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
-
-
-        doc.output('dataurlnewwindow');
-    };
-    if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.src = companyInfo.logoUrl;
-      img.crossOrigin = "anonymous";
-      img.onload = () => performGeneration(img);
-      img.onerror = () => performGeneration(null);
-    } else {
-      performGeneration(null);
     }
-  };
+    if (companyInfo.phone || companyInfo.emailOrSite) {
+        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
+    }
 
-  const generateQuotePdf = (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
-     const performGeneration = (logoImage: HTMLImageElement | null) => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 15;
-        let currentY = 20;
-        let textX = margin;
-        const fontColor = '#000000';
-        const logoWidth = 30;
-        const logoHeight = 30;
-        const logoSpacing = 5;
+    const rightHeaderX = pageWidth - margin;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text("FATURA DE SERVIÇO", rightHeaderX, currentY - 8, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Nº: #${order.id.slice(-4)}`, rightHeaderX, currentY - 2, { align: 'right' });
+    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
+    
+    currentY = 50;
 
-        // Header
-        if (logoImage) {
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
-            textX = margin + logoWidth + logoSpacing;
-        }
-        
-        doc.setFont('helvetica');
-        doc.setTextColor(fontColor);
-        
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        if (companyInfo.name) {
-            doc.text(companyInfo.name, textX, currentY);
-            currentY += 8;
-        }
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        if (companyInfo.address) {
-            doc.text(companyInfo.address, textX, currentY);
-            currentY += 4;
-        }
-        if (companyInfo.phone || companyInfo.emailOrSite) {
-            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
-        }
-
-        const rightHeaderX = pageWidth - margin;
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text("Orçamento de Serviço", rightHeaderX, currentY - 8, { align: 'right' });
+    const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
+        doc.setFillColor(243, 244, 246); // light gray bg
+        doc.rect(x, y, width, 7, 'F');
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Nº: #${order.id.slice(-4)}`, rightHeaderX, currentY - 2, { align: 'right' });
-        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
-        
-        currentY = 50;
-
-        const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
-            doc.setFillColor(243, 244, 246); // light gray bg
-            doc.rect(x, y, width, 7, 'F');
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, x + 3, y + 5);
-            
-            const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
-            doc.autoTable({
-                body: tableBody,
-                startY: y + 7,
-                theme: 'grid',
-                tableWidth: width,
-                margin: { left: x },
-                styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
-                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
-            });
-            return doc.lastAutoTable.finalY;
-        }
-
-        const boxWidth = (pageWidth - margin * 2 - 5) / 2;
-        
-        const clientData = {
-            'Nome:': customer.name,
-            'Telefone:': customer.phone,
-            'Documento:': customer.document || "Não informado",
-        };
-        
-        const equipmentData = {
-            'Equipamento:': typeof order.equipment === 'string' ? order.equipment : `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`,
-            'Nº Série:': order.serialNumber || 'Não informado'
-        }
-
-        const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
-        const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
-        currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
-  
-        const drawFullWidthBox = (title: string, content: string, y: number) => {
-            doc.setFillColor(243, 244, 246);
-            doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, margin + 3, y + 5);
-            
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 6);
-            const textHeight = doc.getTextDimensions(textLines).h;
-            doc.setDrawColor(200, 200, 200);
-            doc.rect(margin, y + 7, pageWidth - margin * 2, textHeight + 6, 'S');
-            doc.text(textLines, margin + 3, y + 12);
-            return y + textHeight + 20;
-        }
-
-        currentY = drawFullWidthBox('Defeito Reclamado', order.reportedProblem || 'Não informado.', currentY);
-        currentY = drawFullWidthBox('Diagnóstico / Laudo Técnico', order.technicalReport || 'Aguardando diagnóstico técnico.', currentY);
-
-        if (order.items && order.items.length > 0) {
-            doc.autoTable({
-                startY: currentY,
-                head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-                body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${(item.unitPrice).toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
-                theme: 'striped',
-                headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
-                bodyStyles: { fontSize: 8, cellPadding: 1.5 },
-                footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
-                foot: [
-                    ['Total', '', '', '', `R$ ${order.totalValue.toFixed(2)}`]
-                ],
-                margin: { left: margin, right: margin }
-            });
-            currentY = doc.lastAutoTable.finalY + 10;
-        }
-        
-        doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text("Validade e Condições:", margin, currentY);
-        currentY += 5;
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text("Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente.", margin, currentY);
+        doc.text(title, x + 3, y + 5);
         
-        doc.output('dataurlnewwindow');
-    };
-    if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.src = companyInfo.logoUrl;
-      img.crossOrigin = "anonymous";
-      img.onload = () => performGeneration(img);
-      img.onerror = () => performGeneration(null);
-    } else {
-      performGeneration(null);
+        const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
+        (doc as any).autoTable({
+            body: tableBody,
+            startY: y + 7,
+            theme: 'grid',
+            tableWidth: width,
+            margin: { left: x },
+            styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
+        });
+        return (doc as any).lastAutoTable.finalY;
     }
+
+    const boxWidth = (pageWidth - margin * 2 - 5) / 2;
+    
+    const clientData = {
+        'Nome:': customer.name,
+        'Telefone:': customer.phone,
+        'Endereço:': customer.address || "Não informado",
+    };
+    
+    const equipmentData = {
+        'Equipamento:': typeof order.equipment === 'string' ? order.equipment : `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`,
+        'Nº Série:': order.serialNumber || 'Não informado',
+        'Data de Entrada:': formatDate(order.date),
+    }
+
+    const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
+    const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
+    
+    currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
+    
+    // Items Table
+    if (order.items && order.items.length > 0) {
+        (doc as any).autoTable({
+            startY: currentY,
+            head: [['Descrição', 'Qtd.', 'Vlr. Unit.', 'Total']],
+            body: order.items.map(item => [item.description, item.quantity, `R$ ${(item.unitPrice).toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+            theme: 'striped',
+            headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9 },
+            bodyStyles: { fontSize: 9 },
+        });
+        currentY = (doc as any).lastAutoTable.finalY;
+    }
+
+    // Financial Summary
+    const summaryY = currentY + 10;
+    const summaryX = pageWidth - margin - 60;
+    doc.setFontSize(10);
+    (doc as any).autoTable({
+        startY: summaryY,
+        body: [
+            ['Subtotal:', `R$ ${(order.totalValue).toFixed(2)}`],
+            ['Desconto:', `- R$ ${(order.discount || 0).toFixed(2)}`],
+            ['Total Pago:', `R$ ${totalPaid.toFixed(2)}`],
+            [{ content: 'SALDO DEVEDOR:', styles: { fontStyle: 'bold' } }, { content: `R$ ${balanceDue.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 2 },
+        columnStyles: { 0: { halign: 'right' }, 1: { halign: 'right', fontStyle: 'bold' } },
+        margin: { left: summaryX }
+    });
+    currentY = (doc as any).lastAutoTable.finalY;
+
+    // Payment Info
+    if (companyInfo.pixKey) {
+        currentY += 10;
+        doc.setFontSize(9);
+        doc.text('Chave PIX para pagamento:', margin, currentY);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(companyInfo.pixKey, margin, currentY + 5);
+    }
+    
+    // Footer
+    const footerY = doc.internal.pageSize.getHeight() - 15;
+    doc.setLineWidth(0.5);
+    doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
+    doc.setFontSize(8);
+    doc.text('Agradecemos a sua preferência!', pageWidth / 2, footerY, { align: 'center' });
+    
+    doc.output('dataurlnewwindow');
   };
 
-  const generateDeliveryReceiptPdf = (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
-    const performGeneration = async (logoImage: HTMLImageElement | null) => {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 15;
-      let currentY = 20;
-      let textX = margin;
-      const fontColor = '#000000';
-  
-      // Header
-      if (logoImage) {
-        const logoWidth = 30;
-        const logoHeight = 30;
-        doc.addImage(logoImage, 'PNG', margin, currentY - 5, logoWidth, logoHeight);
-        textX = margin + logoWidth + 5;
-      }
-  
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text(companyInfo.name || 'Sua Empresa', textX, currentY);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      if (companyInfo.address) {
-        doc.text(companyInfo.address, textX, currentY + 5);
-      }
-      if (companyInfo.phone || companyInfo.emailOrSite) {
-        doc.text(
-          `Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`,
-          textX,
-          currentY + 10
-        );
-      }
-  
-      // Right side header
-      const rightHeaderX = pageWidth - margin;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('Recibo de Entrega', rightHeaderX, currentY, { align: 'right' });
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`OS Nº: ${order.id.slice(-4)}`, rightHeaderX, currentY + 5, { align: 'right' });
-      doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 10, { align: 'right' });
-  
-      currentY += 25;
-      
-      const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
-          doc.setFillColor(243, 244, 246); // light gray bg
-          doc.rect(x, y, width, 7, 'F');
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text(title, x + 3, y + 5);
-          
-          const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
-          doc.autoTable({
-              body: tableBody,
-              startY: y + 7,
-              theme: 'grid',
-              tableWidth: width,
-              margin: { left: x },
-              styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
-              columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
-          });
-          return doc.lastAutoTable.finalY;
-      }
-
-      const boxWidth = (pageWidth - margin * 2 - 5) / 2;
-      
-      const clientData = {
-          'Nome:': customer.name,
-          'Telefone:': customer.phone,
-          'Documento:': customer.document || 'Não informado',
-      };
-      
-      const equipmentData = {
-          'Equipamento:': typeof order.equipment === 'string' ? order.equipment : `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`,
-          'Nº Série:': order.serialNumber || 'Não informado'
-      }
-
-      const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
-      const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
-      
-      currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
-  
-      const drawFullWidthBox = (title: string, content: string, y: number) => {
-          doc.setFillColor(243, 244, 246);
-          doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text(title, margin + 3, y + 5);
-          
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 6);
-          const textHeight = doc.getTextDimensions(textLines).h;
-          doc.setDrawColor(200, 200, 200);
-          doc.rect(margin, y + 7, pageWidth - margin * 2, textHeight + 6, 'S');
-          doc.text(textLines, margin + 3, y + 12);
-          return y + textHeight + 20;
-      }
-      
-      currentY = drawFullWidthBox('Resumo dos Serviços/Peças', order.technicalReport || 'Nenhum serviço detalhado.', currentY);
-
-      doc.setFont('helvetica', 'bold');
-      doc.text('Termo de Recebimento:', margin, currentY);
-      doc.setFont('helvetica', 'normal');
-      currentY += 5;
-      const receiptDate = order.deliveredDate ? new Date(`${order.deliveredDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : new Date().toLocaleDateString('pt-BR');
-      doc.text(`Declaro que recebi o equipamento descrito acima, devidamente reparado e em funcionamento, na data de ${receiptDate}.`, margin, currentY);
-      currentY += 15;
-      
-      // Termo de Garantia
-      doc.setFillColor(243, 244, 246);
-      doc.rect(margin, currentY, pageWidth - margin * 2, 7, 'F');
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Termo de Garantia', margin + 3, currentY + 5);
-      
-      currentY += 7;
-      const warrantyContent = [
-        '1. Prazo: Conforme o Art. 26, II do CDC, o prazo de garantia legal para os serviços prestados e peças novas é de 90 dias a contar da data de entrega do equipamento.',
-        '2. Cobertura: A garantia cobre defeitos de fabricação das peças substituídas e falhas no serviço executado que estejam diretamente relacionadas ao reparo descrito nesta OS.',
-        '3. Exclusões: A garantia não cobre danos por mau uso, negligência, acidentes (quedas, líquidos), picos de energia, instalação de softwares maliciosos (vírus), modificações não autorizadas, violação de lacres ou reparos por terceiros. Problemas de software não relacionados ao serviço executado não são cobertos.',
-        '4. Procedimento: Para acionar a garantia, apresente esta OS. O equipamento passará por nova análise técnica para constatar se o defeito é coberto pela garantia.'
-      ];
-      
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      const warrantyLines = doc.splitTextToSize(warrantyContent.join('\\n\\n'), pageWidth - margin * 2 - 6);
-      const warrantyHeight = doc.getTextDimensions(warrantyLines).h;
-      
-      doc.setDrawColor(200, 200, 200);
-      doc.rect(margin, currentY, pageWidth - margin * 2, warrantyHeight + 6, 'S');
-      doc.text(warrantyLines, margin + 3, currentY + 5);
-      
-      doc.output('dataurlnewwindow');
-    };
-  
-    if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.src = companyInfo.logoUrl;
-      img.crossOrigin = "anonymous";
-      img.onload = () => performGeneration(img);
-      img.onerror = () => performGeneration(null);
-    } else {
-      performGeneration(null);
+  const generateEntryReceiptPdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+    
+    let logoDataUrl: string | null = null;
+    try {
+        const logoPath = "/images/pdf-logos/logo.png";
+        logoDataUrl = await fetch(logoPath)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            }));
+    } catch (error) {
+        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
     }
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 20;
+    let textX = margin;
+    const fontColor = '#000000';
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const logoSpacing = 5;
+
+    // Header
+    if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
+    }
+    
+    doc.setFont('helvetica');
+    doc.setTextColor(fontColor);
+    
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    if (companyInfo.name) {
+        doc.text(companyInfo.name, textX, currentY);
+        currentY += 8;
+    }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (companyInfo.address) {
+        doc.text(companyInfo.address, textX, currentY);
+        currentY += 4;
+    }
+    if (companyInfo.phone || companyInfo.emailOrSite) {
+        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
+    }
+
+    const rightHeaderX = pageWidth - margin;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Recibo de Entrada de Equipamento", rightHeaderX, currentY - 8, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`OS Nº: #${order.id.slice(-4)}`, rightHeaderX, currentY - 2, { align: 'right' });
+    doc.text(`Data Entrada: ${new Date(order.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}`, rightHeaderX, currentY + 4, { align: 'right' });
+    
+    currentY = 50;
+    
+    const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
+        doc.setFillColor(243, 244, 246); // light gray bg
+        doc.rect(x, y, width, 7, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, x + 3, y + 5);
+        
+        const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
+        (doc as any).autoTable({
+            body: tableBody,
+            startY: y + 7,
+            theme: 'grid',
+            tableWidth: width,
+            margin: { left: x },
+            styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
+        });
+        return (doc as any).lastAutoTable.finalY;
+    }
+
+    const boxWidth = (pageWidth - margin * 2 - 5) / 2;
+    
+    const clientData = {
+        'Nome:': customer.name,
+        'Telefone:': customer.phone,
+        'Documento:': customer.document || "Não informado",
+    };
+    
+    const equipmentData = {
+        'Equipamento:': typeof order.equipment === 'string' ? order.equipment : `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`,
+        'Nº Série:': order.serialNumber || 'Não informado',
+        'Acessórios': order.accessories || 'Nenhum'
+    }
+
+    const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
+    const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
+    
+    currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
+
+    const drawFullWidthBox = (title: string, content: string, y: number) => {
+        doc.setFillColor(243, 244, 246);
+        doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin + 3, y + 5);
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 6);
+        const textHeight = doc.getTextDimensions(textLines).h;
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(margin, y + 7, pageWidth - margin * 2, textHeight + 6, 'S');
+        doc.text(textLines, margin + 3, y + 12);
+        return y + textHeight + 20;
+    }
+    
+    currentY = drawFullWidthBox('Defeito Relatado pelo Cliente', order.reportedProblem || 'Não informado.', currentY);
+
+    currentY += 10;
+    doc.setFontSize(8);
+    const termsText = "Declaro que o equipamento acima foi entregue para análise e orçamento. O prazo para orçamento é de 3 dias úteis. A apresentação deste recibo é obrigatória para a retirada do equipamento.";
+    const textLines = doc.splitTextToSize(termsText, pageWidth - margin * 2);
+    doc.text(textLines, margin, currentY);
+    currentY += (textLines.length * 4) + 20;
+
+    doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
+    currentY += 4;
+    doc.setFontSize(9);
+    doc.text('Assinatura do Cliente', pageWidth / 2, currentY, { align: 'center' });
+
+    doc.output('dataurlnewwindow');
+  };
+
+  const generateQuotePdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+    
+    let logoDataUrl: string | null = null;
+    try {
+        const logoPath = "/images/pdf-logos/logo.png";
+        logoDataUrl = await fetch(logoPath)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            }));
+    } catch (error) {
+        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
+    }
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 20;
+    let textX = margin;
+    const fontColor = '#000000';
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const logoSpacing = 5;
+
+    // Header
+    if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
+    }
+    
+    doc.setFont('helvetica');
+    doc.setTextColor(fontColor);
+    
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    if (companyInfo.name) {
+        doc.text(companyInfo.name, textX, currentY);
+        currentY += 8;
+    }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (companyInfo.address) {
+        doc.text(companyInfo.address, textX, currentY);
+        currentY += 4;
+    }
+    if (companyInfo.phone || companyInfo.emailOrSite) {
+        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
+    }
+
+    const rightHeaderX = pageWidth - margin;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Orçamento de Serviço", rightHeaderX, currentY - 8, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Nº: #${order.id.slice(-4)}`, rightHeaderX, currentY - 2, { align: 'right' });
+    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
+    
+    currentY = 50;
+
+    const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
+        doc.setFillColor(243, 244, 246); // light gray bg
+        doc.rect(x, y, width, 7, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, x + 3, y + 5);
+        
+        const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
+        (doc as any).autoTable({
+            body: tableBody,
+            startY: y + 7,
+            theme: 'grid',
+            tableWidth: width,
+            margin: { left: x },
+            styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
+        });
+        return (doc as any).lastAutoTable.finalY;
+    }
+
+    const boxWidth = (pageWidth - margin * 2 - 5) / 2;
+    
+    const clientData = {
+        'Nome:': customer.name,
+        'Telefone:': customer.phone,
+        'Documento:': customer.document || "Não informado",
+    };
+    
+    const equipmentData = {
+        'Equipamento:': typeof order.equipment === 'string' ? order.equipment : `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`,
+        'Nº Série:': order.serialNumber || 'Não informado'
+    }
+
+    const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
+    const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
+    currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
+
+    const drawFullWidthBox = (title: string, content: string, y: number) => {
+        doc.setFillColor(243, 244, 246);
+        doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin + 3, y + 5);
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 6);
+        const textHeight = doc.getTextDimensions(textLines).h;
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(margin, y + 7, pageWidth - margin * 2, textHeight + 6, 'S');
+        doc.text(textLines, margin + 3, y + 12);
+        return y + textHeight + 20;
+    }
+
+    currentY = drawFullWidthBox('Defeito Reclamado', order.reportedProblem || 'Não informado.', currentY);
+    currentY = drawFullWidthBox('Diagnóstico / Laudo Técnico', order.technicalReport || 'Aguardando diagnóstico técnico.', currentY);
+
+    if (order.items && order.items.length > 0) {
+        (doc as any).autoTable({
+            startY: currentY,
+            head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
+            body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${(item.unitPrice).toFixed(2)}`, `R$ ${(item.unitPrice * item.quantity).toFixed(2)}`]),
+            theme: 'striped',
+            headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
+            bodyStyles: { fontSize: 8, cellPadding: 1.5 },
+            footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
+            foot: [
+                ['Total', '', '', '', `R$ ${order.totalValue.toFixed(2)}`]
+            ],
+            margin: { left: margin, right: margin }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 10;
+    }
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Validade e Condições:", margin, currentY);
+    currentY += 5;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente.", margin, currentY);
+    
+    doc.output('dataurlnewwindow');
+  };
+
+  const generateDeliveryReceiptPdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+    const { jsPDF } = await import('jspdf');
+    await import('jspdf-autotable');
+
+    let logoDataUrl: string | null = null;
+    try {
+        const logoPath = "/images/pdf-logos/logo.png";
+        logoDataUrl = await fetch(logoPath)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            }));
+    } catch (error) {
+        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
+    }
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 20;
+    let textX = margin;
+    const fontColor = '#000000';
+
+    // Header
+    if (logoDataUrl) {
+      const logoWidth = 30;
+      const logoHeight = 30;
+      doc.addImage(logoDataUrl, 'PNG', margin, currentY - 5, logoWidth, logoHeight);
+      textX = margin + logoWidth + 5;
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text(companyInfo.name || 'Sua Empresa', textX, currentY);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (companyInfo.address) {
+      doc.text(companyInfo.address, textX, currentY + 5);
+    }
+    if (companyInfo.phone || companyInfo.emailOrSite) {
+      doc.text(
+        `Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`,
+        textX,
+        currentY + 10
+      );
+    }
+
+    // Right side header
+    const rightHeaderX = pageWidth - margin;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Recibo de Entrega', rightHeaderX, currentY, { align: 'right' });
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`OS Nº: ${order.id.slice(-4)}`, rightHeaderX, currentY + 5, { align: 'right' });
+    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 10, { align: 'right' });
+
+    currentY += 25;
+    
+    const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
+        doc.setFillColor(243, 244, 246); // light gray bg
+        doc.rect(x, y, width, 7, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, x + 3, y + 5);
+        
+        const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
+        (doc as any).autoTable({
+            body: tableBody,
+            startY: y + 7,
+            theme: 'grid',
+            tableWidth: width,
+            margin: { left: x },
+            styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
+        });
+        return (doc as any).lastAutoTable.finalY;
+    }
+
+    const boxWidth = (pageWidth - margin * 2 - 5) / 2;
+    
+    const clientData = {
+        'Nome:': customer.name,
+        'Telefone:': customer.phone,
+        'Documento:': customer.document || 'Não informado',
+    };
+    
+    const equipmentData = {
+        'Equipamento:': typeof order.equipment === 'string' ? order.equipment : `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`,
+        'Nº Série:': order.serialNumber || 'Não informado'
+    }
+
+    const clientBoxHeight = drawInfoBox('Dados do Cliente', clientData, margin, currentY, boxWidth);
+    const equipmentBoxHeight = drawInfoBox('Informações do Equipamento', equipmentData, margin + boxWidth + 5, currentY, boxWidth);
+    
+    currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 8;
+
+    const drawFullWidthBox = (title: string, content: string, y: number) => {
+        doc.setFillColor(243, 244, 246);
+        doc.rect(margin, y, pageWidth - margin * 2, 7, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin + 3, y + 5);
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        const textLines = doc.splitTextToSize(content, pageWidth - margin * 2 - 6);
+        const textHeight = doc.getTextDimensions(textLines).h;
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(margin, y + 7, pageWidth - margin * 2, textHeight + 6, 'S');
+        doc.text(textLines, margin + 3, y + 12);
+        return y + textHeight + 20;
+    }
+    
+    currentY = drawFullWidthBox('Resumo dos Serviços/Peças', order.technicalReport || 'Nenhum serviço detalhado.', currentY);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Termo de Recebimento:', margin, currentY);
+    doc.setFont('helvetica', 'normal');
+    currentY += 5;
+    const receiptDate = order.deliveredDate ? new Date(`${order.deliveredDate}T00:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : new Date().toLocaleDateString('pt-BR');
+    doc.text(`Declaro que recebi o equipamento descrito acima, devidamente reparado e em funcionamento, na data de ${receiptDate}.`, margin, currentY);
+    currentY += 15;
+    
+    // Termo de Garantia
+    doc.setFillColor(243, 244, 246);
+    doc.rect(margin, currentY, pageWidth - margin * 2, 7, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Termo de Garantia', margin + 3, currentY + 5);
+    
+    currentY += 7;
+    const warrantyContent = [
+      '1. Prazo: Conforme o Art. 26, II do CDC, o prazo de garantia legal para os serviços prestados e peças novas é de 90 dias a contar da data de entrega do equipamento.',
+      '2. Cobertura: A garantia cobre defeitos de fabricação das peças substituídas e falhas no serviço executado que estejam diretamente relacionadas ao reparo descrito nesta OS.',
+      '3. Exclusões: A garantia não cobre danos por mau uso, negligência, acidentes (quedas, líquidos), picos de energia, instalação de softwares maliciosos (vírus), modificações não autorizadas, violação de lacres ou reparos por terceiros. Problemas de software não relacionados ao serviço executado não são cobertos.',
+      '4. Procedimento: Para acionar a garantia, apresente esta OS. O equipamento passará por nova análise técnica para constatar se o defeito é coberto pela garantia.'
+    ];
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    const warrantyLines = doc.splitTextToSize(warrantyContent.join('\\n\\n'), pageWidth - margin * 2 - 6);
+    const warrantyHeight = doc.getTextDimensions(warrantyLines).h;
+    
+    doc.setDrawColor(200, 200, 200);
+    doc.rect(margin, currentY, pageWidth - margin * 2, warrantyHeight + 6, 'S');
+    doc.text(warrantyLines, margin + 3, currentY + 5);
+    
+    doc.output('dataurlnewwindow');
   };
 
   const filteredOrders = React.useMemo(() => {

@@ -56,107 +56,107 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         await import('jspdf-autotable');
         const companyInfo = await getCompanyInfo();
 
-        const generateContent = (logoImage: HTMLImageElement | null = null) => {
-            const doc = new jsPDF();
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const margin = 15;
-            let currentY = 20;
-            let textX = margin;
-            const logoWidth = 30;
-            const logoHeight = 30;
-            const logoSpacing = 5;
+        let logoDataUrl: string | null = null;
+        try {
+            const logoPath = "/images/pdf-logos/logo.png";
+            logoDataUrl = await fetch(logoPath)
+                .then(res => res.blob())
+                .then(blob => new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(blob);
+                }));
+        } catch (error) {
+            console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
+        }
             
-            // Cabeçalho
-             if (logoImage) {
-                doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
-                textX = margin + logoWidth + logoSpacing;
-            }
-            
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 15;
+        let currentY = 20;
+        let textX = margin;
+        const logoWidth = 30;
+        const logoHeight = 30;
+        const logoSpacing = 5;
+        
+        // Cabeçalho
+         if (logoDataUrl) {
+            doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+            textX = margin + logoWidth + logoSpacing;
+        }
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        if (companyInfo?.name) {
+            doc.text(companyInfo.name, textX, currentY);
+            currentY += 8;
+        }
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        if (companyInfo?.address) {
+            doc.text(companyInfo.address, textX, currentY);
+            currentY += 4;
+        }
+        if (companyInfo?.phone || companyInfo?.emailOrSite) {
+            doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
+        }
+
+        const rightHeaderX = pageWidth - margin;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Comprovante de Venda`, rightHeaderX, currentY - 8, { align: 'right' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Venda #${sale.id.slice(-6)}`, rightHeaderX, currentY - 2, { align: 'right' });
+        doc.text(`Data: ${formatDate(sale.date)} ${sale.time}`, rightHeaderX, currentY + 4, { align: 'right' });
+        
+        currentY = 50;
+        
+        // Detalhes da Venda
+        (doc as any).autoTable({
+            startY: currentY,
+            head: [['Vendedor', 'Forma de Pagamento']],
+            body: [[sale.user, sale.paymentMethod]],
+            theme: 'grid',
+            styles: { fontSize: 9, cellPadding: 2, lineColor: [220,220,220] }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 8;
+
+        // Tabela de Itens
+        (doc as any).autoTable({
+            startY: currentY,
+            head: [['Produto', 'Qtd.', 'Preço Unit.', 'Subtotal']],
+            body: sale.items.map(item => [
+                item.name,
+                item.quantity,
+                `R$ ${item.price.toFixed(2)}`,
+                `R$ ${(item.price * item.quantity).toFixed(2)}`
+            ]),
+            theme: 'striped',
+            headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold' },
+            footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
+            foot: [
+                [{ content: 'Subtotal:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${sale.subtotal.toFixed(2)}`],
+                [{ content: 'Desconto:', colSpan: 3, styles: { halign: 'right' } }, `- R$ ${sale.discount.toFixed(2)}`],
+                [{ content: 'Total Final:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${sale.total.toFixed(2)}`],
+            ]
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 10;
+        
+        // Observações
+        if (sale.observations) {
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(20);
-            if (companyInfo?.name) {
-                doc.text(companyInfo.name, textX, currentY);
-                currentY += 8;
-            }
+            doc.text("Observações:", margin, currentY);
+            currentY += 5;
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            if (companyInfo?.address) {
-                doc.text(companyInfo.address, textX, currentY);
-                currentY += 4;
-            }
-            if (companyInfo?.phone || companyInfo?.emailOrSite) {
-                doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
-            }
-
-            const rightHeaderX = pageWidth - margin;
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Comprovante de Venda`, rightHeaderX, currentY - 8, { align: 'right' });
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Venda #${sale.id.slice(-6)}`, rightHeaderX, currentY - 2, { align: 'right' });
-            doc.text(`Data: ${formatDate(sale.date)} ${sale.time}`, rightHeaderX, currentY + 4, { align: 'right' });
-            
-            currentY = 50;
-            
-            // Detalhes da Venda
-            (doc as any).autoTable({
-                startY: currentY,
-                head: [['Vendedor', 'Forma de Pagamento']],
-                body: [[sale.user, sale.paymentMethod]],
-                theme: 'grid',
-                styles: { fontSize: 9, cellPadding: 2, lineColor: [220,220,220] }
-            });
-            currentY = (doc as any).lastAutoTable.finalY + 8;
-
-            // Tabela de Itens
-            (doc as any).autoTable({
-                startY: currentY,
-                head: [['Produto', 'Qtd.', 'Preço Unit.', 'Subtotal']],
-                body: sale.items.map(item => [
-                    item.name,
-                    item.quantity,
-                    `R$ ${item.price.toFixed(2)}`,
-                    `R$ ${(item.price * item.quantity).toFixed(2)}`
-                ]),
-                theme: 'striped',
-                headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold' },
-                footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
-                foot: [
-                    [{ content: 'Subtotal:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${sale.subtotal.toFixed(2)}`],
-                    [{ content: 'Desconto:', colSpan: 3, styles: { halign: 'right' } }, `- R$ ${sale.discount.toFixed(2)}`],
-                    [{ content: 'Total Final:', colSpan: 3, styles: { halign: 'right' } }, `R$ ${sale.total.toFixed(2)}`],
-                ]
-            });
-            currentY = (doc as any).lastAutoTable.finalY + 10;
-            
-            // Observações
-            if (sale.observations) {
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text("Observações:", margin, currentY);
-                currentY += 5;
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'normal');
-                const obsLines = doc.splitTextToSize(sale.observations, pageWidth - (margin * 2));
-                doc.text(obsLines, margin, currentY);
-            }
-            
-            doc.autoPrint();
-            doc.output('dataurlnewwindow');
-        };
-
-        if (companyInfo?.logoUrl) {
-            const img = new Image();
-            img.onload = () => generateContent(img);
-            img.onerror = () => {
-                console.error("Error loading logo for PDF, proceeding without it.");
-                generateContent(null);
-            };
-            img.src = companyInfo.logoUrl;
-        } else {
-            generateContent(null);
+            const obsLines = doc.splitTextToSize(sale.observations, pageWidth - (margin * 2));
+            doc.text(obsLines, margin, currentY);
         }
+        
+        doc.autoPrint();
+        doc.output('dataurlnewwindow');
     }
 
 
@@ -251,5 +251,3 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         </Dialog>
     );
 }
-
-    

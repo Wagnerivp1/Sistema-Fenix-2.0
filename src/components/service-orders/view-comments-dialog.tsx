@@ -69,84 +69,84 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     const companyInfo = await getCompanyInfo();
     const sortedNotes = sortNotesChronologically(serviceOrder.internalNotes);
 
-    const generatePdfContent = (logoImage: HTMLImageElement | null) => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 15;
-        let currentY = 20;
-        let textX = margin;
-        const logoWidth = 20;
-        const logoHeight = 20;
-        const logoSpacing = 5;
-
-        if (logoImage) {
-            const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 5, logoWidth * logoAR, logoHeight);
-            textX = margin + (logoWidth * logoAR) + logoSpacing;
-        }
-
-        doc.setFont('helvetica');
-        doc.setTextColor('#000000');
-        
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        if (companyInfo?.name) {
-            doc.text(companyInfo.name, textX, currentY);
-            currentY += 12;
-        }
-
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Histórico de Comentários`, margin, currentY);
-        currentY += 6;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`OS: #${serviceOrder.id.slice(-4)} | Cliente: ${serviceOrder.customerName}`, margin, currentY);
-
-        currentY += 10;
-
-        (doc as any).autoTable({
-            startY: currentY,
-            head: [['Data', 'Usuário', 'Comentário']],
-            body: sortedNotes.map(note => [
-                new Date(note.date).toLocaleString('pt-BR'),
-                note.user,
-                note.comment,
-            ]),
-            theme: 'striped',
-            headStyles: { fillColor: [30, 41, 59], textColor: '#FFFFFF' },
-            styles: {
-                cellPadding: 3,
-                fontSize: 9,
-                valign: 'middle',
-            },
-            columnStyles: {
-                0: { cellWidth: 35 },
-                1: { cellWidth: 30 },
-                2: { cellWidth: 'auto' },
-            },
-            didParseCell: (data: any) => {
-                // For long comments
-                if (data.column.index === 2) {
-                    data.cell.styles.overflow = 'linebreak';
-                }
-            },
-        });
-
-        doc.output('dataurlnewwindow');
-    };
-
-    if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.onload = () => generatePdfContent(img);
-      img.onerror = () => {
-        console.error("Error loading logo for PDF, proceeding without it.");
-        generatePdfContent(null);
-      };
-      img.src = companyInfo.logoUrl;
-    } else {
-      generatePdfContent(null);
+    let logoDataUrl: string | null = null;
+    try {
+        const logoPath = "/images/pdf-logos/logo.png";
+        logoDataUrl = await fetch(logoPath)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            }));
+    } catch (error) {
+        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
     }
+        
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 20;
+    let textX = margin;
+    const logoWidth = 20;
+    const logoHeight = 20;
+    const logoSpacing = 5;
+
+    if (logoDataUrl) {
+        const logoAR = logoWidth / logoHeight;
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 5, logoWidth * logoAR, logoHeight);
+        textX = margin + (logoWidth * logoAR) + logoSpacing;
+    }
+
+    doc.setFont('helvetica');
+    doc.setTextColor('#000000');
+    
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    if (companyInfo?.name) {
+        doc.text(companyInfo.name, textX, currentY);
+        currentY += 12;
+    }
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Histórico de Comentários`, margin, currentY);
+    currentY += 6;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`OS: #${serviceOrder.id.slice(-4)} | Cliente: ${serviceOrder.customerName}`, margin, currentY);
+
+    currentY += 10;
+
+    (doc as any).autoTable({
+        startY: currentY,
+        head: [['Data', 'Usuário', 'Comentário']],
+        body: sortedNotes.map(note => [
+            new Date(note.date).toLocaleString('pt-BR'),
+            note.user,
+            note.comment,
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [30, 41, 59], textColor: '#FFFFFF' },
+        styles: {
+            cellPadding: 3,
+            fontSize: 9,
+            valign: 'middle',
+        },
+        columnStyles: {
+            0: { cellWidth: 35 },
+            1: { cellWidth: 30 },
+            2: { cellWidth: 'auto' },
+        },
+        didParseCell: (data: any) => {
+            // For long comments
+            if (data.column.index === 2) {
+                data.cell.styles.overflow = 'linebreak';
+            }
+        },
+    });
+
+    doc.output('dataurlnewwindow');
   };
 
 
@@ -211,5 +211,3 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     </Dialog>
   );
 }
-
-    

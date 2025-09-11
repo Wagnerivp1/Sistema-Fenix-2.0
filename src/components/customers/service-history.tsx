@@ -78,151 +78,147 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
     const companyInfo = await getCompanyInfo();
     const customerName = (filteredHistory[0] as any)?.customerName || (filteredHistory[0] as any)?.client?.name || "Cliente";
     
-    const generateContent = (logoImage: HTMLImageElement | null = null) => {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 15;
-      let currentY = 20;
-      const fontColor = '#000000';
-      const primaryColor = '#e0e7ff';
-      let textX = margin;
-      const logoWidth = 30;
-      const logoHeight = 30;
-      const logoSpacing = 5;
+    let logoDataUrl: string | null = null;
+    try {
+        const logoPath = "/images/pdf-logos/logo.png";
+        logoDataUrl = await fetch(logoPath)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            }));
+    } catch (error) {
+        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
+    }
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 20;
+    const fontColor = '#000000';
+    let textX = margin;
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const logoSpacing = 5;
 
+    if (logoDataUrl) {
+      doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+      textX = margin + logoWidth + logoSpacing;
+    }
+    
+    doc.setFont('helvetica');
+    doc.setTextColor(fontColor);
+    
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    if (companyInfo?.name) {
+        doc.text(companyInfo.name, textX, currentY);
+        currentY += 8;
+    }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (companyInfo?.address) {
+        doc.text(companyInfo.address, textX, currentY);
+        currentY += 4;
+    }
+    if (companyInfo?.phone || companyInfo?.emailOrSite) {
+      doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
+    }
 
-      if (logoImage) {
-        doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
-        textX = margin + logoWidth + logoSpacing;
+    const rightHeaderX = pageWidth - margin;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Histórico de Atendimentos`, rightHeaderX, currentY - 8, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Cliente: ${customerName}`, rightHeaderX, currentY - 2, { align: 'right' });
+    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
+
+    currentY = 50;
+
+    const checkPageBreak = (yPosition: number, requiredSpace: number = 20) => {
+      if (yPosition > doc.internal.pageSize.getHeight() - requiredSpace) {
+        doc.addPage();
+        return 20;
       }
-      
-      doc.setFont('helvetica');
-      doc.setTextColor(fontColor);
-      
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      if (companyInfo?.name) {
-          doc.text(companyInfo.name, textX, currentY);
-          currentY += 8;
-      }
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      if (companyInfo?.address) {
-          doc.text(companyInfo.address, textX, currentY);
-          currentY += 4;
-      }
-      if (companyInfo?.phone || companyInfo?.emailOrSite) {
-        doc.text(`Telefone: ${companyInfo.phone || ''} | E-mail: ${companyInfo.emailOrSite || ''}`, textX, currentY);
-      }
-
-      const rightHeaderX = pageWidth - margin;
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Histórico de Atendimentos`, rightHeaderX, currentY - 8, { align: 'right' });
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Cliente: ${customerName}`, rightHeaderX, currentY - 2, { align: 'right' });
-      doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
-
-      currentY = 50;
-
-      const checkPageBreak = (yPosition: number, requiredSpace: number = 20) => {
-        if (yPosition > doc.internal.pageSize.getHeight() - requiredSpace) {
-          doc.addPage();
-          return 20;
-        }
-        return yPosition;
-      };
-
-      filteredHistory.forEach((order, index) => {
-        if (index > 0) {
-          currentY += 5;
-          doc.setLineDashPattern([1, 2], 0);
-          doc.line(margin, currentY, pageWidth - margin, currentY);
-          doc.setLineDashPattern([], 0);
-          currentY += 10;
-        }
-
-        currentY = checkPageBreak(currentY, 60);
-
-        doc.setFillColor(243, 244, 246);
-        doc.rect(margin, currentY, pageWidth - (margin * 2), 7, 'F');
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Ordem de Serviço #${order.id.slice(-4)}`, margin + 2, currentY + 5);
-        
-        doc.setFontSize(10);
-        doc.text(`Status: ${order.status}`, pageWidth - margin - 2, currentY + 5, { align: 'right' });
-        currentY += 12;
-        
-        const boxWidth = (pageWidth - margin * 2 - 5) / 2;
-
-        const clientData = {
-          'Data de Entrada:': formatDate(order.date),
-          'Atendente:': order.attendant || "Não informado",
-        };
-
-        const equipmentName = getEquipmentName(order.equipment);
-        const equipmentData = {
-            'Equipamento:': equipmentName,
-            'Nº Série:': order.serialNumber || 'Não informado',
-            'Acessórios:': order.accessories || 'Nenhum'
-        }
-        
-        const drawInfoBox = (data: { [key: string]: string }, x: number, y: number, width: number) => {
-            const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
-            (doc as any).autoTable({
-                body: tableBody,
-                startY: y,
-                theme: 'grid',
-                tableWidth: width,
-                margin: { left: x },
-                styles: { fontSize: 8.5, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
-                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
-            });
-            return (doc as any).lastAutoTable.finalY;
-        }
-
-        const clientBoxHeight = drawInfoBox(clientData, margin, currentY, boxWidth);
-        const equipmentBoxHeight = drawInfoBox(equipmentData, margin + boxWidth + 5, currentY, boxWidth);
-        currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 5;
-
-
-        if (order.items && order.items.length > 0) {
-          (doc as any).autoTable({
-            startY: currentY,
-            head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
-            body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${(item.unitPrice || 0).toFixed(2)}`, `R$ ${((item.unitPrice || 0) * item.quantity).toFixed(2)}`]),
-            theme: 'striped',
-            headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
-            bodyStyles: { fontSize: 8, cellPadding: 1.5 },
-            footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
-            foot: [
-                ['Total', '', '', '', `R$ ${(order.totalValue || 0).toFixed(2)}`]
-            ],
-            margin: { left: margin, right: margin }
-          });
-          currentY = (doc as any).lastAutoTable.finalY + 5;
-        }
-      });
-
-      doc.save(`Historico_${customerName.replace(/\s+/g, '_')}.pdf`);
+      return yPosition;
     };
 
-    if (companyInfo?.logoUrl) {
-      const img = new Image();
-      img.onload = () => {
-        generateContent(img);
+    filteredHistory.forEach((order, index) => {
+      if (index > 0) {
+        currentY += 5;
+        doc.setLineDashPattern([1, 2], 0);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        doc.setLineDashPattern([], 0);
+        currentY += 10;
+      }
+
+      currentY = checkPageBreak(currentY, 60);
+
+      doc.setFillColor(243, 244, 246);
+      doc.rect(margin, currentY, pageWidth - (margin * 2), 7, 'F');
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Ordem de Serviço #${order.id.slice(-4)}`, margin + 2, currentY + 5);
+      
+      doc.setFontSize(10);
+      doc.text(`Status: ${order.status}`, pageWidth - margin - 2, currentY + 5, { align: 'right' });
+      currentY += 12;
+      
+      const boxWidth = (pageWidth - margin * 2 - 5) / 2;
+
+      const clientData = {
+        'Data de Entrada:': formatDate(order.date),
+        'Atendente:': order.attendant || "Não informado",
       };
-      img.onerror = () => {
-        console.error("Error loading logo for PDF, proceeding without it.");
-        generateContent(null);
-      };
-      img.src = companyInfo.logoUrl;
-    } else {
-      generateContent(null);
-    }
+
+      const equipmentName = getEquipmentName(order.equipment);
+      const equipmentData = {
+          'Equipamento:': equipmentName,
+          'Nº Série:': order.serialNumber || 'Não informado',
+          'Acessórios:': order.accessories || 'Nenhum'
+      }
+      
+      const drawInfoBox = (data: { [key: string]: string }, x: number, y: number, width: number) => {
+          const tableBody = Object.entries(data).map(([key, value]) => [key, value]);
+          (doc as any).autoTable({
+              body: tableBody,
+              startY: y,
+              theme: 'grid',
+              tableWidth: width,
+              margin: { left: x },
+              styles: { fontSize: 8.5, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
+              columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } }
+          });
+          return (doc as any).lastAutoTable.finalY;
+      }
+
+      const clientBoxHeight = drawInfoBox(clientData, margin, currentY, boxWidth);
+      const equipmentBoxHeight = drawInfoBox(equipmentData, margin + boxWidth + 5, currentY, boxWidth);
+      currentY = Math.max(clientBoxHeight, equipmentBoxHeight) + 5;
+
+
+      if (order.items && order.items.length > 0) {
+        (doc as any).autoTable({
+          startY: currentY,
+          head: [['Tipo', 'Descrição', 'Qtd', 'Vlr. Unit.', 'Total']],
+          body: order.items.map(item => [item.type === 'part' ? 'Peça' : 'Serviço', item.description, item.quantity, `R$ ${(item.unitPrice || 0).toFixed(2)}`, `R$ ${((item.unitPrice || 0) * item.quantity).toFixed(2)}`]),
+          theme: 'striped',
+          headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold', fontSize: 9, cellPadding: 1.5 },
+          bodyStyles: { fontSize: 8, cellPadding: 1.5 },
+          footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' },
+          foot: [
+              ['Total', '', '', '', `R$ ${(order.totalValue || 0).toFixed(2)}`]
+          ],
+          margin: { left: margin, right: margin }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 5;
+      }
+    });
+
+    doc.save(`Historico_${customerName.replace(/\s+/g, '_')}.pdf`);
   };
 
   if (history.length === 0) {
@@ -407,5 +403,3 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   return <InfoItem icon={warrantyIcon} label="Período de Garantia" value={warrantyInfoText} />
 };
-
-    

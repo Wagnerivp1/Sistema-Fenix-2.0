@@ -56,111 +56,111 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
 
-    const performGeneration = (logoImage: HTMLImageElement | null) => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 15;
-        let currentY = 20;
-        let textX = margin;
-        const fontColor = '#000000';
-        const titleText = tx.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
-        const logoWidth = 30;
-        const logoHeight = 30;
-        const logoSpacing = 5;
-
-        // Header
-        if (logoImage) {
-            const logoAR = logoImage.width / logoImage.height;
-            doc.addImage(logoImage, logoImage.src.endsWith('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
-            textX = margin + logoWidth + logoSpacing;
-        }
-        
-        doc.setFont('helvetica');
-        doc.setTextColor(fontColor);
-        
-        if (info.name) {
-            doc.setFontSize(22);
-            doc.setFont('helvetica', 'bold');
-            doc.text(info.name, textX, currentY);
-            currentY += 8;
-        }
-        if (info.address) {
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text(info.address, textX, currentY);
-            currentY += 4;
-        }
-        if (info.phone || info.emailOrSite) {
-            doc.text(`Telefone: ${info.phone || ''} | E-mail: ${info.emailOrSite || ''}`, textX, currentY);
-        }
-
-        const rightHeaderX = pageWidth - margin;
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(titleText, rightHeaderX, currentY - 8, { align: 'right' });
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Transação #${tx.id.slice(-6)}`, rightHeaderX, currentY - 2, { align: 'right' });
-        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
-
-        currentY = 50;
-
-
-        // Body Text
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        const mainText = `Pelo presente, declaramos para os devidos fins que ${tx.type === 'receita' ? 'recebemos' : 'pagamos'} a quantia de:`;
-        doc.text(mainText, margin, currentY, { maxWidth: pageWidth - (margin * 2)});
-        currentY += 10;
-        
-        doc.setFontSize(26);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${tx.amount.toFixed(2)}`, margin, currentY);
-        currentY += 15;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
-        doc.text(`Referente a: ${tx.description}`, margin, currentY);
-        currentY += 15;
-
-        // Details Table
-        (doc as any).autoTable({
-            startY: currentY,
-            theme: 'grid',
-            styles: { fontSize: 10, cellPadding: 3, lineColor: [200,200,200] },
-            headStyles: { fillColor: '#F1F5F9', textColor: '#000000' },
-            body: [
-                ['Data do Lançamento', formatDateForDisplay(tx.date)],
-                ['Forma de Pagamento', tx.paymentMethod],
-                ['Categoria', tx.category],
-            ],
-            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50 } },
-        });
-        currentY = (doc as any).lastAutoTable.finalY + 40;
-        
-        // Footer and Signature
-        const city = info.address?.split('-')[0]?.split(',')[1]?.trim() || "___________________";
-        doc.text(`${city}, ${new Date().toLocaleDateString('pt-BR', {day: '2-digit', month: 'long', year: 'numeric'})}.`, pageWidth / 2, currentY, { align: 'center'});
-        currentY += 20;
-
-        doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
-        doc.text(info.name || 'Assinatura', pageWidth / 2, currentY + 5, { align: 'center'});
-        
-        doc.autoPrint();
-        doc.output('dataurlnewwindow');
-    };
-
-    if (info.logoUrl) {
-        const img = new Image();
-        img.onload = () => performGeneration(img);
-        img.onerror = () => {
-            console.error("Error loading logo for PDF, proceeding without it.");
-            performGeneration(null);
-        };
-        img.src = info.logoUrl;
-    } else {
-        performGeneration(null);
+    let logoDataUrl: string | null = null;
+    try {
+        const logoPath = "/images/pdf-logos/logo.png";
+        logoDataUrl = await fetch(logoPath)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            }));
+    } catch (error) {
+        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
     }
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let currentY = 20;
+    let textX = margin;
+    const fontColor = '#000000';
+    const titleText = tx.type === 'receita' ? 'Recibo de Receita' : 'Comprovante de Despesa';
+    const logoWidth = 30;
+    const logoHeight = 30;
+    const logoSpacing = 5;
+
+    // Header
+    if (logoDataUrl) {
+        const logoAR = logoWidth / logoHeight;
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
+    }
+    
+    doc.setFont('helvetica');
+    doc.setTextColor(fontColor);
+    
+    if (info.name) {
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text(info.name, textX, currentY);
+        currentY += 8;
+    }
+    if (info.address) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(info.address, textX, currentY);
+        currentY += 4;
+    }
+    if (info.phone || info.emailOrSite) {
+        doc.text(`Telefone: ${info.phone || ''} | E-mail: ${info.emailOrSite || ''}`, textX, currentY);
+    }
+
+    const rightHeaderX = pageWidth - margin;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(titleText, rightHeaderX, currentY - 8, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Transação #${tx.id.slice(-6)}`, rightHeaderX, currentY - 2, { align: 'right' });
+    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
+
+    currentY = 50;
+
+
+    // Body Text
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    const mainText = `Pelo presente, declaramos para os devidos fins que ${tx.type === 'receita' ? 'recebemos' : 'pagamos'} a quantia de:`;
+    doc.text(mainText, margin, currentY, { maxWidth: pageWidth - (margin * 2)});
+    currentY += 10;
+    
+    doc.setFontSize(26);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`R$ ${tx.amount.toFixed(2)}`, margin, currentY);
+    currentY += 15;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.text(`Referente a: ${tx.description}`, margin, currentY);
+    currentY += 15;
+
+    // Details Table
+    (doc as any).autoTable({
+        startY: currentY,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 3, lineColor: [200,200,200] },
+        headStyles: { fillColor: '#F1F5F9', textColor: '#000000' },
+        body: [
+            ['Data do Lançamento', formatDateForDisplay(tx.date)],
+            ['Forma de Pagamento', tx.paymentMethod],
+            ['Categoria', tx.category],
+        ],
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50 } },
+    });
+    currentY = (doc as any).lastAutoTable.finalY + 40;
+    
+    // Footer and Signature
+    const city = info.address?.split('-')[0]?.split(',')[1]?.trim() || "___________________";
+    doc.text(`${city}, ${new Date().toLocaleDateString('pt-BR', {day: '2-digit', month: 'long', year: 'numeric'})}.`, pageWidth / 2, currentY, { align: 'center'});
+    currentY += 20;
+
+    doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
+    doc.text(info.name || 'Assinatura', pageWidth / 2, currentY + 5, { align: 'center'});
+    
+    doc.autoPrint();
+    doc.output('dataurlnewwindow');
   };
 
   const generateThermalPdf = async (tx: FinancialTransaction, info: CompanyInfo) => {
@@ -275,5 +275,3 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     </Dialog>
   );
 }
-
-    

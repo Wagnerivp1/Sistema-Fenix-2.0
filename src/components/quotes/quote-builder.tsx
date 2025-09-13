@@ -47,7 +47,6 @@ import {
   Check,
 } from 'lucide-react';
 import { addDays } from 'date-fns';
-import type { jsPDF } from 'jspdf';
 import type { Quote, Customer, StockItem, SaleItem, User, CompanyInfo, Kit } from '@/types';
 import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
 
@@ -58,30 +57,6 @@ interface QuoteBuilderProps {
   quote: Quote | null;
   onSave: (quote: Quote) => void;
 }
-
-const loadImageAsDataUrl = (): Promise<string | null> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.src = '/images/pdf-logos/logo.png';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        resolve(null);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const dataURL = canvas.toDataURL('image/png');
-      resolve(dataURL);
-    };
-    img.onerror = () => {
-      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
-      resolve(null);
-    };
-  });
-};
 
 export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuilderProps) {
   const { toast } = useToast();
@@ -263,7 +238,6 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
-    const logoDataUrl = await loadImageAsDataUrl();
         
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -276,9 +250,13 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     const logoSpacing = 5;
 
     // Header
-    if (logoDataUrl) {
-        (doc as any).addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
-        textX = margin + logoWidth + logoSpacing;
+    if (companyInfo.logoUrl) {
+        try {
+            doc.addImage(companyInfo.logoUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+            textX = margin + logoWidth + logoSpacing;
+        } catch (e) {
+            console.warn("Could not add logo to PDF:", e);
+        }
     }
     
     doc.setFont('helvetica');
@@ -491,5 +469,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     </>
   );
 }
+
+    
 
     

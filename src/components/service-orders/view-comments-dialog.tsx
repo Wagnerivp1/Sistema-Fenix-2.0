@@ -2,7 +2,6 @@
 'use client';
 
 import * as React from 'react';
-import type { jsPDF } from 'jspdf';
 import { Printer } from 'lucide-react';
 import {
   Dialog,
@@ -35,31 +34,6 @@ const sortNotesChronologically = (notes: InternalNote[] | string | undefined): I
   }
   return [...notes].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
-
-const loadImageAsDataUrl = (): Promise<string | null> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.src = '/images/pdf-logos/logo.png';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        resolve(null);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const dataURL = canvas.toDataURL('image/png');
-      resolve(dataURL);
-    };
-    img.onerror = () => {
-      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
-      resolve(null);
-    };
-  });
-};
-
 
 export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onCommentAdd }: ViewCommentsDialogProps) {
   const [newComment, setNewComment] = React.useState('');
@@ -94,8 +68,6 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     const companyInfo = await getCompanyInfo();
     const sortedNotes = sortNotesChronologically(serviceOrder.internalNotes);
 
-    const logoDataUrl = await loadImageAsDataUrl();
-        
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
@@ -105,9 +77,13 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     const logoHeight = 20;
     const logoSpacing = 5;
 
-    if (logoDataUrl) {
-        (doc as any).addImage(logoDataUrl, 'PNG', margin, currentY - 5, logoWidth, logoHeight);
+    if (companyInfo.logoUrl) {
+      try {
+        doc.addImage(companyInfo.logoUrl, 'PNG', margin, currentY - 5, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
+      } catch(e) {
+        console.warn("Could not add logo to PDF:", e);
+      }
     }
 
     doc.setFont('helvetica');
@@ -223,5 +199,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     </Dialog>
   );
 }
+
+    
 
     

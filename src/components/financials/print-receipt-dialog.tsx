@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Printer, ReceiptText, Sheet } from 'lucide-react';
-import type { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
 import type { FinancialTransaction, CompanyInfo } from '@/types';
@@ -33,30 +32,6 @@ const formatDateForDisplay = (dateString: string) => {
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
-const loadImageAsDataUrl = (): Promise<string | null> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.src = '/images/pdf-logos/logo.png';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        resolve(null);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const dataURL = canvas.toDataURL('image/png');
-      resolve(dataURL);
-    };
-    img.onerror = () => {
-      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
-      resolve(null);
-    };
-  });
-};
-
 export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintReceiptDialogProps) {
   const [printType, setPrintType] = React.useState<'a4' | 'thermal'>('a4');
   const { toast } = useToast();
@@ -68,16 +43,15 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     }
 
     const companyInfo = await getCompanyInfo();
-    const logoDataUrl = await loadImageAsDataUrl();
 
     if (printType === 'a4') {
-      generateA4Pdf(transaction, companyInfo, logoDataUrl);
+      generateA4Pdf(transaction, companyInfo);
     } else {
       generateThermalPdf(transaction, companyInfo);
     }
   };
 
-  const generateA4Pdf = async (tx: FinancialTransaction, info: CompanyInfo, logoDataUrl: string | null) => {
+  const generateA4Pdf = async (tx: FinancialTransaction, info: CompanyInfo) => {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
 
@@ -93,9 +67,13 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     const logoSpacing = 5;
 
     // Header
-    if (logoDataUrl) {
-        (doc as any).addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
-        textX = margin + logoWidth + logoSpacing;
+    if (info.logoUrl) {
+        try {
+            doc.addImage(info.logoUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+            textX = margin + logoWidth + logoSpacing;
+        } catch(e) {
+            console.warn("Could not add logo to PDF:", e);
+        }
     }
     
     doc.setFont('helvetica');
@@ -285,5 +263,7 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     </Dialog>
   );
 }
+
+    
 
     

@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FileDown, Calendar, User, Wrench, HardDrive, HelpCircle, FileText, ShoppingBag, DollarSign, ShieldCheck, MessageSquare, Tag, AlertCircle, Search } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import type { jsPDF } from 'jspdf';
 import { cn } from '@/lib/utils';
 import { add, isValid, parseISO } from 'date-fns';
 import { Input } from '../ui/input';
@@ -64,30 +63,6 @@ interface ServiceHistoryProps {
   history: ServiceOrder[];
 }
 
-const loadImageAsDataUrl = (): Promise<string | null> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.src = '/images/pdf-logos/logo.png';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        resolve(null);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const dataURL = canvas.toDataURL('image/png');
-      resolve(dataURL);
-    };
-    img.onerror = () => {
-      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
-      resolve(null);
-    };
-  });
-};
-
 export function ServiceHistory({ history }: ServiceHistoryProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
 
@@ -102,8 +77,6 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
     const companyInfo = await getCompanyInfo();
     const customerName = (filteredHistory[0] as any)?.customerName || (filteredHistory[0] as any)?.client?.name || "Cliente";
     
-    const logoDataUrl = await loadImageAsDataUrl();
-    
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
@@ -114,9 +87,13 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
     const logoHeight = 30;
     const logoSpacing = 5;
 
-    if (logoDataUrl) {
-      (doc as any).addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
-      textX = margin + logoWidth + logoSpacing;
+    if (companyInfo.logoUrl) {
+      try {
+        doc.addImage(companyInfo.logoUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
+      } catch (e) {
+        console.warn("Could not add logo to PDF:", e);
+      }
     }
     
     doc.setFont('helvetica');
@@ -415,5 +392,7 @@ const WarrantyInfo = ({ order }: { order: ServiceOrder }) => {
 
   return <InfoItem icon={warrantyIcon} label="Período de Garantia" value={warrantyInfoText} />
 };
+
+    
 
     

@@ -18,8 +18,6 @@ import { User, Calendar, Clock, Printer, ShoppingCart, DollarSign, StickyNote } 
 import type { Sale, CompanyInfo, SaleItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
-import type { jsPDF } from 'jspdf';
-
 
 interface SaleInvoiceDialogProps {
   isOpen: boolean;
@@ -43,30 +41,6 @@ const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label
     </div>
 );
 
-const loadImageAsDataUrl = (): Promise<string | null> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.src = '/images/pdf-logos/logo.png';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        resolve(null);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const dataURL = canvas.toDataURL('image/png');
-      resolve(dataURL);
-    };
-    img.onerror = () => {
-      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
-      resolve(null);
-    };
-  });
-};
-
 
 export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDialogProps) {
     const { toast } = useToast();
@@ -81,8 +55,6 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         await import('jspdf-autotable');
         const companyInfo = await getCompanyInfo();
 
-        const logoDataUrl = await loadImageAsDataUrl();
-            
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 15;
@@ -93,9 +65,13 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         const logoSpacing = 5;
         
         // Cabeçalho
-         if (logoDataUrl) {
-            (doc as any).addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+         if (companyInfo.logoUrl) {
+           try {
+            doc.addImage(companyInfo.logoUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
             textX = margin + logoWidth + logoSpacing;
+           } catch (e) {
+              console.warn("Could not add logo to PDF:", e);
+           }
         }
         
         doc.setFont('helvetica', 'bold');
@@ -264,5 +240,7 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         </Dialog>
     );
 }
+
+    
 
     

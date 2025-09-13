@@ -107,7 +107,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
 
     if (logoDataUrl) {
         const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        doc.addImage(logoDataUrl, imageType, margin, currentY - 5, logoWidth, logoHeight);
+        (doc as any).addImage(logoDataUrl, imageType, margin, currentY - 5, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
 

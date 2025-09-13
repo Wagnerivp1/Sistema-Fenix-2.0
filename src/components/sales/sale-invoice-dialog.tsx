@@ -95,7 +95,7 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         // Cabeçalho
          if (logoDataUrl) {
             const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-            doc.addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
+            (doc as any).addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
             textX = margin + logoWidth + logoSpacing;
         }
         

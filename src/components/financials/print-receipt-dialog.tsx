@@ -33,6 +33,30 @@ const formatDateForDisplay = (dateString: string) => {
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
+const loadImageAsDataUrl = (path: string): Promise<string | null> => {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(null);
+                return;
+            }
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL(path.endsWith('.png') ? 'image/png' : 'image/jpeg');
+            resolve(dataURL);
+        };
+        img.onerror = () => {
+            console.warn(`Logo para PDF não encontrada em: ${path}. O PDF será gerado sem logo.`);
+            resolve(null);
+        };
+        img.src = path;
+    });
+};
+
 export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintReceiptDialogProps) {
   const [printType, setPrintType] = React.useState<'a4' | 'thermal'>('a4');
   const { toast } = useToast();
@@ -56,19 +80,7 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
 
-    let logoDataUrl: string | null = null;
-    try {
-        const logoPath = "/images/pdf-logos/logo.png";
-        logoDataUrl = await fetch(logoPath)
-            .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.readAsDataURL(blob);
-            }));
-    } catch (error) {
-        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
-    }
+    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -83,8 +95,8 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
 
     // Header
     if (logoDataUrl) {
-        const logoAR = logoWidth / logoHeight;
-        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
     

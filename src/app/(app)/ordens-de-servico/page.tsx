@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -461,25 +460,35 @@ function ServiceOrdersComponent() {
     }
   };
 
+  const loadImageAsDataUrl = (path: string): Promise<string | null> => {
+      return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) {
+                  resolve(null);
+                  return;
+              }
+              ctx.drawImage(img, 0, 0);
+              const dataURL = canvas.toDataURL(path.endsWith('.png') ? 'image/png' : 'image/jpeg');
+              resolve(dataURL);
+          };
+          img.onerror = () => {
+              console.warn(`Logo para PDF não encontrada em: ${path}. O PDF será gerado sem logo.`);
+              resolve(null);
+          };
+          img.src = path;
+      });
+  };
+
   const generateInvoicePdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
     
-    let logoDataUrl: string | null = null;
-    try {
-        const logoPath = "/images/pdf-logos/logo.png";
-        const imgData = await fetch(logoPath)
-            .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            }));
-        logoDataUrl = imgData;
-    } catch (error) {
-        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
-    }
+    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -495,7 +504,8 @@ function ServiceOrdersComponent() {
 
     // Header
     if (logoDataUrl) {
-        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
     
@@ -624,21 +634,7 @@ function ServiceOrdersComponent() {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
     
-    let logoDataUrl: string | null = null;
-    try {
-        const logoPath = "/images/pdf-logos/logo.png";
-        const imgData = await fetch(logoPath)
-            .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            }));
-        logoDataUrl = imgData;
-    } catch (error) {
-        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
-    }
+    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -652,7 +648,8 @@ function ServiceOrdersComponent() {
 
     // Header
     if (logoDataUrl) {
-        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
     
@@ -763,21 +760,7 @@ function ServiceOrdersComponent() {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
     
-    let logoDataUrl: string | null = null;
-    try {
-        const logoPath = "/images/pdf-logos/logo.png";
-        const imgData = await fetch(logoPath)
-            .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            }));
-        logoDataUrl = imgData;
-    } catch (error) {
-        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
-    }
+    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -791,7 +774,8 @@ function ServiceOrdersComponent() {
 
     // Header
     if (logoDataUrl) {
-        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
     
@@ -826,7 +810,7 @@ function ServiceOrdersComponent() {
     currentY = 50;
 
     const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
-        doc.setFillColor(243, 244, 246); // light gray bg
+        doc.setFillColor(243, 244, 246);
         doc.rect(x, y, width, 7, 'F');
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
@@ -914,21 +898,7 @@ function ServiceOrdersComponent() {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
 
-    let logoDataUrl: string | null = null;
-    try {
-        const logoPath = "/images/pdf-logos/logo.png";
-        const imgData = await fetch(logoPath)
-            .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            }));
-        logoDataUrl = imgData;
-    } catch (error) {
-        console.warn("Logo para PDF não encontrada. O PDF será gerado sem logo.");
-    }
+    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -941,7 +911,8 @@ function ServiceOrdersComponent() {
     if (logoDataUrl) {
       const logoWidth = 30;
       const logoHeight = 30;
-      doc.addImage(logoDataUrl, 'PNG', margin, currentY - 5, logoWidth, logoHeight);
+      const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+      doc.addImage(logoDataUrl, imageType, margin, currentY - 5, logoWidth, logoHeight);
       textX = margin + logoWidth + 5;
     }
 
@@ -974,7 +945,7 @@ function ServiceOrdersComponent() {
     currentY += 25;
     
     const drawInfoBox = (title: string, data: { [key: string]: string }, x: number, y: number, width: number) => {
-        doc.setFillColor(243, 244, 246); // light gray bg
+        doc.setFillColor(243, 244, 246);
         doc.rect(x, y, width, 7, 'F');
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
@@ -1314,5 +1285,3 @@ export default function ServiceOrdersPage() {
     </React.Suspense>
   );
 }
-
-    

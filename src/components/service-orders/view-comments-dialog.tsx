@@ -36,28 +36,28 @@ const sortNotesChronologically = (notes: InternalNote[] | string | undefined): I
   return [...notes].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
-const loadImageAsDataUrl = (path: string): Promise<string | null> => {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                resolve(null);
-                return;
-            }
-            ctx.drawImage(img, 0, 0);
-            const dataURL = canvas.toDataURL(path.endsWith('.png') ? 'image/png' : 'image/jpeg');
-            resolve(dataURL);
-        };
-        img.onerror = () => {
-            console.warn(`Logo para PDF não encontrada em: ${path}. O PDF será gerado sem logo.`);
-            resolve(null);
-        };
-        img.src = path;
-    });
+const loadImageAsDataUrl = (): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = '/images/pdf-logos/logo.png';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    };
+    img.onerror = () => {
+      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
+      resolve(null);
+    };
+  });
 };
 
 
@@ -94,7 +94,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     const companyInfo = await getCompanyInfo();
     const sortedNotes = sortNotesChronologically(serviceOrder.internalNotes);
 
-    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
+    const logoDataUrl = await loadImageAsDataUrl();
         
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -106,8 +106,7 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     const logoSpacing = 5;
 
     if (logoDataUrl) {
-        const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        (doc as any).addImage(logoDataUrl, imageType, margin, currentY - 5, logoWidth, logoHeight);
+        (doc as any).addImage(logoDataUrl, 'PNG', margin, currentY - 5, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
 
@@ -224,3 +223,5 @@ export function ViewCommentsDialog({ isOpen, onOpenChange, serviceOrder, onComme
     </Dialog>
   );
 }
+
+    

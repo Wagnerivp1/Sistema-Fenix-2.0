@@ -90,6 +90,31 @@ const allStatuses: ServiceOrder['status'][] = [
   'Cancelada'
 ];
 
+const loadImageAsDataUrl = (): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = '/images/pdf-logos/logo.png';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    };
+    img.onerror = () => {
+      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
+      resolve(null);
+    };
+  });
+};
+
+
 function ServiceOrdersComponent() {
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customerId');
@@ -439,56 +464,30 @@ function ServiceOrdersComponent() {
     });
   };
 
-
   const handlePrint = async (documentType: 'entry' | 'quote' | 'delivery' | 'invoice', order: ServiceOrder) => {
     const companyInfo = await getCompanyInfo();
     const customer = customers.find(c => c.name === order.customerName);
-
     if (!customer) {
       toast({ variant: 'destructive', title: 'Erro', description: 'Cliente da OS não encontrado.' });
       return;
     }
     
+    const logoDataUrl = await loadImageAsDataUrl();
+
     if (documentType === 'entry') {
-      generateEntryReceiptPdf(order, customer, companyInfo);
+      generateEntryReceiptPdf(order, customer, companyInfo, logoDataUrl);
     } else if (documentType === 'quote') {
-      generateQuotePdf(order, customer, companyInfo);
+      generateQuotePdf(order, customer, companyInfo, logoDataUrl);
     } else if (documentType === 'delivery') {
-      generateDeliveryReceiptPdf(order, customer, companyInfo);
+      generateDeliveryReceiptPdf(order, customer, companyInfo, logoDataUrl);
     } else if (documentType === 'invoice') {
-      generateInvoicePdf(order, customer, companyInfo);
+      generateInvoicePdf(order, customer, companyInfo, logoDataUrl);
     }
   };
 
-  const loadImageAsDataUrl = (path: string): Promise<string | null> => {
-      return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              if (!ctx) {
-                  resolve(null);
-                  return;
-              }
-              ctx.drawImage(img, 0, 0);
-              const dataURL = canvas.toDataURL(path.endsWith('.png') ? 'image/png' : 'image/jpeg');
-              resolve(dataURL);
-          };
-          img.onerror = () => {
-              console.warn(`Logo para PDF não encontrada em: ${path}. O PDF será gerado sem logo.`);
-              resolve(null);
-          };
-          img.src = path;
-      });
-  };
-
-  const generateInvoicePdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+  const generateInvoicePdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo, logoDataUrl: string | null) => {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
-    
-    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -504,8 +503,7 @@ function ServiceOrdersComponent() {
 
     // Header
     if (logoDataUrl) {
-        const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        doc.addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
     
@@ -630,11 +628,9 @@ function ServiceOrdersComponent() {
     doc.output('dataurlnewwindow');
   };
 
-  const generateEntryReceiptPdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+  const generateEntryReceiptPdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo, logoDataUrl: string | null) => {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
-    
-    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -648,8 +644,7 @@ function ServiceOrdersComponent() {
 
     // Header
     if (logoDataUrl) {
-        const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        doc.addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
     
@@ -756,11 +751,9 @@ function ServiceOrdersComponent() {
     doc.output('dataurlnewwindow');
   };
 
-  const generateQuotePdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+  const generateQuotePdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo, logoDataUrl: string | null) => {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
-    
-    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -774,8 +767,7 @@ function ServiceOrdersComponent() {
 
     // Header
     if (logoDataUrl) {
-        const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        doc.addImage(logoDataUrl, imageType, margin, currentY - 8, logoWidth, logoHeight);
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
     }
     
@@ -894,11 +886,9 @@ function ServiceOrdersComponent() {
     doc.output('dataurlnewwindow');
   };
 
-  const generateDeliveryReceiptPdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo) => {
+  const generateDeliveryReceiptPdf = async (order: ServiceOrder, customer: Customer, companyInfo: CompanyInfo, logoDataUrl: string | null) => {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
-
-    const logoDataUrl = await loadImageAsDataUrl("/images/pdf-logos/logo.png");
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -911,8 +901,7 @@ function ServiceOrdersComponent() {
     if (logoDataUrl) {
       const logoWidth = 30;
       const logoHeight = 30;
-      const imageType = logoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-      doc.addImage(logoDataUrl, imageType, margin, currentY - 5, logoWidth, logoHeight);
+      doc.addImage(logoDataUrl, 'PNG', margin, currentY - 5, logoWidth, logoHeight);
       textX = margin + logoWidth + 5;
     }
 
@@ -1285,3 +1274,5 @@ export default function ServiceOrdersPage() {
     </React.Suspense>
   );
 }
+
+    

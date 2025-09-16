@@ -32,6 +32,33 @@ const formatDateForDisplay = (dateString: string) => {
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
+const loadImageAsDataUrl = (url: string | undefined): Promise<string | null> => {
+  if (!url) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    };
+    img.onerror = () => {
+      console.warn(`Could not load image for PDF from: ${url}`);
+      resolve(null);
+    };
+    img.src = url;
+  });
+};
+
+
 export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintReceiptDialogProps) {
   const [printType, setPrintType] = React.useState<'a4' | 'thermal'>('a4');
   const { toast } = useToast();
@@ -68,11 +95,10 @@ export function PrintReceiptDialog({ isOpen, onOpenChange, transaction }: PrintR
 
     // Header
     if (info.logoUrl) {
-        try {
-            doc.addImage(info.logoUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        const logoDataUrl = await loadImageAsDataUrl(info.logoUrl);
+        if (logoDataUrl) {
+            doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
             textX = margin + logoWidth + logoSpacing;
-        } catch(e) {
-            console.warn("Could not add logo to PDF:", e);
         }
     }
     

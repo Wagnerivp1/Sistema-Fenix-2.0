@@ -58,6 +58,32 @@ interface QuoteBuilderProps {
   onSave: (quote: Quote) => void;
 }
 
+const loadImageAsDataUrl = (url: string | undefined): Promise<string | null> => {
+  if (!url) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    };
+    img.onerror = () => {
+      console.warn(`Could not load image for PDF from: ${url}`);
+      resolve(null);
+    };
+    img.src = url;
+  });
+};
+
 export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuilderProps) {
   const { toast } = useToast();
   const { user: currentUser } = useCurrentUser();
@@ -238,6 +264,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
+    const logoDataUrl = await loadImageAsDataUrl(companyInfo.logoUrl);
         
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -250,13 +277,9 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     const logoSpacing = 5;
 
     // Header
-    if (companyInfo.logoUrl) {
-        try {
-            doc.addImage(companyInfo.logoUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
-            textX = margin + logoWidth + logoSpacing;
-        } catch (e) {
-            console.warn("Could not add logo to PDF:", e);
-        }
+    if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+        textX = margin + logoWidth + logoSpacing;
     }
     
     doc.setFont('helvetica');

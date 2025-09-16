@@ -59,6 +59,32 @@ const getStatusVariant = (status: string) => {
     }
 }
 
+const loadImageAsDataUrl = (url: string | undefined): Promise<string | null> => {
+  if (!url) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    };
+    img.onerror = () => {
+      console.warn(`Could not load image for PDF from: ${url}`);
+      resolve(null);
+    };
+    img.src = url;
+  });
+};
+
 interface ServiceHistoryProps {
   history: ServiceOrder[];
 }
@@ -88,11 +114,10 @@ export function ServiceHistory({ history }: ServiceHistoryProps) {
     const logoSpacing = 5;
 
     if (companyInfo.logoUrl) {
-      try {
-        doc.addImage(companyInfo.logoUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+      const logoDataUrl = await loadImageAsDataUrl(companyInfo.logoUrl);
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
         textX = margin + logoWidth + logoSpacing;
-      } catch (e) {
-        console.warn("Could not add logo to PDF:", e);
       }
     }
     

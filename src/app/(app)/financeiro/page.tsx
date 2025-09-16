@@ -110,10 +110,11 @@ const formatDateForDisplay = (dateString: string | undefined) => {
   return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
-const loadImageAsDataUrl = (): Promise<string | null> => {
+const loadImageAsDataUrl = (url: string | undefined): Promise<string | null> => {
+  if (!url) return Promise.resolve(null);
   return new Promise((resolve) => {
     const img = new Image();
-    img.src = '/images/pdf-logos/logo.png';
+    img.crossOrigin = 'Anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
@@ -128,11 +129,13 @@ const loadImageAsDataUrl = (): Promise<string | null> => {
       resolve(dataURL);
     };
     img.onerror = () => {
-      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
+      console.warn(`Could not load image for PDF from: ${url}`);
       resolve(null);
     };
+    img.src = url;
   });
 };
+
 
 export default function FinanceiroPage() {
   const { toast } = useToast();
@@ -379,7 +382,7 @@ export default function FinanceiroPage() {
     await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
     
-    const logoDataUrl = companyInfo.logoUrl || await loadImageAsDataUrl();
+    const logoDataUrl = await loadImageAsDataUrl(companyInfo.logoUrl);
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -392,7 +395,7 @@ export default function FinanceiroPage() {
 
     // Header
     if (logoDataUrl) {
-      doc.addImage(logoDataUrl, logoDataUrl.includes('png') ? 'PNG' : 'JPEG', margin, 12, logoWidth, logoHeight);
+      doc.addImage(logoDataUrl, 'PNG', margin, 12, logoWidth, logoHeight);
       textX = margin + logoWidth + logoSpacing;
     }
     

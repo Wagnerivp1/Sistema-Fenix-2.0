@@ -180,3 +180,12 @@ export type Kit = {
   name: string;
   items: KitItem[];
 };
+
+export type OSPayment = {
+  id: string;
+  amount: number;
+  date: string;
+  method: string;
+}
+
+    

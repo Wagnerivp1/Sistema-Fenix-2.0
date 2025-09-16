@@ -1,5 +1,41 @@
 [
   {
+    "id": "FIN-1758034969369-0",
+    "type": "receita",
+    "description": "[ESTORNADO] Cliente: CINE FOTO REGINA  | Produto(s): Cartucho de Tinta Epson 103 Preto | Parcelamento: 1/3 de R$ 16.33 | Pagamento: parcelado | Valor Total: R$ 49.00 | Vencimento: 16/10/2025 | Data: 15/09/2025 | Motivo: Cliente pediu para Cancelar",
+    "amount": 16.333333333333332,
+    "date": "2025-09-16",
+    "dueDate": "2025-10-16",
+    "category": "Venda Estornada",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1758034964995",
+    "status": "Estornado"
+  },
+  {
+    "id": "FIN-1758034969369-1",
+    "type": "receita",
+    "description": "[ESTORNADO] Cliente: CINE FOTO REGINA  | Produto(s): Cartucho de Tinta Epson 103 Preto | Parcelamento: 2/3 de R$ 16.33 | Pagamento: parcelado | Valor Total: R$ 49.00 | Vencimento: 16/11/2025 | Data: 15/09/2025 | Motivo: Cliente pediu para Cancelar",
+    "amount": 16.333333333333332,
+    "date": "2025-09-16",
+    "dueDate": "2025-11-16",
+    "category": "Venda Estornada",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1758034964995",
+    "status": "Estornado"
+  },
+  {
+    "id": "FIN-1758034969369-2",
+    "type": "receita",
+    "description": "[ESTORNADO] Cliente: CINE FOTO REGINA  | Produto(s): Cartucho de Tinta Epson 103 Preto | Parcelamento: 3/3 de R$ 16.33 | Pagamento: parcelado | Valor Total: R$ 49.00 | Vencimento: 16/12/2025 | Data: 15/09/2025 | Motivo: Cliente pediu para Cancelar",
+    "amount": 16.333333333333332,
+    "date": "2025-09-16",
+    "dueDate": "2025-12-16",
+    "category": "Venda Estornada",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1758034964995",
+    "status": "Estornado"
+  },
+  {
     "id": "FIN-1758032567277-entry",
     "type": "receita",
     "description": "Entrada: Cliente: Marcelo Kuplens | OS #4427 | Pagamento: Dinheiro | Valor Total: R$ 1000.00 | Data: 24/08/2025",

@@ -118,5 +118,27 @@
     "paymentMethod": "parcelado",
     "observations": "marcelo ",
     "status": "Estornada"
+  },
+  {
+    "id": "SALE-1758034964995",
+    "date": "2025-09-16",
+    "time": "12:02:44",
+    "user": "Wagner lopes",
+    "items": [
+      {
+        "id": "PROD-019",
+        "name": "Cartucho de Tinta Epson 103 Preto",
+        "price": 49,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 49,
+    "discount": 0,
+    "total": 49,
+    "paymentMethod": "parcelado",
+    "observations": "compra de teste ",
+    "customerId": "1752581309250-0.23832530068551883",
+    "status": "Estornada",
+    "reversalReason": "Cliente pediu para Cancelar"
   }
 ]

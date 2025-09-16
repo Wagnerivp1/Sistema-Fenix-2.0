@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MoreHorizontal, Undo2, MessageSquare, DollarSign, Printer, MessageCircle, Trash2, FileSignature } from 'lucide-react';
+import { MoreHorizontal, Undo2, MessageSquare, DollarSign, Printer, MessageCircle, Trash2, FileSignature, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -1100,12 +1100,15 @@ function ServiceOrdersComponent() {
       </CardHeader>
       <CardContent>
          <div className="mb-4">
-          <Input
-            placeholder="Filtrar por cliente, equipamento ou nº OS..."
-            className="max-w-sm"
-            value={searchFilter}
-            onChange={(e) => setSearchFilter(e.target.value)}
-          />
+          <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Filtrar por cliente, equipamento ou nº OS..."
+                className="max-w-sm pl-8"
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+              />
+          </div>
         </div>
         <Table>
           <TableHeader>
@@ -1159,8 +1162,15 @@ function ServiceOrdersComponent() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuLabel>Ações da OS</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
+                            {!isFinished && (
+                                <DropdownMenuItem onSelect={() => handleOpenPaymentDialog(order)}>
+                                    <DollarSign className="mr-2 h-4 w-4 text-green-500"/>
+                                    Adicionar Pagamento
+                                </DropdownMenuItem>
+                            )}
                              <DropdownMenuSub>
                               <DropdownMenuSubTrigger>Mudar Status</DropdownMenuSubTrigger>
                               <DropdownMenuPortal>
@@ -1176,17 +1186,17 @@ function ServiceOrdersComponent() {
                                   </DropdownMenuSubContent>
                               </DropdownMenuPortal>
                             </DropdownMenuSub>
-                            <DropdownMenuItem onSelect={() => handlePrint('invoice', order)}>
-                               <FileSignature className="mr-2 h-4 w-4" />
-                               Gerar Fatura
-                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                              <DropdownMenuSub>
                               <DropdownMenuSubTrigger>
                                  <Printer className="mr-2 h-4 w-4" />
-                                 Outros Documentos
+                                 Imprimir
                               </DropdownMenuSubTrigger>
                               <DropdownMenuPortal>
                                   <DropdownMenuSubContent>
+                                      <DropdownMenuItem onSelect={() => handlePrint('invoice', order)}>Fatura de Serviço</DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuLabel>Outros Documentos</DropdownMenuLabel>
                                       <DropdownMenuItem onSelect={() => handlePrint('entry', order)}>Recibo de Entrada</DropdownMenuItem>
                                       <DropdownMenuItem onSelect={() => handlePrint('quote', order)}>Orçamento de Serviço</DropdownMenuItem>
                                       <DropdownMenuItem onSelect={() => handlePrint('delivery', order)}>Recibo de Entrega</DropdownMenuItem>
@@ -1197,20 +1207,17 @@ function ServiceOrdersComponent() {
                               <MessageSquare className="mr-2 h-4 w-4" />
                               Exibir Comentários
                             </DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => toast({title: "Em breve!", description: "A notificação para clientes via WhatsApp será implementada em futuras versões."})}>
+                              <MessageCircle className="mr-2 h-4 w-4" />
+                              Notificar Cliente
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            {!isFinished && (
-                                <DropdownMenuItem onSelect={() => handleOpenPaymentDialog(order)}>
-                                    <DollarSign className="mr-2 h-4 w-4 text-green-500"/>
-                                    Adicionar Pagamento
-                                </DropdownMenuItem>
-                            )}
                             {isFinished && (
                               <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
                                 <Undo2 className="mr-2 h-4 w-4" />
                                 Reabrir OS
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuSeparator />
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
@@ -1274,5 +1281,7 @@ export default function ServiceOrdersPage() {
     </React.Suspense>
   );
 }
+
+    
 
     

@@ -15,28 +15,33 @@ export function DuePaymentsAlert() {
 
   const checkDuePayments = React.useCallback(async () => {
     setIsLoading(true);
-    const transactions = await getFinancialTransactions();
-    const today = new Date();
+    try {
+      const transactions = await getFinancialTransactions();
+      
+      const dueToday = transactions.filter(tx => {
+        if (tx.status !== 'pendente' || !tx.dueDate) {
+          return false;
+        }
+        try {
+          // Garante que a data seja interpretada corretamente como UTC para evitar problemas de fuso horário
+          const dueDate = parseISO(tx.dueDate);
+          return isToday(dueDate);
+        } catch (e) {
+          console.error(`Invalid due date format for transaction ${tx.id}:`, tx.dueDate);
+          return false;
+        }
+      });
 
-    const dueToday = transactions.filter(tx => {
-      if (tx.status !== 'pendente' || !tx.dueDate) {
-        return false;
-      }
-      try {
-        const dueDate = parseISO(tx.dueDate);
-        return isToday(dueDate);
-      } catch (e) {
-        console.error(`Invalid due date format for transaction ${tx.id}:`, tx.dueDate);
-        return false;
-      }
-    });
+      const count = dueToday.length;
+      const amount = dueToday.reduce((sum, tx) => sum + tx.amount, 0);
 
-    const count = dueToday.length;
-    const amount = dueToday.reduce((sum, tx) => sum + tx.amount, 0);
-
-    setDueTodayCount(count);
-    setDueTodayAmount(amount);
-    setIsLoading(false);
+      setDueTodayCount(count);
+      setDueTodayAmount(amount);
+    } catch (error) {
+      console.error("Failed to check due payments:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {

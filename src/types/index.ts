@@ -88,6 +88,7 @@ export type Sale = {
     observations?: string;
     customerId?: string;
     relatedQuoteId?: string;
+    status?: 'Finalizada' | 'Estornada';
 };
 
 export type Quote = {
@@ -113,8 +114,8 @@ export type FinancialTransaction = {
     amount: number;
     date: string; // YYYY-MM-DD
     dueDate?: string; // YYYY-MM-DD, for installments
-    status?: 'pago' | 'pendente';
-    category: 'Venda de Produto' | 'Venda de Serviço' | 'Compra de Peça' | 'Salário' | 'Aluguel' | 'Outra Receita' | 'Outra Despesa';
+    status?: 'pago' | 'pendente' | 'Estornado';
+    category: 'Venda de Produto' | 'Venda de Serviço' | 'Compra de Peça' | 'Salário' | 'Aluguel' | 'Outra Receita' | 'Outra Despesa' | 'Venda Estornada';
     paymentMethod: string;
     relatedSaleId?: string;
     relatedServiceOrderId?: string;

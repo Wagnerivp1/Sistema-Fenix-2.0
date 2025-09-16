@@ -1,29 +1,5 @@
 [
   {
-    "id": "FIN-1758033126806-1",
-    "type": "receita",
-    "description": "Cliente: ADVOCACIA JOÃO FABIO HILARIO (fILHO) | Produto(s): SSD Externo Kingston 500GB USB 3.1 | Parcelamento: 2/3 de R$ 133.00 | Pagamento: parcelado | Valor Total: R$ 399.00 | Vencimento: 16/11/2025 | Data: 15/09/2025",
-    "amount": 133,
-    "date": "2025-09-16",
-    "dueDate": "2025-11-16",
-    "category": "Venda de Produto",
-    "paymentMethod": "parcelado",
-    "relatedSaleId": "SALE-1758033124567",
-    "status": "pendente"
-  },
-  {
-    "id": "FIN-1758033126806-2",
-    "type": "receita",
-    "description": "Cliente: ADVOCACIA JOÃO FABIO HILARIO (fILHO) | Produto(s): SSD Externo Kingston 500GB USB 3.1 | Parcelamento: 3/3 de R$ 133.00 | Pagamento: parcelado | Valor Total: R$ 399.00 | Vencimento: 16/12/2025 | Data: 15/09/2025",
-    "amount": 133,
-    "date": "2025-09-16",
-    "dueDate": "2025-12-16",
-    "category": "Venda de Produto",
-    "paymentMethod": "parcelado",
-    "relatedSaleId": "SALE-1758033124567",
-    "status": "pendente"
-  },
-  {
     "id": "FIN-1758032567277-entry",
     "type": "receita",
     "description": "Entrada: Cliente: Marcelo Kuplens | OS #4427 | Pagamento: Dinheiro | Valor Total: R$ 1000.00 | Data: 24/08/2025",
@@ -56,42 +32,6 @@
     "category": "Venda de Serviço",
     "paymentMethod": "Dinheiro",
     "relatedServiceOrderId": "OS-1756145364427",
-    "status": "pendente"
-  },
-  {
-    "id": "FIN-1758032517903-0",
-    "type": "receita",
-    "description": "Cliente: Não identificado | Produto(s): Pendrive Kingston 64GB USB 3.0 | Parcelamento: 1/3 de R$ 29.67 | Pagamento: parcelado | Valor Total: R$ 89.00 | Vencimento: 16/10/2025 | Data: 15/09/2025",
-    "amount": 29.666666666666668,
-    "date": "2025-09-16",
-    "dueDate": "2025-10-16",
-    "category": "Venda de Produto",
-    "paymentMethod": "parcelado",
-    "relatedSaleId": "SALE-1758032515540",
-    "status": "pendente"
-  },
-  {
-    "id": "FIN-1758032517903-1",
-    "type": "receita",
-    "description": "Cliente: Não identificado | Produto(s): Pendrive Kingston 64GB USB 3.0 | Parcelamento: 2/3 de R$ 29.67 | Pagamento: parcelado | Valor Total: R$ 89.00 | Vencimento: 16/11/2025 | Data: 15/09/2025",
-    "amount": 29.666666666666668,
-    "date": "2025-09-16",
-    "dueDate": "2025-11-16",
-    "category": "Venda de Produto",
-    "paymentMethod": "parcelado",
-    "relatedSaleId": "SALE-1758032515540",
-    "status": "pendente"
-  },
-  {
-    "id": "FIN-1758032517903-2",
-    "type": "receita",
-    "description": "Cliente: Não identificado | Produto(s): Pendrive Kingston 64GB USB 3.0 | Parcelamento: 3/3 de R$ 29.67 | Pagamento: parcelado | Valor Total: R$ 89.00 | Vencimento: 16/12/2025 | Data: 15/09/2025",
-    "amount": 29.666666666666668,
-    "date": "2025-09-16",
-    "dueDate": "2025-12-16",
-    "category": "Venda de Produto",
-    "paymentMethod": "parcelado",
-    "relatedSaleId": "SALE-1758032515540",
     "status": "pendente"
   },
   {

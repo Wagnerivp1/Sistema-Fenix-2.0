@@ -77,7 +77,7 @@ import {
   getServiceOrders,
   saveServiceOrders,
 } from '@/lib/storage';
-import type { FinancialTransaction, Sale, StockItem, ServiceOrder } from '@/types';
+import type { FinancialTransaction, Sale, StockItem, ServiceOrder, CompanyInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PrintReceiptDialog } from '@/components/financials/print-receipt-dialog';
@@ -101,27 +101,27 @@ const formatDateForDisplay = (dateString: string | undefined) => {
 };
 
 const loadImageAsDataUrl = (): Promise<string | null> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.src = '/images/pdf-logos/logo.png';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        resolve(null);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const dataURL = canvas.toDataURL('image/png');
-      resolve(dataURL);
-    };
-    img.onerror = () => {
-      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
-      resolve(null);
-    };
-  });
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = '/images/pdf-logos/logo.png';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(null);
+                return;
+            }
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL('image/png');
+            resolve(dataURL);
+        };
+        img.onerror = () => {
+            console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
+            resolve(null);
+        };
+    });
 };
 
 export default function FinanceiroPage() {
@@ -163,10 +163,12 @@ export default function FinanceiroPage() {
     // Adicionar listener para recarregar dados quando houver mudanças
     window.addEventListener('storage-change-financialTransactions', loadData);
     window.addEventListener('storage-change-serviceOrders', loadData);
+    window.addEventListener('storage-change-sales', loadData);
 
     return () => {
       window.removeEventListener('storage-change-financialTransactions', loadData);
       window.removeEventListener('storage-change-serviceOrders', loadData);
+      window.removeEventListener('storage-change-sales', loadData);
     };
   }, [loadData]);
 
@@ -186,29 +188,35 @@ export default function FinanceiroPage() {
     // 1. Find the original sale
     const saleToReverse = allSales.find(s => s.id === transaction.relatedSaleId);
     if (saleToReverse) {
-        // 2. Return items to stock
-        const stock = await getStock();
-        const updatedStock = [...stock];
-        saleToReverse.items.forEach(saleItem => {
-            // Only return items that are from stock (have a PROD- id)
-            if (saleItem.id && saleItem.id.startsWith('PROD-')) {
-                const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
-                if (stockIndex !== -1) {
-                    updatedStock[stockIndex].quantity += saleItem.quantity;
-                }
-            }
-        });
-        await saveStock(updatedStock);
-        window.dispatchEvent(new Event('storage-change-stock'));
+      // 2. Return items to stock
+      const stock = await getStock();
+      const updatedStock = [...stock];
+      saleToReverse.items.forEach(saleItem => {
+        if (saleItem.id && saleItem.id.startsWith('PROD-')) {
+          const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
+          if (stockIndex !== -1) {
+            updatedStock[stockIndex].quantity += saleItem.quantity;
+          }
+        }
+      });
+      await saveStock(updatedStock);
+      window.dispatchEvent(new Event('storage-change-stock'));
 
-        // 3. Remove the sale record
-        const updatedSales = allSales.filter(s => s.id !== transaction.relatedSaleId);
-        setAllSales(updatedSales);
-        await saveSales(updatedSales);
+      // 3. Update sale status to 'Estornada' instead of removing
+      const updatedSales = allSales.map(s => 
+        s.id === transaction.relatedSaleId ? { ...s, status: 'Estornada' as const } : s
+      );
+      setAllSales(updatedSales);
+      await saveSales(updatedSales);
+      window.dispatchEvent(new Event('storage-change-sales'));
     }
-    
-    // 4. Delete the associated financial transaction(s)
-    const updatedTransactions = allTransactions.filter(t => t.relatedSaleId !== transaction.relatedSaleId);
+
+    // 4. Update associated financial transaction status to 'Estornado'
+    const updatedTransactions = allTransactions.map(t =>
+      t.relatedSaleId === transaction.relatedSaleId
+        ? { ...t, status: 'Estornado' as const, category: 'Venda Estornada' as const, description: `[ESTORNADO] ${t.description}` }
+        : t
+    );
     setAllTransactions(updatedTransactions);
     await saveFinancialTransactions(updatedTransactions);
     window.dispatchEvent(new Event('storage-change-financialTransactions'));
@@ -266,6 +274,10 @@ export default function FinanceiroPage() {
 
 
   const filteredTransactions = React.useMemo(() => {
+    if (categoryFilter === 'Venda Estornada') {
+        return allTransactions.filter(t => t.status === 'Estornado');
+    }
+    
     if (typeFilter === 'contas_a_receber') {
         return combinedReceivables.filter(t => t.description.toLowerCase().includes(descriptionFilter.toLowerCase()));
     }
@@ -277,13 +289,13 @@ export default function FinanceiroPage() {
       const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter;
       const matchesDate = !dateRange || !dateRange.from || (transactionDate && transactionDate >= dateRange.from && (!dateRange.to || transactionDate <= dateRange.to));
 
-      return matchesDescription && matchesType && matchesDate && matchesCategory;
+      return matchesDescription && matchesType && matchesDate && matchesCategory && t.status !== 'Estornado';
     });
   }, [allTransactions, descriptionFilter, typeFilter, categoryFilter, dateRange, combinedReceivables]);
 
 
   const totalReceitas = filteredTransactions
-    .filter(t => t.type === 'receita')
+    .filter(t => t.type === 'receita' && t.status !== 'Estornado')
     .reduce((acc, t) => acc + t.amount, 0);
   const totalDespesas = filteredTransactions
     .filter(t => t.type === 'despesa')
@@ -299,7 +311,7 @@ export default function FinanceiroPage() {
     let despesas = 0;
 
     allTransactions.forEach(t => {
-        if (!t.date || isNaN(new Date(t.date).getTime())) return;
+        if (!t.date || isNaN(new Date(t.date).getTime()) || t.status === 'Estornado') return;
         const transactionDate = parseISO(t.date);
         if (isWithinInterval(transactionDate, { start: startOfCurrentMonth, end: endOfCurrentMonth })) {
             if (t.type === 'receita') {
@@ -497,6 +509,7 @@ export default function FinanceiroPage() {
                     <SelectItem value="all">Todas as Categorias</SelectItem>
                     <SelectItem value="Venda de Produto">Receita por Venda</SelectItem>
                     <SelectItem value="Venda de Serviço">Receita por OS</SelectItem>
+                    <SelectItem value="Venda Estornada">Vendas Estornadas</SelectItem>
                     <SelectItem value="Outra Receita">Outras Receitas</SelectItem>
                     <SelectItem value="Compra de Peça">Compra de Peça</SelectItem>
                     <SelectItem value="Salário">Salário</SelectItem>
@@ -572,14 +585,15 @@ export default function FinanceiroPage() {
           <TableBody>
             {filteredTransactions.map((transaction) => {
               const isPending = transaction.status === 'pendente';
-              const valueColorClass = transaction.type === 'receita' && !isPending ? 'text-green-500' : isPending ? 'text-destructive' : 'text-red-500';
+              const isReversed = transaction.status === 'Estornado';
+              const valueColorClass = transaction.type === 'receita' && !isPending && !isReversed ? 'text-green-500' : isPending ? 'text-destructive' : isReversed ? 'text-gray-500 line-through' : 'text-red-500';
               
               return (
-                <TableRow key={transaction.id} className={cn(isPending && 'bg-destructive/10')}>
+                <TableRow key={transaction.id} className={cn(isPending && 'bg-destructive/10', isReversed && 'bg-gray-500/10')}>
                   <TableCell>
                     {transaction.type === 'receita' ? (<ArrowUpCircle className="h-5 w-5 text-green-500" />) : (<ArrowDownCircle className="h-5 w-5 text-red-500" />)}
                   </TableCell>
-                  <TableCell className={cn('font-medium', isPending && 'text-destructive')}>
+                  <TableCell className={cn('font-medium', isPending && 'text-destructive', isReversed && 'text-gray-500')}>
                     {transaction.description}
                   </TableCell>
                   <TableCell>
@@ -593,7 +607,7 @@ export default function FinanceiroPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button></DropdownMenuTrigger>
+                      <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost" disabled={isReversed}><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                          {transaction.status === 'pendente' && (
@@ -613,7 +627,7 @@ export default function FinanceiroPage() {
                             <AlertDialog>
                                 <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">Estornar Venda</DropdownMenuItem></AlertDialogTrigger>
                                 <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Confirmar Estorno</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. A venda será cancelada, o lançamento financeiro removido e os produtos retornarão ao estoque. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogHeader><AlertDialogTitle>Confirmar Estorno</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. A venda será marcada como estornada, os lançamentos financeiros revertidos e os produtos retornarão ao estoque. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
                                 <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleReverseSale(transaction)}>Confirmar Estorno</AlertDialogAction></AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>

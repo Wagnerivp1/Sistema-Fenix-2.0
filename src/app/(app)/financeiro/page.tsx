@@ -77,7 +77,7 @@ import {
   getServiceOrders,
   saveServiceOrders,
 } from '@/lib/storage';
-import type { FinancialTransaction, Sale, StockItem, ServiceOrder, OSPayment } from '@/types';
+import type { FinancialTransaction, Sale, StockItem, ServiceOrder } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PrintReceiptDialog } from '@/components/financials/print-receipt-dialog';
@@ -183,30 +183,42 @@ export default function FinanceiroPage() {
   const handleReverseSale = async (transaction: FinancialTransaction) => {
     if (!transaction.relatedSaleId) return;
 
+    // 1. Find the original sale
     const saleToReverse = allSales.find(s => s.id === transaction.relatedSaleId);
     if (saleToReverse) {
-      const stock = await getStock();
-      const updatedStock = [...stock];
-      saleToReverse.items.forEach(saleItem => {
-        const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
-        if (stockIndex !== -1) {
-          updatedStock[stockIndex].quantity += saleItem.quantity;
-        }
-      });
-      await saveStock(updatedStock);
+        // 2. Return items to stock
+        const stock = await getStock();
+        const updatedStock = [...stock];
+        saleToReverse.items.forEach(saleItem => {
+            // Only return items that are from stock (have a PROD- id)
+            if (saleItem.id && saleItem.id.startsWith('PROD-')) {
+                const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
+                if (stockIndex !== -1) {
+                    updatedStock[stockIndex].quantity += saleItem.quantity;
+                }
+            }
+        });
+        await saveStock(updatedStock);
+        window.dispatchEvent(new Event('storage-change-stock'));
 
-      const updatedSales = allSales.filter(s => s.id !== transaction.relatedSaleId);
-      setAllSales(updatedSales);
-      await saveSales(updatedSales);
+        // 3. Remove the sale record
+        const updatedSales = allSales.filter(s => s.id !== transaction.relatedSaleId);
+        setAllSales(updatedSales);
+        await saveSales(updatedSales);
     }
-
-    await handleDeleteTransaction(transaction.id);
+    
+    // 4. Delete the associated financial transaction(s)
+    const updatedTransactions = allTransactions.filter(t => t.relatedSaleId !== transaction.relatedSaleId);
+    setAllTransactions(updatedTransactions);
+    await saveFinancialTransactions(updatedTransactions);
+    window.dispatchEvent(new Event('storage-change-financialTransactions'));
 
     toast({
       title: 'Venda Estornada!',
       description: 'A venda foi estornada e os itens retornaram ao estoque.',
     });
   };
+
 
   const handleMarkAsPaid = async (txId: string) => {
     let transactionToPay: FinancialTransaction | undefined;
@@ -326,7 +338,7 @@ export default function FinanceiroPage() {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
-    const logoDataUrl = await loadImageAsDataUrl();
+    const logoDataUrl = companyInfo.logoUrl || null;
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -594,22 +606,28 @@ export default function FinanceiroPage() {
                            <DropdownMenuItem asChild><Link href={`/ordens-de-servico?orderId=${transaction.relatedServiceOrderId}`}><FileText className="mr-2 h-4 w-4"/>Ver Ordem de Serviço</Link></DropdownMenuItem>
                          )}
                         <DropdownMenuItem onSelect={() => handlePrintClick(transaction)}><Printer className="mr-2 h-4 w-4" />Imprimir Recibo</DropdownMenuItem>
-                        {transaction.relatedSaleId && (<>
-                          <DropdownMenuSeparator />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">Estornar Venda</DropdownMenuItem></AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader><AlertDialogTitle>Confirmar Estorno</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. A venda será cancelada, o lançamento financeiro removido e os produtos retornarão ao estoque. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
-                              <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleReverseSale(transaction)}>Confirmar Estorno</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog></>
+                        
+                        <DropdownMenuSeparator />
+                        
+                        {transaction.relatedSaleId && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">Estornar Venda</DropdownMenuItem></AlertDialogTrigger>
+                                <AlertDialogContent>
+                                <AlertDialogHeader><AlertDialogTitle>Confirmar Estorno</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. A venda será cancelada, o lançamento financeiro removido e os produtos retornarão ao estoque. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleReverseSale(transaction)}>Confirmar Estorno</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         )}
                         <AlertDialog>
-                          <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className={!transaction.relatedSaleId ? 'text-destructive' : ''}>Excluir Lançamento</DropdownMenuItem></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle><AlertDialogDescription>Atenção: esta ação removerá apenas o registro financeiro. A venda e o estoque não serão alterados. Para reverter tudo, use "Estornar Venda".</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Excluir Mesmo Assim</AlertDialogAction></AlertDialogFooter>
-                          </AlertDialogContent>
+                            <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className={!transaction.relatedSaleId ? 'text-destructive focus:bg-destructive/10 focus:text-destructive' : ''} disabled={!!transaction.relatedSaleId}>
+                                    Excluir Lançamento
+                                </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader><AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle><AlertDialogDescription>Atenção: esta ação removerá apenas o registro financeiro. Para reverter uma venda, use a opção "Estornar Venda".</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Excluir Mesmo Assim</AlertDialogAction></AlertDialogFooter>
+                            </AlertDialogContent>
                         </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -629,5 +647,3 @@ export default function FinanceiroPage() {
     </>
   );
 }
-
-    

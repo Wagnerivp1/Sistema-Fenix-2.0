@@ -13,6 +13,7 @@ import { AddTransactionDialog } from '@/components/dashboard/add-transaction-dia
 import { getFinancialTransactions, saveFinancialTransactions } from '@/lib/storage';
 import { FinancialTransaction } from '@/types';
 import { PrintReceiptDialog } from '@/components/financials/print-receipt-dialog';
+import { DuePaymentsAlert } from '@/components/dashboard/due-payments-alert';
 
 
 export default function DashboardPage() {
@@ -115,6 +116,9 @@ export default function DashboardPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatsCards />
+        </div>
+        <div>
+          <DuePaymentsAlert />
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 md:gap-8">
           <div className="lg:col-span-2">

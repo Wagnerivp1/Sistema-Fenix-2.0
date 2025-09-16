@@ -106,11 +106,26 @@
     "customerName": "Wagner Pizzaia ",
     "equipment": "Impressora EPSON L3250",
     "reportedProblem": "NÃO SAI TINTA PRETA",
-    "status": "Aberta",
+    "status": "Aguardando Pagamento",
     "date": "2025-08-21",
-    "totalValue": 0,
-    "items": [],
-    "payments": [],
+    "totalValue": 2000,
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 2000,
+        "type": "service",
+        "id": 1758043404393
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1758043425890-entry",
+        "amount": 300,
+        "date": "2025-09-16",
+        "method": "Dinheiro"
+      }
+    ],
     "internalNotes": [],
     "technicalReport": "",
     "accessories": "S/A",

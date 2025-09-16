@@ -11,12 +11,12 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import * as React from 'react';
-import type { StockItem, ServiceOrder } from '@/types';
-import { getStock, getServiceOrders } from '@/lib/storage';
+import type { StockItem, FinancialTransaction } from '@/types';
+import { getStock, getFinancialTransactions } from '@/lib/storage';
 
 export function AlertsAndNotifications() {
   const [lowStockItems, setLowStockItems] = React.useState<StockItem[]>([]);
-  const [pendingPaymentOrders, setPendingPaymentOrders] = React.useState<ServiceOrder[]>([]);
+  const [pendingPayments, setPendingPayments] = React.useState<FinancialTransaction[]>([]);
 
   const checkAlerts = React.useCallback(async () => {
     // Check stock levels
@@ -24,10 +24,10 @@ export function AlertsAndNotifications() {
     const lowItems = stock.filter(item => item.quantity <= item.minStock && item.minStock > 0);
     setLowStockItems(lowItems);
     
-    // Check for orders awaiting payment
-    const serviceOrders = await getServiceOrders();
-    const pendingOrders = serviceOrders.filter(order => order.status === 'Aguardando Pagamento');
-    setPendingPaymentOrders(pendingOrders);
+    // Check for pending payments
+    const transactions = await getFinancialTransactions();
+    const pending = transactions.filter(tx => tx.status === 'pendente');
+    setPendingPayments(pending);
 
   }, []);
 
@@ -35,15 +35,15 @@ export function AlertsAndNotifications() {
     checkAlerts();
     // Listen for storage changes that might affect alerts
     window.addEventListener('storage-change-stock', checkAlerts);
-    window.addEventListener('storage-change-serviceOrders', checkAlerts);
+    window.addEventListener('storage-change-financialTransactions', checkAlerts);
     
     return () => {
         window.removeEventListener('storage-change-stock', checkAlerts);
-        window.removeEventListener('storage-change-serviceOrders', checkAlerts);
+        window.removeEventListener('storage-change-financialTransactions', checkAlerts);
     };
   }, [checkAlerts]);
 
-  const hasAlerts = lowStockItems.length > 0 || pendingPaymentOrders.length > 0;
+  const hasAlerts = lowStockItems.length > 0 || pendingPayments.length > 0;
 
   return (
     <Card className="h-full flex flex-col">
@@ -68,14 +68,14 @@ export function AlertsAndNotifications() {
             </div>
           </div>
         )}
-         {pendingPaymentOrders.length > 0 && (
+         {pendingPayments.length > 0 && (
           <div className="border-l-4 border-yellow-500 bg-yellow-500/10 p-4 rounded-r-lg">
             <div className="flex items-start gap-3">
               <WalletCards className="h-5 w-5 text-yellow-600" />
               <div>
                 <h4 className="font-semibold text-yellow-700">Pagamentos Pendentes</h4>
                 <p className="text-sm text-yellow-600/80">
-                  Existem {pendingPaymentOrders.length} OS aguardando pagamento.
+                  Existem {pendingPayments.length} parcelas aguardando pagamento.
                 </p>
                 <Button variant="link" asChild className="p-0 h-auto mt-1 text-yellow-700">
                    <Link href="/financeiro?type=contas_a_receber">Ver no Financeiro</Link>

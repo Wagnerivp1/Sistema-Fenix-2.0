@@ -58,9 +58,22 @@ export function AddPaymentDialog({ isOpen, onOpenChange, serviceOrder, onSave }:
     const newPayments: OSPayment[] = [];
     const newTransactions: FinancialTransaction[] = [];
     
+    const saleDate = format(new Date(serviceOrder.date), 'dd/MM/yyyy');
+    const baseDesc = `Cliente: ${serviceOrder.customerName} | OS #${serviceOrder.id.slice(-4)} | Pagamento: ${paymentMethod} | Valor Total: R$ ${serviceOrder.totalValue.toFixed(2)} | Data: ${saleDate}`;
+
     if (paymentType === 'integral') {
         newPayments.push({ id: `PAY-${Date.now()}`, amount: balanceDue, date: new Date().toISOString().split('T')[0], method: paymentMethod });
-        newTransactions.push({ id: `FIN-${Date.now()}`, type: 'receita', description: `Pagamento integral OS #${serviceOrder.id.slice(-4)}`, amount: balanceDue, date: new Date().toISOString().split('T')[0], category: 'Venda de Serviço', paymentMethod, relatedServiceOrderId: serviceOrder.id, status: 'pago' });
+        newTransactions.push({ 
+            id: `FIN-${Date.now()}`, 
+            type: 'receita', 
+            description: baseDesc,
+            amount: balanceDue, 
+            date: new Date().toISOString().split('T')[0], 
+            category: 'Venda de Serviço', 
+            paymentMethod, 
+            relatedServiceOrderId: serviceOrder.id, 
+            status: 'pago' 
+        });
     } else { // Parcelado
         const entry = Number(entryAmount) || 0;
         if (entry > balanceDue) {
@@ -71,23 +84,30 @@ export function AddPaymentDialog({ isOpen, onOpenChange, serviceOrder, onSave }:
         // Registra a entrada se houver
         if (entry > 0) {
             newPayments.push({ id: `PAY-${Date.now()}-entry`, amount: entry, date: new Date().toISOString().split('T')[0], method: paymentMethod });
-            newTransactions.push({ id: `FIN-${Date.now()}-entry`, type: 'receita', description: `Entrada OS #${serviceOrder.id.slice(-4)}`, amount: entry, date: new Date().toISOString().split('T')[0], category: 'Venda de Serviço', paymentMethod, relatedServiceOrderId: serviceOrder.id, status: 'pago' });
+            newTransactions.push({ 
+                id: `FIN-${Date.now()}-entry`, 
+                type: 'receita', 
+                description: `Entrada: ${baseDesc}`,
+                amount: entry, 
+                date: new Date().toISOString().split('T')[0], 
+                category: 'Venda de Serviço', 
+                paymentMethod, 
+                relatedServiceOrderId: serviceOrder.id, 
+                status: 'pago' 
+            });
         }
         
         const remainingBalance = balanceDue - entry;
-        if (remainingBalance <= 0 && entry > 0) {
-           // This case is handled as full payment now. No installments needed.
-        } else if (installments > 0) {
+        if (remainingBalance > 0 && installments > 0) {
           const installmentAmount = remainingBalance / installments;
 
           for (let i = 0; i < installments; i++) {
               const dueDate = addMonths(firstDueDate || new Date(), i);
 
-              // Cria a transação financeira para CADA parcela como pendente
               newTransactions.push({
                   id: `FIN-${Date.now()}-${i}`,
                   type: 'receita',
-                  description: `Parcela ${i+1}/${installments} OS #${serviceOrder.id.slice(-4)}`,
+                  description: `Cliente: ${serviceOrder.customerName} | OS #${serviceOrder.id.slice(-4)} | Parcelamento: ${i + 1}/${installments} de R$ ${installmentAmount.toFixed(2)} | Pagamento: ${paymentMethod} | Valor Total: R$ ${serviceOrder.totalValue.toFixed(2)} | Vencimento: ${format(dueDate, 'dd/MM/yyyy')} | Data: ${saleDate}`,
                   amount: installmentAmount,
                   date: new Date().toISOString().split('T')[0], // Data de criação da transação
                   dueDate: format(dueDate, 'yyyy-MM-dd'), // Data de vencimento da parcela
@@ -155,3 +175,5 @@ export function AddPaymentDialog({ isOpen, onOpenChange, serviceOrder, onSave }:
     </Dialog>
   );
 }
+
+    

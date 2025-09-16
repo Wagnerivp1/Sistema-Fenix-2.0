@@ -30,9 +30,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import { getStock, getSales, saveStock, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, saveSales } from '@/lib/storage';
+import { getStock, getSales, saveStock, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, saveSales, getCustomers } from '@/lib/storage';
 import { useCurrentUser } from '@/hooks/use-current-user';
-import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem } from '@/types';
+import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem, Customer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -43,6 +43,7 @@ import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { UserPlus } from 'lucide-react';
 
 export default function VendasPage() {
   const { toast } = useToast();
@@ -64,6 +65,10 @@ export default function VendasPage() {
   const [currentSaleId, setCurrentSaleId] = React.useState('');
   
   const [stock, setStock] = React.useState<StockItem[]>([]);
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | undefined>(undefined);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = React.useState(false);
+  const [newCustomer, setNewCustomer] = React.useState<Omit<Customer, 'id'>>({ name: '', phone: '', email: '', address: '', document: '' });
   const [barcode, setBarcode] = React.useState('');
   
   // States for installments
@@ -74,8 +79,9 @@ export default function VendasPage() {
 
   React.useEffect(() => {
     const loadData = async () => {
-      const stockData = await getStock();
+      const [stockData, customersData] = await Promise.all([getStock(), getCustomers()]);
       setStock(stockData);
+      setCustomers(customersData);
     };
     loadData();
     barcodeInputRef.current?.focus();
@@ -195,6 +201,7 @@ export default function VendasPage() {
     setPaymentMethod('dinheiro');
     setObservations('');
     setCurrentSaleId('');
+    setSelectedCustomerId(undefined);
     setCompanyInfoForDialog(null);
     setIsInstallments(false);
     setInstallmentsCount(2);
@@ -207,6 +214,20 @@ export default function VendasPage() {
     toast({ title: 'Venda Cancelada', description: 'Todos os itens foram removidos do carrinho.' });
   };
   
+    const handleSaveNewCustomer = async () => {
+        if (!newCustomer.name) {
+            toast({ variant: 'destructive', title: 'Nome obrigatório' });
+            return;
+        }
+        const customerToAdd: Customer = { ...newCustomer, id: `CUST-${Date.now()}` };
+        const updatedCustomers = [...customers, customerToAdd];
+        await saveCustomers(updatedCustomers);
+        setCustomers(updatedCustomers);
+        setSelectedCustomerId(customerToAdd.id);
+        setIsAddCustomerOpen(false);
+        toast({ title: 'Cliente adicionado!', description: `${customerToAdd.name} foi salvo.` });
+    };
+
   const processSale = async (shouldPrint = false) => {
     if (saleItems.length === 0) {
         toast({ variant: 'destructive', title: 'Carrinho Vazio', description: 'Adicione produtos para finalizar a venda.' });
@@ -214,6 +235,7 @@ export default function VendasPage() {
     }
     
     const saleId = currentSaleId || `SALE-${Date.now()}`;
+    const customer = customers.find(c => c.id === selectedCustomerId);
 
     // 1. Create Sale Record
     const newSale: Sale = {
@@ -227,6 +249,7 @@ export default function VendasPage() {
         total: finalTotal,
         paymentMethod: paymentMethod,
         observations: observations,
+        customerId: selectedCustomerId,
     };
     const existingSales = await getSales();
     await saveSales([...existingSales, newSale]);
@@ -256,15 +279,20 @@ export default function VendasPage() {
     // 3. Create Financial Transaction(s)
     const existingTransactions = await getFinancialTransactions();
     let newTransactions: FinancialTransaction[] = [];
+    const productNames = saleItems.map(i => i.name).join(', ');
+    const saleDate = format(new Date(newSale.date), 'dd/MM/yyyy');
     
+    const baseDesc = `Cliente: ${customer?.name || 'Não identificado'} | Produto(s): ${productNames} | Pagamento: ${paymentMethod} | Valor Total: R$ ${finalTotal.toFixed(2)} | Data: ${saleDate}`;
+
     if (paymentMethod === 'a_prazo') {
+        const dueDate = addDays(new Date(), 30);
         newTransactions.push({
             id: `FIN-${Date.now()}`,
             type: 'receita',
-            description: `Venda a prazo #${newSale.id.slice(-6)}`,
+            description: `${baseDesc} | Vencimento: ${format(dueDate, 'dd/MM/yyyy')}`,
             amount: finalTotal,
             date: newSale.date,
-            dueDate: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+            dueDate: format(dueDate, 'yyyy-MM-dd'),
             category: 'Venda de Produto',
             paymentMethod: 'A prazo',
             relatedSaleId: newSale.id,
@@ -278,7 +306,7 @@ export default function VendasPage() {
             newTransactions.push({
                 id: `FIN-${Date.now()}-${i}`,
                 type: 'receita',
-                description: `Parcela ${i+1}/${installmentsCount} - Venda #${newSale.id.slice(-6)}`,
+                description: `Cliente: ${customer?.name || 'Não identificado'} | Produto(s): ${productNames} | Parcelamento: ${i+1}/${installmentsCount} de R$ ${installmentAmount.toFixed(2)} | Pagamento: ${paymentMethod} | Valor Total: R$ ${finalTotal.toFixed(2)} | Vencimento: ${format(dueDate, 'dd/MM/yyyy')} | Data: ${saleDate}`,
                 amount: installmentAmount,
                 date: newSale.date,
                 dueDate: format(dueDate, 'yyyy-MM-dd'),
@@ -292,7 +320,7 @@ export default function VendasPage() {
         newTransactions.push({
             id: `FIN-${Date.now()}`,
             type: 'receita',
-            description: 'Venda de Produtos (PDV)',
+            description: baseDesc,
             amount: finalTotal,
             date: new Date().toISOString().split('T')[0],
             category: 'Venda de Produto',
@@ -454,6 +482,21 @@ export default function VendasPage() {
               <CardTitle>Resumo e Pagamento</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+               <div className="space-y-2">
+                  <Label htmlFor="customer">Cliente (Opcional)</Label>
+                  <div className="flex gap-2">
+                    <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione um cliente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">Nenhum / Cliente Avulso</SelectItem>
+                            {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="icon" onClick={() => setIsAddCustomerOpen(true)}><UserPlus /></Button>
+                  </div>
+              </div>
               <div className="space-y-2 text-base">
                 <div className="flex justify-between items-center">
                   <span>Subtotal</span>
@@ -572,7 +615,30 @@ export default function VendasPage() {
             </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
-
+     {/* Add New Customer Dialog */}
+    <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                    <Label htmlFor="new-name">Nome</Label>
+                    <Input id="new-name" value={newCustomer.name} onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="new-phone">Telefone</Label>
+                    <Input id="new-phone" value={newCustomer.phone} onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})} />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsAddCustomerOpen(false)}>Cancelar</Button>
+                <Button onClick={handleSaveNewCustomer}>Salvar Cliente</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
     </>
   );
 }
+
+    

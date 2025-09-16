@@ -38,9 +38,24 @@
     "reportedProblem": "Orçamento",
     "status": "Aguardando Pagamento",
     "date": "2025-08-25",
-    "totalValue": 0,
-    "items": [],
-    "payments": [],
+    "totalValue": 1000,
+    "items": [
+      {
+        "description": "FORMATAÇÃO ",
+        "quantity": 1,
+        "unitPrice": 1000,
+        "type": "service",
+        "id": 1758031616704
+      }
+    ],
+    "payments": [
+      {
+        "id": "PAY-1758031635135-entry",
+        "amount": 100,
+        "date": "2025-09-16",
+        "method": "Dinheiro"
+      }
+    ],
     "internalNotes": [],
     "technicalReport": "",
     "accessories": "S/A",

@@ -1,5 +1,29 @@
 [
   {
+    "id": "FIN-1758046670471-0",
+    "type": "receita",
+    "description": "Cliente: CESTA BASICA SANTA RITA | Produto(s): Pendrive Kingston 64GB USB 3.0 | Parcelamento: 1/2 de R$ 44.50 | Pagamento: parcelado | Valor Total: R$ 89.00 | Vencimento: 16/09/2025 | Data: 15/09/2025",
+    "amount": 44.5,
+    "date": "2025-09-16",
+    "dueDate": "2025-09-16",
+    "category": "Venda de Produto",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1758046668270",
+    "status": "pendente"
+  },
+  {
+    "id": "FIN-1758046670471-1",
+    "type": "receita",
+    "description": "Cliente: CESTA BASICA SANTA RITA | Produto(s): Pendrive Kingston 64GB USB 3.0 | Parcelamento: 2/2 de R$ 44.50 | Pagamento: parcelado | Valor Total: R$ 89.00 | Vencimento: 16/10/2025 | Data: 15/09/2025",
+    "amount": 44.5,
+    "date": "2025-09-16",
+    "dueDate": "2025-10-16",
+    "category": "Venda de Produto",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1758046668270",
+    "status": "pendente"
+  },
+  {
     "id": "FIN-1758046533247-0",
     "type": "receita",
     "description": "Cliente: ADVOCACIA JOÃO FABIO HILARIO (fILHO) | Produto(s): Pendrive Kingston 64GB USB 3.0 | Parcelamento: 1/1 de R$ 89.00 | Pagamento: parcelado | Valor Total: R$ 89.00 | Vencimento: 16/10/2025 | Data: 15/09/2025",

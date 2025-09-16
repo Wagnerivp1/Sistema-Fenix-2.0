@@ -90,10 +90,11 @@ const allStatuses: ServiceOrder['status'][] = [
   'Cancelada'
 ];
 
-const loadImageAsDataUrl = (): Promise<string | null> => {
+const loadImageAsDataUrl = async (url: string | undefined): Promise<string | null> => {
+  if (!url) return null;
   return new Promise((resolve) => {
     const img = new Image();
-    img.src = '/images/pdf-logos/logo.png';
+    img.crossOrigin = 'Anonymous'; // Handle CORS if the image is on another domain
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
@@ -104,13 +105,14 @@ const loadImageAsDataUrl = (): Promise<string | null> => {
         return;
       }
       ctx.drawImage(img, 0, 0);
-      const dataURL = canvas.toDataURL('image/png');
+      const dataURL = canvas.toDataURL('image/png'); // Always get PNG to be safe
       resolve(dataURL);
     };
     img.onerror = () => {
-      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
-      resolve(null);
+      console.warn(`Could not load image from: ${url}`);
+      resolve(null); // Resolve with null if the image fails to load
     };
+    img.src = url;
   });
 };
 
@@ -465,14 +467,14 @@ function ServiceOrdersComponent() {
   };
 
   const handlePrint = async (documentType: 'entry' | 'quote' | 'delivery' | 'invoice', order: ServiceOrder) => {
-    const companyInfo = await getCompanyInfo();
     const customer = customers.find(c => c.name === order.customerName);
     if (!customer) {
       toast({ variant: 'destructive', title: 'Erro', description: 'Cliente da OS não encontrado.' });
       return;
     }
     
-    const logoDataUrl = await loadImageAsDataUrl();
+    const companyInfo = await getCompanyInfo();
+    const logoDataUrl = await loadImageAsDataUrl(companyInfo.logoUrl);
 
     if (documentType === 'entry') {
       generateEntryReceiptPdf(order, customer, companyInfo, logoDataUrl);
@@ -1129,7 +1131,7 @@ function ServiceOrdersComponent() {
                 const equipmentName = typeof order.equipment === 'string'
                   ? order.equipment
                   : `${order.equipment.type || ''} ${order.equipment.brand || ''} ${order.equipment.model || ''}`.trim();
-                const isFinished = ['Finalizado', 'Entregue', 'Cancelada'].includes(order.status);
+                const isFinishedOrPending = ['Finalizado', 'Entregue', 'Cancelada', 'Aguardando Pagamento'].includes(order.status);
                 
                 return (
                   <TableRow key={order.id}>
@@ -1165,7 +1167,7 @@ function ServiceOrdersComponent() {
                             <DropdownMenuLabel>Ações da OS</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={() => handleEditClick(order)}>Editar Detalhes</DropdownMenuItem>
-                            {!isFinished && (
+                            {!isFinishedOrPending && (
                                 <DropdownMenuItem onSelect={() => handleOpenPaymentDialog(order)}>
                                     <DollarSign className="mr-2 h-4 w-4 text-green-500"/>
                                     Adicionar Pagamento
@@ -1212,7 +1214,7 @@ function ServiceOrdersComponent() {
                               Notificar Cliente
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            {isFinished && (
+                            {isFinishedOrPending && order.status !== 'Aguardando Pagamento' && (
                               <DropdownMenuItem onSelect={() => handleReopenOrder(order.id)}>
                                 <Undo2 className="mr-2 h-4 w-4" />
                                 Reabrir OS
@@ -1281,7 +1283,3 @@ export default function ServiceOrdersPage() {
     </React.Suspense>
   );
 }
-
-    
-
-    

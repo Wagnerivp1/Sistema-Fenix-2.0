@@ -140,5 +140,45 @@
     "customerId": "1752581309250-0.23832530068551883",
     "status": "Estornada",
     "reversalReason": "Cliente pediu para Cancelar"
+  },
+  {
+    "id": "SALE-1758043730256",
+    "date": "2025-09-16",
+    "time": "14:28:56",
+    "user": "Wagner lopes",
+    "items": [
+      {
+        "id": "PROD-032",
+        "name": "SSD Externo Kingston 500GB USB 3.1",
+        "price": 399,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 399,
+    "discount": 0,
+    "total": 399,
+    "paymentMethod": "a_prazo",
+    "observations": "",
+    "customerId": "1752587568423-0.36339501987805745"
+  },
+  {
+    "id": "SALE-1758044050948",
+    "date": "2025-09-16",
+    "time": "14:34:10",
+    "user": "Wagner lopes",
+    "items": [
+      {
+        "id": "PROD-019",
+        "name": "Cartucho de Tinta Epson 103 Preto",
+        "price": 49,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 49,
+    "discount": 0,
+    "total": 49,
+    "paymentMethod": "parcelado",
+    "observations": "",
+    "customerId": "1752587568423-0.36339501987805745"
   }
 ]

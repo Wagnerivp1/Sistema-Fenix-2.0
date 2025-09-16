@@ -35,11 +35,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
+  DialogDescription
 } from '@/components/ui/dialog';
 
 import { getStock, getSales, saveStock, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, saveSales, getCustomers, saveCustomers } from '@/lib/storage';
 import { useCurrentUser } from '@/hooks/use-current-user';
-import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem, Customer } from '@/types';
+import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, Customer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -290,22 +292,7 @@ export default function VendasPage() {
     
     const baseDesc = `Cliente: ${customer?.name || 'Não identificado'} | Produto(s): ${productNames}`;
 
-    if (paymentMethod === 'a_prazo') {
-        const dueDate = addDays(new Date(), 30);
-        newTransactions.push({
-            id: `FIN-${Date.now()}`,
-            type: 'receita',
-            description: `${baseDesc} | Pagamento: A prazo | Valor Total: R$ ${finalTotal.toFixed(2)} | Vencimento: ${format(dueDate, 'dd/MM/yyyy')} | Data: ${saleDate}`,
-            amount: finalTotal,
-            date: newSale.date,
-            dueDate: format(dueDate, 'yyyy-MM-dd'),
-            category: 'Venda de Produto',
-            paymentMethod: 'A prazo',
-            relatedSaleId: newSale.id,
-            status: 'pendente',
-        });
-    }
-    else if (isInstallments) {
+    if (isInstallments) {
         const installmentAmount = finalTotal / installmentsCount;
         for (let i = 0; i < installmentsCount; i++) {
             const dueDate = addMonths(firstDueDate || new Date(), i);
@@ -380,8 +367,6 @@ export default function VendasPage() {
             return;
         }
         setIsPixDialogOpen(true);
-    } else if (paymentMethod === 'a_prazo') {
-        setIsCreditSaleDialogOpen(true);
     }
     else {
         processSale(true);
@@ -532,7 +517,6 @@ export default function VendasPage() {
                       <SelectItem value="pix">PIX</SelectItem>
                       <SelectItem value="credito">Cartão de Crédito</SelectItem>
                       <SelectItem value="debito">Cartão de Débito</SelectItem>
-                      <SelectItem value="a_prazo">A prazo</SelectItem>
                       <SelectItem value="parcelado">Parcelado</SelectItem>
                   </SelectContent>
                 </Select>
@@ -626,6 +610,9 @@ export default function VendasPage() {
         <DialogContent>
             <DialogHeader>
                 <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+                <DialogDescription>
+                    Preencha os dados do novo cliente abaixo.
+                </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
                 <div className="space-y-2">

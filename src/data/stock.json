@@ -31,7 +31,7 @@
     "category": "Armazenamento e Acessórios",
     "costPrice": 330,
     "price": 399,
-    "quantity": 10,
+    "quantity": 9,
     "minStock": 3,
     "unitOfMeasure": "UN"
   },
@@ -43,7 +43,7 @@
     "category": "Impressoras e Suprimentos",
     "costPrice": 40,
     "price": 49,
-    "quantity": 20,
+    "quantity": 19,
     "minStock": 5,
     "unitOfMeasure": "UN"
   },

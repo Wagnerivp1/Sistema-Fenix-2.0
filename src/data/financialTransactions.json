@@ -1,5 +1,29 @@
 [
   {
+    "id": "FIN-1758044055643-0",
+    "type": "receita",
+    "description": "Cliente: JULIANO JOSÉ PALMA  | Produto(s): Cartucho de Tinta Epson 103 Preto | Parcelamento: 1/2 de R$ 24.50 | Pagamento: parcelado | Valor Total: R$ 49.00 | Vencimento: 16/10/2025 | Data: 15/09/2025",
+    "amount": 24.5,
+    "date": "2025-09-16",
+    "dueDate": "2025-10-16",
+    "category": "Venda de Produto",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1758044050948",
+    "status": "pendente"
+  },
+  {
+    "id": "FIN-1758044055644-1",
+    "type": "receita",
+    "description": "Cliente: JULIANO JOSÉ PALMA  | Produto(s): Cartucho de Tinta Epson 103 Preto | Parcelamento: 2/2 de R$ 24.50 | Pagamento: parcelado | Valor Total: R$ 49.00 | Vencimento: 16/11/2025 | Data: 15/09/2025",
+    "amount": 24.5,
+    "date": "2025-09-16",
+    "dueDate": "2025-11-16",
+    "category": "Venda de Produto",
+    "paymentMethod": "parcelado",
+    "relatedSaleId": "SALE-1758044050948",
+    "status": "pendente"
+  },
+  {
     "id": "FIN-1758043425890-entry",
     "type": "receita",
     "description": "Entrada: Cliente: Wagner Pizzaia  | OS #0769 | Pagamento: Dinheiro | Valor Total: R$ 2000.00 | Data: 20/08/2025",

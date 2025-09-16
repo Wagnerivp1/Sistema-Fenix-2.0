@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { ShoppingCart, Trash2, ScanLine, FileText, Calendar as CalendarIcon, FileSignature } from 'lucide-react';
+import { ShoppingCart, Trash2, ScanLine, FileText, Calendar as CalendarIcon, FileSignature, UserPlus } from 'lucide-react';
 import { addDays, addMonths, format } from 'date-fns';
 import { DateRange } from "react-day-picker";
 import { ptBR } from 'date-fns/locale';
@@ -50,7 +50,6 @@ import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { UserPlus } from 'lucide-react';
 
 export default function VendasPage() {
   const { toast } = useToast();
@@ -637,6 +636,18 @@ export default function VendasPage() {
                     <Label htmlFor="new-phone">Telefone</Label>
                     <Input id="new-phone" value={newCustomer.phone} onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})} />
                 </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="new-email">Email</Label>
+                    <Input id="new-email" type="email" value={newCustomer.email} onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="new-address">Endereço</Label>
+                    <Input id="new-address" value={newCustomer.address} onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="new-document">Documento (CPF/CNPJ)</Label>
+                    <Input id="new-document" value={newCustomer.document} onChange={(e) => setNewCustomer({...newCustomer, document: e.target.value})} />
+                </div>
             </div>
             <DialogFooter>
                 <Button variant="ghost" onClick={() => setIsAddCustomerOpen(false)}>Cancelar</Button>
@@ -647,4 +658,3 @@ export default function VendasPage() {
     </>
   );
 }
-

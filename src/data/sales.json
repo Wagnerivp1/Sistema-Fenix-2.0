@@ -117,5 +117,24 @@
     "total": 89,
     "paymentMethod": "parcelado",
     "observations": "marcelo "
+  },
+  {
+    "id": "SALE-1758032515540",
+    "date": "2025-09-16",
+    "time": "11:21:55",
+    "user": "Wagner lopes",
+    "items": [
+      {
+        "id": "PROD-031",
+        "name": "Pendrive Kingston 64GB USB 3.0",
+        "price": 89,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 89,
+    "discount": 0,
+    "total": 89,
+    "paymentMethod": "parcelado",
+    "observations": ""
   }
 ]

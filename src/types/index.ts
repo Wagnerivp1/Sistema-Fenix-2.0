@@ -6,13 +6,6 @@ export type InternalNote = {
   comment: string;
 };
 
-export type OSPayment = {
-    id: string;
-    amount: number;
-    date: string;
-    method: string;
-}
-
 export type Customer = {
   id: string;
   name: string;
@@ -46,7 +39,7 @@ export type ServiceOrder = {
   discount?: number;
   finalValue?: number;
   items?: ServiceOrderItem[];
-  payments?: OSPayment[];
+  payments?: { id: string; amount: number; date: string; method: string; }[];
   internalNotes?: InternalNote[] | string;
   technicalReport?: string;
   accessories?: string;
@@ -89,6 +82,7 @@ export type Sale = {
     customerId?: string;
     relatedQuoteId?: string;
     status?: 'Finalizada' | 'Estornada';
+    reversalReason?: string;
 };
 
 export type Quote = {

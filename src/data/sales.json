@@ -116,6 +116,7 @@
     "discount": 0,
     "total": 89,
     "paymentMethod": "parcelado",
-    "observations": "marcelo "
+    "observations": "marcelo ",
+    "status": "Estornada"
   }
 ]

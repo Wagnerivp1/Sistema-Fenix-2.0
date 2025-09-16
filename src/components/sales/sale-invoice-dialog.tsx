@@ -14,8 +14,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { User, Calendar, Clock, Printer, ShoppingCart, DollarSign, StickyNote } from 'lucide-react';
-import type { Sale, CompanyInfo, SaleItem } from '@/types';
+import { User, Calendar, Clock, Printer, ShoppingCart, DollarSign, StickyNote, AlertTriangle } from 'lucide-react';
+import type { Sale, CompanyInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getCompanyInfo } from '@/lib/storage';
 
@@ -54,6 +54,7 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         const { jsPDF } = await import('jspdf');
         await import('jspdf-autotable');
         const companyInfo = await getCompanyInfo();
+        const logoDataUrl = companyInfo.logoUrl || null;
 
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -65,9 +66,9 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         const logoSpacing = 5;
         
         // Cabeçalho
-         if (companyInfo.logoUrl) {
+         if (logoDataUrl) {
            try {
-            doc.addImage(companyInfo.logoUrl, 'PNG', margin, currentY - 8, logoWidth, logoHeight);
+            doc.addImage(logoDataUrl, logoDataUrl.includes('png') ? 'PNG' : 'JPEG', margin, currentY - 8, logoWidth, logoHeight);
             textX = margin + logoWidth + logoSpacing;
            } catch (e) {
               console.warn("Could not add logo to PDF:", e);
@@ -155,15 +156,32 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-3xl h-[80vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Fatura da Venda #{sale.id.slice(-6)}</DialogTitle>
+                    <DialogTitle>{sale.status === 'Estornada' ? 'Venda Estornada' : 'Fatura da Venda'} #{sale.id.slice(-6)}</DialogTitle>
                     <DialogDescription>
-                        A venda foi finalizada. Imprima a fatura para o cliente.
+                       {sale.status === 'Estornada'
+                        ? "Esta venda foi estornada. Os detalhes são apenas para consulta."
+                        : "A venda foi finalizada. Imprima a fatura para o cliente."
+                       }
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex-grow min-h-0">
                     <ScrollArea className="h-full pr-6">
                         <div className="space-y-6">
+                            {sale.status === 'Estornada' && (
+                                <div className="p-4 border-l-4 border-destructive bg-destructive/10 rounded-r-lg">
+                                    <div className="flex items-start gap-3 text-destructive">
+                                        <AlertTriangle className="h-5 w-5" />
+                                        <div>
+                                            <h4 className="font-semibold">Venda Estornada</h4>
+                                            <p className="text-sm">
+                                                Motivo: {sale.reversalReason || 'Não informado.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="p-4 border rounded-lg">
                                 <h3 className="font-semibold mb-4">Informações Gerais</h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2">
@@ -231,7 +249,7 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
 
                 <DialogFooter className="flex-shrink-0 pt-4 border-t sm:justify-between">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
-                    <Button onClick={handlePrint}>
+                    <Button onClick={handlePrint} disabled={sale.status === 'Estornada'}>
                         <Printer className="mr-2 h-4 w-4" />
                         Imprimir Fatura
                     </Button>
@@ -240,7 +258,3 @@ export function SaleInvoiceDialog({ isOpen, onOpenChange, sale }: SaleInvoiceDia
         </Dialog>
     );
 }
-
-    
-
-    

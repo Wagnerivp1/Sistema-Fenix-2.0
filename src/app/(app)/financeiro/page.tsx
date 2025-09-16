@@ -63,8 +63,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 import {
   getFinancialTransactions,
@@ -142,6 +152,10 @@ export default function FinanceiroPage() {
   const [isPrintDialogOpen, setIsPrintDialogOpen] = React.useState(false);
   const [saleForDetails, setSaleForDetails] = React.useState<Sale | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
+  const [isReversalDialogOpen, setIsReversalDialogOpen] = React.useState(false);
+  const [transactionToReverse, setTransactionToReverse] = React.useState<FinancialTransaction | null>(null);
+  const [reversalReason, setReversalReason] = React.useState('');
+
 
   const loadData = React.useCallback(async () => {
     setIsLoading(true);
@@ -182,39 +196,50 @@ export default function FinanceiroPage() {
     });
   };
 
-  const handleReverseSale = async (transaction: FinancialTransaction) => {
-    if (!transaction.relatedSaleId) return;
+  const handleOpenReversalDialog = (transaction: FinancialTransaction) => {
+    setTransactionToReverse(transaction);
+    setReversalReason('');
+    setIsReversalDialogOpen(true);
+  };
 
-    // 1. Find the original sale
-    const saleToReverse = allSales.find(s => s.id === transaction.relatedSaleId);
-    if (saleToReverse) {
-      // 2. Return items to stock
-      const stock = await getStock();
-      const updatedStock = [...stock];
-      saleToReverse.items.forEach(saleItem => {
-        if (saleItem.id && saleItem.id.startsWith('PROD-')) {
-          const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
-          if (stockIndex !== -1) {
-            updatedStock[stockIndex].quantity += saleItem.quantity;
-          }
-        }
-      });
-      await saveStock(updatedStock);
-      window.dispatchEvent(new Event('storage-change-stock'));
-
-      // 3. Update sale status to 'Estornada' instead of removing
-      const updatedSales = allSales.map(s => 
-        s.id === transaction.relatedSaleId ? { ...s, status: 'Estornada' as const } : s
-      );
-      setAllSales(updatedSales);
-      await saveSales(updatedSales);
-      window.dispatchEvent(new Event('storage-change-sales'));
+  const handleReverseSale = async () => {
+    if (!transactionToReverse?.relatedSaleId || !reversalReason.trim()) {
+        toast({
+            variant: 'destructive',
+            title: 'Erro',
+            description: 'O motivo do estorno é obrigatório.',
+        });
+        return;
     }
+    const saleToReverse = allSales.find(s => s.id === transactionToReverse.relatedSaleId);
+    if (!saleToReverse) return;
 
-    // 4. Update associated financial transaction status to 'Estornado'
+    // 1. Return items to stock
+    const stock = await getStock();
+    const updatedStock = [...stock];
+    saleToReverse.items.forEach(saleItem => {
+      if (saleItem.id && saleItem.id.startsWith('PROD-')) {
+        const stockIndex = updatedStock.findIndex(stockItem => stockItem.id === saleItem.id);
+        if (stockIndex !== -1) {
+          updatedStock[stockIndex].quantity += saleItem.quantity;
+        }
+      }
+    });
+    await saveStock(updatedStock);
+    window.dispatchEvent(new Event('storage-change-stock'));
+
+    // 2. Update sale status to 'Estornada' and add reason
+    const updatedSales = allSales.map(s => 
+      s.id === transactionToReverse.relatedSaleId ? { ...s, status: 'Estornada' as const, reversalReason: reversalReason.trim() } : s
+    );
+    setAllSales(updatedSales);
+    await saveSales(updatedSales);
+    window.dispatchEvent(new Event('storage-change-sales'));
+    
+    // 3. Update associated financial transactions status to 'Estornado'
     const updatedTransactions = allTransactions.map(t =>
-      t.relatedSaleId === transaction.relatedSaleId
-        ? { ...t, status: 'Estornado' as const, category: 'Venda Estornada' as const, description: `[ESTORNADO] ${t.description}` }
+      t.relatedSaleId === transactionToReverse.relatedSaleId
+        ? { ...t, status: 'Estornado' as const, category: 'Venda Estornada' as const, description: `[ESTORNADO] ${t.description} | Motivo: ${reversalReason.trim()}` }
         : t
     );
     setAllTransactions(updatedTransactions);
@@ -225,6 +250,9 @@ export default function FinanceiroPage() {
       title: 'Venda Estornada!',
       description: 'A venda foi estornada e os itens retornaram ao estoque.',
     });
+
+    setIsReversalDialogOpen(false);
+    setTransactionToReverse(null);
   };
 
 
@@ -350,7 +378,8 @@ export default function FinanceiroPage() {
     const { jsPDF } = await import('jspdf');
     await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
-    const logoDataUrl = companyInfo.logoUrl || null;
+    
+    const logoDataUrl = companyInfo.logoUrl ? companyInfo.logoUrl : await loadImageAsDataUrl();
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -363,7 +392,7 @@ export default function FinanceiroPage() {
 
     // Header
     if (logoDataUrl) {
-      doc.addImage(logoDataUrl, 'PNG', margin, 12, logoWidth, logoHeight);
+      doc.addImage(logoDataUrl, logoDataUrl.includes('png') ? 'PNG' : 'JPEG', margin, 12, logoWidth, logoHeight);
       textX = margin + logoWidth + logoSpacing;
     }
     
@@ -624,13 +653,9 @@ export default function FinanceiroPage() {
                         <DropdownMenuSeparator />
                         
                         {transaction.relatedSaleId && (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">Estornar Venda</DropdownMenuItem></AlertDialogTrigger>
-                                <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Confirmar Estorno</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. A venda será marcada como estornada, os lançamentos financeiros revertidos e os produtos retornarão ao estoque. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleReverseSale(transaction)}>Confirmar Estorno</AlertDialogAction></AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                           <DropdownMenuItem onSelect={() => handleOpenReversalDialog(transaction)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                             Estornar Venda
+                           </DropdownMenuItem>
                         )}
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -658,6 +683,36 @@ export default function FinanceiroPage() {
     </Card>
      <PrintReceiptDialog isOpen={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen} transaction={transactionToPrint}/>
      <SaleDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} sale={saleForDetails}/>
+
+     <Dialog open={isReversalDialogOpen} onOpenChange={setIsReversalDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Estornar Venda</DialogTitle>
+                <DialogDescription>
+                    Por favor, informe o motivo do estorno. Esta ação reverterá os lançamentos financeiros e devolverá os itens ao estoque.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-2">
+                <Label htmlFor="reversalReason">Motivo do Estorno</Label>
+                <Textarea
+                    id="reversalReason"
+                    value={reversalReason}
+                    onChange={(e) => setReversalReason(e.target.value)}
+                    placeholder="Ex: Produto devolvido pelo cliente, erro no lançamento, etc."
+                />
+            </div>
+            <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsReversalDialogOpen(false)}>Cancelar</Button>
+                <Button
+                    variant="destructive"
+                    onClick={handleReverseSale}
+                    disabled={!reversalReason.trim()}
+                >
+                    Confirmar Estorno
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+     </Dialog>
     </>
   );
 }

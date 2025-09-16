@@ -37,26 +37,26 @@
   {
     "id": "FIN-1758031843945-0",
     "type": "receita",
-    "description": "Parcela 1/2 - Venda #840129",
+    "description": "[ESTORNADO] Parcela 1/2 - Venda #840129",
     "amount": 44.5,
     "date": "2025-09-16",
     "dueDate": "2025-10-16",
-    "category": "Venda de Produto",
+    "category": "Venda Estornada",
     "paymentMethod": "parcelado",
     "relatedSaleId": "SALE-1758031840129",
-    "status": "pendente"
+    "status": "Estornado"
   },
   {
     "id": "FIN-1758031843945-1",
     "type": "receita",
-    "description": "Parcela 2/2 - Venda #840129",
+    "description": "[ESTORNADO] Parcela 2/2 - Venda #840129",
     "amount": 44.5,
     "date": "2025-09-16",
     "dueDate": "2025-11-16",
-    "category": "Venda de Produto",
+    "category": "Venda Estornada",
     "paymentMethod": "parcelado",
     "relatedSaleId": "SALE-1758031840129",
-    "status": "pendente"
+    "status": "Estornado"
   },
   {
     "id": "FIN-1758031635135-entry",

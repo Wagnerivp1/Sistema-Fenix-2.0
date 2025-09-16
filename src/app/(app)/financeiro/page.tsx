@@ -91,7 +91,7 @@ import type { FinancialTransaction, Sale, StockItem, ServiceOrder, CompanyInfo }
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PrintReceiptDialog } from '@/components/financials/print-receipt-dialog';
-import { SaleDetailsDialog } from '@/components/financials/sale-details-dialog';
+import { SaleInvoiceDialog } from '@/components/sales/sale-invoice-dialog';
 import Link from 'next/link';
 
 declare module 'jspdf' {
@@ -111,27 +111,27 @@ const formatDateForDisplay = (dateString: string | undefined) => {
 };
 
 const loadImageAsDataUrl = (): Promise<string | null> => {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.src = '/images/pdf-logos/logo.png';
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                resolve(null);
-                return;
-            }
-            ctx.drawImage(img, 0, 0);
-            const dataURL = canvas.toDataURL('image/png');
-            resolve(dataURL);
-        };
-        img.onerror = () => {
-            console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
-            resolve(null);
-        };
-    });
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = '/images/pdf-logos/logo.png';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      resolve(dataURL);
+    };
+    img.onerror = () => {
+      console.warn(`Logo para PDF não encontrada em: /images/pdf-logos/logo.png`);
+      resolve(null);
+    };
+  });
 };
 
 export default function FinanceiroPage() {
@@ -379,7 +379,7 @@ export default function FinanceiroPage() {
     await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
     
-    const logoDataUrl = companyInfo.logoUrl ? companyInfo.logoUrl : await loadImageAsDataUrl();
+    const logoDataUrl = companyInfo.logoUrl || await loadImageAsDataUrl();
     
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -462,7 +462,7 @@ export default function FinanceiroPage() {
             <div>
               <h3 className="text-lg font-bold">Contas a Receber</h3>
               <p className="text-sm font-semibold">
-                Total pendente: R$ {totalReceivable.toFixed(2)}
+                Total pendente: R$ ${totalReceivable.toFixed(2)}
               </p>
             </div>
           </div>
@@ -506,7 +506,7 @@ export default function FinanceiroPage() {
                 monthlySummary.saldo >= 0 ? 'text-green-500' : 'text-destructive'
               )}
             >
-              R$ {monthlySummary.saldo.toFixed(2)}
+              R$ ${monthlySummary.saldo.toFixed(2)}
             </p>
           </div>
         </div>
@@ -586,14 +586,14 @@ export default function FinanceiroPage() {
                     <div className="font-bold text-primary">Saldo</div>
 
                     <div className="font-medium text-muted-foreground">Período</div>
-                    <div className="text-green-500">R$ {totalReceitas.toFixed(2)}</div>
-                    <div className="text-red-500">R$ {totalDespesas.toFixed(2)}</div>
-                    <div className={cn(saldoPeriodo >= 0 ? "text-primary" : "text-destructive")}>R$ {saldoPeriodo.toFixed(2)}</div>
+                    <div className="text-green-500">R$ ${totalReceitas.toFixed(2)}</div>
+                    <div className="text-red-500">R$ ${totalDespesas.toFixed(2)}</div>
+                    <div className={cn(saldoPeriodo >= 0 ? "text-primary" : "text-destructive")}>R$ ${saldoPeriodo.toFixed(2)}</div>
                     
                     <div className="font-medium text-muted-foreground">Mês</div>
-                    <div className="text-green-500">R$ {monthlySummary.receitas.toFixed(2)}</div>
-                    <div className="text-red-500">R$ {monthlySummary.despesas.toFixed(2)}</div>
-                    <div className={cn(monthlySummary.saldo >= 0 ? "text-primary" : "text-destructive")}>R$ {monthlySummary.saldo.toFixed(2)}</div>
+                    <div className="text-green-500">R$ ${monthlySummary.receitas.toFixed(2)}</div>
+                    <div className="text-red-500">R$ ${monthlySummary.despesas.toFixed(2)}</div>
+                    <div className={cn(monthlySummary.saldo >= 0 ? "text-primary" : "text-destructive")}>R$ ${monthlySummary.saldo.toFixed(2)}</div>
                 </div>
             </div>
         </div>
@@ -632,7 +632,7 @@ export default function FinanceiroPage() {
                     {formatDateForDisplay(transaction.dueDate || transaction.date)}
                   </TableCell>
                   <TableCell className={cn('text-right font-semibold', valueColorClass)}>
-                    {transaction.type === 'receita' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
+                    {transaction.type === 'receita' ? '+' : '-'} R$ ${transaction.amount.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -657,17 +657,19 @@ export default function FinanceiroPage() {
                              Estornar Venda
                            </DropdownMenuItem>
                         )}
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className={!transaction.relatedSaleId ? 'text-destructive focus:bg-destructive/10 focus:text-destructive' : ''} disabled={!!transaction.relatedSaleId}>
-                                    Excluir Lançamento
-                                </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle><AlertDialogDescription>Atenção: esta ação removerá apenas o registro financeiro. Para reverter uma venda, use a opção "Estornar Venda".</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Excluir Mesmo Assim</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        {!transaction.relatedSaleId && !transaction.relatedServiceOrderId && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className='text-destructive focus:bg-destructive/10 focus:text-destructive'>
+                                        Excluir Lançamento
+                                    </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader><AlertDialogTitle>Excluir Lançamento?</AlertDialogTitle><AlertDialogDescription>Esta ação removerá permanentemente este lançamento financeiro. Deseja continuar?</AlertDialogDescription></AlertDialogHeader>
+                                    <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Excluir</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -682,7 +684,7 @@ export default function FinanceiroPage() {
       </CardContent>
     </Card>
      <PrintReceiptDialog isOpen={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen} transaction={transactionToPrint}/>
-     <SaleDetailsDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} sale={saleForDetails}/>
+     <SaleInvoiceDialog isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} sale={saleForDetails}/>
 
      <Dialog open={isReversalDialogOpen} onOpenChange={setIsReversalDialogOpen}>
         <DialogContent>

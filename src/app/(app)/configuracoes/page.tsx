@@ -558,31 +558,6 @@ export default function ConfiguracoesPage() {
     </Card>
 
     <Card>
-      <CardHeader>
-        <CardTitle>Plano e Faturamento</CardTitle>
-        <CardDescription>
-          Consulte os limites do plano gratuito e a calculadora de preços para uso excedente.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h4 className="font-semibold">Calculadora de Preços Firebase</h4>
-            <p className="text-sm text-muted-foreground">
-              O sistema opera no plano Spark (gratuito) do Firebase. Se precisar de mais recursos, consulte os preços aqui.
-            </p>
-          </div>
-          <Button variant="secondary" asChild>
-            <a href="https://firebase.google.com/pricing" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Ver Preços
-            </a>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-
-    <Card>
         <CardHeader><CardTitle>Ferramentas</CardTitle><CardDescription>Recursos adicionais para gerenciamento de dados.</CardDescription></CardHeader>
         <CardContent className="space-y-4">
              <div className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

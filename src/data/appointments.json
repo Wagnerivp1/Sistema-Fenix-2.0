@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "id": "APT-1758048483981",
+    "title": "CLIENTE AVULSO - Buscar computador ",
+    "start": "2025-09-16T15:47",
+    "end": "2025-09-16T15:47",
+    "allDay": true,
+    "extendedProps": {
+      "status": "agendado",
+      "customerId": "1752591100370-0.5475282037034886",
+      "serviceType": "Buscar computador ",
+      "customerName": "CLIENTE AVULSO",
+      "address": "RUA MARECHAL FLORIANO PEIXOTO, 80"
+    }
+  },
+  {
+    "id": "APT-1758048488996",
+    "title": "CLIENTE AVULSO - Buscar computador ",
+    "start": "2025-09-16T15:47",
+    "end": "2025-09-16T15:47",
+    "allDay": true,
+    "extendedProps": {
+      "status": "agendado",
+      "customerId": "1752591100370-0.5475282037034886",
+      "serviceType": "Buscar computador ",
+      "customerName": "CLIENTE AVULSO",
+      "address": "RUA MARECHAL FLORIANO PEIXOTO, 80"
+    }
+  }
+]

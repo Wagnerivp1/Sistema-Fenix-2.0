@@ -29,8 +29,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
-import { getStock, getSales, saveStock, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, saveSales, getCustomers } from '@/lib/storage';
+import { getStock, getSales, saveStock, getFinancialTransactions, saveFinancialTransactions, getCompanyInfo, saveSales, getCustomers, saveCustomers } from '@/lib/storage';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import type { Sale, FinancialTransaction, User, CompanyInfo, SaleItem, StockItem, Customer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -282,14 +289,14 @@ export default function VendasPage() {
     const productNames = saleItems.map(i => i.name).join(', ');
     const saleDate = format(new Date(newSale.date), 'dd/MM/yyyy');
     
-    const baseDesc = `Cliente: ${customer?.name || 'Não identificado'} | Produto(s): ${productNames} | Pagamento: ${paymentMethod} | Valor Total: R$ ${finalTotal.toFixed(2)} | Data: ${saleDate}`;
+    const baseDesc = `Cliente: ${customer?.name || 'Não identificado'} | Produto(s): ${productNames}`;
 
     if (paymentMethod === 'a_prazo') {
         const dueDate = addDays(new Date(), 30);
         newTransactions.push({
             id: `FIN-${Date.now()}`,
             type: 'receita',
-            description: `${baseDesc} | Vencimento: ${format(dueDate, 'dd/MM/yyyy')}`,
+            description: `${baseDesc} | Pagamento: A prazo | Valor Total: R$ ${finalTotal.toFixed(2)} | Vencimento: ${format(dueDate, 'dd/MM/yyyy')} | Data: ${saleDate}`,
             amount: finalTotal,
             date: newSale.date,
             dueDate: format(dueDate, 'yyyy-MM-dd'),
@@ -306,7 +313,7 @@ export default function VendasPage() {
             newTransactions.push({
                 id: `FIN-${Date.now()}-${i}`,
                 type: 'receita',
-                description: `Cliente: ${customer?.name || 'Não identificado'} | Produto(s): ${productNames} | Parcelamento: ${i+1}/${installmentsCount} de R$ ${installmentAmount.toFixed(2)} | Pagamento: ${paymentMethod} | Valor Total: R$ ${finalTotal.toFixed(2)} | Vencimento: ${format(dueDate, 'dd/MM/yyyy')} | Data: ${saleDate}`,
+                description: `${baseDesc} | Parcelamento: ${i + 1}/${installmentsCount} de R$ ${installmentAmount.toFixed(2)} | Pagamento: ${paymentMethod} | Valor Total: R$ ${finalTotal.toFixed(2)} | Vencimento: ${format(dueDate, 'dd/MM/yyyy')} | Data: ${saleDate}`,
                 amount: installmentAmount,
                 date: newSale.date,
                 dueDate: format(dueDate, 'yyyy-MM-dd'),
@@ -320,7 +327,7 @@ export default function VendasPage() {
         newTransactions.push({
             id: `FIN-${Date.now()}`,
             type: 'receita',
-            description: baseDesc,
+            description: `${baseDesc} | Pagamento: ${paymentMethod} | Valor Total: R$ ${finalTotal.toFixed(2)} | Data: ${saleDate}`,
             amount: finalTotal,
             date: new Date().toISOString().split('T')[0],
             category: 'Venda de Produto',
@@ -641,4 +648,3 @@ export default function VendasPage() {
   );
 }
 
-    

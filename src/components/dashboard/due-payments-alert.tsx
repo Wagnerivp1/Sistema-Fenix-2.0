@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { getFinancialTransactions } from '@/lib/storage';
 import { FinancialTransaction } from '@/types';
-import { isToday, parseISO } from 'date-fns';
 
 export function DuePaymentsAlert() {
   const [dueTodayCount, setDueTodayCount] = React.useState(0);
@@ -18,14 +17,24 @@ export function DuePaymentsAlert() {
     try {
       const transactions = await getFinancialTransactions();
       
+      const today = new Date();
+      
       const dueToday = transactions.filter(tx => {
         if (tx.status !== 'pendente' || !tx.dueDate) {
           return false;
         }
         try {
-          // Garante que a data seja interpretada corretamente como UTC para evitar problemas de fuso horário
-          const dueDate = parseISO(tx.dueDate);
-          return isToday(dueDate);
+          // Timezone-safe date comparison
+          // Create date object from YYYY-MM-DD string, which will be in local time zone at midnight
+          const [year, month, day] = tx.dueDate.split('-').map(Number);
+          // Note: month is 0-indexed in JS Date
+          const dueDate = new Date(year, month - 1, day);
+
+          return (
+            dueDate.getFullYear() === today.getFullYear() &&
+            dueDate.getMonth() === today.getMonth() &&
+            dueDate.getDate() === today.getDate()
+          );
         } catch (e) {
           console.error(`Invalid due date format for transaction ${tx.id}:`, tx.dueDate);
           return false;

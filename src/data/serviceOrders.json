@@ -36,7 +36,7 @@
     "customerName": "Marcelo Kuplens",
     "equipment": "COMPUTADOR S/M S/M",
     "reportedProblem": "Orçamento",
-    "status": "Aguardando Pagamento",
+    "status": "Finalizado",
     "date": "2025-08-25",
     "totalValue": 1000,
     "items": [
@@ -106,7 +106,7 @@
     "customerName": "Wagner Pizzaia ",
     "equipment": "Impressora EPSON L3250",
     "reportedProblem": "NÃO SAI TINTA PRETA",
-    "status": "Aguardando Pagamento",
+    "status": "Finalizado",
     "date": "2025-08-21",
     "totalValue": 2000,
     "items": [
@@ -187,7 +187,7 @@
     "customerName": "Escola ivaipoã. ",
     "equipment": "Impressora Brother MCP-8952w",
     "reportedProblem": "Semi-nova",
-    "status": "Aguardando Pagamento",
+    "status": "Finalizado",
     "date": "2025-08-20",
     "totalValue": 1400,
     "items": [
@@ -1606,7 +1606,7 @@
     "customerName": "ADVOCACIA LINCON",
     "equipment": "COMPUTADOR S/M S/M",
     "reportedProblem": "TRAVANDO ",
-    "status": "Aguardando Pagamento",
+    "status": "Finalizado",
     "date": "2025-07-24T17:45:26.419Z",
     "totalValue": 950,
     "items": [

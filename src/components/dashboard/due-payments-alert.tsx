@@ -18,22 +18,26 @@ export function DuePaymentsAlert() {
       const transactions = await getFinancialTransactions();
       
       const today = new Date();
-      
+      // Get today's date components in the local timezone
+      const todayYear = today.getFullYear();
+      const todayMonth = today.getMonth();
+      const todayDate = today.getDate();
+
       const dueToday = transactions.filter(tx => {
         if (tx.status !== 'pendente' || !tx.dueDate) {
           return false;
         }
         try {
-          // Timezone-safe date comparison
-          // Create date object from YYYY-MM-DD string, which will be in local time zone at midnight
+          // Create a date object from the YYYY-MM-DD string.
+          // This will be interpreted in the local timezone at midnight.
           const [year, month, day] = tx.dueDate.split('-').map(Number);
-          // Note: month is 0-indexed in JS Date
           const dueDate = new Date(year, month - 1, day);
-
+          
+          // Compare year, month, and day components, ignoring time and timezone.
           return (
-            dueDate.getFullYear() === today.getFullYear() &&
-            dueDate.getMonth() === today.getMonth() &&
-            dueDate.getDate() === today.getDate()
+            dueDate.getFullYear() === todayYear &&
+            dueDate.getMonth() === todayMonth &&
+            dueDate.getDate() === todayDate
           );
         } catch (e) {
           console.error(`Invalid due date format for transaction ${tx.id}:`, tx.dueDate);

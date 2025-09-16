@@ -34,7 +34,7 @@ function LogoInternal({ className }: { className?: string }) {
       ) : (
         <Wrench className="h-8 w-8 shrink-0" />
       )}
-      <div className={cn("flex flex-col transition-opacity duration-200", state === 'collapsed' ? 'opacity-0' : 'opacity-100')}>
+      <div className={cn("flex flex-col transition-opacity duration-200", state === 'collapsed' ? 'opacity-0' : 'opacity-100', 'md:group-data-[state=expanded]:opacity-100 md:group-data-[state=collapsed]:opacity-0')}>
         {companyInfo?.name && (
             <span className="text-lg font-bold tracking-tight whitespace-nowrap">{companyInfo.name}</span>
         )}

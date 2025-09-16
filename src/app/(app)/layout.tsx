@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarHeader,
@@ -10,6 +10,7 @@ import {
   SidebarFooter,
   SidebarInset,
   SidebarProvider,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { Logo } from '@/components/logo';
@@ -46,7 +47,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  // O AuthGuard agora está fora do AppLayout para envolver tudo
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/';
+  
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+  
   return (
     <AuthGuard>
       <SidebarProvider>
@@ -62,7 +69,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <HeaderActions />
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset>{children}</SidebarInset>
+        <div className="flex flex-col flex-1">
+            <header className="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-30 md:hidden">
+              <SidebarTrigger />
+              <div className="flex-1 text-center">
+                <Logo />
+              </div>
+            </header>
+            <SidebarInset>{children}</SidebarInset>
+        </div>
       </SidebarProvider>
     </AuthGuard>
   );

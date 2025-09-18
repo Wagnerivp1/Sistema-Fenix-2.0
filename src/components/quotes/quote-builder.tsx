@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input, CurrencyInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -49,6 +49,8 @@ import {
 import { addDays } from 'date-fns';
 import type { Quote, Customer, StockItem, SaleItem, User, CompanyInfo, Kit } from '@/types';
 import { ManualAddItemDialog } from '@/components/sales/manual-add-item-dialog';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 
 interface QuoteBuilderProps {
@@ -260,9 +262,8 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
   const generatePdf = async () => {
     const customer = customers.find(c => c.id === selectedCustomerId);
     if (!customer) { toast({variant: 'destructive', title: 'Selecione um cliente'}); return; }
+    if (items.length === 0) { toast({variant: 'destructive', title: 'Adicione itens ao orçamento'}); return; }
     
-    const { jsPDF } = await import('jspdf');
-    await import('jspdf-autotable');
     const companyInfo = await getCompanyInfo();
     const logoDataUrl = await loadImageAsDataUrl(companyInfo.logoUrl);
         
@@ -343,11 +344,13 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
         head: [['Descrição', 'Qtd.', 'Vlr. Unit.', 'Subtotal']],
         body: items.map(item => [item.name, item.quantity, `R$ ${(item.price || 0).toFixed(2)}`, `R$ ${((item.price || 0) * (item.quantity || 0)).toFixed(2)}`]),
         foot: [
-            ['Total Serviços: R$ 0.00', 'Total Peças: R$ 0.00', { content: 'Valor Total Estimado:', styles: { halign: 'right' } }, { content: `R$ ${total.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
+            ['', '', { content: 'Subtotal:', styles: { halign: 'right' } }, { content: `R$ ${subtotal.toFixed(2)}` }],
+            ['', '', { content: 'Desconto:', styles: { halign: 'right' } }, { content: `- R$ ${discount.toFixed(2)}` }],
+            ['', '', { content: 'Total:', styles: { halign: 'right', fontStyle: 'bold' } }, { content: `R$ ${total.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
         ],
         theme: 'striped',
         headStyles: { fillColor: '#334155', textColor: '#FFFFFF', fontStyle: 'bold' },
-        footStyles: { fillColor: '#F1F5F9', textColor: '#000000', fontStyle: 'bold' }
+        footStyles: { fillColor: '#F1F5F9', textColor: '#000000' }
     });
     currentY = (doc as any).lastAutoTable.finalY + 10;
     
@@ -358,8 +361,10 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     currentY += 5;
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text("Este orçamento é válido por até 3 dias. A execução dos serviços ocorrerá somente após aprovação do cliente.", margin, currentY);
+    const validUntilDate = addDays(new Date(), 3).toLocaleDateString('pt-BR');
+    doc.text(`Este orçamento é válido por até ${validUntilDate}. A execução dos serviços ocorrerá somente após aprovação do cliente.`, margin, currentY);
     
+    doc.autoPrint();
     doc.output('dataurlnewwindow');
   };
 
@@ -384,7 +389,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
                         <Button variant="outline" onClick={() => setIsManualAddOpen(true)}>Adicionar Item Manual</Button>
                     </div>
                     <div className="border rounded-lg min-h-[300px] flex-grow">
-                        <ScrollArea className="h-[calc(100%-2rem)]">
+                        <ScrollArea className="h-full">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -442,7 +447,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
                     </div>
                      <div className="space-y-2 text-base mt-auto">
                         <div className="flex justify-between items-center"><span className="text-muted-foreground">Subtotal</span><span>R$ {subtotal.toFixed(2)}</span></div>
-                        <div className="flex justify-between items-center"><Label htmlFor="discount">Desconto (R$)</Label><Input id="discount" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} className="w-24 h-8 text-right" /></div>
+                        <div className="flex justify-between items-center"><Label htmlFor="discount">Desconto (R$)</Label><CurrencyInput id="discount" value={discount} onValueChange={setDiscount} className="w-24 h-8 text-right" /></div>
                         <div className="flex justify-between items-center font-bold text-xl border-t pt-2"><Label>Total</Label><span>R$ {total.toFixed(2)}</span></div>
                     </div>
                     <div className="space-y-2">
@@ -492,7 +497,3 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     </>
   );
 }
-
-    
-
-    

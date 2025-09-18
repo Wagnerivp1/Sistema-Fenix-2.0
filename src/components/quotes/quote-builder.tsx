@@ -372,7 +372,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-full h-[95vh] flex flex-col p-0">
-        <DialogHeader className="p-4 border-b">
+        <DialogHeader className="p-4 border-b flex-shrink-0">
           <DialogTitle>{quote ? `Editar Orçamento #${quote.id.slice(-6)}` : 'Criar Novo Orçamento'}</DialogTitle>
           <DialogDescription>
             Adicione itens e defina os detalhes do orçamento.
@@ -421,7 +421,7 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
 
           {/* Sidebar - Right Panel */}
           <div className="md:col-span-1 border-t md:border-t-0 md:border-l p-4 flex flex-col gap-4 bg-muted/30">
-            <ScrollArea className="flex-grow">
+            <ScrollArea className="flex-grow h-full">
               <div className="flex flex-col gap-4 h-full">
                 <div className="space-y-2">
                   <Label htmlFor="customer">Cliente</Label>
@@ -462,11 +462,12 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
           </div>
         </div>
 
-        <DialogFooter className="p-4 border-t flex-shrink-0">
-          <Button variant="outline" onClick={generatePdf}><Printer className="mr-2"/>Imprimir PDF</Button>
-          <div className="flex-grow" />
-          <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
-          <Button onClick={handleSaveQuote}>Salvar Orçamento</Button>
+        <DialogFooter className="p-4 border-t flex-shrink-0 sm:justify-between">
+           <Button variant="outline" onClick={generatePdf}><Printer className="mr-2"/>Imprimir PDF</Button>
+           <div className="flex gap-2">
+             <DialogClose asChild><Button variant="ghost">Cancelar</Button></DialogClose>
+             <Button onClick={handleSaveQuote}>Salvar Orçamento</Button>
+           </div>
         </DialogFooter>
 
         {/* Add New Customer Dialog */}
@@ -502,3 +503,5 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
     </>
   );
 }
+
+    

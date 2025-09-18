@@ -172,16 +172,20 @@ export function AppointmentReminder() {
       }
     };
 
+    let intervalId: NodeJS.Timeout | null = null;
     const initialCheckTimeout = setTimeout(() => {
         checkAppointments(); // Initial check after a short delay
-        const intervalId = setInterval(checkAppointments, 60000); // Subsequent checks every minute
-
-        // Cleanup function to clear the interval when the component unmounts
-        return () => clearInterval(intervalId);
+        intervalId = setInterval(checkAppointments, 60000); // Subsequent checks every minute
     }, 2000); // 2-second delay
 
-    // Cleanup for the timeout if the component unmounts before it fires
-    return () => clearTimeout(initialCheckTimeout);
+    // Cleanup function to clear the interval and timeout when the component unmounts
+    return () => {
+        clearTimeout(initialCheckTimeout);
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+        stopSound(); // Ensure any running sound is stopped on cleanup
+    };
   }, [toast, companyInfo, dismiss]);
 
   return null;

@@ -14,6 +14,7 @@ import {
   Settings,
   Calendar,
   FileText,
+  FileSignature,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -36,6 +37,7 @@ const allNavItems: NavItem[] = [
   { href: '/produtos', label: 'Produtos', icon: Archive, permission: 'accessInventory' },
   { href: '/vendas', label: 'Vendas', icon: ShoppingCart, permission: 'accessSales' },
   { href: '/orcamentos', label: 'Orçamentos', icon: FileText, permission: 'accessQuotes' },
+  { href: '/laudos', label: 'Laudos Técnicos', icon: FileSignature, permission: 'accessLaudos' },
   { href: '/financeiro', label: 'Financeiro', icon: CircleDollarSign, permission: 'accessFinancials' },
   { href: '/configuracoes', label: 'Configurações', icon: Settings, permission: 'accessSettings' },
 ];

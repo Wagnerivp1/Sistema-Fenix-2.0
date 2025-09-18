@@ -156,7 +156,7 @@ async function initializeDb() {
                 accessDashboard: true, accessClients: true, accessServiceOrders: true,
                 accessInventory: true, accessSales: true, accessFinancials: true,
                 accessSettings: true, accessDangerZone: true, accessAgenda: true,
-                accessQuotes: true, canEdit: true, canDelete: true,
+                accessQuotes: true, accessLaudos: true, canEdit: true, canDelete: true,
                 canViewPasswords: true, canManageUsers: true
             })
         );
@@ -197,10 +197,9 @@ export async function getLoggedInUser(): Promise<User | null> {
     await db.close();
 
     if (userRow) {
-        const { password, permissions, ...user } = userRow;
         return {
-            ...user,
-            permissions: parseJSON<UserPermissions>(permissions, {} as UserPermissions),
+            ...userRow,
+            permissions: parseJSON<UserPermissions>(userRow.permissions, {} as UserPermissions),
         };
     }
     return null;
@@ -223,17 +222,19 @@ export async function removeSessionToken(): Promise<void> {
 // Users
 export async function getUsers(): Promise<User[]> {
     const db = await getDb();
-    const rows = await db.all('SELECT * FROM users');
+    const rows = await db.all('SELECT id, name, login, permissions FROM users');
     await db.close();
     return rows.map(row => ({ ...row, permissions: parseJSON(row.permissions, {}) }));
 }
 export async function saveUsers(users: User[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM users');
     for (const user of users) {
         await db.run('INSERT INTO users (id, name, login, password, permissions) VALUES (?, ?, ?, ?, ?)',
             user.id, user.name, user.login, user.password, JSON.stringify(user.permissions));
     }
+    await db.run('COMMIT');
     await db.close();
 }
 
@@ -246,11 +247,13 @@ export async function getCustomers(): Promise<Customer[]> {
 }
 export async function saveCustomers(customers: Customer[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM customers');
     for (const customer of customers) {
         await db.run('INSERT INTO customers (id, name, phone, email, address, document) VALUES (?, ?, ?, ?, ?, ?)',
             customer.id, customer.name, customer.phone, customer.email, customer.address, customer.document);
     }
+    await db.run('COMMIT');
     await db.close();
 }
 
@@ -269,12 +272,14 @@ export async function getServiceOrders(): Promise<ServiceOrder[]> {
 }
 export async function saveServiceOrders(orders: ServiceOrder[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM service_orders');
     for (const order of orders) {
         await db.run(`INSERT INTO service_orders (id, customerName, equipment, reportedProblem, status, date, deliveredDate, attendant, paymentMethod, warranty, totalValue, technicalReport, accessories, serialNumber, internalNotes, payments, items) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             order.id, order.customerName, JSON.stringify(order.equipment), order.reportedProblem, order.status, order.date, order.deliveredDate, order.attendant, order.paymentMethod, order.warranty, order.totalValue, order.technicalReport, order.accessories, order.serialNumber, JSON.stringify(order.internalNotes), JSON.stringify(order.payments), JSON.stringify(order.items));
     }
+    await db.run('COMMIT');
     await db.close();
 }
 
@@ -287,12 +292,14 @@ export async function getStock(): Promise<StockItem[]> {
 }
 export async function saveStock(stock: StockItem[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM stock');
     for (const item of stock) {
         await db.run(`INSERT INTO stock (id, name, description, category, quantity, price, costPrice, minStock, barcode, unitOfMeasure) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             item.id, item.name, item.description, item.category, item.quantity, item.price, item.costPrice, item.minStock, item.barcode, item.unitOfMeasure);
     }
+    await db.run('COMMIT');
     await db.close();
 }
 
@@ -305,12 +312,14 @@ export async function getSales(): Promise<Sale[]> {
 }
 export async function saveSales(sales: Sale[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM sales');
     for (const sale of sales) {
         await db.run(`INSERT INTO sales (id, date, time, user, subtotal, discount, total, paymentMethod, observations, customerId, relatedQuoteId, status, reversalReason, items) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             sale.id, sale.date, sale.time, sale.user, sale.subtotal, sale.discount, sale.total, sale.paymentMethod, sale.observations, sale.customerId, sale.relatedQuoteId, sale.status, sale.reversalReason, JSON.stringify(sale.items));
     }
+    await db.run('COMMIT');
     await db.close();
 }
 
@@ -323,12 +332,14 @@ export async function getFinancialTransactions(): Promise<FinancialTransaction[]
 }
 export async function saveFinancialTransactions(transactions: FinancialTransaction[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM financial_transactions');
     for (const tx of transactions) {
         await db.run(`INSERT INTO financial_transactions (id, type, description, amount, date, dueDate, status, category, paymentMethod, relatedSaleId, relatedServiceOrderId) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             tx.id, tx.type, tx.description, tx.amount, tx.date, tx.dueDate, tx.status, tx.category, tx.paymentMethod, tx.relatedSaleId, tx.relatedServiceOrderId);
     }
+    await db.run('COMMIT');
     await db.close();
 }
 
@@ -345,12 +356,14 @@ export async function getAppointments(): Promise<Appointment[]> {
 }
 export async function saveAppointments(appointments: Appointment[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM appointments');
     for (const appt of appointments) {
         await db.run(`INSERT INTO appointments (id, title, start, "end", allDay, extendedProps) 
             VALUES (?, ?, ?, ?, ?, ?)`,
             appt.id, appt.title, appt.start, appt.end, appt.allDay, JSON.stringify(appt.extendedProps));
     }
+    await db.run('COMMIT');
     await db.close();
 }
 
@@ -363,12 +376,14 @@ export async function getQuotes(): Promise<Quote[]> {
 }
 export async function saveQuotes(quotes: Quote[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM quotes');
     for (const quote of quotes) {
         await db.run(`INSERT INTO quotes (id, date, time, user, subtotal, discount, total, observations, customerId, customerName, status, validUntil, items) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             quote.id, quote.date, quote.time, quote.user, quote.subtotal, quote.discount, quote.total, quote.observations, quote.customerId, quote.customerName, quote.status, quote.validUntil, JSON.stringify(quote.items));
     }
+    await db.run('COMMIT');
     await db.close();
 }
 
@@ -381,11 +396,13 @@ export async function getKits(): Promise<Kit[]> {
 }
 export async function saveKits(kits: Kit[]): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM kits');
     for (const kit of kits) {
         await db.run('INSERT INTO kits (id, name, items) VALUES (?, ?, ?)',
             kit.id, kit.name, JSON.stringify(kit.items));
     }
+    await db.run('COMMIT');
     await db.close();
 }
 

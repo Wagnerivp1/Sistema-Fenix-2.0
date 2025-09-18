@@ -126,6 +126,7 @@ export type UserPermissions = {
   accessDangerZone: boolean;
   accessAgenda: boolean;
   accessQuotes: boolean;
+  accessLaudos: boolean;
   canEdit: boolean;
   canDelete: boolean;
   canViewPasswords: boolean;
@@ -187,5 +188,3 @@ export type OSPayment = {
   date: string;
   method: string;
 }
-
-    

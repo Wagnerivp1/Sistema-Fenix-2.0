@@ -371,92 +371,97 @@ export function QuoteBuilder({ isOpen, onOpenChange, quote, onSave }: QuoteBuild
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-5xl w-full h-[95vh] flex flex-col p-0">
         <DialogHeader className="p-4 border-b">
           <DialogTitle>{quote ? `Editar Orçamento #${quote.id.slice(-6)}` : 'Criar Novo Orçamento'}</DialogTitle>
           <DialogDescription>
             Adicione itens e defina os detalhes do orçamento.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow min-h-0">
-            <div className="grid grid-cols-1 md:grid-cols-3 h-full">
-                <div className="md:col-span-2 flex flex-col p-4 h-full">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="relative flex-grow">
-                            <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input placeholder="Escanear código de barras..." className="pl-10" value={barcode} onChange={(e) => setBarcode(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleBarcodeScan()} />
-                        </div>
-                        <Button variant="outline" onClick={() => setIsManualAddOpen(true)}>Adicionar Item Manual</Button>
-                    </div>
-                    <div className="border rounded-lg min-h-[300px] flex-grow">
-                        <ScrollArea className="h-full">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Produto</TableHead>
-                                        <TableHead className="w-24 text-center">Qtd.</TableHead>
-                                        <TableHead className="w-32 text-right">Preço</TableHead>
-                                        <TableHead className="w-32 text-right">Subtotal</TableHead>
-                                        <TableHead className="w-12"></TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {items.length > 0 ? items.map(item => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="font-medium">{item.name}</TableCell>
-                                            <TableCell><Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value))} className="w-16 h-8 text-center mx-auto" /></TableCell>
-                                            <TableCell className="text-right">R$ {(item.price || 0).toFixed(2)}</TableCell>
-                                            <TableCell className="text-right">R$ {((item.price || 0) * (item.quantity || 0)).toFixed(2)}</TableCell>
-                                            <TableCell><Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
-                                        </TableRow>
-                                    )) : (
-                                        <TableRow><TableCell colSpan={5} className="text-center h-48">Nenhum item adicionado.</TableCell></TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </ScrollArea>
-                    </div>
-                </div>
-                <div className="md:col-span-1 border-l p-4 flex flex-col gap-4 bg-muted/30 h-full">
-                    <div className="space-y-2">
-                        <Label htmlFor="customer">Cliente</Label>
-                        <div className="flex gap-2">
-                            <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione um cliente" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <Button variant="outline" size="icon" onClick={() => setIsAddCustomerOpen(true)}><UserPlus /></Button>
-                        </div>
-                    </div>
-                     <div className="space-y-2">
-                      <Label htmlFor="kit">Adicionar Kit ao Orçamento</Label>
-                      <Select onValueChange={handleAddKit}>
-                          <SelectTrigger id="kit">
-                              <SelectValue placeholder="Selecione um kit..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {kits.map(k => (
-                                  <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
-                    </div>
-                     <div className="space-y-2 text-base mt-auto">
-                        <div className="flex justify-between items-center"><span className="text-muted-foreground">Subtotal</span><span>R$ {subtotal.toFixed(2)}</span></div>
-                        <div className="flex justify-between items-center"><Label htmlFor="discount">Desconto (R$)</Label><CurrencyInput id="discount" value={discount} onValueChange={setDiscount} className="w-24 h-8 text-right" /></div>
-                        <div className="flex justify-between items-center font-bold text-xl border-t pt-2"><Label>Total</Label><span>R$ {total.toFixed(2)}</span></div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="observations">Observações</Label>
-                        <Textarea id="observations" placeholder="Condições, detalhes adicionais, etc." value={observations} onChange={e => setObservations(e.target.value)} rows={4}/>
-                    </div>
-                </div>
+
+        <div className="flex-grow min-h-0 md:grid md:grid-cols-3">
+          {/* Main Content - Left Panel */}
+          <div className="md:col-span-2 flex flex-col p-4 h-full">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="relative flex-grow">
+                <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input placeholder="Escanear código de barras..." className="pl-10" value={barcode} onChange={(e) => setBarcode(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleBarcodeScan()} />
+              </div>
+              <Button variant="outline" onClick={() => setIsManualAddOpen(true)}>Adicionar Item Manual</Button>
             </div>
+            <div className="border rounded-lg flex-grow relative">
+              <ScrollArea className="absolute inset-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Produto</TableHead>
+                      <TableHead className="w-24 text-center">Qtd.</TableHead>
+                      <TableHead className="w-32 text-right">Preço</TableHead>
+                      <TableHead className="w-32 text-right">Subtotal</TableHead>
+                      <TableHead className="w-12"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.length > 0 ? items.map(item => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell><Input type="number" value={item.quantity} onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value))} className="w-16 h-8 text-center mx-auto" /></TableCell>
+                        <TableCell className="text-right">R$ {(item.price || 0).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">R$ {((item.price || 0) * (item.quantity || 0)).toFixed(2)}</TableCell>
+                        <TableCell><Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                      </TableRow>
+                    )) : (
+                      <TableRow><TableCell colSpan={5} className="text-center h-48">Nenhum item adicionado.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </div>
+          </div>
+
+          {/* Sidebar - Right Panel */}
+          <div className="md:col-span-1 border-t md:border-t-0 md:border-l p-4 flex flex-col gap-4 bg-muted/30">
+            <ScrollArea className="flex-grow">
+              <div className="flex flex-col gap-4 h-full">
+                <div className="space-y-2">
+                  <Label htmlFor="customer">Cliente</Label>
+                  <div className="flex gap-2">
+                    <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                      <SelectTrigger><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
+                      <SelectContent>
+                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="icon" onClick={() => setIsAddCustomerOpen(true)}><UserPlus /></Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="kit">Adicionar Kit ao Orçamento</Label>
+                  <Select onValueChange={handleAddKit}>
+                    <SelectTrigger id="kit"><SelectValue placeholder="Selecione um kit..." /></SelectTrigger>
+                    <SelectContent>
+                      {kits.map(k => (
+                        <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="observations">Observações</Label>
+                  <Textarea id="observations" placeholder="Condições, detalhes, etc." value={observations} onChange={e => setObservations(e.target.value)} rows={4}/>
+                </div>
+              </div>
+            </ScrollArea>
+            
+            {/* Financial Summary */}
+            <div className="flex-shrink-0 mt-auto pt-4 border-t space-y-2">
+                <div className="flex justify-between items-center text-sm"><span className="text-muted-foreground">Subtotal</span><span>R$ {subtotal.toFixed(2)}</span></div>
+                <div className="flex justify-between items-center text-sm"><Label htmlFor="discount">Desconto (R$)</Label><CurrencyInput id="discount" value={discount} onValueChange={setDiscount} className="w-24 h-8 text-right" /></div>
+                <div className="flex justify-between items-center font-bold text-xl border-t pt-2 mt-2"><Label>Total</Label><span>R$ {total.toFixed(2)}</span></div>
+            </div>
+          </div>
         </div>
+
         <DialogFooter className="p-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={generatePdf}><Printer className="mr-2"/>Imprimir PDF</Button>
           <div className="flex-grow" />

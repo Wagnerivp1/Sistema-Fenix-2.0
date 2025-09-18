@@ -222,9 +222,13 @@ export async function removeSessionToken(): Promise<void> {
 // Users
 export async function getUsers(): Promise<User[]> {
     const db = await getDb();
-    const rows = await db.all('SELECT id, name, login, permissions FROM users');
+    const rows = await db.all('SELECT * FROM users');
     await db.close();
-    return rows.map(row => ({ ...row, permissions: parseJSON(row.permissions, {}) }));
+    return rows.map(row => ({ 
+        ...row, 
+        password: row.password, // Keep password for auth checks
+        permissions: parseJSON(row.permissions, {}) 
+    }));
 }
 export async function saveUsers(users: User[]): Promise<void> {
     const db = await getDb();
@@ -264,7 +268,7 @@ export async function getServiceOrders(): Promise<ServiceOrder[]> {
     await db.close();
     return rows.map(row => ({
         ...row,
-        equipment: parseJSON(row.equipment, {}),
+        equipment: typeof row.equipment === 'string' ? row.equipment : parseJSON(row.equipment, {}),
         items: parseJSON<ServiceOrderItem[]>(row.items, []),
         payments: parseJSON<OSPayment[]>(row.payments, []),
         internalNotes: parseJSON<InternalNote[]>(row.internalNotes, []),
@@ -277,7 +281,7 @@ export async function saveServiceOrders(orders: ServiceOrder[]): Promise<void> {
     for (const order of orders) {
         await db.run(`INSERT INTO service_orders (id, customerName, equipment, reportedProblem, status, date, deliveredDate, attendant, paymentMethod, warranty, totalValue, technicalReport, accessories, serialNumber, internalNotes, payments, items) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            order.id, order.customerName, JSON.stringify(order.equipment), order.reportedProblem, order.status, order.date, order.deliveredDate, order.attendant, order.paymentMethod, order.warranty, order.totalValue, order.technicalReport, order.accessories, order.serialNumber, JSON.stringify(order.internalNotes), JSON.stringify(order.payments), JSON.stringify(order.items));
+            order.id, order.customerName, typeof order.equipment === 'string' ? order.equipment : JSON.stringify(order.equipment), order.reportedProblem, order.status, order.date, order.deliveredDate, order.attendant, order.paymentMethod, order.warranty, order.totalValue, order.technicalReport, order.accessories, order.serialNumber, JSON.stringify(order.internalNotes), JSON.stringify(order.payments), JSON.stringify(order.items));
     }
     await db.run('COMMIT');
     await db.close();

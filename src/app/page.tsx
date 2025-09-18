@@ -33,6 +33,7 @@ const adminPermissions: UserPermissions = {
   accessDangerZone: true,
   accessAgenda: true,
   accessQuotes: true,
+  accessLaudos: true,
   canEdit: true,
   canDelete: true,
   canViewPasswords: true,

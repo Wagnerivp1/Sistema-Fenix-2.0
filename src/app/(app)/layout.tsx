@@ -15,7 +15,6 @@ import {
 import { MainNav } from '@/components/main-nav';
 import { Logo } from '@/components/logo';
 import { HeaderActions } from '@/components/layout/header-actions';
-import { AppointmentReminder } from '@/components/reminders/appointment-reminder';
 import { getSessionToken, removeSessionToken } from '@/lib/storage';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -57,7 +56,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       <SidebarProvider>
-        <AppointmentReminder />
         <Sidebar>
           <SidebarHeader>
             <Logo />

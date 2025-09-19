@@ -91,6 +91,15 @@ export default function LoginPage() {
       const inputPasswordEncoded = btoa(password);
 
       if (user && user.password === inputPasswordEncoded) {
+        // Ensure the admin user has all current permissions upon login
+        if (user.userType === 'admin') {
+            user.permissions = {
+                ...adminPermissions,
+                ...user.permissions, // Keep existing permissions but ensure all admin ones are present
+                accessLaudos: true,
+            };
+        }
+
         await saveSessionToken(`TOKEN-${Date.now()}-${Math.random()}`, user);
         toast({
           title: 'Login bem-sucedido!',

@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { getCustomers, getServiceOrders, getCompanyInfo } from '@/lib/storage';
 import type { Customer, ServiceOrder, CompanyInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { Printer, User, HardDrive } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
@@ -53,6 +54,7 @@ const loadImageAsDataUrl = async (url: string | undefined): Promise<string | nul
 
 export default function LaudosPage() {
   const { toast } = useToast();
+  const { user: currentUser } = useCurrentUser();
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [serviceOrders, setServiceOrders] = React.useState<ServiceOrder[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(null);
@@ -106,6 +108,7 @@ export default function LaudosPage() {
 
     const companyInfo = await getCompanyInfo();
     const logoDataUrl = await loadImageAsDataUrl(companyInfo.logoUrl);
+    const generationDate = new Date();
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -143,7 +146,7 @@ export default function LaudosPage() {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`OS Nº: #${selectedOrder.id.slice(-4)}`, rightHeaderX, currentY - 2, { align: 'right' });
-    doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
+    doc.text(`Data Emissão: ${generationDate.toLocaleDateString('pt-BR')}`, rightHeaderX, currentY + 4, { align: 'right' });
 
 
     currentY = 55;
@@ -205,6 +208,26 @@ export default function LaudosPage() {
     doc.setFontSize(11);
     const laudoLines = doc.splitTextToSize(laudoText, pageWidth - margin * 2);
     doc.text(laudoLines, margin, currentY);
+    currentY += (doc.getTextDimensions(laudoLines).h) + 20;
+    
+    // --- Footer with Date, Location and Signature ---
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    const city = companyInfo.address?.split('-')[0]?.split(',')[1]?.trim() || '____________';
+    const emissionDateTime = `${city}, ${generationDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} às ${generationDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    doc.text(emissionDateTime, pageWidth / 2, currentY, { align: 'center' });
+    currentY += 25;
+
+    doc.line(pageWidth / 2 - 40, currentY, pageWidth / 2 + 40, currentY);
+    currentY += 5;
+    
+    doc.setFontSize(10);
+    doc.text(currentUser?.name || 'Técnico Responsável', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 4;
+    doc.setFontSize(8);
+    doc.text(companyInfo.name || '', pageWidth / 2, currentY, { align: 'center' });
+
 
     doc.output('dataurlnewwindow');
   };

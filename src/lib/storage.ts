@@ -207,7 +207,12 @@ export async function getLoggedInUser(): Promise<User | null> {
 
 export async function saveSessionToken(token: string, user: User): Promise<void> {
     const db = await getDb();
+    await db.run('BEGIN TRANSACTION');
+    // Update user permissions in the database
+    await db.run('UPDATE users SET permissions = ? WHERE id = ?', JSON.stringify(user.permissions), user.id);
+    // Save session
     await db.run('INSERT OR REPLACE INTO session (id, token, loggedInUserLogin) VALUES (1, ?, ?)', token, user.login);
+    await db.run('COMMIT');
     await db.close();
 }
 

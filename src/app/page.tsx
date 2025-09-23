@@ -91,12 +91,13 @@ export default function LoginPage() {
       const inputPasswordEncoded = btoa(password);
 
       if (user && user.password === inputPasswordEncoded) {
-        // Ensure the admin user has all current permissions upon login
-        if (user.userType === 'admin') {
+        // Ensure the admin user has all current permissions upon login.
+        // This will update existing users with new permissions like `accessLaudos`.
+        if (user.userType === 'admin' || user.login === 'admin') {
             user.permissions = {
-                ...adminPermissions,
-                ...user.permissions, // Keep existing permissions but ensure all admin ones are present
-                accessLaudos: true,
+                ...adminPermissions, // Start with the full set of admin permissions
+                ...user.permissions, // Apply user's specific saved permissions
+                accessLaudos: true,  // Explicitly ensure laudos access
             };
         }
 
@@ -156,7 +157,7 @@ export default function LoginPage() {
       name: newUser.name,
       login: newUser.login,
       password: btoa(newUser.password), // Encrypt password
-      permissions: adminPermissions,
+      permissions: adminPermissions, // Grant full permissions
       userType: 'admin',
     };
     

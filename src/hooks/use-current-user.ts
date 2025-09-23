@@ -29,15 +29,19 @@ export function useCurrentUser(): AuthState {
 
     fetchUser();
     
-    // Although we are not using localStorage anymore, other tabs might not
-    // be aware of a login/logout. A more robust solution might use
-    // BroadcastChannel or websockets, but for this app's scope, we can
-    // re-validate periodically or on window focus.
     const handleFocus = () => fetchUser();
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'session') {
+            fetchUser();
+        }
+    };
+
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorageChange);
     };
     
   }, []);

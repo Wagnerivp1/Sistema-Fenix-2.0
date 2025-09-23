@@ -176,16 +176,18 @@ export default function FinanceiroPage() {
   }, []);
 
   React.useEffect(() => {
+    const handleStorageChange = () => loadData();
+    
     loadData();
-    // Adicionar listener para recarregar dados quando houver mudanças
-    window.addEventListener('storage-change-financialTransactions', loadData);
-    window.addEventListener('storage-change-serviceOrders', loadData);
-    window.addEventListener('storage-change-sales', loadData);
+    
+    window.addEventListener('storage-change-financialTransactions', handleStorageChange);
+    window.addEventListener('storage-change-serviceOrders', handleStorageChange);
+    window.addEventListener('storage-change-sales', handleStorageChange);
 
     return () => {
-      window.removeEventListener('storage-change-financialTransactions', loadData);
-      window.removeEventListener('storage-change-serviceOrders', loadData);
-      window.removeEventListener('storage-change-sales', loadData);
+      window.removeEventListener('storage-change-financialTransactions', handleStorageChange);
+      window.removeEventListener('storage-change-serviceOrders', handleStorageChange);
+      window.removeEventListener('storage-change-sales', handleStorageChange);
     };
   }, [loadData]);
 

@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   devIndicators: {
     allowedDevOrigins: [
       'http://localhost:3000',
-      'http://192.168.100.205',
+      'http://192.168.100.205:3000',
     ],
   },
   typescript: {
